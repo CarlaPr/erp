@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard - Alfatahi ERP')}"></head>
+<body class="bg-slate-900 flex">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
+    <header class="mb-8">
+        <h2 class="text-3xl font-bold text-white">Dashboard</h2>
+        <p class="text-slate-400">Visão geral do sistema.</p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+            <h3 class="text-slate-400 font-medium mb-2">Total de Clientes</h3>
+            <p class="text-3xl font-bold text-white">0</p>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>

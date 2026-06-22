@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Alfatahi ERP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Regras do index.css original caso existam variáveis de cor personalizadas */
+        body { background-color: #0f172a; color: white; } /* bg-slate-900 */
+    </style>
+</head>
+<body>
+<div th:fragment="sidebar" class="w-64 bg-slate-800 min-h-screen fixed left-0 top-0 p-4 border-r border-slate-700">
+    <div class="flex items-center gap-2 mb-8">
+        <i data-lucide="layout-dashboard" class="text-cyan-400"></i>
+        <h1 class="text-xl font-bold text-white">Alfatahi ERP</h1>
+    </div>
+    <nav class="space-y-2">
+        <a href="/dashboard" th:classappend="${currentPage == 'dashboard'} ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-400 hover:bg-slate-700'" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors">
+            <i data-lucide="home" class="w-5 h-5"></i> Dashboard
+        </a>
+        <a href="/clients" th:classappend="${currentPage == 'clients'} ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-400 hover:bg-slate-700'" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors">
+            <i data-lucide="users" class="w-5 h-5"></i> Clientes
+        </a>
+        <a href="/work-orders" th:classappend="${currentPage == 'work-orders'} ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-400 hover:bg-slate-700'" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors">
+            <i data-lucide="file-text" class="w-5 h-5"></i> Ordens de Serviço
+        </a>
+        <a href="/suppliers" th:classappend="${currentPage == 'suppliers'} ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-400 hover:bg-slate-700'" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors">
+            <i data-lucide="truck" class="w-5 h-5"></i> Fornecedores
+        </a>
+        <a href="/finance" th:classappend="${currentPage == 'finance'} ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-400 hover:bg-slate-700'" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors">
+            <i data-lucide="dollar-sign" class="w-5 h-5"></i> Fluxo de Caixa / Finanças
+        </a>
+        <a href="/dre" th:classappend="${currentPage == 'dre'} ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-400 hover:bg-slate-700'" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors">
+            <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Demonstrativo (DRE)
+        </a>
+        <a href="/settings" th:classappend="${currentPage == 'settings'} ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-400 hover:bg-slate-700'" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors">
+            <i data-lucide="settings" class="w-5 h-5"></i> Definições / Perfil
+        </a>
+    </nav>
+</div>
+
+<script th:fragment="lucide-script">
+    lucide.createIcons();
+</script>
+</body>
+</html>

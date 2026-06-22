@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(title='Fluxo de Caixa - Alfatahi ERP')}"></head>
+<body class="bg-slate-900 flex">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
+    <header class="mb-8">
+        <h2 class="text-3xl font-bold text-white">Fluxo de Caixa Integrado</h2>
+        <p class="text-slate-400">Visão consolidada de entradas, saídas e saldos operacionais.</p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+            <span class="text-emerald-400 text-xs font-semibold block uppercase">Total Recebido (Entradas)</span>
+            <p class="text-3xl font-bold text-white mt-1" th:text="'R$ ' + ${totalIn}">R$ 0,00</p>
+        </div>
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+            <span class="text-rose-400 text-xs font-semibold block uppercase">Total Pago (Saídas)</span>
+            <p class="text-3xl font-bold text-white mt-1" th:text="'R$ ' + ${totalOut}">R$ 0,00</p>
+        </div>
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg" th:classappend="${balance >= 0} ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-rose-500'">
+            <span class="text-slate-400 text-xs font-semibold block uppercase">Saldo Operacional</span>
+            <p class="text-3xl font-bold text-white mt-1" th:text="'R$ ' + ${balance}">R$ 0,00</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="trending-up" class="text-emerald-400"></i> Contas a Receber
+                </h3>
+                <button onclick="toggleModal('receivableModal', true)" class="text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-semibold px-3 py-1.5 rounded-lg transition-colors">+ Receita</button>
+            </div>
+            <table class="w-full text-left text-xs">
+                <thead>
+                <tr class="text-slate-400 border-b border-slate-700">
+                    <th class="pb-2">Descrição</th>
+                    <th class="pb-2">Vencimento</th>
+                    <th class="pb-2 text-right">Valor</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/50">
+                <tr th:each="r : ${receivables}" class="text-slate-300">
+                    <td class="py-2" th:text="${r.description}">Faturamento OS</td>
+                    <td class="py-2" th:text="${r.dueDate}">20/12/2026</td>
+                    <td class="py-2 text-right font-semibold text-emerald-400" th:text="'R$ ' + ${r.totalAmount}">R$ 0,00</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="trending-down" class="text-rose-400"></i> Contas a Pagar
+                </h3>
+                <button onclick="toggleModal('payableModal', true)" class="text-xs bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-semibold px-3 py-1.5 rounded-lg transition-colors">+ Despesa</button>
+            </div>
+            <table class="w-full text-left text-xs">
+                <thead>
+                <tr class="text-slate-400 border-b border-slate-700">
+                    <th class="pb-2">Descrição</th>
+                    <th class="pb-2">Vencimento</th>
+                    <th class="pb-2 text-right">Valor</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/50">
+                <tr th:each="p : ${payables}" class="text-slate-300">
+                    <td class="py-2" th:text="${p.description}">Compra Vidros</td>
+                    <td class="py-2" th:text="${p.dueDate}">15/12/2026</td>
+                    <td class="py-2 text-right font-semibold text-rose-400" th:text="'R$ ' + ${p.totalAmount}">R$ 0,00</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div id="payableModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-xl p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-4">Adicionar Conta a Pagar</h3>
+            <form th:action="@{/finance/payable/save}" th:object="${newPayable}" method="POST" class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-slate-400 mb-1">Descrição</label>
+                    <input type="text" th:field="*{description}" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Valor (R$)</label>
+                        <input type="number" step="0.01" th:field="*{totalAmount}" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Vencimento</label>
+                        <input type="date" th:field="*{dueDate}" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Tipo Classificação</label>
+                    <select th:field="*{category}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                        <option value="fixed">Custo Fixo</option>
+                        <option value="variable">Custo Variável (Matéria-prima)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-4">
+                    <button type="button" onclick="toggleModal('payableModal', false)" class="px-4 py-2 bg-slate-700 rounded-lg text-white">Voltar</button>
+                    <button type="submit" class="px-4 py-2 bg-rose-500 text-white font-semibold rounded-lg">Lançar Despesa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    function toggleModal(id, show) {
+        const modal = document.getElementById(id);
+        if (show) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+        else { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+    }
+</script>
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>

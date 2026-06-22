@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Clientes - Alfatahi ERP')}"></head>
+<body class="bg-slate-900 flex">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-bold text-white">Clientes</h2>
+            <p class="text-slate-400">Gerenciamento da carteira de clientes do sistema.</p>
+        </div>
+        <button onclick="toggleModal(true)" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-semibold px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i data-lucide="user-plus" class="w-5 h-5"></i> Novo Cliente
+        </button>
+    </header>
+
+    <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead>
+            <tr class="border-b border-slate-700 bg-slate-800/50 text-slate-400 font-semibold text-sm">
+                <th class="p-4">Nome</th>
+                <th class="p-4">Documento</th>
+                <th class="p-4">Contato</th>
+                <th class="p-4">Cidade</th>
+                <th class="p-4">Tipo</th>
+                <th class="p-4 text-center">Ações</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700 text-sm">
+            <tr th:each="client : ${clients}" class="hover:bg-slate-700/30 transition-colors">
+                <td class="p-4 font-medium text-white" th:text="${client.name}">Nome do Cliente</td>
+                <td class="p-4 text-slate-300" th:text="${client.document}">000.000.000-00</td>
+                <td class="p-4">
+                    <div class="text-slate-300" th:text="${client.email}">email@teste.com</div>
+                    <div class="text-slate-500 text-xs" th:text="${client.phone}">(11) 99999-9999</div>
+                </td>
+                <td class="p-4 text-slate-300" th:text="${client.city}">Itaquaquecetuba</td>
+                <td class="p-4">
+                    <span th:if="${client.type == 'individual'}" class="px-2 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400">Física</span>
+                    <span th:if="${client.type == 'company'}" class="px-2 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400">Jurídica</span>
+                </td>
+                <td class="p-4 text-center space-x-2">
+                    <a th:href="@{/clients/edit/{id}(id=${client.id})}" class="text-cyan-400 hover:text-cyan-300 inline-block">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </a>
+                    <a th:href="@{/clients/delete/{id}(id=${client.id})}" onclick="return confirm('Tem certeza que deseja excluir este cliente?')" class="text-rose-400 hover:text-rose-300 inline-block">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(clients)}">
+                <td colspan="6" class="p-8 text-center text-slate-500">
+                    Nenhum cliente cadastrado ainda.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="clientModal" th:class="${isEditing} ? 'fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50' : 'fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center z-50'">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-xl rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <header class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
+                <h3 class="text-xl font-bold text-white" th:text="${isEditing} ? 'Editar Cliente' : 'Cadastrar Novo Cliente'">Formulário</h3>
+                <a href="/clients" class="text-slate-400 hover:text-slate-200">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </a>
+            </header>
+
+            <form th:action="@{/clients/save}" th:object="${newClient}" method="POST" class="p-6 space-y-4">
+                <input type="hidden" th:field="*{id}" />
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Nome Completo / Razão Social</label>
+                        <input type="text" th:field="*{name}" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Tipo de Pessoa</label>
+                        <select th:field="*{type}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500">
+                            <option value="individual">Pessoa Física (CPF)</option>
+                            <option value="company">Pessoa Jurídica (CNPJ)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">CPF / CNPJ</label>
+                        <input type="text" th:field="*{document}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">E-mail</label>
+                        <input type="email" th:field="*{email}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Telefone</label>
+                        <input type="text" th:field="*{phone}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                    </div>
+
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Endereço Completo</label>
+                        <input type="text" th:field="*{address}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Cidade</label>
+                        <input type="text" th:field="*{city}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-700 mt-6">
+                    <a href="/clients" class="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition-colors">Cancelar</a>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-cyan-500 text-slate-900 font-semibold hover:bg-cyan-600 transition-colors">Salvar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script>
+    function toggleModal(show) {
+        const modal = document.getElementById('clientModal');
+        if (show) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        } else {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+    }
+</script>
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>
