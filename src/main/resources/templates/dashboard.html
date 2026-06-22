@@ -1,24 +1,81 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Dashboard - Alfatahi ERP')}"></head>
+<head th:replace="~{fragments/layout :: head(title='Dashboard - Alfatahi ERP')}"></head>
 <body class="bg-slate-900 flex">
-
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
 <main class="ml-64 p-8 w-full min-h-screen text-slate-200">
     <header class="mb-8">
-        <h2 class="text-3xl font-bold text-white">Dashboard</h2>
-        <p class="text-slate-400">Visão geral do sistema.</p>
+        <h2 class="text-3xl font-bold text-white">Dashboard Gerencial</h2>
+        <p class="text-slate-400">Visão analítica de faturamento e fluxo de caixa.</p>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
-            <h3 class="text-slate-400 font-medium mb-2">Total de Clientes</h3>
-            <p class="text-3xl font-bold text-white">0</p>
+            <h3 class="text-slate-400 font-medium mb-2 uppercase text-xs">Receitas Acumuladas</h3>
+            <p class="text-3xl font-bold text-emerald-400" th:text="'R$ ' + ${totalReceitas}">R$ 0,00</p>
         </div>
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+            <h3 class="text-slate-400 font-medium mb-2 uppercase text-xs">Saídas e Custos</h3>
+            <p class="text-3xl font-bold text-rose-400" th:text="'R$ ' + ${totalDespesas}">R$ 0,00</p>
+        </div>
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg border-l-4 border-l-cyan-500">
+            <h3 class="text-slate-400 font-medium mb-2 uppercase text-xs">Saldo Operacional</h3>
+            <p class="text-3xl font-bold text-white" th:text="'R$ ' + ${saldoAtual}">R$ 0,00</p>
+        </div>
+    </div>
+
+    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg w-full max-w-4xl">
+        <h3 class="text-white font-bold mb-4">Evolução Financeira (Últimos 6 meses)</h3>
+        <canvas id="financeChart" height="100"></canvas>
     </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:inline="javascript">
+    /* Dados injetados pelo Spring Boot de forma segura */
+    const labels = /*[[${chartMonths}]]*/ "['Jan']";
+    const revenues = /*[[${chartRevenues}]]*/ "[0]";
+    const expenses = /*[[${chartExpenses}]]*/ "[0]";
+
+    const ctx = document.getElementById('financeChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: eval(labels),
+            datasets: [
+                {
+                    label: 'Entradas (R$)',
+                    data: eval(revenues),
+                    borderColor: '#10b981', // emerald-500
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Saídas (R$)',
+                    data: eval(expenses),
+                    borderColor: '#f43f5e', // rose-500
+                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: '#cbd5e1' } }
+            },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+            }
+        }
+    });
+</script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 </body>
 </html>

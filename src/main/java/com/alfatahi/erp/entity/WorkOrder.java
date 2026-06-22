@@ -32,11 +32,12 @@ public class WorkOrder {
     private String description;
 
     @Column(columnDefinition = "varchar(30) default 'budget'")
-    private String status = "budget"; // budget, approved, in_progress, completed, cancelled, delivered
+    private String status = "budget";
 
-    @Column(name = "total_value")
+    @Column(name = "total_value", precision = 12, scale = 2)
     private BigDecimal totalValue = BigDecimal.ZERO;
 
+    @Column(precision = 12, scale = 2)
     private BigDecimal discount = BigDecimal.ZERO;
 
     @Column(name = "install_address")

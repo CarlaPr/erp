@@ -1,7 +1,9 @@
 package com.alfatahi.erp.service;
 
 import com.alfatahi.erp.entity.WorkOrder;
+import com.alfatahi.erp.entity.WorkOrderItem;
 import com.alfatahi.erp.repository.WorkOrderRepository;
+import com.alfatahi.erp.repository.WorkOrderItemRepository;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.UUID;
 public class WorkOrderService {
 
     private final WorkOrderRepository workOrderRepository;
+    private final WorkOrderItemRepository itemRepository;
 
-    public WorkOrderService(WorkOrderRepository workOrderRepository) {
+    public WorkOrderService(WorkOrderRepository workOrderRepository, WorkOrderItemRepository itemRepository) {
         this.workOrderRepository = workOrderRepository;
+        this.itemRepository = itemRepository;
     }
 
     public List<WorkOrder> listAll() {
@@ -21,12 +25,10 @@ public class WorkOrderService {
     }
 
     public WorkOrder save(WorkOrder workOrder) {
-        // Gerador automático de número de O.S. sequencial básico caso venha vazio
         if (workOrder.getNumber() == null || workOrder.getNumber().isEmpty()) {
             workOrder.setNumber("OS-" + (workOrderRepository.count() + 1001));
         }
 
-        // Cálculo automático da área baseado na largura e altura enviadas
         if (workOrder.getWidth() != null && workOrder.getHeight() != null) {
             workOrder.setArea(workOrder.getWidth().multiply(workOrder.getHeight()));
         }
@@ -36,10 +38,16 @@ public class WorkOrderService {
 
     public WorkOrder findById(UUID id) {
         return workOrderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("O.S. não encontrada: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Ordem de Serviço não encontrada: " + id));
     }
 
     public void delete(UUID id) {
         workOrderRepository.deleteById(id);
+    }
+
+    public BigDecimal calculateObraCost(UUID workOrderId) {
+        return itemRepository.findByWorkOrderId(workOrderId).stream()
+                .map(WorkOrderItem::getTotalCost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
