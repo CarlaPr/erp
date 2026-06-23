@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(title='Contas a Pagar - Alfa Tahi')}"></head>
+<body class="bg-[#0B1120] flex font-sans">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-black text-white tracking-tight">Contas a Pagar</h2>
+            <p class="text-slate-400 mt-1">Controlo de fornecedores, despesas fixas e CMV.</p>
+        </div>
+        <button onclick="toggleModal('payableModal', true)" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-rose-500/20">
+            <i data-lucide="plus" class="w-5 h-5"></i> Nova Despesa
+        </button>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Cadastrado</span>
+            <p class="text-2xl font-black text-white mt-2" th:text="'R$ ' + ${valCadastrado}">R$ 0,00</p>
+        </div>
+        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Pago (Liquidado)</span>
+            <p class="text-2xl font-black text-emerald-400 mt-2" th:text="'R$ ' + ${valPago}">R$ 0,00</p>
+        </div>
+        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Pendente</span>
+            <p class="text-2xl font-black text-amber-400 mt-2" th:text="'R$ ' + ${valPendente}">R$ 0,00</p>
+        </div>
+        <div class="bg-rose-500/10 p-6 rounded-2xl border border-rose-500/20 backdrop-blur-sm">
+            <span class="text-rose-400 text-xs font-bold uppercase tracking-wider">Em Atraso</span>
+            <p class="text-2xl font-black text-rose-400 mt-2" th:text="'R$ ' + ${valAtraso}">R$ 0,00</p>
+        </div>
+    </div>
+
+    <div class="flex gap-2 mb-6 bg-slate-800/50 p-1.5 rounded-xl border border-slate-700/50 w-fit backdrop-blur-sm">
+        <button onclick="filterTable('all')" class="tab-btn active px-4 py-2 rounded-lg text-sm font-bold text-white bg-slate-700 shadow-sm transition-all">Todos</button>
+        <button onclick="filterTable('variable')" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition-all">Variáveis (CMV)</button>
+        <button onclick="filterTable('fixed')" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition-all">Despesas Fixas</button>
+        <button onclick="filterTable('provision')" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition-all">Provisões</button>
+    </div>
+
+    <div class="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+        <table class="w-full text-left border-collapse" id="payablesTable">
+            <thead>
+            <tr class="border-b border-slate-700/50 bg-slate-800/80 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                <th class="p-5">Vencimento</th>
+                <th class="p-5">Fornecedor / Descrição</th>
+                <th class="p-5">Categoria</th>
+                <th class="p-5 text-right">Valor Total</th>
+                <th class="p-5 text-center">Status</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700/50 text-sm">
+            <tr th:each="p : ${payables}" class="hover:bg-slate-700/30 transition-colors" th:data-category="${p.category}">
+                <td class="p-5 text-slate-300 font-medium" th:text="${#temporals.format(p.dueDate, 'dd/MM/yyyy')}">01/01/2026</td>
+                <td class="p-5">
+                    <div class="font-bold text-white" th:text="${p.supplier != null ? p.supplier.name : 'Avulso'}">Fornecedor</div>
+                    <div class="text-xs text-slate-400 mt-0.5" th:text="${p.description}">Desc</div>
+                </td>
+                <td class="p-5">
+                    <span th:if="${p.category == 'variable'}" class="text-cyan-400 text-xs font-bold uppercase tracking-wider">Variável (CMV)</span>
+                    <span th:if="${p.category == 'fixed'}" class="text-indigo-400 text-xs font-bold uppercase tracking-wider">Custo Fixo</span>
+                    <span th:if="${p.category == 'provision'}" class="text-amber-400 text-xs font-bold uppercase tracking-wider">Provisão</span>
+                </td>
+                <td class="p-5 text-right font-mono font-bold text-rose-400" th:text="'R$ ' + ${p.totalAmount}">0,00</td>
+                <td class="p-5 text-center">
+                    <span th:if="${p.status == 'paid'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase tracking-wide">Pago</span>
+                    <span th:if="${p.status == 'pending'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 uppercase tracking-wide">Pendente</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="payableModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8">
+            <h3 class="text-2xl font-black text-white mb-6">Lançar Despesa</h3>
+            <form th:action="@{/payables/save}" th:object="${newPayable}" method="POST" class="space-y-5 text-sm">
+                <div class="grid grid-cols-2 gap-5">
+                    <div class="col-span-2">
+                        <label class="block text-slate-400 font-bold mb-2">Descrição</label>
+                        <input type="text" th:field="*{description}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Fornecedor (Opcional)</label>
+                        <select th:field="*{supplier}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-rose-500 outline-none">
+                            <option value="">-- Avulso --</option>
+                            <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Classificação (Tipo)</label>
+                        <select th:field="*{category}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-rose-500 outline-none">
+                            <option value="variable">Variável (CMV - Insumos)</option>
+                            <option value="fixed">Custo Fixo (Aluguer, Energia)</option>
+                            <option value="provision">Provisão (Férias, Impostos)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Valor Total (R$)</label>
+                        <input type="number" step="0.01" th:field="*{totalAmount}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-rose-500 outline-none" />
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Data de Vencimento</label>
+                        <input type="date" th:field="*{dueDate}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-rose-500 outline-none text-slate-300" />
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Forma de Pagamento</label>
+                        <select th:field="*{paymentMethod}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-rose-500 outline-none">
+                            <option value="PIX">PIX</option>
+                            <option value="Boleto">Boleto</option>
+                            <option value="Transferencia">Transferência Bancária</option>
+                            <option value="Cartao">Cartão de Crédito</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Status Inicial</label>
+                        <select th:field="*{status}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-rose-500 outline-none">
+                            <option value="pending">Pendente (A Pagar)</option>
+                            <option value="paid">Pago (Liquidado)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-800">
+                    <button type="button" onclick="toggleModal('payableModal', false)" class="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-rose-500 text-white font-black hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20">Gravar Despesa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script>
+    function toggleModal(id, show) {
+        const modal = document.getElementById(id);
+        if (show) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+        else { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+    }
+
+    // Lógica simples para as abas de filtro idêntico ao vídeo
+    function filterTable(category) {
+        // Atualizar botões
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
+            btn.classList.add('text-slate-400');
+        });
+        event.target.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
+        event.target.classList.remove('text-slate-400');
+
+        // Filtrar linhas
+        const rows = document.querySelectorAll('#payablesTable tbody tr');
+        rows.forEach(row => {
+            if (category === 'all' || row.dataset.category === category) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+</script>
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>

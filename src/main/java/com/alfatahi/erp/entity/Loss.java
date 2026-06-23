@@ -8,29 +8,44 @@ import java.util.UUID;
 @Entity
 @Table(name = "losses")
 public class Loss {
-    @Id @GeneratedValue(strategy = GenerationType.UUID)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne
     @JoinColumn(name = "work_order_id")
-    private WorkOrder workOrder; // Obra onde ocorreu o prejuízo
+    private WorkOrder workOrder;
 
     @Column(nullable = false)
-    private String material; // Ex: Espelho 4mm, Perfil U
+    private String type;
+
+    // ESTE É O CAMPO QUE RESOLVE O ERRO DE SQL!
+    @Column(nullable = false)
+    private String material = "N/A"; // Valor default seguro
 
     @Column(nullable = false)
-    private String reason; // Quebra no transporte, erro de medida, defeito de fábrica
+    private String description;
 
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(name = "financial_impact", nullable = false, precision = 12, scale = 2)
     private BigDecimal financialImpact = BigDecimal.ZERO;
 
+    @Column(name = "occurrence_date", nullable = false)
     private LocalDate occurrenceDate = LocalDate.now();
 
-    // Getters e Setters gerados
-    public UUID getId() { return id; } public void setId(UUID id) { this.id = id; }
-    public WorkOrder getWorkOrder() { return workOrder; } public void setWorkOrder(WorkOrder workOrder) { this.workOrder = workOrder; }
-    public String getMaterial() { return material; } public void setMaterial(String material) { this.material = material; }
-    public String getReason() { return reason; } public void setReason(String reason) { this.reason = reason; }
-    public BigDecimal getFinancialImpact() { return financialImpact; } public void setFinancialImpact(BigDecimal financialImpact) { this.financialImpact = financialImpact; }
-    public LocalDate getOccurrenceDate() { return occurrenceDate; } public void setOccurrenceDate(LocalDate occurrenceDate) { this.occurrenceDate = occurrenceDate; }
+    // Getters and Setters
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    public WorkOrder getWorkOrder() { return workOrder; }
+    public void setWorkOrder(WorkOrder workOrder) { this.workOrder = workOrder; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+    public String getMaterial() { return material; }
+    public void setMaterial(String material) { this.material = material; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public BigDecimal getFinancialImpact() { return financialImpact; }
+    public void setFinancialImpact(BigDecimal financialImpact) { this.financialImpact = financialImpact; }
+    public LocalDate getOccurrenceDate() { return occurrenceDate; }
+    public void setOccurrenceDate(LocalDate occurrenceDate) { this.occurrenceDate = occurrenceDate; }
 }

@@ -1,104 +1,171 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(title='Composição da O.S. - Alfatahi ERP')}"></head>
-<body class="bg-slate-900 flex">
+<head th:replace="~{fragments/layout :: head(title='Ordens de Serviço - Alfa Tahi')}"></head>
+<body class="bg-[#0B1120] flex font-sans">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
 <main class="ml-64 p-8 w-full min-h-screen text-slate-200">
-    <header class="mb-8 flex justify-between items-center">
+    <header class="flex justify-between items-center mb-8">
         <div>
-            <a href="/work-orders" class="text-cyan-400 hover:underline text-sm flex items-center gap-1 mb-2">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar para Ordens de Serviço
-            </a>
-            <h2 class="text-3xl font-bold text-white">
-                Composição de Materiais: <span class="text-cyan-400" th:text="${workOrder.number}">OS-1001</span>
-            </h2>
-            <p class="text-slate-400" th:text="${workOrder.title}">Título da Obra</p>
+            <h2 class="text-3xl font-black text-white tracking-tight">Ordens de Serviço</h2>
+            <p class="text-slate-400 mt-1">Gestão de projetos, custos operacionais e margens.</p>
         </div>
-        <button onclick="toggleItemModal(true)" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-semibold px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-            <i data-lucide="package-plus" class="w-5 h-5"></i> Adicionar Insumo / Vidro
+        <button onclick="openModal()" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i> Nova OS
         </button>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
-            <span class="text-slate-400 text-xs font-semibold block uppercase">Preço Total de Venda (Orçamento)</span>
-            <p class="text-2xl font-bold text-cyan-400 mt-1" th:text="'R$ ' + ${workOrder.totalValue ?: 0}">R$ 0,00</p>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Receita Total</span>
+            <p class="text-2xl font-black text-white mt-2" th:text="'R$ ' + ${receitaTotal}">R$ 0,00</p>
         </div>
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
-            <span class="text-slate-400 text-xs font-semibold block uppercase">Custo Real de Matéria-Prima (CMV)</span>
-            <p class="text-2xl font-bold text-rose-400 mt-1" th:text="'R$ ' + ${totalCost ?: 0}">R$ 0,00</p>
+        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Custos Totais (CMV)</span>
+            <p class="text-2xl font-black text-rose-400 mt-2" th:text="'R$ ' + ${custoTotal}">R$ 0,00</p>
         </div>
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 border-l-4 border-l-emerald-500">
-            <span class="text-slate-400 text-xs font-semibold block uppercase">Lucro Bruto Estimado</span>
-            <p class="text-2xl font-bold text-emerald-400 mt-1" th:text="'R$ ' + ${(workOrder.totalValue ?: 0) - (totalCost ?: 0)}">R$ 0,00</p>
+        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Lucro Bruto Global</span>
+            <p class="text-2xl font-black text-emerald-400 mt-2" th:text="'R$ ' + ${lucroBruto}">R$ 0,00</p>
+        </div>
+        <div class="bg-cyan-500/10 p-6 rounded-2xl border border-cyan-500/20 backdrop-blur-sm">
+            <span class="text-cyan-400 text-xs font-bold uppercase tracking-wider">Margem Média</span>
+            <p class="text-2xl font-black text-cyan-400 mt-2" th:text="${margemMedia} + '%'">0%</p>
         </div>
     </div>
 
-    <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-hidden">
+    <div class="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
         <table class="w-full text-left border-collapse">
             <thead>
-            <tr class="border-b border-slate-700 bg-slate-800/50 text-slate-400 font-semibold text-xs uppercase">
-                <th class="p-4">Item / Insumo</th>
-                <th class="p-4 text-center">Qtd</th>
-                <th class="p-4">Custo Un.</th>
-                <th class="p-4">Preço Un. Venda</th>
-                <th class="p-4">Total Custo</th>
-                <th class="p-4">Total Venda</th>
-                <th class="p-4 text-center">Ações</th>
+            <tr class="border-b border-slate-700/50 bg-slate-800/80 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                <th class="p-5">OS / Cliente</th>
+                <th class="p-5">Status</th>
+                <th class="p-5 text-right">Receita (R$)</th>
+                <th class="p-5 text-right">Custo (R$)</th>
+                <th class="p-5 text-right">Lucro</th>
+                <th class="p-5 text-center">Entrega</th>
+                <th class="p-5 text-center">Ações</th>
             </tr>
             </thead>
-            <tbody class="divide-y divide-slate-700 text-sm">
-            <tr th:each="item : ${items}" class="hover:bg-slate-700/30">
-                <td class="p-4 font-medium text-white" th:text="${item.description}">Chapa Vidro Incolor 10mm</td>
-                <td class="p-4 text-center text-slate-300" th:text="${item.quantity}">1.00</td>
-                <td class="p-4 text-slate-400" th:text="'R$ ' + ${item.unitCost}">R$ 0,00</td>
-                <td class="p-4 text-slate-400" th:text="'R$ ' + ${item.unitPrice}">R$ 0,00</td>
-                <td class="p-4 text-rose-400 font-mono" th:text="'R$ ' + ${item.getTotalCost()}">R$ 0,00</td>
-                <td class="p-4 text-emerald-400 font-mono font-semibold" th:text="'R$ ' + ${item.getTotalPrice()}">R$ 0,00</td>
-                <td class="p-4 text-center">
-                    <a th:href="@{/work-orders/{woId}/items/delete/{itemId}(woId=${workOrder.id}, itemId=${item.id})}" onclick="return confirm('Remover este material do projeto?')" class="text-rose-400 hover:text-rose-300">
-                        <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
-                    </a>
+            <tbody class="divide-y divide-slate-700/50 text-sm">
+            <tr th:each="wo : ${workOrders}" class="hover:bg-slate-700/30 transition-colors">
+                <td class="p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-slate-700/50 px-2 py-1 rounded text-xs font-mono font-bold text-cyan-400" th:text="${wo.number}">OS-01</div>
+                        <div>
+                            <div class="font-bold text-white" th:text="${wo.title}">Titulo</div>
+                            <div class="text-xs text-slate-400" th:text="${wo.client != null ? wo.client.name : 'S/ Cliente'}">Cliente</div>
+                        </div>
+                    </div>
                 </td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(items)}">
-                <td colspan="7" class="p-8 text-center text-slate-500">Nenhum material adicionado a esta O.S. ainda.</td>
+                <td class="p-5">
+                    <span th:if="${wo.status == 'budget'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase">Orçamento</span>
+                    <span th:if="${wo.status == 'approved'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 uppercase">Aprovado</span>
+                    <span th:if="${wo.status == 'in_progress'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-400 uppercase">Em Obra</span>
+                    <span th:if="${wo.status == 'completed'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">Concluído</span>
+                </td>
+                <td class="p-5 text-right font-mono font-bold text-slate-300" th:text="${wo.totalValue}">0,00</td>
+                <td class="p-5 text-right font-mono font-bold text-rose-400" th:text="${wo.getTotalCost()}">0,00</td>
+                <td class="p-5 text-right">
+                    <div class="font-mono font-bold text-emerald-400" th:text="${wo.getProfit()}">0,00</div>
+                    <div class="text-[10px] text-emerald-500/70 font-bold" th:text="${wo.getMargin()} + '%'">0%</div>
+                </td>
+                <td class="p-5 text-center text-slate-400" th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : '-'}">-</td>
+                <td class="p-5 text-center space-x-3">
+                    <button th:data-id="${wo.id}" onclick="editOs(this.getAttribute('data-id'))" class="text-cyan-400 hover:text-cyan-300">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </button>
+                    <a th:href="@{/work-orders/delete/{id}(id=${wo.id})}" onclick="return confirm('Excluir O.S.?')" class="text-rose-400 hover:text-rose-300"><i data-lucide="trash-2" class="w-4 h-4"></i></a>
+                </td>
             </tr>
             </tbody>
         </table>
     </div>
 
-    <div id="itemModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center z-50">
-        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-xl shadow-2xl p-6">
-            <h3 class="text-xl font-bold text-white mb-4">Adicionar Material/Serviço</h3>
+    <div id="osModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto pt-10 pb-10">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl p-8 my-auto relative">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <h3 class="text-2xl font-black text-white mb-6" id="modalTitle">Nova Ordem de Serviço</h3>
 
-            <form th:action="@{/work-orders/{id}/items/save(id=${workOrder.id})}" th:object="${newItem}" method="POST" class="space-y-4 text-sm">
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Descrição do Material</label>
-                    <input type="text" th:field="*{description}" placeholder="Ex: Vidro Temperado Incolor 8mm (m²)" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none" />
-                </div>
+            <form id="osForm" onsubmit="saveFullOS(event)" class="space-y-6 text-sm">
+                <input type="hidden" id="osId" />
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Quantidade</label>
-                    <input type="number" step="0.01" th:field="*{quantity}" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-1">Custo de Compra (R$)</label>
-                        <input type="number" step="0.01" th:field="*{unitCost}" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none" />
+                <div class="grid grid-cols-3 gap-5 bg-slate-800/30 p-5 rounded-xl border border-slate-700/50">
+                    <div class="col-span-2">
+                        <label class="block text-slate-400 font-bold mb-2">Projeto / Título</label>
+                        <input type="text" id="osTitle" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:border-cyan-500 outline-none" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-1">Preço de Venda (R$)</label>
-                        <input type="number" step="0.01" th:field="*{unitPrice}" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none" />
+                        <label class="block text-slate-400 font-bold mb-2">Status</label>
+                        <select id="osStatus" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:border-cyan-500 outline-none">
+                            <option value="budget">Orçamento</option>
+                            <option value="approved">Aprovado</option>
+                            <option value="in_progress">Em Obra</option>
+                            <option value="completed">Concluído</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Cliente</label>
+                        <select id="osClient" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:border-cyan-500 outline-none">
+                            <option value="">-- Selecione --</option>
+                            <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Previsão Entrega</label>
+                        <input type="date" id="osDate" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-300 focus:border-cyan-500 outline-none" />
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Preço Final (R$)</label>
+                        <input type="number" step="0.01" id="osTotalValue" onkeyup="updateLiveKPIs()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-emerald-400 font-bold focus:border-cyan-500 outline-none" />
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-4 border-t border-slate-700 mt-6">
-                    <button type="button" onclick="toggleItemModal(false)" class="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-cyan-500 text-slate-900 font-semibold hover:bg-cyan-600 transition-colors">Adicionar</button>
+                <div class="mt-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="layers" class="w-5 h-5 text-cyan-400"></i> Custos Operacionais (Insumos)</h4>
+                    </div>
+
+                    <div class="bg-slate-800/80 rounded-xl border border-slate-700 overflow-hidden mb-4">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-700/50 text-slate-400">
+                            <tr>
+                                <th class="p-3">Descrição (Vidro, Alumínio)</th>
+                                <th class="p-3 w-20 text-center">Qtd</th>
+                                <th class="p-3 w-32 text-right">Custo Un. (R$)</th>
+                                <th class="p-3 w-32 text-right">Total (R$)</th>
+                                <th class="p-3 w-12 text-center">X</th>
+                            </tr>
+                            </thead>
+                            <tbody id="itemsTableBody" class="divide-y divide-slate-700/50">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex gap-2 items-center bg-slate-800/30 p-2 rounded-lg border border-slate-700/50 border-dashed">
+                        <input type="text" id="newItemDesc" placeholder="Descreva o material..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none" />
+                        <input type="number" id="newItemQtd" placeholder="Qtd" value="1" class="w-20 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none text-center" />
+                        <input type="number" id="newItemCost" placeholder="Custo R$" class="w-32 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none text-right" />
+                        <button type="button" onclick="addItem()" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 px-4 py-2 rounded-lg font-bold">Add</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-slate-700 pt-6 mt-6">
+                    <div class="flex gap-6">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Custo Total Matéria-Prima</span>
+                            <span class="text-xl font-mono font-bold text-rose-400" id="liveCost">R$ 0.00</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Lucro Previsto</span>
+                            <span class="text-xl font-mono font-bold text-emerald-400" id="liveProfit">R$ 0.00</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
+                        <button type="submit" class="px-6 py-3 rounded-xl bg-cyan-500 text-slate-900 font-black hover:bg-cyan-600 transition-colors shadow-lg shadow-cyan-500/20">Gravar O.S.</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -106,10 +173,119 @@
 </main>
 
 <script>
-    function toggleItemModal(show) {
-        const modal = document.getElementById('itemModal');
-        if (show) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
-        else { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+    let osItems = []; // Guarda os itens em memória
+
+    function openModal() {
+        document.getElementById('osForm').reset();
+        document.getElementById('osId').value = '';
+        osItems = [];
+        renderItems();
+        document.getElementById('modalTitle').innerText = 'Nova Ordem de Serviço';
+        document.getElementById('osModal').classList.remove('hidden');
+        document.getElementById('osModal').classList.add('flex');
+    }
+
+    function closeModal() {
+        document.getElementById('osModal').classList.add('hidden');
+        document.getElementById('osModal').classList.remove('flex');
+    }
+
+    async function editOs(id) {
+        const response = await fetch(`/work-orders/edit-data/${id}`);
+        const data = await response.json();
+
+        document.getElementById('osId').value = data.id;
+        document.getElementById('osTitle').value = data.title;
+        document.getElementById('osStatus').value = data.status;
+        document.getElementById('osClient').value = data.client ? data.client.id : '';
+        document.getElementById('osDate').value = data.installDate;
+        document.getElementById('osTotalValue').value = data.totalValue;
+
+        osItems = data.items || [];
+        renderItems();
+
+        document.getElementById('modalTitle').innerText = `Editar OS: ${data.number}`;
+        document.getElementById('osModal').classList.remove('hidden');
+        document.getElementById('osModal').classList.add('flex');
+    }
+
+    function addItem() {
+        const desc = document.getElementById('newItemDesc').value;
+        const qtd = parseFloat(document.getElementById('newItemQtd').value) || 1;
+        const cost = parseFloat(document.getElementById('newItemCost').value) || 0;
+
+        if(!desc) return alert("Insira a descrição!");
+
+        osItems.push({
+            description: desc,
+            quantity: qtd,
+            unitCost: cost,
+            unitPrice: cost // Replica para manter a integridade com a Entidade
+        });
+
+        document.getElementById('newItemDesc').value = '';
+        document.getElementById('newItemCost').value = '';
+        renderItems();
+    }
+
+    function removeItem(index) {
+        osItems.splice(index, 1);
+        renderItems();
+    }
+
+    function renderItems() {
+        const tbody = document.getElementById('itemsTableBody');
+        tbody.innerHTML = '';
+        let totalCustoMat = 0;
+
+        osItems.forEach((item, index) => {
+            const totalItem = item.quantity * item.unitCost;
+            totalCustoMat += totalItem;
+
+            tbody.innerHTML += `
+                    <tr class="bg-slate-800">
+                        <td class="p-3 text-slate-200">${item.description}</td>
+                        <td class="p-3 text-center text-slate-400">${item.quantity}</td>
+                        <td class="p-3 text-right text-slate-400">R$ ${item.unitCost.toFixed(2)}</td>
+                        <td class="p-3 text-right text-rose-400 font-bold">R$ ${totalItem.toFixed(2)}</td>
+                        <td class="p-3 text-center">
+                            <button type="button" onclick="removeItem(${index})" class="text-rose-500 hover:text-rose-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `;
+        });
+        lucide.createIcons();
+        updateLiveKPIs(totalCustoMat);
+    }
+
+    function updateLiveKPIs(custoForcado = null) {
+        let totalCustoMat = custoForcado !== null ? custoForcado : osItems.reduce((acc, i) => acc + (i.quantity * i.unitCost), 0);
+        const precoVenda = parseFloat(document.getElementById('osTotalValue').value) || 0;
+
+        document.getElementById('liveCost').innerText = `R$ ${totalCustoMat.toFixed(2)}`;
+        document.getElementById('liveProfit').innerText = `R$ ${(precoVenda - totalCustoMat).toFixed(2)}`;
+    }
+
+    async function saveFullOS(e) {
+        e.preventDefault();
+
+        const payload = {
+            id: document.getElementById('osId').value || null,
+            title: document.getElementById('osTitle').value,
+            status: document.getElementById('osStatus').value,
+            installDate: document.getElementById('osDate').value || null,
+            totalValue: parseFloat(document.getElementById('osTotalValue').value) || 0,
+            client: document.getElementById('osClient').value ? { id: document.getElementById('osClient').value } : null,
+            items: osItems
+        };
+
+        await fetch('/work-orders/save-ajax', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        window.location.reload();
     }
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>

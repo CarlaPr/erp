@@ -1,79 +1,192 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(title='Dashboard - Alfatahi ERP')}"></head>
-<body class="bg-slate-900 flex">
+<head th:replace="~{fragments/layout :: head(title='Dashboard Executivo - Alfa Tahi')}"></head>
+<body class="bg-[#0B1120] flex font-sans">
+
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
 <main class="ml-64 p-8 w-full min-h-screen text-slate-200">
     <header class="mb-8">
-        <h2 class="text-3xl font-bold text-white">Dashboard Gerencial</h2>
-        <p class="text-slate-400">Visão analítica de faturamento e fluxo de caixa.</p>
+        <h2 class="text-3xl font-black text-white tracking-tight">Dashboard Executivo</h2>
+        <p class="text-slate-400 mt-1">Fluxo de caixa, custos e performance comercial atualizado em tempo real.</p>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
-            <h3 class="text-slate-400 font-medium mb-2 uppercase text-xs">Receitas Acumuladas</h3>
-            <p class="text-3xl font-bold text-emerald-400" th:text="'R$ ' + ${totalReceitas}">R$ 0,00</p>
+    <!-- GRID DE 8 CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <!-- Linha 1 -->
+        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50 relative overflow-hidden">
+            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Saldo Atual</span>
+            <p class="text-2xl font-black text-white mt-1" th:text="'R$ ' + ${dash.saldoAtual}">R$ 0,00</p>
+            <p class="text-[10px] text-slate-500 mt-1" th:text="'Projetado: R$ ' + ${dash.saldoProjetado}"></p>
+            <i data-lucide="landmark" class="w-12 h-12 text-slate-700/30 absolute right-[-10px] bottom-[-10px]"></i>
         </div>
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
-            <h3 class="text-slate-400 font-medium mb-2 uppercase text-xs">Saídas e Custos</h3>
-            <p class="text-3xl font-bold text-rose-400" th:text="'R$ ' + ${totalDespesas}">R$ 0,00</p>
+        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50 relative overflow-hidden">
+            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">A Receber</span>
+            <p class="text-2xl font-black text-emerald-400 mt-1" th:text="'R$ ' + ${dash.aReceber}">R$ 0,00</p>
+            <p class="text-[10px] text-slate-500 mt-1" th:text="'Recebido: R$ ' + ${dash.recebido}"></p>
+            <i data-lucide="trending-up" class="w-12 h-12 text-slate-700/30 absolute right-[-10px] bottom-[-10px]"></i>
         </div>
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg border-l-4 border-l-cyan-500">
-            <h3 class="text-slate-400 font-medium mb-2 uppercase text-xs">Saldo Operacional</h3>
-            <p class="text-3xl font-bold text-white" th:text="'R$ ' + ${saldoAtual}">R$ 0,00</p>
+        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50 relative overflow-hidden">
+            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">A Pagar</span>
+            <p class="text-2xl font-black text-rose-400 mt-1" th:text="'R$ ' + ${dash.aPagar}">R$ 0,00</p>
+            <p class="text-[10px] text-slate-500 mt-1" th:text="'Pago: R$ ' + ${dash.pago}"></p>
+            <i data-lucide="trending-down" class="w-12 h-12 text-slate-700/30 absolute right-[-10px] bottom-[-10px]"></i>
+        </div>
+        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50 relative overflow-hidden">
+            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Lucro Bruto (OS)</span>
+            <p class="text-2xl font-black text-cyan-400 mt-1" th:text="'R$ ' + ${dash.lucroBruto}">R$ 0,00</p>
+            <p class="text-[10px] text-slate-500 mt-1" th:text="'Margem média: ' + ${dash.margemMedia} + '%'"></p>
+            <i data-lucide="pie-chart" class="w-12 h-12 text-slate-700/30 absolute right-[-10px] bottom-[-10px]"></i>
+        </div>
+
+        <!-- Linha 2 -->
+        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50">
+            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Ticket Médio</span>
+            <p class="text-xl font-black text-white mt-1" th:text="'R$ ' + ${dash.ticketMedio}">R$ 0,00</p>
+        </div>
+        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50">
+            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">OS Ativas</span>
+            <p class="text-xl font-black text-white mt-1" th:text="${dash.osAtivas}">0</p>
+        </div>
+        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50">
+            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Inadimplentes</span>
+            <p class="text-xl font-black text-rose-400 mt-1" th:text="${dash.inadimplentes}">0</p>
+        </div>
+        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50">
+            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Perdas</span>
+            <p class="text-xl font-black text-white mt-1" th:text="'R$ ' + ${dash.perdas}">R$ 0,00</p>
+            <p class="text-[10px] text-slate-500 mt-1" th:text="${dash.perdasPercentual} + '% da receita'"></p>
         </div>
     </div>
 
-    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg w-full max-w-4xl">
-        <h3 class="text-white font-bold mb-4">Evolução Financeira (Últimos 6 meses)</h3>
-        <canvas id="financeChart" height="100"></canvas>
+    <!-- GRÁFICOS (VISÃO 1, 2 e 3) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Visão 1 -->
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 lg:col-span-2">
+            <h3 class="text-white font-bold text-sm mb-1">Visão 1 - Fluxo de caixa</h3>
+            <p class="text-[10px] text-slate-400 mb-4">Entradas x Saídas previstas e realizadas por mês.</p>
+            <div class="h-64 w-full">
+                <canvas id="chartVisao1"></canvas>
+            </div>
+        </div>
+
+        <!-- Visão 2 -->
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50">
+            <h3 class="text-white font-bold text-sm mb-1">Visão 2 - Custos por categoria</h3>
+            <p class="text-[10px] text-slate-400 mb-4">Onde o dinheiro está sendo gasto.</p>
+            <div class="h-48 w-full flex justify-center">
+                <canvas id="chartVisao2"></canvas>
+            </div>
+        </div>
+
+        <!-- Visão 3 -->
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50">
+            <h3 class="text-white font-bold text-sm mb-1">Visão 3 - Performance comercial</h3>
+            <p class="text-[10px] text-slate-400 mb-4">Receita e lucro por tipo de serviço.</p>
+            <div class="h-48 w-full">
+                <canvas id="chartVisao3"></canvas>
+            </div>
+        </div>
     </div>
+
+    <!-- TABELAS INFERIORES -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Ranking -->
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50">
+            <h3 class="text-white font-bold text-sm mb-1">Ranking — OS mais rentáveis</h3>
+            <p class="text-[10px] text-slate-400 mb-4">Top 5 ordens por margem.</p>
+            <div class="space-y-4">
+                <div th:each="os : ${topWorkOrders}" class="flex justify-between items-center border-b border-slate-700/50 pb-2">
+                    <div>
+                        <p class="text-sm font-bold text-white" th:text="${os.number} + ' - ' + ${os.title}">OS</p>
+                        <p class="text-[10px] text-slate-400" th:text="${os.client != null ? os.client.name : 'Cliente'}">Cliente</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-emerald-400" th:text="'R$ ' + ${os.totalValue}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendário Financeiro -->
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50">
+            <h3 class="text-white font-bold text-sm mb-1">Calendário financeiro</h3>
+            <p class="text-[10px] text-slate-400 mb-4">Próximos vencimentos.</p>
+            <div class="space-y-4">
+                <div th:each="pay : ${upcomingPayables}" class="flex justify-between items-center border-b border-slate-700/50 pb-2">
+                    <div>
+                        <p class="text-sm font-bold text-white" th:text="${pay.description}">Luz</p>
+                        <p class="text-[10px] text-slate-400" th:text="${#temporals.format(pay.dueDate, 'dd/MM/yyyy')}">Data</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-rose-400" th:text="'- R$ ' + ${pay.totalAmount}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script th:inline="javascript">
-    /* Dados injetados pelo Spring Boot de forma segura */
-    const labels = /*[[${chartMonths}]]*/ "['Jan']";
-    const revenues = /*[[${chartRevenues}]]*/ "[0]";
-    const expenses = /*[[${chartExpenses}]]*/ "[0]";
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = 'Inter, sans-serif';
 
-    const ctx = document.getElementById('financeChart').getContext('2d');
-    new Chart(ctx, {
+    // ==========================================
+    // VISÃO 1: Fluxo de Caixa (12 Meses Dinâmicos)
+    // ==========================================
+    const labelsV1 = /*[[${chartMonths}]]*/ "['Jan']";
+    const dataIn = /*[[${chartIn}]]*/ "[0,0,0,0,0,0,0,0,0,0,0,0]";
+    const dataOut = /*[[${chartOut}]]*/ "[0,0,0,0,0,0,0,0,0,0,0,0]";
+
+    new Chart(document.getElementById('chartVisao1'), {
         type: 'line',
         data: {
-            labels: eval(labels),
+            labels: eval(labelsV1),
             datasets: [
-                {
-                    label: 'Entradas (R$)',
-                    data: eval(revenues),
-                    borderColor: '#10b981', // emerald-500
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: true
-                },
-                {
-                    label: 'Saídas (R$)',
-                    data: eval(expenses),
-                    borderColor: '#f43f5e', // rose-500
-                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: true
-                }
+                { label: 'Entradas (Faturado)', data: eval(dataIn), borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.4 },
+                { label: 'Saídas (Custos)', data: eval(dataOut), borderColor: '#f43f5e', backgroundColor: '#f43f5e', tension: 0.4 }
             ]
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { labels: { color: '#cbd5e1' } }
-            },
-            scales: {
-                x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
-                y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: '#334155' } }, x: { grid: { display: false } } } }
+    });
+
+    // ==========================================
+    // VISÃO 2: Custos por Categoria (Dinâmico)
+    // ==========================================
+    const donutDataArr = /*[[${donutData}]]*/ "[0,0,0]";
+
+    new Chart(document.getElementById('chartVisao2'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Custo Variável (Materiais)', 'Custo Fixo (Operação)', 'Provisões'],
+            datasets: [{
+                data: eval(donutDataArr),
+                backgroundColor: ['#22d3ee', '#f43f5e', '#fbbf24'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } } }
+    });
+
+    // ==========================================
+    // VISÃO 3: Performance Comercial (Dinâmico)
+    // ==========================================
+    const barLabelsArr = /*[[${barLabels}]]*/ "[]";
+    const barRevArr = /*[[${barRevenues}]]*/ "[]";
+    const barProfArr = /*[[${barProfits}]]*/ "[]";
+
+    new Chart(document.getElementById('chartVisao3'), {
+        type: 'bar',
+        data: {
+            labels: eval(barLabelsArr),
+            datasets: [
+                { label: 'Receita', data: eval(barRevArr), backgroundColor: '#10b981', borderRadius: 4 },
+                { label: 'Lucro', data: eval(barProfArr), backgroundColor: '#2dd4bf', borderRadius: 4 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: '#334155' } }, x: { grid: { display: false } } } }
     });
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>

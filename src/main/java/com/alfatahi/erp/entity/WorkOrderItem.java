@@ -14,6 +14,7 @@ public class WorkOrderItem {
 
     @ManyToOne
     @JoinColumn(name = "work_order_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore // ADICIONE ESTA LINHA AQUI!
     private WorkOrder workOrder;
 
     @Column(nullable = false)
@@ -27,6 +28,7 @@ public class WorkOrderItem {
 
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice = BigDecimal.ZERO;
+
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }

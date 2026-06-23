@@ -5,12 +5,14 @@ import com.alfatahi.erp.entity.WorkOrderItem;
 import com.alfatahi.erp.service.ClientService;
 import com.alfatahi.erp.service.WorkOrderService;
 import com.alfatahi.erp.repository.ServiceCategoryRepository;
-import com.alfatahi.erp.repository.WorkOrderItemRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
 import java.util.UUID;
 
 @Controller
@@ -20,92 +22,61 @@ public class WorkOrderController {
     private final WorkOrderService workOrderService;
     private final ClientService clientService;
     private final ServiceCategoryRepository categoryRepository;
-    private final WorkOrderItemRepository workOrderItemRepository;
 
-    public WorkOrderController(WorkOrderService workOrderService,
-                               ClientService clientService,
-                               ServiceCategoryRepository categoryRepository,
-                               WorkOrderItemRepository workOrderItemRepository) {
+    public WorkOrderController(WorkOrderService workOrderService, ClientService clientService, ServiceCategoryRepository categoryRepository) {
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
-        this.workOrderItemRepository = workOrderItemRepository;
     }
 
     @GetMapping
     public String index(Model model) {
+        List<WorkOrder> workOrders = workOrderService.listAll();
+
+        // Cálculo dos 4 Cards de Topo
+        BigDecimal receitaTotal = workOrders.stream().map(wo -> wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal custoTotal = workOrders.stream().map(WorkOrder::getTotalCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal lucroBruto = receitaTotal.subtract(custoTotal);
+        BigDecimal margemMedia = receitaTotal.compareTo(BigDecimal.ZERO) > 0
+                ? lucroBruto.multiply(new BigDecimal("100")).divide(receitaTotal, 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
         model.addAttribute("currentPage", "work-orders");
-        model.addAttribute("workOrders", workOrderService.listAll());
+        model.addAttribute("workOrders", workOrders);
         model.addAttribute("clients", clientService.listAllActive());
         model.addAttribute("categories", categoryRepository.findAll());
-        model.addAttribute("newWorkOrder", new WorkOrder());
+
+        model.addAttribute("receitaTotal", receitaTotal);
+        model.addAttribute("custoTotal", custoTotal);
+        model.addAttribute("lucroBruto", lucroBruto);
+        model.addAttribute("margemMedia", margemMedia);
+
         return "work-orders";
     }
 
-    @PostMapping("/save")
-    public String save(@ModelAttribute("newWorkOrder") WorkOrder workOrder) {
+    @GetMapping("/edit-data/{id}")
+    @ResponseBody
+    public ResponseEntity<WorkOrder> getWorkOrderData(@PathVariable UUID id) {
+        // Envia os dados completos da O.S. (incluindo a lista de custos) para popular o modal via JS
+        return ResponseEntity.ok(workOrderService.findById(id));
+    }
+
+    @PostMapping(value = "/save-ajax", consumes = "application/json")
+    @ResponseBody
+    public ResponseEntity<?> saveAjax(@RequestBody WorkOrder workOrder) {
+        // Garante que todos os itens recebem o ID da O.S. antes de guardar em cascata
+        if (workOrder.getItems() != null) {
+            for (WorkOrderItem item : workOrder.getItems()) {
+                item.setWorkOrder(workOrder);
+            }
+        }
         workOrderService.save(workOrder);
-        return "redirect:/work-orders";
-    }
-
-    @GetMapping("/edit/{id}")
-    public String edit(@PathVariable("id") UUID id, Model model) {
-        model.addAttribute("currentPage", "work-orders");
-        model.addAttribute("workOrders", workOrderService.listAll());
-        model.addAttribute("clients", clientService.listAllActive());
-        model.addAttribute("categories", categoryRepository.findAll());
-        model.addAttribute("newWorkOrder", workOrderService.findById(id));
-        model.addAttribute("isEditing", true);
-        return "work-orders";
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable("id") UUID id) {
         workOrderService.delete(id);
         return "redirect:/work-orders";
-    }
-
-    // ==================================================
-    // NOVAS ROTAS AUDITADAS: GESTÃO GRANULAR DE MATERIAIS
-    // ==================================================
-
-    @GetMapping("/{id}/items")
-    public String viewItems(@PathVariable("id") UUID id, Model model) {
-        WorkOrder wo = workOrderService.findById(id);
-        model.addAttribute("currentPage", "work-orders");
-        model.addAttribute("workOrder", wo);
-        model.addAttribute("items", workOrderItemRepository.findByWorkOrderId(id));
-        model.addAttribute("newItem", new WorkOrderItem());
-        model.addAttribute("totalCost", workOrderService.calculateObraCost(id));
-        return "work-order-items";
-    }
-
-    @PostMapping("/{id}/items/save")
-    public String saveItem(@PathVariable("id") UUID id, @ModelAttribute("newItem") WorkOrderItem item) {
-        WorkOrder wo = workOrderService.findById(id);
-        item.setWorkOrder(wo);
-        workOrderItemRepository.save(item);
-
-        BigDecimal newTotal = workOrderItemRepository.findByWorkOrderId(id).stream()
-                .map(WorkOrderItem::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        wo.setTotalValue(newTotal);
-        workOrderService.save(wo);
-
-        return "redirect:/work-orders/" + id + "/items";
-    }
-
-    @GetMapping("/{woId}/items/delete/{itemId}")
-    public String deleteItem(@PathVariable("woId") UUID woId, @PathVariable("itemId") UUID itemId) {
-        workOrderItemRepository.deleteById(itemId);
-
-        WorkOrder wo = workOrderService.findById(woId);
-        BigDecimal newTotal = workOrderItemRepository.findByWorkOrderId(woId).stream()
-                .map(WorkOrderItem::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        wo.setTotalValue(newTotal);
-        workOrderService.save(wo);
-
-        return "redirect:/work-orders/" + woId + "/items";
     }
 }

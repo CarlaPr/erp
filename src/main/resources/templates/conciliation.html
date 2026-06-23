@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(title='Conciliação Bancária - Alfa Tahi')}"></head>
+<body class="bg-[#0B1120] flex font-sans">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-black text-white tracking-tight">Conciliação Bancária</h2>
+            <p class="text-slate-400 mt-1">Sincronize o ERP com o extrato real da conta corrente.</p>
+        </div>
+        <button onclick="toggleModal('bankModal', true)" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20">
+            <i data-lucide="plus" class="w-5 h-5"></i> Lançamento Manual
+        </button>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-indigo-500/10 p-6 rounded-2xl border border-indigo-500/30 backdrop-blur-sm">
+            <span class="text-indigo-400 text-xs font-bold uppercase tracking-wider">Saldo Real (Conciliado)</span>
+            <p class="text-3xl font-black text-indigo-400 mt-2" th:text="'R$ ' + ${saldoConciliado}">R$ 0,00</p>
+        </div>
+        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Entradas Pendentes (ERP)</span>
+            <p class="text-2xl font-black text-emerald-400 mt-2" th:text="'R$ ' + ${entradasPendentes}">R$ 0,00</p>
+        </div>
+        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Saídas Pendentes (ERP)</span>
+            <p class="text-2xl font-black text-rose-400 mt-2" th:text="'R$ ' + ${saidasPendentes}">R$ 0,00</p>
+        </div>
+    </div>
+
+    <div class="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+        <table class="w-full text-left border-collapse">
+            <thead>
+            <tr class="border-b border-slate-700/50 bg-slate-800/80 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                <th class="p-5">Data</th>
+                <th class="p-5">Descrição</th>
+                <th class="p-5 text-center">Tipo</th>
+                <th class="p-5 text-right">Valor</th>
+                <th class="p-5 text-center">Status no Banco</th>
+                <th class="p-5 text-center">Ação</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700/50 text-sm">
+            <tr th:each="t : ${transactions}" class="hover:bg-slate-700/30 transition-colors">
+                <td class="p-5 text-slate-300 font-medium" th:text="${#temporals.format(t.transactionDate, 'dd/MM/yyyy')}">Data</td>
+                <td class="p-5 font-bold text-white" th:text="${t.description}">Desc</td>
+                <td class="p-5 text-center">
+                    <i th:if="${t.type == 'IN'}" data-lucide="arrow-down-left" class="w-5 h-5 text-emerald-400 inline"></i>
+                    <i th:if="${t.type == 'OUT'}" data-lucide="arrow-up-right" class="w-5 h-5 text-rose-400 inline"></i>
+                </td>
+                <td class="p-5 text-right font-mono font-bold" th:classappend="${t.type == 'IN' ? 'text-emerald-400' : 'text-rose-400'}" th:text="'R$ ' + ${t.amount}">0,00</td>
+                <td class="p-5 text-center">
+                    <span th:if="${t.status == 'conciliated'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-400 uppercase">Conciliado</span>
+                    <span th:if="${t.status == 'pending'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-500/20 text-slate-400 uppercase">Pendente</span>
+                </td>
+                <td class="p-5 text-center">
+                    <a th:href="@{/conciliation/toggle/{id}(id=${t.id})}" class="text-cyan-400 hover:text-cyan-300 text-xs font-bold underline">Alternar</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="bankModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8">
+            <h3 class="text-2xl font-black text-white mb-6">Lançamento Extrato</h3>
+            <form th:action="@{/conciliation/save}" th:object="${newTx}" method="POST" class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-slate-400 font-bold mb-2">Descrição</label>
+                    <input type="text" th:field="*{description}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Data</label>
+                        <input type="date" th:field="*{transactionDate}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Valor</label>
+                        <input type="number" step="0.01" th:field="*{amount}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Tipo Movimento</label>
+                        <select th:field="*{type}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none">
+                            <option value="IN">Entrada (+)</option>
+                            <option value="OUT">Saída (-)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Status</label>
+                        <select th:field="*{status}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none">
+                            <option value="pending">Pendente</option>
+                            <option value="conciliated">Conciliado Banco</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 mt-4 border-t border-slate-800">
+                    <button type="button" onclick="toggleModal('bankModal', false)" class="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-indigo-500 text-white font-black hover:bg-indigo-600 transition-colors">Gravar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script>
+    function toggleModal(id, show) {
+        const modal = document.getElementById(id);
+        if (show) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+        else { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+    }
+</script>
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>

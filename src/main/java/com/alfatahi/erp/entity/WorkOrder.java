@@ -93,4 +93,34 @@ public class WorkOrder {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+
+
+    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<WorkOrderItem> items = new java.util.ArrayList<>();
+
+    public java.util.List<WorkOrderItem> getItems() { return items; }
+    public void setItems(java.util.List<WorkOrderItem> items) {
+        this.items.clear();
+        if (items != null) {
+            this.items.addAll(items);
+        }
+    }
+
+    // Métodos utilitários para o Dashboard e Tabelas
+    public BigDecimal getTotalCost() {
+        if (items == null || items.isEmpty()) return BigDecimal.ZERO;
+        return items.stream()
+                .map(WorkOrderItem::getTotalCost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getProfit() {
+        return (totalValue != null ? totalValue : BigDecimal.ZERO).subtract(getTotalCost());
+    }
+
+    public BigDecimal getMargin() {
+        BigDecimal rev = (totalValue != null ? totalValue : BigDecimal.ZERO);
+        if (rev.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO;
+        return getProfit().multiply(new BigDecimal("100")).divide(rev, 2, java.math.RoundingMode.HALF_UP);
+    }
 }

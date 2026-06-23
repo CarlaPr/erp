@@ -1,59 +1,114 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(title='DRE - Alfatahi ERP')}"></head>
-<body class="bg-slate-900 flex">
+<head th:replace="~{fragments/layout :: head(title='DRE Gerencial - Alfa Tahi')}"></head>
+<body class="bg-[#0B1120] flex font-sans">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
 <main class="ml-64 p-8 w-full min-h-screen text-slate-200">
     <header class="mb-8">
-        <h2 class="text-3xl font-bold text-white">Demonstração do Resultado do Exercício (DRE)</h2>
-        <p class="text-slate-400">Análise de competência para avaliação da saúde financeira real da empresa.</p>
+        <h2 class="text-3xl font-black text-white tracking-tight">DRE Gerencial Comparativo</h2>
+        <p class="text-slate-400 mt-1">Análise de margens de lucro por regime de competência.</p>
     </header>
 
-    <div class="max-w-3xl bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
-        <div class="p-6 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
-            <span class="font-bold text-sm uppercase text-slate-400">Estrutura de Conta</span>
-            <span class="font-bold text-sm uppercase text-slate-400">Resultado Acumulado</span>
+    <form th:action="@{/dre}" method="GET" class="flex flex-wrap gap-4 mb-6 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 backdrop-blur-sm items-end shadow-lg shadow-black/20">
+        <div>
+            <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Tipo de Visualização</label>
+            <select id="typeSelect" name="type" onchange="toggleMonthSelect()" class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:border-cyan-500 outline-none text-sm transition-colors">
+                <option value="single" th:selected="${selectedType == 'single'}">Mês Específico (Único)</option>
+                <option value="comparative" th:selected="${selectedType == 'comparative'}">Comparativo (Últimos 4 Meses)</option>
+                <option value="annual" th:selected="${selectedType == 'annual'}">Anual Consolidado (12 Meses)</option>
+            </select>
         </div>
-
-        <div class="p-6 space-y-4 text-sm">
-            <!-- Linha 1: Receita -->
-            <div class="flex justify-between items-center py-2 border-b border-slate-700/50">
-                <span class="text-white font-medium">1. RECEITA OPERACIONAL BRUTA (Entradas Efetuadas)</span>
-                <span class="text-emerald-400 font-bold font-mono" th:text="'+ R$ ' + ${dre.receitasBrutas}">+ R$ 0,00</span>
-            </div>
-
-            <!-- Linha 2: Deduções Variáveis -->
-            <div class="flex justify-between items-center py-2 border-b border-slate-700/50 pl-4">
-                <span class="text-slate-400">(-) Custos Variáveis (Matéria-prima e Insumos)</span>
-                <span class="text-rose-400 font-mono" th:text="'- R$ ' + ${dre.custosVariaveis}">- R$ 0,00</span>
-            </div>
-
-            <!-- Linha 3: Margem Bruta -->
-            <div class="flex justify-between items-center py-2 bg-slate-900/40 px-3 rounded-lg border border-slate-700/30">
-                <span class="text-white font-semibold">(=) MARGEM DE CONTRIBUIÇÃO BRUTA</span>
-                <span class="text-white font-bold font-mono" th:text="'R$ ' + ${dre.margemContribuicao}">R$ 0,00</span>
-            </div>
-
-            <!-- Linha 4: Custos Fixos -->
-            <div class="flex justify-between items-center py-2 border-b border-slate-700/50 pl-4">
-                <span class="text-slate-400">(-) Custos Fixos / Operacionais Básicos</span>
-                <span class="text-rose-400 font-mono" th:text="'- R$ ' + ${dre.custosFixos}">- R$ 0,00</span>
-            </div>
-
-            <!-- Linha 5: Resultado Líquido Final -->
-            <div class="flex justify-between items-center p-4 rounded-xl mt-6" th:classappend="${dre.resultadoLiquido >= 0} ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-rose-500/10 border border-rose-500/30'">
-                <div>
-                    <h4 class="text-base font-bold text-white" th:text="${dre.resultadoLiquido >= 0} ? '(=) LUCRO LÍQUIDO DO PERÍODO' : '(=) PREJUÍZO OPERACIONAL ACUMULADO'">Resultado</h4>
-                    <p class="text-xs text-slate-400">Resultado final após todas as deduções de caixa.</p>
-                </div>
-                <span class="text-2xl font-black font-mono" th:classappend="${dre.resultadoLiquido >= 0} ? 'text-emerald-400' : 'text-rose-400'" th:text="'R$ ' + ${dre.resultadoLiquido}">R$ 0,00</span>
-            </div>
+        <div>
+            <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Mês Base</label>
+            <select id="monthSelect" name="month" class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:border-cyan-500 outline-none text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                <option value="1" th:selected="${selectedMonth == 1}">Janeiro</option>
+                <option value="2" th:selected="${selectedMonth == 2}">Fevereiro</option>
+                <option value="3" th:selected="${selectedMonth == 3}">Março</option>
+                <option value="4" th:selected="${selectedMonth == 4}">Abril</option>
+                <option value="5" th:selected="${selectedMonth == 5}">Maio</option>
+                <option value="6" th:selected="${selectedMonth == 6}">Junho</option>
+                <option value="7" th:selected="${selectedMonth == 7}">Julho</option>
+                <option value="8" th:selected="${selectedMonth == 8}">Agosto</option>
+                <option value="9" th:selected="${selectedMonth == 9}">Setembro</option>
+                <option value="10" th:selected="${selectedMonth == 10}">Outubro</option>
+                <option value="11" th:selected="${selectedMonth == 11}">Novembro</option>
+                <option value="12" th:selected="${selectedMonth == 12}">Dezembro</option>
+            </select>
         </div>
+        <div>
+            <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Ano</label>
+            <input type="number" name="year" th:value="${selectedYear}" required class="w-24 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:border-cyan-500 outline-none text-sm transition-colors" />
+        </div>
+        <button type="submit" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 text-sm h-[42px]">
+            <i data-lucide="filter" class="w-4 h-4"></i> Atualizar DRE
+        </button>
+    </form>
+
+    <div class="bg-[#131C2F] rounded-2xl border border-slate-700/50 shadow-2xl overflow-hidden w-full overflow-x-auto">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+            <thead>
+            <tr class="border-b border-slate-700 bg-slate-800/80 text-white font-bold text-sm tracking-wider">
+                <th class="p-5 uppercase text-slate-400">Estrutura do DRE</th>
+                <th th:each="col : ${dreColumns}" class="p-5 text-right font-black" th:text="${col.mesAno}">MÊS</th>
+            </tr>
+            </thead>
+            <tbody class="text-sm divide-y divide-slate-800/50">
+            <tr class="hover:bg-slate-800/30">
+                <td class="p-4 pl-6 text-white font-bold">1. RECEITA BRUTA (Vendas)</td>
+                <td th:each="col : ${dreColumns}" class="p-4 text-right font-mono text-cyan-400 font-bold" th:text="'R$ ' + ${col.receitaBruta}">0,00</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+                <td class="p-4 pl-10 text-slate-400">(-) Impostos s/ Notas (Simples 6%)</td>
+                <td th:each="col : ${dreColumns}" class="p-4 text-right font-mono text-rose-400" th:text="'- R$ ' + ${col.impostos}">0,00</td>
+            </tr>
+            <tr class="bg-slate-800/20">
+                <td class="p-4 pl-6 text-white font-black">= RECEITA LÍQUIDA</td>
+                <td th:each="col : ${dreColumns}" class="p-4 text-right font-mono text-white font-bold" th:text="'R$ ' + ${col.receitaLiquida}">0,00</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+                <td class="p-4 pl-10 text-slate-400">(-) C.M.V. (Vidros, Alumínio)</td>
+                <td th:each="col : ${dreColumns}" class="p-4 text-right font-mono text-rose-400" th:text="'- R$ ' + ${col.cmv}">0,00</td>
+            </tr>
+            <tr class="bg-slate-800/40">
+                <td class="p-4 pl-6 text-cyan-400 font-black">= LUCRO BRUTO GERENCIAL</td>
+                <td th:each="col : ${dreColumns}" class="p-4 text-right font-mono text-cyan-400 font-bold" th:text="'R$ ' + ${col.lucroBruto}">0,00</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+                <td class="p-4 pl-10 text-slate-400">(-) Despesas Fixas (Operação)</td>
+                <td th:each="col : ${dreColumns}" class="p-4 text-right font-mono text-rose-400" th:text="'- R$ ' + ${col.despesasFixas}">0,00</td>
+            </tr>
+            <tr class="bg-emerald-500/10 border-t-2 border-emerald-500/30">
+                <td class="p-5 pl-6 text-emerald-400 font-black text-base">= LUCRO LÍQUIDO FINAL</td>
+                <td th:each="col : ${dreColumns}" class="p-5 text-right font-mono font-black" th:classappend="${col.lucroLiquido >= 0 ? 'text-emerald-400' : 'text-rose-400'}" th:text="'R$ ' + ${col.lucroLiquido}">0,00</td>
+            </tr>
+            <tr class="bg-[#131C2F]">
+                <td class="p-4 pl-6 text-slate-400 font-bold">MARGEM LÍQUIDA (%)</td>
+                <td th:each="col : ${dreColumns}" class="p-4 text-right font-mono font-bold" th:classappend="${col.margemLiquida >= 0 ? 'text-emerald-500' : 'text-rose-500'}" th:text="${col.margemLiquida} + '%'">0%</td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 </main>
 
+<script>
+    // Função para desativar o campo do Mês quando a visão "Anual" é escolhida
+    function toggleMonthSelect() {
+        const type = document.getElementById('typeSelect').value;
+        const monthSelect = document.getElementById('monthSelect');
+        if (type === 'annual') {
+            monthSelect.disabled = true;
+            monthSelect.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            monthSelect.disabled = false;
+            monthSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    // Correr no arranque da página para garantir o estado correto
+    document.addEventListener("DOMContentLoaded", toggleMonthSelect);
+</script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 </body>
 </html>

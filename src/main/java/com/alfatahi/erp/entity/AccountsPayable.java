@@ -36,6 +36,13 @@ public class AccountsPayable {
     @Column(nullable = false)
     private String status = "pending"; // pending, paid, cancelled
 
+    @Column(name = "payment_method")
+    private String paymentMethod; // PIX, Boleto, Cartão, Transferência
+
+    // Adicione o Getter e Setter
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
