@@ -11,9 +11,14 @@
             <h2 class="text-3xl font-black text-white tracking-tight">Conciliação Bancária</h2>
             <p class="text-slate-400 mt-1">Sincronize o ERP com o extrato real da conta corrente.</p>
         </div>
-        <button onclick="toggleModal('bankModal', true)" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20">
-            <i data-lucide="plus" class="w-5 h-5"></i> Lançamento Manual
-        </button>
+        <div class="flex gap-3">
+            <button onclick="toggleModal('bankModal', true)" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20">
+                <i data-lucide="plus" class="w-5 h-5"></i> Manual
+            </button>
+            <button onclick="toggleModal('ofxModal', true)" class="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-black px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Importar OFX
+            </button>
+        </div>
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -101,6 +106,41 @@
                 <div class="flex justify-end gap-3 pt-4 mt-4 border-t border-slate-800">
                     <button type="button" onclick="toggleModal('bankModal', false)" class="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
                     <button type="submit" class="px-6 py-3 rounded-xl bg-indigo-500 text-white font-black hover:bg-indigo-600 transition-colors">Gravar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="ofxModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="bg-emerald-500/20 p-3 rounded-xl">
+                    <i data-lucide="upload-cloud" class="w-6 h-6 text-emerald-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-black text-white">Importar Extrato OFX</h3>
+                    <p class="text-xs text-slate-400">Baixa automática inteligente.</p>
+                </div>
+            </div>
+
+            <form th:action="@{/conciliation/upload}" method="POST" enctype="multipart/form-data" class="space-y-4 text-sm">
+                <div class="border-2 border-dashed border-slate-700 rounded-xl p-6 text-center hover:border-emerald-500 transition-colors">
+                    <i data-lucide="file-text" class="w-8 h-8 text-slate-500 mx-auto mb-3"></i>
+                    <label class="block text-slate-300 font-bold mb-1 cursor-pointer">
+                        Clique para escolher o ficheiro .OFX
+                        <input type="file" name="file" accept=".ofx" required class="hidden" id="fileInput" onchange="document.getElementById('fileName').innerText = this.files[0].name" />
+                    </label>
+                    <p class="text-xs text-slate-500 mt-2" id="fileName">Nenhum ficheiro selecionado</p>
+                </div>
+
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                    <p class="text-[10px] text-slate-400">
+                        <i data-lucide="info" class="w-3 h-3 inline"></i> O sistema tentará encontrar faturas com o **mesmo valor** num intervalo de até **5 dias** da data da transação bancária e dar baixa automática.
+                    </p>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 mt-4 border-t border-slate-800">
+                    <button type="button" onclick="toggleModal('ofxModal', false)" class="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-emerald-500 text-slate-900 font-black hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20">Processar Ficheiro</button>
                 </div>
             </form>
         </div>

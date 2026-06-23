@@ -1,12 +1,19 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.entity.AccountsPayable;
+import com.alfatahi.erp.entity.AccountsReceivable;
 import com.alfatahi.erp.entity.BankTransaction;
+import com.alfatahi.erp.repository.AccountsPayableRepository;
+import com.alfatahi.erp.repository.AccountsReceivableRepository;
 import com.alfatahi.erp.repository.BankTransactionRepository;
+import com.alfatahi.erp.service.OfxParserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,9 +22,17 @@ import java.util.UUID;
 public class ConciliationController {
 
     private final BankTransactionRepository bankRepo;
+    private final AccountsPayableRepository payRepo;
+    private final AccountsReceivableRepository recRepo;
+    private final OfxParserService ofxParserService;
 
-    public ConciliationController(BankTransactionRepository bankRepo) {
+    // Injetamos todos os repositórios necessários para dar as baixas
+    public ConciliationController(BankTransactionRepository bankRepo, AccountsPayableRepository payRepo,
+                                  AccountsReceivableRepository recRepo, OfxParserService ofxParserService) {
         this.bankRepo = bankRepo;
+        this.payRepo = payRepo;
+        this.recRepo = recRepo;
+        this.ofxParserService = ofxParserService;
     }
 
     @GetMapping
@@ -60,6 +75,62 @@ public class ConciliationController {
         if (tx != null) {
             tx.setStatus("conciliated".equals(tx.getStatus()) ? "pending" : "conciliated");
             bankRepo.save(tx);
+        }
+        return "redirect:/conciliation";
+    }
+
+    // =======================================================
+    // NOVO: ROBÔ DE IMPORTAÇÃO OFX E BAIXA AUTOMÁTICA
+    // =======================================================
+    @PostMapping("/upload")
+    public String uploadOfx(@RequestParam("file") MultipartFile file) {
+        try {
+            List<BankTransaction> transactions = ofxParserService.parse(file);
+            List<AccountsReceivable> receivables = recRepo.findAll();
+            List<AccountsPayable> payables = payRepo.findAll();
+
+            for (BankTransaction tx : transactions) {
+                boolean matched = false;
+
+                if ("IN".equals(tx.getType())) {
+                    // Procura Contas a Receber compatíveis (Mesmo valor, diferença máx 5 dias)
+                    for (AccountsReceivable r : receivables) {
+                        if ("pending".equals(r.getStatus()) && r.getTotalAmount().compareTo(tx.getAmount()) == 0) {
+                            long daysDiff = Math.abs(ChronoUnit.DAYS.between(r.getDueDate(), tx.getTransactionDate()));
+                            if (daysDiff <= 5) {
+                                r.setStatus("received");
+                                r.setReceivedAmount(tx.getAmount());
+                                recRepo.save(r);
+
+                                tx.setStatus("conciliated");
+                                tx.setDescription(tx.getDescription() + " (Auto-baixa: " + r.getDescription() + ")");
+                                matched = true;
+                                break; // Já encontrou a conta, vai para a próxima transação
+                            }
+                        }
+                    }
+                } else if ("OUT".equals(tx.getType())) {
+                    // Procura Contas a Pagar compatíveis
+                    for (AccountsPayable p : payables) {
+                        if ("pending".equals(p.getStatus()) && p.getTotalAmount().compareTo(tx.getAmount()) == 0) {
+                            long daysDiff = Math.abs(ChronoUnit.DAYS.between(p.getDueDate(), tx.getTransactionDate()));
+                            if (daysDiff <= 5) {
+                                p.setStatus("paid");
+                                payRepo.save(p);
+
+                                tx.setStatus("conciliated");
+                                tx.setDescription(tx.getDescription() + " (Auto-baixa: " + p.getDescription() + ")");
+                                matched = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                bankRepo.save(tx); // Grava a transação do banco (conciliada ou pendente)
+            }
+        } catch (Exception e) {
+            // Em produção, deveria injetar uma mensagem de erro no Model
+            e.printStackTrace();
         }
         return "redirect:/conciliation";
     }

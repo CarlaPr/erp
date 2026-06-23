@@ -158,6 +158,17 @@ public class WebController {
         model.addAttribute("barRevenues", catRevenues.toString());
         model.addAttribute("barProfits", catProfits.toString());
 
+        // --- NOVO: GERADOR DA DATA EXTENSA NO FORMATO EXATO DO VÍDEO ---
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new java.util.Locale("pt", "BR"));
+        String dateStr = LocalDate.now().format(formatter);
+        // Capitaliza a primeira letra do mês (ex: "junho" para "Junho")
+        String[] parts = dateStr.split(" ");
+        if(parts.length > 2) {
+            parts[2] = parts[2].substring(0, 1).toUpperCase() + parts[2].substring(1);
+            dateStr = String.join(" ", parts);
+        }
+        model.addAttribute("currentDateStr", dateStr);
+
         return "dashboard";
     }
 }
