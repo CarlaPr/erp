@@ -48,7 +48,7 @@ public class Client {
     }
 
     // ==========================================
-    // ADICIONE ESTES MÉTODOS GETTERS E SETTERS:
+    //  GETTERS E SETTERS:
     // ==========================================
 
     public UUID getId() {
@@ -56,7 +56,6 @@ public class Client {
     }
 
     public void setId(UUID id) {
-        // Correção importante para evitar conflito de strings vazias vindas do formulário HTML
         this.id = id;
     }
 
@@ -139,5 +138,9 @@ public class Client {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public void setActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }

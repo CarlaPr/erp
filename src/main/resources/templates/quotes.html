@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(title='Orçamentos e Recibos - Alfa Tahi')}"></head>
+<body class="bg-[#0B1120] flex font-sans">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-black text-white tracking-tight">Criação de Orçamentos</h2>
+        </div>
+
+    </header>
+
+    <div class="flex gap-2 mb-6 bg-slate-800/50 p-1.5 rounded-xl border border-slate-700/50 w-fit backdrop-blur-sm">
+        <a href="/quotes" class="px-4 py-2 rounded-lg text-sm font-bold transition-all text-white" th:classappend="${selectedFilterStatus == null} ? 'bg-slate-700 shadow-sm' : 'text-slate-400 hover:text-white'">Todos</a>
+        <a href="/quotes?status=pending" class="px-4 py-2 rounded-lg text-sm font-bold transition-all" th:classappend="${selectedFilterStatus == 'pending'} ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'">Pendentes</a>
+        <a href="/quotes?status=approved" class="px-4 py-2 rounded-lg text-sm font-bold transition-all" th:classappend="${selectedFilterStatus == 'approved'} ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'">Aprovados</a>
+        <a href="/quotes?status=cancelled" class="px-4 py-2 rounded-lg text-sm font-bold transition-all" th:classappend="${selectedFilterStatus == 'cancelled'} ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'">Cancelados</a>
+        <button onclick="openNewQuoteModal()" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-cyan-500/20 text-sm">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Orçamento
+        </button>
+    </div>
+
+    <form method="GET" action="/quotes" class="bg-slate-900 border border-slate-800 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div>
+            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Filtrar por Mês</label>
+            <select name="month" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none">
+                <option value="all" th:selected="${selectedMonth == 'all'}">Ver Todos os Meses</option>
+                <option th:each="m : ${availableMonths}"
+                        th:value="${m.value}"
+                        th:selected="${selectedMonth == m.value}"
+                        th:text="${m.label}"></option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">N° do Orçamento</label>
+            <input type="text" name="number" th:value="${selectedNumber}" placeholder="Ex: ORC-05" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none" />
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Nome do Cliente</label>
+            <input type="text" name="name" th:value="${selectedName}" placeholder="Buscar cliente..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none" />
+        </div>
+        <div class="flex items-end gap-2">
+            <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-black py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/10 flex items-center justify-center gap-2">
+                <i data-lucide="search" class="w-4 h-4"></i> Filtrar Painel
+            </button>
+        </div>
+    </form>
+
+    <div class="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+        <table class="w-full text-left border-collapse">
+            <thead>
+            <tr class="border-b border-slate-700/50 bg-slate-800/80 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                <th class="p-5">Orçamento</th>
+                <th class="p-5">Cliente</th>
+                <th class="p-5 text-right">Valor Venda</th>
+                <th class="p-5 text-center">Status</th>
+                <th class="p-5 text-center">Vínculo Gestão</th>
+                <th class="p-5 text-center">Ações</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700/50 text-sm">
+            <tr th:each="q : ${quotes}" class="hover:bg-slate-700/30 transition-colors">
+                <td class="p-5">
+                    <div class="font-mono font-bold text-cyan-400" th:text="${q.number}">ORC-123</div>
+                    <div class="text-[10px] text-slate-400" th:text="${#temporals.format(q.dateCreated, 'dd/MM/yyyy')}">Data</div>
+                </td>
+                <td class="p-5 font-bold text-white" th:text="${q.client != null ? q.client.name : 'Consumidor Final'}">Cliente</td>
+                <td class="p-5 text-right font-mono font-bold text-emerald-400" th:text="'R$ ' + ${q.totalValue}">R$ 0,00</td>
+                <td class="p-5 text-center">
+                    <span th:if="${q.status == 'pending'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase">Pendente</span>
+                    <span th:if="${q.status == 'approved'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">Aprovado</span>
+                    <span th:if="${q.status == 'cancelled'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 uppercase">Cancelado</span>
+                </td>
+                <td class="p-5 text-center">
+                    <span th:if="${q.workOrder != null}" class="px-2 py-1 bg-slate-900 border border-slate-700 text-cyan-400 font-mono text-xs rounded-lg" th:text="${q.workOrder.number}">OS</span>
+                    <span th:if="${q.workOrder == null}" class="text-slate-600 text-xs">—</span>
+                </td>
+                <td class="p-5 text-center space-x-2">
+                    <button th:if="${q.status == 'pending' || q.status == 'negotiation'}" th:data-id="${q.id}" onclick="approveQuote(this.getAttribute('data-id'))" class="text-emerald-400 hover:text-emerald-300" title="Aprovar Venda e Gerar OS"><i data-lucide="check-circle" class="w-5 h-5 inline"></i></button>
+                    <button th:if="${q.status == 'pending' || q.status == 'negotiation'}" th:data-id="${q.id}" onclick="cancelQuote(this.getAttribute('data-id'))" class="text-rose-400 hover:text-rose-300" title="Cancelar Orçamento"><i data-lucide="minus-circle" class="w-5 h-5 inline"></i></button>
+                    <button th:data-id="${q.id}" onclick="viewReceipt(this.getAttribute('data-id'))" class="text-indigo-400 hover:text-indigo-300" title="Ver Recibo / Imprimir"><i data-lucide="printer" class="w-5 h-5 inline"></i></button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="quoteModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-6">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl p-8 relative my-auto">
+            <button onclick="closeModal('quoteModal')" class="absolute top-6 right-6 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <h3 class="text-2xl font-black text-white mb-6">Elaborar Orçamento</h3>
+
+            <form id="quoteForm" onsubmit="saveQuote(event)" class="space-y-6 text-sm">
+                <input type="hidden" id="quoteId" />
+
+                <div class="grid grid-cols-3 gap-4 bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-slate-400 font-bold">Cliente</label>
+                            <button type="button" onclick="toggleModal('clientInlineModal', true)" class="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 transition-all">
+                                <i data-lucide="user-plus" class="w-3 h-3"></i> + Criar Cliente
+                            </button>
+                        </div>
+                        <select id="quoteClient" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-cyan-500">
+                            <option value="">Selecione</option>
+                            <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Forma de Pagamento</label>
+                        <select id="quotePayment" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none">
+                            <option value="PIX">PIX</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Cartao_Credito">Cartão de Crédito</option>
+                            <option value="Cartao_Debito">Cartão de Débito</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">Parcelas</label>
+                        <input type="number" id="quoteInstallments" min="1" value="1" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none" />
+                    </div>
+                </div>
+
+                <div class="bg-slate-800/20 p-4 rounded-xl border border-slate-700/40">
+                    <h4 class="text-white font-bold mb-3 text-xs uppercase tracking-wider text-cyan-400">Inserir Item / Serviço</h4>
+                    <div class="grid grid-cols-6 gap-3 mb-3">
+                        <div class="col-span-2">
+                            <select id="itemCat" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none">
+                                <option value="Box">Box de Banheiro</option>
+                                <option value="Sacada">Fechamento de Sacada</option>
+                                <option value="Janela">Janela Alumínio/Vidro</option>
+                                <option value="Espelho">Espelho Lapidado/Bisoté</option>
+                                <option value="Porta">Porta de Vidro</option>
+                            </select>
+                        </div>
+                        <div class="col-span-4">
+                            <input type="text" id="itemProd" placeholder="Especificação do Vidro (Ex: Temperado 8mm Incolor)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none" />
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="number" step="0.01" id="itemWidth" placeholder="Largura (m)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none text-center" />
+                        <input type="number" step="0.01" id="itemHeight" placeholder="Altura (m)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none text-center" />
+                        <input type="number" id="itemQtd" placeholder="Qtd" value="1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none text-center" />
+                        <input type="number" step="0.01" id="itemPrice" placeholder="Preço Linear/m² (R$)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none text-right" />
+                        <button type="button" onclick="addItemToQuote()" class="bg-cyan-500 text-slate-900 px-4 rounded-lg font-bold hover:bg-cyan-600 transition-colors">Incluir</button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950/40 rounded-xl border border-slate-800 overflow-hidden">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-slate-800 text-slate-400">
+                        <tr>
+                            <th class="p-3">Item / Descrição</th>
+                            <th class="p-3 text-center">Medidas</th>
+                            <th class="p-3 text-center">Qtd</th>
+                            <th class="p-3 text-center text-cyan-400 font-bold">M² Un.</th>
+                            <th class="p-3 text-center text-cyan-400 font-bold">M² Total</th>
+                            <th class="p-3 text-right">Preço Un.</th>
+                            <th class="p-3 text-right">Subtotal</th>
+                            <th class="p-3 text-center"></th>
+                        </tr>
+                        </thead>
+                        <tbody id="quoteItemsTable"></tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <label class="block text-slate-400 font-bold mb-2">Observações / Termos do Orçamento</label>
+                    <textarea id="quoteObs" rows="5"
+                              class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-white outline-none focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed scrollbar-thin scrollbar-thumb-slate-800"
+                              placeholder="Insira as observações de entrega e parcelamento..."></textarea></div>
+
+                <div class="flex justify-between items-center border-t border-slate-800 pt-4">
+                    <div>
+                        <span class="text-xs text-slate-400 uppercase font-bold block">Valor Total Geral</span>
+                        <span class="text-2xl font-mono font-black text-emerald-400" id="liveQuoteTotal">R$ 0,00</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeModal('quoteModal')" class="px-5 py-2.5 rounded-xl bg-slate-800 font-bold">Cancelar</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-cyan-500 text-slate-900 font-black hover:bg-cyan-600 shadow-lg shadow-cyan-500/10">Salvar Rascunho</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-800 pt-4">
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-2">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 inline mr-1 text-cyan-400"></i> Garantia Comercial
+                        </label>
+                        <textarea id="quoteWarranty" rows="5"
+                                  class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-white outline-none focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed scrollbar-thin scrollbar-thumb-slate-800"
+                                  placeholder="Insira as regras e prazos da garantia..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="receiptModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-10">
+        <div class="bg-white text-slate-900 w-full max-w-3xl rounded-xl shadow-2xl p-12 relative font-sans print:p-0 print:shadow-none print:w-full" id="printableReceiptArea">
+            <button onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 print:hidden"><i data-lucide="x" class="w-6 h-6"></i></button>
+
+            <style>
+                @media print {
+                    body * { visibility: hidden; }
+                    #printableReceiptArea, #printableReceiptArea * { visibility: visible; }
+                    body {
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                        display: block !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100% !important;
+                    }
+                    #printableReceiptArea {
+                        position: absolute !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        box-shadow: none !important;
+                        border: none !important;
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                    }
+                    @page {
+                        size: A4;
+                        margin: 10mm 12mm 10mm 12mm;
+                    }
+                    .print\:hidden { display: none !important; }
+                }
+            </style>
+
+            <div class="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-6">
+                <div class="flex flex-col">
+                    <div th:if="${profile.logoUrl != null && !profile.logoUrl.isEmpty()}" class="mb-3">
+                        <img th:src="${profile.logoUrl}" class="max-h-20 max-w-[240px] object-contain text-left mix-blend-multiply print:mix-blend-normal" alt="Logo" />
+                    </div>
+                    <h2 class="text-3xl font-black tracking-tight text-slate-900 uppercase" th:text="${profile.companyName}"></h2>
+                    <div class="text-sm text-slate-600 mt-4 space-y-1 font-medium">
+                        <p th:text="'CPF/CNPJ: ' + ${profile.document}"></p>
+                        <p th:text="${profile.address}"></p>
+                        <p th:text="'Telefone: ' + ${profile.phone}"></p>
+                        <p th:text="'E-mail: ' + ${profile.email}"></p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="bg-slate-100 p-5 rounded-xl border border-slate-200 inline-block min-w-[220px]">
+                        <h3 class="text-xs font-bold font-mono text-slate-500 uppercase tracking-wider">ORÇAMENTO</h3>
+                        <p class="text-2xl font-black text-slate-900 font-mono" id="recNum">N° --</p>
+                        <div class="text-xs text-slate-500 mt-2 border-t pt-2 border-slate-200">
+                            <span class="font-bold block text-slate-700">Data de emissão:</span>
+                            <span id="recDate">--/--/----</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block font-mono">Orçamento para</span>
+                <h4 class="text-xl font-black text-slate-900" id="recClient">Nome do Cliente</h4>
+                <p class="text-sm text-slate-500 italic mt-0.5">Aqui está o orçamento conforme solicitado:</p>
+            </div>
+
+            <div class="border border-slate-300 rounded-xl overflow-hidden mb-6 bg-white shadow-sm">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                    <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider border-b border-slate-900">
+                        <th class="p-4 pl-4 w-[50%]">Descrição do Projeto</th>
+                        <th class="p-4 text-center">Unid.</th>
+                        <th class="p-4 text-center">Qtd</th>
+                        <th class="p-4 text-right">Preço Unit.</th>
+                        <th class="p-4 text-right pr-4">Total</th>
+                    </tr>
+                    </thead>
+                    <tbody id="recItems" class="divide-y divide-slate-200 font-medium text-slate-800">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 border-t pt-6 border-slate-200">
+                <div class="text-sm text-slate-600 space-y-2">
+                    <h5 class="font-bold text-slate-900 uppercase font-mono tracking-wide text-xs">OBSERVAÇÕES ADICIONAIS</h5>
+                    <div id="recObs" class="whitespace-pre-line text-sm text-slate-600 font-sans leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        --
+                    </div>
+                </div>
+
+                <div class="flex flex-col justify-end items-end w-full">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 w-full max-w-[340px] font-mono shadow-sm">
+                        <div class="flex justify-between items-center text-xs text-slate-500 font-bold pb-2.5">
+                            <span>VALOR TOTAL:</span>
+                            <span id="recTotal" class="text-slate-900 text-base font-black tracking-tight">R$ 0,00</span>
+                        </div>
+                        <div id="recFinalRow" class="flex justify-between items-center pt-2.5 border-t border-slate-200" style="display: none;">
+                            <span class="text-xs text-slate-500 font-bold">VALOR FINAL:</span>
+                            <span id="recFinalInstallments" class="text-xl font-black text-emerald-600 tracking-tight">10x R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 border-t-2 border-dashed border-slate-200 pt-6">
+                <div class="grid grid-cols-2 gap-4 text-sm text-slate-500">
+                    <div>
+                        <h5 class="font-bold text-slate-900 font-mono text-xs uppercase mb-1">GARANTIA</h5>
+                        <p id="recWarrantyText" class="text-slate-800 font-sans font-bold text-base text-cyan-600">--</p>
+                    </div>
+                    <div class="text-right flex flex-col justify-between">
+                        <p class="text-[10px] font-mono text-slate-400 mt-4">Documento Comercial Processado Digitalmente — <span th:text="${profile.companyName}">Vidraçaria Ruglass</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-16 pt-12 border-t border-slate-200 grid grid-cols-2 gap-12 text-center text-sm font-sans">
+                <div class="relative flex flex-col items-center justify-end min-h-[90px]">
+                    <img th:if="${profile.signatureUrl != null && !profile.signatureUrl.isEmpty()}" th:src="${profile.signatureUrl}" class="absolute bottom-6 max-h-20 object-contain pointer-events-none mix-blend-multiply" />
+                    <div class="w-full border-t border-slate-400 pt-2 font-bold text-slate-800" th:text="${profile.companyName}"></div>
+                    <div class="text-xs text-slate-400" th:text="'CNPJ: ' + ${profile.document}"></div>
+                </div>
+                <div class="flex flex-col items-center justify-end min-h-[90px]">
+                    <div class="w-full border-t border-slate-400 pt-2 font-bold text-slate-800" id="recSignatureClientName">Assinatura do Cliente</div>
+                    <div class="text-xs text-slate-400"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 print:hidden border-t border-slate-100 pt-4 mt-8">
+                <button onclick="closeModal('receiptModal')" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs hover:bg-slate-200 transition">Fechar</button>
+                <button onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-950 text-white px-5 py-2.5 rounded-xl font-black flex items-center gap-2 text-xs hover:bg-slate-800 transition shadow-lg shadow-black/10"><i data-lucide="printer" class="w-4 h-4"></i> Imprimir Orçamento</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="approvalConfirmModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70]">
+        <div class="bg-[#131C2F] border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-150">
+
+            <div class="bg-emerald-500/10 p-4 rounded-full w-fit mx-auto text-emerald-400 mb-4 shadow-inner">
+                <i data-lucide="check-circle" class="w-8 h-8"></i>
+            </div>
+
+            <h3 class="text-xl font-black text-white mb-2 tracking-tight">Confirmar Fechamento de Venda?</h3>
+            <p class="text-sm text-slate-400 mb-6 leading-relaxed">
+                Esta ação irá congelar esta versão do orçamento. Criará de forma automatizada a **Ordem de Serviço** na linha de produção e gerar o lançamento no **Contas a Receber**.
+            </p>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModal('approvalConfirmModal')" class="w-1/2 px-4 py-2.5 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors text-sm">
+                    Cancelar
+                </button>
+                <button type="button" onclick="executeApproval()" class="w-1/2 px-4 py-2.5 rounded-xl bg-emerald-500 text-slate-900 font-black hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/10 text-sm">
+                    Confirmar e Gerar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="clientInlineModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60]">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-150">
+
+            <button type="button" onclick="closeModal('clientInlineModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h4 class="text-lg font-black text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-2">
+                <i data-lucide="user-plus" class="text-cyan-400 w-5 h-5"></i> Cadastrar Cliente
+            </h4>
+
+            <div class="space-y-4 text-sm">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Nome Completo / Razão Social</label>
+                        <input type="text" id="inlineClientName" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Tipo de Pessoa</label>
+                        <select id="inlineClientType" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all">
+                            <option value="individual">Pessoa Física (CPF)</option>
+                            <option value="company">Pessoa Jurídica (CNPJ)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">CPF / CNPJ</label>
+                        <input type="text" id="inlineClientDoc" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">E-mail</label>
+                        <input type="email" id="inlineClientEmail" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Telefone</label>
+                        <input type="text" id="inlineClientPhone" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                    </div>
+
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Endereço Completo</label>
+                        <input type="text" id="inlineClientAddress" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                    </div>
+
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Cidade</label>
+                        <input type="text" id="inlineClientCity" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-800 mt-6">
+                    <button type="button" onclick="closeModal('clientInlineModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
+                    <button type="button" onclick="saveInlineClient()" class="px-4 py-2 rounded-xl bg-cyan-500 text-slate-900 font-black hover:bg-cyan-600 transition-colors shadow-lg shadow-cyan-500/10">Salvar e Selecionar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</main>
+
+<script>
+
+    // VARIÁVEIS PARA ARMAZENAMENTO TEMPORÁRIO DO NOME DO PDF
+    let currentActiveClientForPdf = "Consumidor Final";
+    let currentActiveNumberForPdf = "000";
+
+    // LISTA INTEGRADA DE ITENS DO ORÇAMENTO
+    let currentItems = [];
+
+    function toggleModal(id, show) {
+        const m = document.getElementById(id);
+        if(m) {
+            if(show) { m.classList.remove('hidden'); m.classList.add('flex'); }
+            else { m.classList.add('hidden'); m.classList.remove('flex'); }
+        }
+    }
+
+    function closeModal(id) {
+        toggleModal(id, false);
+    }
+
+    const DEFAULT_WARRANTY = "90 Dias (cobre apenas regulagens, vedação e vícios de instalação).";
+    const DEFAULT_OBSERVATIONS = "* Parcelamento: Em até 10x sem juros no cartão.\n* Prazo de Entrega: Até 15 dias úteis após a confirmação do pedido.\n* Forma de Execução: Início dos serviços mediante sinal de 50%.\nO saldo restante (50%) deve ser quitado na conclusão da instalação.\n* Observação: Em caso de desistência após o pagamento do sinal, o valor não será reembolsado devido aos custos de reserva de material e produção personalizada.";
+
+    // 5.2 — Atualizar abertura de Novo Orçamento para preencher os padrões
+    function openNewQuoteModal() {
+        if(document.getElementById('quoteForm')) document.getElementById('quoteForm').reset();
+        document.getElementById('quoteId').value = '';
+
+        // Injeta os valores padrão que o usuário poderá editar livremente antes de salvar
+        document.getElementById('quoteWarranty').value = DEFAULT_WARRANTY;
+        document.getElementById('quoteObs').value = DEFAULT_OBSERVATIONS;
+
+        currentItems = [];
+        renderQuoteItems();
+        document.getElementById('liveQuoteTotal').innerText = 'R$ 0,00';
+        toggleModal('quoteModal', true);
+    }
+
+    function addItemToQuote() {
+        const cat = document.getElementById('itemCat').value;
+        const prod = document.getElementById('itemProd').value;
+        const w = parseFloat(document.getElementById('itemWidth').value) || 0;
+        const h = parseFloat(document.getElementById('itemHeight').value) || 0;
+        const q = parseFloat(document.getElementById('itemQtd').value) || 1;
+        const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+
+        if(!prod || price <= 0) {
+            alert('Por favor, preencha a especificação do produto e o preço unitário!');
+            return;
+        }
+
+        currentItems.push({ category: cat, product: prod, width: w, height: h, quantity: q, unitPrice: price });
+
+        document.getElementById('itemProd').value = '';
+        document.getElementById('itemWidth').value = '';
+        document.getElementById('itemHeight').value = '';
+        document.getElementById('itemPrice').value = '';
+        renderQuoteItems();
+    }
+
+    function removeQuoteItem(idx) {
+        currentItems.splice(idx, 1);
+        renderQuoteItems();
+    }
+
+    function renderQuoteItems() {
+        const tbody = document.getElementById('quoteItemsTable');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        let totalGeneral = 0;
+
+        currentItems.forEach((item, idx) => {
+            // 1. Calcula a metragem quadrada unitária (L x A)
+            let m2Unitario = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 0;
+
+            // 2. Calcula a metragem quadrada total multiplicada pela quantidade
+            let m2Total = m2Unitario * item.quantity;
+
+            // 3. Lógica matemática de precificação consolidada por peça
+            let multiplicadorM2 = m2Unitario > 0 ? m2Unitario : 1;
+            let precoPecaUnitaria = multiplicadorM2 * item.unitPrice;
+            let sub = item.quantity * precoPecaUnitaria;
+            totalGeneral += sub;
+
+            tbody.innerHTML += `
+                    <tr class="bg-slate-800/40 border-b border-slate-800 hover:bg-slate-700/20 transition-colors">
+                        <td class="p-3"><span class="font-bold text-cyan-400">[${item.category}]</span> ${item.product}</td>
+                        <td class="p-3 text-center text-slate-400 font-mono">${item.width > 0 ? item.width + 'x' + item.height + 'm' : 'un'}</td>
+                        <td class="p-3 text-center text-slate-300 font-bold">${item.quantity}</td>
+
+                        <!-- MONITORAMENTO DE M² (EXCLUSIVO INTERNO) -->
+                        <td class="p-3 text-center text-slate-400 font-mono">${m2Unitario > 0 ? m2Unitario.toFixed(2) + ' m²' : '—'}</td>
+                        <td class="p-3 text-center text-cyan-400 font-mono font-bold">${m2Total > 0 ? m2Total.toFixed(2) + ' m²' : '—'}</td>
+
+                        <td class="p-3 text-right text-slate-400 font-mono">R$ ${precoPecaUnitaria.toFixed(2)}</td>
+                        <td class="p-3 text-right text-emerald-400 font-bold font-mono">R$ ${sub.toFixed(2)}</td>
+                        <td class="p-3 text-center"><button type="button" onclick="removeQuoteItem(${idx})" class="text-rose-500 hover:text-rose-400 font-bold">X</button></td>
+                    </tr>
+                `;
+        });
+        const totalEl = document.getElementById('liveQuoteTotal');
+        if(totalEl) totalEl.innerText = `R$ ${totalGeneral.toFixed(2)}`;
+    }
+
+    function saveQuote(e) {
+        if(e) e.preventDefault();
+        if(currentItems.length === 0) return alert('Adicione pelo menos um item ao orçamento!');
+
+        const payload = {
+            id: document.getElementById('quoteId').value || null,
+            client: { id: document.getElementById('quoteClient').value },
+            paymentMethod: document.getElementById('quotePayment').value,
+            installments: parseInt(document.getElementById('quoteInstallments').value) || 1,
+            observations: document.getElementById('quoteObs').value, // Observações customizadas
+            warranty: document.getElementById('quoteWarranty').value, // Garantia customizada
+            totalValue: parseFloat(document.getElementById('liveQuoteTotal').innerText.replace('R$ ', '').replace(',', '.')),
+            items: currentItems
+        };
+
+        fetch('/quotes/save-ajax', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            window.location.reload();
+        });
+    }
+
+    // VARIÁVEL GLOBAL DE ESCOPO PARA ARMAZENAR O ID TEMPORARIAMENTE
+    let quoteIdToApprove = null;
+
+    // 1. Acionador do botão da tabela (Apenas abre o modal customizado)
+    function approveQuote(id) {
+        quoteIdToApprove = id;
+        toggleModal('approvalConfirmModal', true);
+    }
+
+    // 2. Executor Oficial (Disparado quando o usuário confirma dentro do novo modal)
+    async function executeApproval() {
+        if (!quoteIdToApprove) return;
+
+        console.log("⚙️ Iniciando barramento de integração automática para o orçamento:", quoteIdToApprove);
+
+        try {
+            const response = await fetch(`/quotes/approve/${quoteIdToApprove}`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                console.log("✅ Integração concluída com sucesso!");
+                window.location.reload();
+            } else {
+                alert('Erro no processamento da integração financeira/operacional.');
+            }
+        } catch (error) {
+            console.error("Erro crítico na rota de aprovação:", error);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
+    // REQUISITO: Cancelamento imediato sem disparar nenhum aviso na tela
+    function cancelQuote(id) {
+        console.log("🚫 Desativando orçamento diretamente no sistema para o ID:", id);
+
+        fetch(`/quotes/cancel/${id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: "Cancelado via Painel de Controle Comercial"
+        }).then(response => {
+            if (response.ok) {
+                // Recarrega a tela de imediato com o novo status atualizado
+                window.location.reload();
+            } else {
+                console.error("Erro na comunicação de status.");
+            }
+        }).catch(err => console.error("Erro crítico:", err));
+    }
+
+    function generateDynamicPdfNameAndPrint() {
+
+        const originalErpTitle = document.title;
+
+        document.title = `Orçamento - ${currentActiveClientForPdf} - ${currentActiveNumberForPdf}`;
+
+        console.log(`🎯 Arquivo temporariamente renomeado para a fila do sistema operacional: "${document.title}"`);
+
+        window.print();
+
+        document.title = originalErpTitle;
+    }
+
+    function viewReceipt(id) {
+        fetch(`/quotes/view-data/${id}`)
+            .then(res => res.json())
+            .then(q => {
+                // Captura dos dados para o nome automático do arquivo PDF
+                currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
+                currentActiveNumberForPdf = q.number;
+
+                document.getElementById('recNum').innerText = `N° ${q.number.replace('ORC-', '')}`;
+                document.getElementById('recDate').innerText = new Date(q.dateCreated).toLocaleDateString('pt-BR');
+                document.getElementById('recClient').innerText = q.client ? q.client.name : 'Consumidor Final';
+                document.getElementById('recSignatureClientName').innerText = q.client ? q.client.name : 'Assinatura do Cliente';
+
+                document.getElementById('recObs').innerText = q.observations || 'Sem observações adicionais.';
+                document.getElementById('recWarrantyText').innerText = q.warranty || DEFAULT_WARRANTY;
+
+                // Alimenta o Valor Total real do orçamento
+                document.getElementById('recTotal').innerText = `R$ ${q.totalValue.toFixed(2)}`;
+
+                // Controla dinamicamente a exibição da linha de parcelas (Apenas para Cartão de Crédito)
+                const recFinalRow = document.getElementById('recFinalRow');
+                if (q.paymentMethod === 'Cartao_Credito') {
+                    if (recFinalRow) recFinalRow.style.display = 'flex';
+                    let valorParcela = q.totalValue / (q.installments || 10);
+                    document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x R$ ${valorParcela.toFixed(2)}`;
+                } else {
+                    if (recFinalRow) recFinalRow.style.display = 'none';
+                }
+
+                const itemsTbody = document.getElementById('recItems');
+                if(itemsTbody) {
+                    itemsTbody.innerHTML = '';
+                    q.items.forEach(item => {
+                        let m2 = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 1;
+                        let precoPecaUnitaria = m2 * item.unitPrice;
+                        let sub = item.quantity * precoPecaUnitaria;
+
+                        // CORREÇÃO EXATA: Trocado para spans com blocos e margem superior negativa (-mt-1)
+                        itemsTbody.innerHTML += `
+                            <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                                <td class="p-4 pl-4 text-slate-900 alignment-top">
+                                    <!-- 1. Nome do Item Principal (Grande e colado) -->
+                                    <span class="font-extrabold text-base text-slate-950 uppercase tracking-wide leading-none block m-0 p-0">
+                                        ${item.category || 'Item Comercial'}
+                                    </span>
+
+                                    <!-- 2. Descrição (Puxada para cima com -mt-1 para colar no título) -->
+                                    <span class="text-xs sm:text-sm text-slate-500 font-normal whitespace-pre-line leading-tight block -mt-1 p-0">
+                                        ${item.product}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-center text-slate-500 font-mono text-sm">un</td>
+                                <td class="p-4 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
+                                <td class="p-4 text-right font-mono text-slate-600 text-sm">R$ ${precoPecaUnitaria.toFixed(2)}</td>
+                                <td class="p-4 text-right pr-4 font-mono font-bold text-slate-900 text-sm">R$ ${sub.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                }
+                toggleModal('receiptModal', true);
+            });
+    }
+
+    function saveInlineClient() {
+        console.log("⚙️ Processando gravação assíncrona do cliente...");
+
+        const nameEl = document.getElementById('inlineClientName');
+        const typeEl = document.getElementById('inlineClientType');
+        const docEl = document.getElementById('inlineClientDoc');
+        const emailEl = document.getElementById('inlineClientEmail');
+        const phoneEl = document.getElementById('inlineClientPhone');
+        const addressEl = document.getElementById('inlineClientAddress');
+        const cityEl = document.getElementById('inlineClientCity');
+
+        if (!nameEl || !nameEl.value.trim()) {
+            alert('Por favor, insira o Nome Completo / Razão Social!');
+            return;
+        }
+
+        const payload = {
+            name: nameEl.value.trim(),
+            type: typeEl ? typeEl.value : 'individual',
+            document: docEl ? docEl.value.trim() : '',
+            email: emailEl ? emailEl.value.trim() : '',
+            phone: phoneEl ? phoneEl.value.trim() : '',
+            address: addressEl ? addressEl.value.trim() : '',
+            city: cityEl ? cityEl.value.trim() : ''
+        };
+
+        fetch('/quotes/add-client-ajax', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(res => {
+                if(res.ok) return res.json();
+                throw new Error("Erro de resposta do servidor");
+            })
+            .then(savedClient => {
+                console.log("✅ Cliente guardado no banco:", savedClient);
+                const clientSelect = document.getElementById('quoteClient');
+                if (clientSelect) {
+                    const newOption = document.createElement('option');
+                    newOption.value = savedClient.id;
+                    newOption.textContent = savedClient.name;
+                    newOption.selected = true; // Mantém selecionado auto
+                    clientSelect.appendChild(newOption);
+                }
+
+                // Limpa os campos após gravação
+                if (nameEl) nameEl.value = '';
+                if (docEl) docEl.value = '';
+                if (emailEl) emailEl.value = '';
+                if (phoneEl) phoneEl.value = '';
+                if (addressEl) addressEl.value = '';
+                if (cityEl) cityEl.value = '';
+
+                closeModal('clientInlineModal');
+            })
+            .catch(err => {
+                console.error("❌ Erro:", err);
+                alert('Erro ao guardar o cliente. Verifique o console.');
+            });
+    }
+</script>
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>

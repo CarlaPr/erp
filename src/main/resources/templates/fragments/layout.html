@@ -1,73 +1,92 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title}">Alfatahi ERP</title>
+    <title th:text="${title}">Alfa Tahi ERP</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        /* Regras do index.css original caso existam variáveis de cor personalizadas */
-        body { background-color: #0f172a; color: white; } /* bg-slate-900 */
-    </style>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
 <body>
-<div th:fragment="sidebar" class="w-64 bg-slate-900 min-h-screen fixed left-0 top-0 p-4 border-r border-slate-800 shadow-2xl z-40">
-    <div class="flex items-center gap-3 mb-10 pl-2 mt-2">
-        <div class="bg-gradient-to-br from-cyan-400 to-blue-500 p-2 rounded-xl shadow-lg shadow-cyan-500/20">
-            <i data-lucide="layers" class="text-slate-900 w-6 h-6"></i>
+
+<div th:fragment="sidebar" class="w-64 bg-slate-900 min-h-screen fixed left-0 top-0 p-4 border-r border-slate-800 shadow-2xl flex flex-col justify-between z-40">
+    <div>
+        <div class="flex items-center gap-3 mb-8 pl-2 mt-2">
+            <div class="bg-gradient-to-br from-cyan-400 to-blue-500 p-2 rounded-xl shadow-lg shadow-cyan-500/20">
+                <i data-lucide="layers" class="text-slate-900 w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black text-white tracking-tight leading-tight">Alfa Tahi</h1>
+                <span class="text-[10px] text-cyan-400 font-bold tracking-widest uppercase">Vidraçaria - Gestão</span>
+            </div>
         </div>
-        <div>
-            <h1 class="text-xl font-black text-white tracking-tight leading-tight">Alfa Tahi</h1>
-            <span class="text-[10px] text-cyan-400 font-bold tracking-widest uppercase">Vidraçaria - Gestão</span>
-        </div>
+
+        <nav class="space-y-1 text-sm font-medium">
+
+            <div class="pt-2 pb-1 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Setor Comercial</div>
+
+            <a href="/commercial" th:classappend="${currentPage == 'commercial'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <i data-lucide="line-chart" class="w-5 h-5"></i> Dashboard Vendas
+            </a>
+            <a href="/quotes" th:classappend="${currentPage == 'quotes'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <i data-lucide="file-signature" class="w-5 h-5"></i> Orçamentos
+            </a>
+            <a href="/clients" th:classappend="${currentPage == 'clients'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <i data-lucide="users" class="w-5 h-5"></i> Clientes
+            </a>
+            <a href="/quotes" class="text-slate-400 hover:bg-slate-800 hover:text-slate-200 flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <i data-lucide="receipt" class="w-5 h-5"></i> Recibos
+            </a>
+
+            <div sec:authorize="hasRole('GESTAO')" class="space-y-1">
+                <div class="pt-4 pb-1 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Setor Administrativo</div>
+
+                <a href="/dashboard" th:classappend="${currentPage == 'dashboard'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard Executivo
+                </a>
+                <a href="/work-orders" th:classappend="${currentPage == 'work-orders'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> Ordens de Serviço
+                </a>
+                <a href="/receivables" th:classappend="${currentPage == 'receivables'} ? 'bg-emerald-500/10 text-emerald-400 border-r-2 border-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                    <i data-lucide="trending-up" class="w-5 h-5"></i> Contas a Receber
+                </a>
+                <a href="/payables" th:classappend="${currentPage == 'payables'} ? 'bg-rose-500/10 text-rose-400 border-r-2 border-rose-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                    <i data-lucide="trending-down" class="w-5 h-5"></i> Contas a Pagar
+                </a>
+                <a href="/losses" th:classappend="${currentPage == 'losses'} ? 'bg-amber-500/10 text-amber-400 border-r-2 border-amber-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i> Controle de Perdas
+                </a>
+                <a href="/dre" th:classappend="${currentPage == 'dre'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i> DRE Gerencial
+                </a>
+                <a href="/conciliation" th:classappend="${currentPage == 'conciliation'} ? 'bg-indigo-500/10 text-indigo-400 border-r-2 border-indigo-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                    <i data-lucide="landmark" class="w-5 h-5"></i> Conciliação
+                </a>
+                <a href="/suppliers" th:classappend="${currentPage == 'suppliers'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                    <i data-lucide="truck" class="w-5 h-5"></i> Fornecedores
+                </a>
+                <a href="/settings" th:classappend="${currentPage == 'settings'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                    <i data-lucide="settings" class="w-5 h-5"></i> Configurações
+                </a>
+            </div>
+        </nav>
     </div>
 
-    <nav class="space-y-1.5 text-sm font-medium">
-        <a href="/dashboard" th:classappend="${currentPage == 'dashboard'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
-        </a>
-
-        <div class="pt-4 pb-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Operacional</div>
-
-        <a href="/work-orders" th:classappend="${currentPage == 'work-orders'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-            <i data-lucide="file-text" class="w-5 h-5"></i> Ordens de Serviço
-        </a>
-
-        <div class="pt-4 pb-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Financeiro</div>
-
-        <a href="/receivables" th:classappend="${currentPage == 'receivables'} ? 'bg-emerald-500/10 text-emerald-400 border-r-2 border-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-            <i data-lucide="trending-up" class="w-5 h-5"></i> Contas a Receber
-        </a>
-        <a href="/payables" th:classappend="${currentPage == 'payables'} ? 'bg-rose-500/10 text-rose-400 border-r-2 border-rose-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-            <i data-lucide="trending-down" class="w-5 h-5"></i> Contas a Pagar
-        </a>
-        <a href="/losses" th:classappend="${currentPage == 'losses'} ? 'bg-amber-500/10 text-amber-400 border-r-2 border-amber-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-            <i data-lucide="alert-triangle" class="w-5 h-5"></i> Controle de Perdas
-        </a>
-        <a href="/dre" th:classappend="${currentPage == 'dre'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-            <i data-lucide="bar-chart-3" class="w-5 h-5"></i> DRE Gerencial
-        </a>
-        <a href="/conciliation" th:classappend="${currentPage == 'conciliation'} ? 'bg-indigo-500/10 text-indigo-400 border-r-2 border-indigo-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-            <i data-lucide="landmark" class="w-5 h-5"></i> Conciliação Bancária
-        </a>
-
-        <div class="pt-4 pb-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cadastros</div>
-
-        <a href="/clients" th:classappend="${currentPage == 'clients'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-            <i data-lucide="users" class="w-5 h-5"></i> Clientes
-        </a>
-        <a href="/suppliers" th:classappend="${currentPage == 'suppliers'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-            <i data-lucide="truck" class="w-5 h-5"></i> Fornecedores
-        </a>
-        <a href="/settings" th:classappend="${currentPage == 'settings'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-            <i data-lucide="settings" class="w-5 h-5"></i> Configurações
-        </a>
-    </nav>
+    <div class="border-t border-slate-800 pt-4 mt-auto">
+        <form th:action="@{/logout}" method="POST" class="w-full">
+            <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-all font-bold text-sm text-left">
+                <i data-lucide="log-out" class="w-5 h-5"></i> Sair da Conta
+            </button>
+        </form>
+    </div>
 </div>
 
-<script th:fragment="lucide-script">
-    lucide.createIcons();
-</script>
+<div th:fragment="lucide-script">
+    <script>
+        lucide.createIcons();
+    </script>
+</div>
+
 </body>
 </html>

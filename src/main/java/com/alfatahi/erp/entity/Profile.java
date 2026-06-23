@@ -26,6 +26,12 @@ public class Profile {
     @Column(name = "logo_url")
     private String logoUrl;
 
+    @Column(name = "signature_url")
+    private String signatureUrl;
+
+    public String getSignatureUrl() { return signatureUrl; }
+    public void setSignatureUrl(String signatureUrl) { this.signatureUrl = signatureUrl; }
+
     // Getters and Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
