@@ -1,12 +1,8 @@
 package com.alfatahi.erp.controller;
 
-import com.alfatahi.erp.entity.Profile;
-import com.alfatahi.erp.entity.WorkOrder;
-import com.alfatahi.erp.entity.WorkOrderItem;
-import com.alfatahi.erp.repository.ProfileRepository;
-import com.alfatahi.erp.repository.ServiceCategoryRepository;
-import com.alfatahi.erp.service.ClientService;
-import com.alfatahi.erp.service.WorkOrderService;
+import com.alfatahi.erp.entity.*;
+import com.alfatahi.erp.repository.*;
+import com.alfatahi.erp.service.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,6 +12,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/work-orders")
@@ -24,77 +21,107 @@ public class WorkOrderController {
     private final WorkOrderService workOrderService;
     private final ClientService clientService;
     private final ServiceCategoryRepository categoryRepository;
-
-    // INJEÇÃO OBRIGATÓRIA DO PERFIL DA EMPRESA
     private final ProfileRepository profileRepository;
+    private final QuoteRepository quoteRepository;
 
-    public WorkOrderController(WorkOrderService workOrderService,
-                               ClientService clientService,
-                               ServiceCategoryRepository categoryRepository,
-                               ProfileRepository profileRepository) {
+    public WorkOrderController(WorkOrderService workOrderService, ClientService clientService,
+                               ServiceCategoryRepository categoryRepository, ProfileRepository profileRepository,
+                               QuoteRepository quoteRepository) {
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
         this.profileRepository = profileRepository;
+        this.quoteRepository = quoteRepository;
     }
 
     @GetMapping
     public String index(Model model) {
-        List<WorkOrder> workOrders = workOrderService.listAll();
+        List<WorkOrder> allOrders = workOrderService.listAll();
 
-        BigDecimal receitaTotal = workOrders.stream().map(wo -> wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal custoTotal = workOrders.stream().map(WorkOrder::getTotalCost).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal lucroBruto = receitaTotal.subtract(custoTotal);
-        BigDecimal margemMedia = receitaTotal.compareTo(BigDecimal.ZERO) > 0
-                ? lucroBruto.multiply(new BigDecimal("100")).divide(receitaTotal, 2, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
+        // Filtra ativas para KPIs
+        List<WorkOrder> active = allOrders.stream().filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus())).collect(Collectors.toList());
 
-        // =====================================================================
-        // GARANTE QUE PUXA OS DADOS DA EMPRESA (LOGO, CNPJ, ENDEREÇO, ETC)
-        // =====================================================================
-        Profile profile = profileRepository.findAll().stream().findFirst().orElseGet(() -> {
-            Profile p = new Profile();
-            p.setCompanyName("Alfa Tahi");
-            return profileRepository.save(p);
-        });
+        BigDecimal receita = active.stream().map(WorkOrder::getTotalValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal custo = active.stream().map(WorkOrder::getTotalCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal lucro = receita.subtract(custo);
+        BigDecimal margem = receita.compareTo(BigDecimal.ZERO) > 0 ? lucro.multiply(new BigDecimal("100")).divide(receita, 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
 
-        model.addAttribute("currentPage", "work-orders");
-        model.addAttribute("workOrders", workOrders);
+        model.addAttribute("workOrders", allOrders);
+        model.addAttribute("availableQuotes", quoteRepository.findAll().stream().filter(q -> "approved".equals(q.getStatus())).collect(Collectors.toList()));
         model.addAttribute("clients", clientService.listAllActive());
-        model.addAttribute("categories", categoryRepository.findAll());
-
-        // ENVIA A INFORMAÇÃO PARA O HTML (Isto faz os dados aparecerem no Modal!)
-        model.addAttribute("profile", profile);
-
-        model.addAttribute("receitaTotal", receitaTotal);
-        model.addAttribute("custoTotal", custoTotal);
-        model.addAttribute("lucroBruto", lucroBruto);
-        model.addAttribute("margemMedia", margemMedia);
-
+        model.addAttribute("profile", profileRepository.findAll().stream().findFirst().orElse(null));
+        model.addAttribute("receitaTotal", receita);
+        model.addAttribute("custoTotal", custo);
+        model.addAttribute("lucroBruto", lucro);
+        model.addAttribute("margemMedia", margem);
         return "work-orders";
-    }
-
-    @GetMapping("/edit-data/{id}")
-    @ResponseBody
-    public ResponseEntity<WorkOrder> getWorkOrderData(@PathVariable UUID id) {
-        return ResponseEntity.ok(workOrderService.findById(id));
     }
 
     @PostMapping(value = "/save-ajax", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<?> saveAjax(@RequestBody WorkOrder workOrder) {
+        WorkOrder targetWo;
+
+        if (workOrder.getId() != null) {
+            targetWo = workOrderService.findById(workOrder.getId());
+            if (targetWo != null) {
+                // Atualiza campos
+                targetWo.setTitle(workOrder.getTitle());
+                targetWo.setStatus(workOrder.getStatus());
+                targetWo.setDescription(workOrder.getDescription());
+                targetWo.setNotes(workOrder.getNotes());
+                targetWo.setInstallDate(workOrder.getInstallDate());
+                targetWo.setTotalValue(workOrder.getTotalValue());
+                targetWo.setClient(workOrder.getClient());
+
+                // Limpa a lista atual. Graças ao orphanRemoval=true na Entidade,
+                // o Hibernate apaga os itens antigos sozinho.
+                targetWo.getItems().clear();
+            } else {
+                targetWo = workOrder;
+            }
+        } else {
+            targetWo = workOrder;
+        }
+
+        // Adiciona os itens novos corretamente
         if (workOrder.getItems() != null) {
             for (WorkOrderItem item : workOrder.getItems()) {
-                item.setWorkOrder(workOrder);
+                item.setId(null); // Garante que não duplica
+                item.setWorkOrder(targetWo);
+                targetWo.getItems().add(item);
             }
         }
-        workOrderService.save(workOrder);
+
+        // Vinculação com Orçamento
+        if (workOrder.getQuoteId() != null) {
+            Quote q = quoteRepository.findById(workOrder.getQuoteId()).orElse(null);
+            if (q != null) {
+                targetWo.setQuote(q);
+                q.setWorkOrder(targetWo);
+                quoteRepository.save(q);
+            }
+        }
+
+        workOrderService.save(targetWo);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/delete/{id}")
-    public String delete(@PathVariable("id") UUID id) {
-        workOrderService.delete(id);
-        return "redirect:/work-orders";
+    @PostMapping("/cancel/{id}")
+    @ResponseBody
+    public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody String reason) {
+        WorkOrder wo = workOrderService.findById(id);
+        if(wo != null) {
+            wo.setStatus("cancelled");
+            wo.setNotes((wo.getNotes() != null ? wo.getNotes() : "") + "\n>>> CANCELADA: " + reason);
+            if(wo.getQuote() != null) {
+                Quote q = wo.getQuote();
+                q.setWorkOrder(null);
+                quoteRepository.save(q);
+                wo.setQuote(null);
+            }
+            workOrderService.save(wo);
+        }
+        return ResponseEntity.ok().build();
     }
 }
