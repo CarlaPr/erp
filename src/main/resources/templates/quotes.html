@@ -171,7 +171,16 @@
                     <label class="block text-slate-400 font-bold mb-2">Observações / Termos do Orçamento</label>
                     <textarea id="quoteObs" rows="5"
                               class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-white outline-none focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed scrollbar-thin scrollbar-thumb-slate-800"
-                              placeholder="Insira as observações de entrega e parcelamento..."></textarea></div>
+                              placeholder="Insira as observações de entrega e parcelamento..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-slate-400 font-bold mb-2">Garantia</label>
+                    <textarea id="quoteWarranty" rows="5"
+                              class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-white outline-none focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed scrollbar-thin scrollbar-thumb-slate-800"
+                              placeholder="Insira as regras e prazos da garantia...">
+                    </textarea>
+                </div>
 
                 <div class="flex justify-between items-center border-t border-slate-800 pt-4">
                     <div>
@@ -184,16 +193,6 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-800 pt-4">
-                    <div>
-                        <label class="block text-slate-400 font-bold mb-2">
-                            <i data-lucide="shield-check" class="w-3.5 h-3.5 inline mr-1 text-cyan-400"></i> Garantia Comercial
-                        </label>
-                        <textarea id="quoteWarranty" rows="5"
-                                  class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-white outline-none focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed scrollbar-thin scrollbar-thumb-slate-800"
-                                  placeholder="Insira as regras e prazos da garantia..."></textarea>
-                    </div>
-                </div>
             </form>
         </div>
     </div>
@@ -424,11 +423,9 @@
 
 <script>
 
-    // VARIÁVEIS PARA ARMAZENAMENTO TEMPORÁRIO DO NOME DO PDF
     let currentActiveClientForPdf = "Consumidor Final";
     let currentActiveNumberForPdf = "000";
 
-    // LISTA INTEGRADA DE ITENS DO ORÇAMENTO
     let currentItems = [];
 
     function toggleModal(id, show) {
@@ -444,14 +441,12 @@
     }
 
     const DEFAULT_WARRANTY = "90 Dias (cobre apenas regulagens, vedação e vícios de instalação).";
-    const DEFAULT_OBSERVATIONS = "* Parcelamento: Em até 10x sem juros no cartão.\n* Prazo de Entrega: Até 15 dias úteis após a confirmação do pedido.\n* Forma de Execução: Início dos serviços mediante sinal de 50%.\nO saldo restante (50%) deve ser quitado na conclusão da instalação.\n* Observação: Em caso de desistência após o pagamento do sinal, o valor não será reembolsado devido aos custos de reserva de material e produção personalizada.";
+    const DEFAULT_OBSERVATIONS = "Prazo de Entrega: Até 15 dias úteis após a confirmação do pedido.\n* Forma de Execução: Início dos serviços mediante sinal de 50%.\nO saldo restante (50%) deve ser quitado na conclusão da instalação.\n* Observação: Em caso de desistência após o pagamento do sinal, o valor não será reembolsado devido aos custos de reserva de material e produção personalizada.";
 
-    // 5.2 — Atualizar abertura de Novo Orçamento para preencher os padrões
     function openNewQuoteModal() {
         if(document.getElementById('quoteForm')) document.getElementById('quoteForm').reset();
         document.getElementById('quoteId').value = '';
 
-        // Injeta os valores padrão que o usuário poderá editar livremente antes de salvar
         document.getElementById('quoteWarranty').value = DEFAULT_WARRANTY;
         document.getElementById('quoteObs').value = DEFAULT_OBSERVATIONS;
 
@@ -495,13 +490,10 @@
         let totalGeneral = 0;
 
         currentItems.forEach((item, idx) => {
-            // 1. Calcula a metragem quadrada unitária (L x A)
             let m2Unitario = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 0;
 
-            // 2. Calcula a metragem quadrada total multiplicada pela quantidade
             let m2Total = m2Unitario * item.quantity;
 
-            // 3. Lógica matemática de precificação consolidada por peça
             let multiplicadorM2 = m2Unitario > 0 ? m2Unitario : 1;
             let precoPecaUnitaria = multiplicadorM2 * item.unitPrice;
             let sub = item.quantity * precoPecaUnitaria;
@@ -551,16 +543,13 @@
         });
     }
 
-    // VARIÁVEL GLOBAL DE ESCOPO PARA ARMAZENAR O ID TEMPORARIAMENTE
     let quoteIdToApprove = null;
 
-    // 1. Acionador do botão da tabela (Apenas abre o modal customizado)
     function approveQuote(id) {
         quoteIdToApprove = id;
         toggleModal('approvalConfirmModal', true);
     }
 
-    // 2. Executor Oficial (Disparado quando o usuário confirma dentro do novo modal)
     async function executeApproval() {
         if (!quoteIdToApprove) return;
 
@@ -583,7 +572,6 @@
         }
     }
 
-    // REQUISITO: Cancelamento imediato sem disparar nenhum aviso na tela
     function cancelQuote(id) {
         console.log("🚫 Desativando orçamento diretamente no sistema para o ID:", id);
 
@@ -593,7 +581,6 @@
             body: "Cancelado via Painel de Controle Comercial"
         }).then(response => {
             if (response.ok) {
-                // Recarrega a tela de imediato com o novo status atualizado
                 window.location.reload();
             } else {
                 console.error("Erro na comunicação de status.");
@@ -738,6 +725,7 @@
                 alert('Erro ao guardar o cliente. Verifique o console.');
             });
     }
+
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 </body>
