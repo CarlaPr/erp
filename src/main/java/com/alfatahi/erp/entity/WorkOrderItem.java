@@ -14,7 +14,7 @@ public class WorkOrderItem {
 
     @ManyToOne
     @JoinColumn(name = "work_order_id", nullable = false)
-    @com.fasterxml.jackson.annotation.JsonIgnore // ADICIONE ESTA LINHA AQUI!
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private WorkOrder workOrder;
 
     @Column(nullable = false)
@@ -29,7 +29,7 @@ public class WorkOrderItem {
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice = BigDecimal.ZERO;
 
-
+    // Getters and Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -48,11 +48,16 @@ public class WorkOrderItem {
     public BigDecimal getUnitPrice() { return unitPrice; }
     public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
 
+
     public BigDecimal getTotalCost() {
-        return this.quantity.multiply(this.unitCost);
+        BigDecimal q = this.quantity != null ? this.quantity : BigDecimal.ZERO;
+        BigDecimal c = this.unitCost != null ? this.unitCost : BigDecimal.ZERO;
+        return q.multiply(c);
     }
 
     public BigDecimal getTotalPrice() {
-        return this.quantity.multiply(this.unitPrice);
+        BigDecimal q = this.quantity != null ? this.quantity : BigDecimal.ZERO;
+        BigDecimal p = this.unitPrice != null ? this.unitPrice : BigDecimal.ZERO;
+        return q.multiply(p);
     }
 }

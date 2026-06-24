@@ -112,9 +112,8 @@
                     <td class="py-3 text-center">
                         <span th:if="${q.status == 'pending'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase">Pendente</span>
                         <span th:if="${q.status == 'approved'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">Aprovado</span>
-                        <span th:if="${q.status == 'cancelled'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 uppercase">Cancelado</span>
+                        <span th:if="${q.status == 'canceled' || q.status == 'cancelled'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 uppercase">Cancelado</span>
                         <span th:if="${q.status == 'expired'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/20 text-slate-400 uppercase">Expirado</span>
-
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(recentQuotes)}">

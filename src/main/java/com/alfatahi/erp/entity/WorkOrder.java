@@ -59,7 +59,17 @@ public class WorkOrder {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // Getters and Setters
+    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<WorkOrderItem> items = new java.util.ArrayList<>();
+
+    @OneToOne(mappedBy = "workOrder")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Quote quote;
+
+    public Quote getQuote() { return quote; }
+    public void setQuote(Quote quote) { this.quote = quote; }
+
+    // Getters and Setters padrões
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getNumber() { return number; }
@@ -74,8 +84,6 @@ public class WorkOrder {
     public void setDescription(String description) { this.description = description; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    public BigDecimal getTotalValue() { return totalValue; }
-    public void setTotalValue(BigDecimal totalValue) { this.totalValue = totalValue; }
     public BigDecimal getDiscount() { return discount; }
     public void setDiscount(BigDecimal discount) { this.discount = discount; }
     public String getInstallAddress() { return installAddress; }
@@ -94,10 +102,6 @@ public class WorkOrder {
     public void setNotes(String notes) { this.notes = notes; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
-
-    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL, orphanRemoval = true)
-    private java.util.List<WorkOrderItem> items = new java.util.ArrayList<>();
-
     public java.util.List<WorkOrderItem> getItems() { return items; }
     public void setItems(java.util.List<WorkOrderItem> items) {
         this.items.clear();
@@ -106,21 +110,31 @@ public class WorkOrder {
         }
     }
 
-    // Métodos utilitários para o Dashboard e Tabelas
+    public void setTotalValue(BigDecimal totalValue) { this.totalValue = totalValue; }
+
+    public BigDecimal getTotalValue() {
+        return this.totalValue != null ? this.totalValue : BigDecimal.ZERO;
+    }
+
     public BigDecimal getTotalCost() {
-        if (items == null || items.isEmpty()) return BigDecimal.ZERO;
-        return items.stream()
-                .map(WorkOrderItem::getTotalCost)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (this.items == null || this.items.isEmpty()) return BigDecimal.ZERO;
+        BigDecimal sum = BigDecimal.ZERO;
+        for (WorkOrderItem item : this.items) {
+            if (item != null && item.getTotalCost() != null) {
+                sum = sum.add(item.getTotalCost());
+            }
+        }
+        return sum;
     }
 
     public BigDecimal getProfit() {
-        return (totalValue != null ? totalValue : BigDecimal.ZERO).subtract(getTotalCost());
+        return getTotalValue().subtract(getTotalCost());
     }
 
     public BigDecimal getMargin() {
-        BigDecimal rev = (totalValue != null ? totalValue : BigDecimal.ZERO);
-        if (rev.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO;
+        BigDecimal rev = getTotalValue();
+        // Evita ArithmeticException (divisão por zero ou por número negativo)
+        if (rev.compareTo(BigDecimal.ZERO) <= 0) return BigDecimal.ZERO;
         return getProfit().multiply(new BigDecimal("100")).divide(rev, 2, java.math.RoundingMode.HALF_UP);
     }
 }

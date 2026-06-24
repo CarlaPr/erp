@@ -29,10 +29,10 @@ public class CommercialController {
         long totalClients = clientRepo.count();
         long totalQuotes = allQuotes.size();
 
-        // Contadores dinâmicos por status
+        // Contadores dinâmicos por status (alinhado com as grafias do banco de dados)
         long pending = allQuotes.stream().filter(q -> "pending".equals(q.getStatus())).count();
         long approved = allQuotes.stream().filter(q -> "approved".equals(q.getStatus())).count();
-        long cancelled = allQuotes.stream().filter(q -> "cancelled".equals(q.getStatus())).count();
+        long cancelled = allQuotes.stream().filter(q -> "canceled".equals(q.getStatus()) || "cancelled".equals(q.getStatus())).count();
         long expired = allQuotes.stream().filter(q -> "expired".equals(q.getStatus())).count();
 
         // Soma do valor total vendido (apenas orçamentos aprovados)
@@ -56,9 +56,14 @@ public class CommercialController {
         model.addAttribute("countCancelled", cancelled);
         model.addAttribute("countExpired", expired);
 
-        // Lista histórica ordenada dos últimos 6 orçamentos gerados
+
         List<Quote> recentQuotes = allQuotes.stream()
-                .sorted((q1, q2) -> q2.getDateCreated().compareTo(q1.getDateCreated()))
+                .sorted((q1, q2) -> {
+                    if (q1.getDateCreated() == null && q2.getDateCreated() == null) return 0;
+                    if (q1.getDateCreated() == null) return 1;
+                    if (q2.getDateCreated() == null) return -1;
+                    return q2.getDateCreated().compareTo(q1.getDateCreated());
+                })
                 .limit(6)
                 .toList();
         model.addAttribute("recentQuotes", recentQuotes);

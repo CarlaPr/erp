@@ -2,7 +2,6 @@ package com.alfatahi.erp.service;
 
 import com.alfatahi.erp.entity.*;
 import com.alfatahi.erp.repository.*;
-import com.alfatahi.erp.repository.QuoteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,15 +23,18 @@ public class QuoteService {
     }
 
     @Transactional
-    public void approveAndGenerateIntegrations(UUID quoteId) {
-        Quote quote = quoteRepo.findById(quoteId).orElseThrow();
+    public void approveQuote(UUID quoteId) {
+        Quote quote = quoteRepo.findById(quoteId).orElseThrow(() -> new RuntimeException("Orçamento não encontrado"));
 
-        if ("approved".equals(quote.getStatus())) return;
-        quote.setStatus("approved");
+        if ("approved".equals(quote.getStatus())) {
+            return;
+        }
 
         WorkOrder os = new WorkOrder();
-        long nextOsNumber = osRepo.count() + 1;
-        os.setNumber(String.format("OS-%02d", nextOsNumber));
+
+        // Mantém a inteligência de trocar ORC- por OS-
+        String osNumber = quote.getNumber() != null ? quote.getNumber().replace("ORC-", "OS-") : "OS-NOVO";
+        os.setNumber(osNumber);
 
         os.setClient(quote.getClient());
         os.setTitle("Venda: " + quote.getNumber());
@@ -40,33 +42,37 @@ public class QuoteService {
         os.setStatus("in_progress");
         os.setTotalValue(quote.getTotalValue());
 
-        // Converte as medidas do Comercial em Linhas Genéricas para a Gestão
-        for (QuoteItem qi : quote.getItems()) {
-            WorkOrderItem osItem = new WorkOrderItem();
-            String dimensions = " (LxA: " + qi.getWidth() + "x" + qi.getHeight() + ")";
-            osItem.setDescription(qi.getCategory() + " - " + qi.getProduct() + dimensions);
-            osItem.setQuantity(qi.getQuantity());
-            osItem.setUnitPrice(qi.getUnitPrice());
-            osItem.setUnitCost(BigDecimal.ZERO); // Fica a zero para o Gestor preencher o CMV real dps
-            osItem.setWorkOrder(os);
-            os.getItems().add(osItem);
-        }
-        osRepo.save(os);
-        quote.setWorkOrder(os); // Amarração bidirecional!
+        if (quote.getItems() != null) {
+            for (QuoteItem qi : quote.getItems()) {
+                WorkOrderItem osItem = new WorkOrderItem();
+                String dimensions = " (LxA: " + qi.getWidth() + "x" + qi.getHeight() + ")";
+                osItem.setDescription(qi.getCategory() + " - " + qi.getProduct() + dimensions);
 
-        // ==========================================
-        // 2. INTEGRAÇÃO FINANCEIRA
-        // ==========================================
+                osItem.setQuantity(qi.getQuantity());
+                osItem.setUnitPrice(qi.getUnitPrice());
+                osItem.setUnitCost(BigDecimal.ZERO);
+
+                os.getItems().add(osItem);
+            }
+        }
+
+        os = osRepo.saveAndFlush(os);
+
+
+        quote.setStatus("approved");
+        quote.setWorkOrder(os);
+        quoteRepo.saveAndFlush(quote);
+
+
         AccountsReceivable rec = new AccountsReceivable();
         rec.setClient(quote.getClient());
         rec.setWorkOrder(os);
         rec.setDescription("Ref. Orçamento " + quote.getNumber());
         rec.setTotalAmount(quote.getTotalValue());
         rec.setInstallments(quote.getInstallments());
-        rec.setDueDate(LocalDate.now().plusDays(3)); // Pode ser ajustado
+        rec.setDueDate(LocalDate.now().plusDays(3)); // Prazo de compensação
         rec.setStatus("pending");
-        finRepo.save(rec);
 
-        quoteRepo.save(quote);
+        finRepo.save(rec);
     }
 }

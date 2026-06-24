@@ -55,7 +55,17 @@
                         <div class="bg-slate-700/50 px-2 py-1 rounded text-xs font-mono font-bold text-cyan-400" th:text="${wo.number}">OS-01</div>
                         <div>
                             <div class="font-bold text-white" th:text="${wo.title}">Titulo</div>
-                            <div class="text-xs text-slate-400" th:text="${wo.client != null ? wo.client.name : 'S/ Cliente'}">Cliente</div>
+                            <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
+                                <span th:text="${wo.client != null ? wo.client.name : 'S/ Cliente'}">Cliente</span>
+
+                                <button type="button" th:if="${wo.quote != null}"
+                                        th:data-id="${wo.quote.id}" onclick="viewReceipt(this.getAttribute('data-id'))"
+                                        class="text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1 cursor-pointer"
+                                        title="Visualizar e Imprimir Espelho Comercial">
+                                    <i data-lucide="printer" class="w-3 h-3"></i>
+                                    <span th:text="${wo.quote.number}"></span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </td>
@@ -65,10 +75,10 @@
                     <span th:if="${wo.status == 'in_progress'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-400 uppercase">Em Obra</span>
                     <span th:if="${wo.status == 'completed'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">Concluído</span>
                 </td>
-                <td class="p-5 text-right font-mono font-bold text-slate-300" th:text="${wo.totalValue}">0,00</td>
-                <td class="p-5 text-right font-mono font-bold text-rose-400" th:text="${wo.getTotalCost()}">0,00</td>
+                <td class="p-5 text-right font-mono font-bold text-slate-300" th:text="'R$ ' + ${wo.totalValue}">0,00</td>
+                <td class="p-5 text-right font-mono font-bold text-rose-400" th:text="'R$ ' + ${wo.getTotalCost()}">0,00</td>
                 <td class="p-5 text-right">
-                    <div class="font-mono font-bold text-emerald-400" th:text="${wo.getProfit()}">0,00</div>
+                    <div class="font-mono font-bold text-emerald-400" th:text="'R$ ' + ${wo.getProfit()}">0,00</div>
                     <div class="text-[10px] text-emerald-500/70 font-bold" th:text="${wo.getMargin()} + '%'">0%</div>
                 </td>
                 <td class="p-5 text-center text-slate-400" th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : '-'}">-</td>
@@ -170,9 +180,123 @@
             </form>
         </div>
     </div>
+
+    <div id="receiptModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-10">
+        <div class="bg-white text-slate-900 w-full max-w-3xl rounded-xl shadow-2xl p-12 relative font-sans print:p-0 print:shadow-none print:w-full" id="printableReceiptArea">
+            <button type="button" onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 print:hidden"><i data-lucide="x" class="w-6 h-6"></i></button>
+
+            <style>
+                @media print {
+                    body * { visibility: hidden; }
+                    #printableReceiptArea, #printableReceiptArea * { visibility: visible; }
+                    body {
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                        display: block !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100% !important;
+                    }
+                    #printableReceiptArea {
+                        position: absolute !important; left: 0 !important; top: 0 !important;
+                        width: 100% !important; max-width: 100% !important; margin: 0 !important;
+                        padding: 0 !important; box-shadow: none !important; border: none !important;
+                        background: #ffffff !important; color: #000000 !important;
+                    }
+                    @page { size: A4; margin: 10mm 12mm 10mm 12mm; }
+                    .print\:hidden { display: none !important; }
+                }
+            </style>
+
+            <div class="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-6">
+                <div class="flex flex-col">
+                    <div th:if="${profile != null && profile.logoUrl != null && !profile.logoUrl.isEmpty()}" class="mb-3">
+                        <img th:src="${profile.logoUrl}" class="max-h-20 max-w-[240px] object-contain text-left mix-blend-multiply print:mix-blend-normal" alt="Logo" />
+                    </div>
+                    <h2 class="text-3xl font-black tracking-tight text-slate-900 uppercase" th:text="${profile != null ? profile.companyName : 'Empresa'}"></h2>
+                    <div class="text-sm text-slate-600 mt-4 space-y-1 font-medium">
+                        <p th:text="${profile != null && profile.document != null ? 'CPF/CNPJ: ' + profile.document : 'CPF/CNPJ: —'}"></p>
+                        <p th:text="${profile != null && profile.address != null ? profile.address : 'Endereço: —'}"></p>
+                        <p th:text="${profile != null && profile.phone != null ? 'Telefone: ' + profile.phone : 'Telefone: —'}"></p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="bg-slate-100 p-5 rounded-xl border border-slate-200 inline-block min-w-[220px]">
+                        <h3 class="text-xs font-bold font-mono text-slate-500 uppercase tracking-wider">ORÇAMENTO</h3>
+                        <p class="text-2xl font-black text-slate-900 font-mono" id="recNum">N° --</p>
+                        <div class="text-xs text-slate-500 mt-2 border-t pt-2 border-slate-200">
+                            <span class="font-bold block text-slate-700">Data de emissão:</span>
+                            <span id="recDate">--/--/----</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block font-mono">Orçamento para</span>
+                <h4 class="text-xl font-black text-slate-900" id="recClient">Nome do Cliente</h4>
+            </div>
+
+            <div class="border border-slate-300 rounded-xl overflow-hidden mb-6 bg-white shadow-sm">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                    <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider border-b border-slate-900">
+                        <th class="p-4 pl-4 w-[50%]">Descrição do Projeto</th>
+                        <th class="p-4 text-center">Unid.</th>
+                        <th class="p-4 text-center">Qtd</th>
+                        <th class="p-4 text-right">Preço Unit.</th>
+                        <th class="p-4 text-right pr-4">Total</th>
+                    </tr>
+                    </thead>
+                    <tbody id="recItems" class="divide-y divide-slate-200 font-medium text-slate-800"></tbody>
+                </table>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 border-t pt-6 border-slate-200">
+                <div class="text-sm text-slate-600 space-y-2">
+                    <h5 class="font-bold text-slate-900 uppercase font-mono tracking-wide text-xs">OBSERVAÇÕES ADICIONAIS</h5>
+                    <div id="recObs" class="whitespace-pre-line text-sm text-slate-600 font-sans leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100">--</div>
+                </div>
+                <div class="flex flex-col justify-end items-end w-full">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 w-full max-w-[340px] font-mono shadow-sm">
+                        <div class="flex justify-between items-center text-xs text-slate-500 font-bold pb-2.5">
+                            <span>VALOR TOTAL:</span>
+                            <span id="recTotal" class="text-slate-900 text-base font-black tracking-tight">R$ 0,00</span>
+                        </div>
+                        <div id="recFinalRow" class="flex justify-between items-center pt-2.5 border-t border-slate-200" style="display: none;">
+                            <span class="text-xs text-slate-500 font-bold">VALOR FINAL:</span>
+                            <span id="recFinalInstallments" class="text-xl font-black text-emerald-600 tracking-tight">10x R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 border-t-2 border-dashed border-slate-200 pt-6">
+                <div class="grid grid-cols-2 gap-4 text-sm text-slate-500">
+                    <div>
+                        <h5 class="font-bold text-slate-900 font-mono text-xs uppercase mb-1">GARANTIA</h5>
+                        <p id="recWarrantyText" class="text-slate-800 font-sans font-bold text-base text-cyan-600">--</p>
+                    </div>
+                    <div class="text-right flex flex-col justify-between">
+                        <p class="text-[10px] font-mono text-slate-400 mt-4">Documento Digital — <span th:text="${profile != null ? profile.companyName : 'Vidraçaria'}"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 print:hidden border-t border-slate-100 pt-4 mt-8">
+                <button type="button" onclick="closeModal('receiptModal')" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs hover:bg-slate-200 transition">Fechar</button>
+                <button type="button" onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-950 text-white px-5 py-2.5 rounded-xl font-black flex items-center gap-2 text-xs hover:bg-slate-800 transition shadow-lg shadow-black/10"><i data-lucide="printer" class="w-4 h-4"></i> Imprimir Orçamento</button>
+            </div>
+        </div>
+    </div>
+
+
 </main>
 
 <script>
+    // ===============================================
+    // LÓGICA DO MODAL DE ORDEM DE SERVIÇO (PRODUÇÃO)
+    // ===============================================
     let osItems = []; // Guarda os itens em memória
 
     function openModal() {
@@ -185,9 +309,14 @@
         document.getElementById('osModal').classList.add('flex');
     }
 
-    function closeModal() {
-        document.getElementById('osModal').classList.add('hidden');
-        document.getElementById('osModal').classList.remove('flex');
+    // Função inteligente: fecha o modal de OS ou o modal de Recibo dependendo de quem chamar
+    function closeModal(modalId) {
+        const id = typeof modalId === 'string' ? modalId : 'osModal';
+        const m = document.getElementById(id);
+        if(m) {
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
     }
 
     async function editOs(id) {
@@ -254,7 +383,8 @@
                     </tr>
                 `;
         });
-        lucide.createIcons();
+
+        if(typeof lucide !== 'undefined') lucide.createIcons();
         updateLiveKPIs(totalCustoMat);
     }
 
@@ -287,7 +417,101 @@
 
         window.location.reload();
     }
+
+    // ==========================================================
+    // LÓGICA DE IMPRESSÃO: ESPELHO DO ORÇAMENTO (COMERCIAL)
+    // ==========================================================
+    let currentActiveClientForPdf = "Consumidor Final";
+    let currentActiveNumberForPdf = "000";
+
+    function generateDynamicPdfNameAndPrint() {
+        const originalErpTitle = document.title;
+        document.title = `Orçamento - ${currentActiveClientForPdf} - ${currentActiveNumberForPdf}`;
+        window.print();
+        document.title = originalErpTitle;
+    }
+
+    function viewReceipt(id) {
+        // Consulta à API central de orçamentos do Comercial
+        fetch(`/quotes/view-data/${id}`)
+            .then(res => {
+                if(!res.ok) {
+                    alert("Erro interno no Servidor ao tentar converter o recibo.");
+                    throw new Error("Falha na API");
+                }
+                return res.json();
+            })
+            .then(q => {
+                currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
+                currentActiveNumberForPdf = q.number || "000";
+
+                document.getElementById('recNum').innerText = `N° ${(q.number || "").replace('ORC-', '')}`;
+                document.getElementById('recDate').innerText = q.dateCreated ? new Date(q.dateCreated).toLocaleDateString('pt-BR') : '--/--/----';
+                document.getElementById('recClient').innerText = currentActiveClientForPdf;
+
+                document.getElementById('recObs').innerText = q.observations || 'Sem observações adicionais.';
+                document.getElementById('recWarrantyText').innerText = q.warranty || '90 Dias.';
+
+                let valTotal = q.totalValue != null ? parseFloat(q.totalValue) : 0;
+                document.getElementById('recTotal').innerText = `R$ ${valTotal.toFixed(2)}`;
+
+                const recFinalRow = document.getElementById('recFinalRow');
+                if (q.paymentMethod === 'Cartao_Credito') {
+                    if (recFinalRow) recFinalRow.style.display = 'flex';
+                    let inst = q.installments || 1;
+                    let valorParcela = valTotal / inst;
+                    document.getElementById('recFinalInstallments').innerText = `${inst}x R$ ${valorParcela.toFixed(2)}`;
+                } else {
+                    if (recFinalRow) recFinalRow.style.display = 'none';
+                }
+
+                const itemsTbody = document.getElementById('recItems');
+                if(itemsTbody) {
+                    itemsTbody.innerHTML = '';
+                    let arrayItems = q.items || [];
+
+                    arrayItems.forEach(item => {
+                        let w = item.width || 0;
+                        let h = item.height || 0;
+                        let m2 = (w > 0 && h > 0) ? (w * h) : 1;
+                        let uPrice = item.unitPrice != null ? parseFloat(item.unitPrice) : 0;
+                        let qtd = item.quantity != null ? parseFloat(item.quantity) : 1;
+
+                        let precoPecaUnitaria = m2 * uPrice;
+                        let sub = qtd * precoPecaUnitaria;
+
+                        itemsTbody.innerHTML += `
+                            <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                                <td class="p-4 pl-4 text-slate-900 alignment-top">
+                                    <span class="font-extrabold text-base text-slate-950 uppercase tracking-wide leading-none block m-0 p-0">
+                                        ${item.category || 'Item Comercial'}
+                                    </span>
+                                    <span class="text-xs sm:text-sm text-slate-500 font-normal whitespace-pre-line leading-tight block -mt-1 p-0">
+                                        ${item.product || 'Sem Especificação'}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-center text-slate-500 font-mono text-sm">un</td>
+                                <td class="p-4 text-center font-bold text-slate-900 text-sm">${qtd}</td>
+                                <td class="p-4 text-right font-mono text-slate-600 text-sm">R$ ${precoPecaUnitaria.toFixed(2)}</td>
+                                <td class="p-4 text-right pr-4 font-mono font-bold text-slate-900 text-sm">R$ ${sub.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Abre o modal diretamente na página de OS!
+                const m = document.getElementById('receiptModal');
+                if(m) {
+                    m.classList.remove('hidden');
+                    m.classList.add('flex');
+                }
+            })
+            .catch(err => {
+                console.error("Erro Javascript ao puxar dados do recibo:", err);
+            });
+    }
 </script>
+
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 </body>
 </html>

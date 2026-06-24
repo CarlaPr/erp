@@ -39,22 +39,13 @@ public class QuoteController {
             @RequestParam(required = false) String name,
             Model model) {
 
-        // 1. Validação automática de orçamentos pendentes com mais de 1 mês
-        LocalDate limiteValidade = LocalDate.now().minusMonths(1);
+        // 1. Validação de expiração usando LocalDateTime nativo
+        java.time.LocalDateTime limiteValidade = java.time.LocalDateTime.now().minusMonths(1);
+        quoteRepo.expirePendingQuotes(limiteValidade);
+
         List<Quote> todosOrcamentos = quoteRepo.findAll();
 
-        boolean houveramAlteracoes = false;
-        for (Quote q : todosOrcamentos) {
-            if ("pending".equals(q.getStatus()) && q.getDateCreated() != null && q.getDateCreated().isBefore(limiteValidade)) {
-                q.setStatus("canceled");
-                houveramAlteracoes = true;
-            }
-        }
-        if (houveramAlteracoes) {
-            quoteRepo.saveAll(todosOrcamentos);
-        }
-
-        // 2. Ordenação rigorosa: Mais recente primeiro (Data e ID/Número)
+        // 2. Ordenação rigorosa decrescente
         todosOrcamentos.sort((q1, q2) -> {
             if (q1.getDateCreated() == null || q2.getDateCreated() == null) return 0;
             int dataCompare = q2.getDateCreated().compareTo(q1.getDateCreated());
@@ -64,14 +55,14 @@ public class QuoteController {
             return q2.getNumber().compareTo(q1.getNumber());
         });
 
-        // 3. Define o mês atual como filtro padrão
+        // 3. FIX DO ERRO: Modificado de LocalDate.now() para LocalDateTime.now()
         if (month == null || month.isEmpty()) {
             if (!"all".equals(month)) {
-                month = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM").format(LocalDate.now());
+                month = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM").format(java.time.LocalDateTime.now());
             }
         }
 
-        // 4. Filtragem por Stream
+        // 4. Filtro por Stream
         final String finalMonth = month;
         List<Quote> filteredList = todosOrcamentos.stream().filter(q -> {
             if (status != null && !status.isEmpty() && !q.getStatus().equals(status)) return false;
@@ -86,17 +77,16 @@ public class QuoteController {
             return true;
         }).collect(java.util.stream.Collectors.toList());
 
-        // =========================================================================
-        // REQUISITO: GERAÇÃO DINÂMICA DOS MESES DO ANO (SEM COMPONENTES FIXOS)
-        // =========================================================================
+        // 5. Geração dinâmica dos últimos 12 meses
         List<java.util.Map<String, String>> disponiveis = new java.util.ArrayList<>();
-        LocalDate dataLoop = LocalDate.now();
-        // Loop para gerar os últimos 12 meses dinamicamente a partir de hoje
+        java.time.LocalDateTime dataLoop = java.time.LocalDateTime.now(); // Alterado para LocalDateTime
+
         for (int i = 0; i < 12; i++) {
-            LocalDate target = dataLoop.minusMonths(i);
+            java.time.LocalDateTime target = dataLoop.minusMonths(i);
             String val = target.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
-            String label = target.format(java.time.format.DateTimeFormatter.ofPattern("MMMM / yyyy", new java.util.Locale("pt", "BR")));
-            label = label.substring(0, 1).toUpperCase() + label.substring(1); // Capitaliza a primeira letra
+
+            String label = target.format(java.time.format.DateTimeFormatter.ofPattern("MMMM / yyyy", java.util.Locale.forLanguageTag("pt-BR")));
+            label = label.substring(0, 1).toUpperCase() + label.substring(1);
 
             java.util.Map<String, String> itemMes = new java.util.HashMap<>();
             itemMes.put("value", val);
@@ -110,13 +100,12 @@ public class QuoteController {
             return profileRepo.save(p);
         });
 
-        // Envio seguro ao Thymeleaf
         model.addAttribute("quote", new Quote());
         model.addAttribute("currentPage", "quotes");
         model.addAttribute("quotes", filteredList);
         model.addAttribute("clients", clientRepo.findAll());
         model.addAttribute("profile", profile);
-        model.addAttribute("availableMonths", disponiveis); // Nova lista dinâmica ativa
+        model.addAttribute("availableMonths", disponiveis);
         model.addAttribute("selectedMonth", month);
         model.addAttribute("selectedNumber", number);
         model.addAttribute("selectedName", name);
@@ -141,7 +130,7 @@ public class QuoteController {
         }
 
         if (quote.getDateCreated() == null) {
-            quote.setDateCreated(LocalDate.now());
+            quote.setDateCreated(java.time.LocalDateTime.now());
         }
 
         if (quote.getItems() != null) {
@@ -149,6 +138,7 @@ public class QuoteController {
                 item.setQuote(quote);
             }
         }
+
         quoteRepo.save(quote);
         return ResponseEntity.ok().build();
     }
@@ -156,7 +146,7 @@ public class QuoteController {
     @PostMapping("/approve/{id}")
     @ResponseBody
     public ResponseEntity<?> approve(@PathVariable UUID id) {
-        quoteService.approveAndGenerateIntegrations(id);
+        quoteService.approveQuote(id);
         return ResponseEntity.ok().build();
     }
 
