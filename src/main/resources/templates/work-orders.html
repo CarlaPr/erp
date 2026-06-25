@@ -429,99 +429,65 @@
     }
 
     async function editOs(id) {
-        try {
-            const response = await fetch(`/work-orders/edit-data/${id}`);
-            if (!response.ok) throw new Error("Falha ao buscar dados da OS");
+        const response = await fetch(`/work-orders/edit-data/${id}`);
+        const data = await response.json();
 
-            const data = await response.json();
+        document.getElementById('osId').value = data.id;
+        document.getElementById('osTitle').value = data.title;
+        document.getElementById('osStatus').value = data.status;
+        document.getElementById('osQuote').value = data.quoteId || '';
+        document.getElementById('osClient').value = data.client ? data.client.id : '';
+        document.getElementById('osDate').value = data.installDate || '';
+        document.getElementById('osTotalValue').value = data.totalValue;
 
-            // Preenche campos básicos
-            document.getElementById('osId').value = data.id || '';
-            document.getElementById('osTitle').value = data.title || '';
-            document.getElementById('osStatus').value = data.status || 'pending';
-            document.getElementById('osDate').value = data.installDate ? data.installDate.split('T')[0] : '';
-            document.getElementById('osTotalValue').value = data.totalValue || 0;
+        handleQuoteChange();
 
-            // Ajuste de data: pega apenas a parte AAAA-MM-DD
-            if (data.installDate) {
-                document.getElementById('osDate').value = data.installDate.split('T')[0];
-            } else {
-                document.getElementById('osDate').value = '';
-            }
+        soldItems = [];
+        materialItems = [];
+        operationalItems = [];
 
-            // Preenche Cliente e Orçamento com segurança
-            document.getElementById('osClient').value = data.client ? data.client.id : '';
-            document.getElementById('osQuote').value = data.quote ? data.quote.id : '';
-
-            if (data.client) {
-                document.getElementById('osClient').value = data.client.id;
-            } else {
-                document.getElementById('osClient').value = '';
-            }
-
-            // Se 'data.quote' for um objeto, pegamos o ID dele
-            if (data.quote) {
-                document.getElementById('osQuote').value = data.quote.id;
-            } else {
-                document.getElementById('osQuote').value = '';
-            }
-
-            // Limpa e reseta
-            handleQuoteChange();
-            soldItems = [];
-            materialItems = [];
-            operationalItems = [];
-
-            // Preenche Itens
-            if (data.items && Array.isArray(data.items)) {
-                data.items.forEach(i => {
-                    const desc = i.description || "";
-
-                    // 1. Identifica Custo Operacional
-                    if (desc.startsWith("[OP] ")) {
-                        const parts = desc.split(" ||| ");
-                        const meta = parts[0].replace("[OP] ", "").split(" | ");
-                        operationalItems.push({
-                            id: i.id,
-                            category: meta[0] || 'Mão de Obra',
-                            date: meta[1] || '',
-                            obs: meta[2] || '',
-                            description: parts[1] || '',
-                            value: i.unitCost || 0
-                        });
-                    }
-                    // 2. Identifica Item Vendido
-                    else if (i.unitPrice > 0 && i.unitCost === 0) {
-                        soldItems.push({
-                            id: i.id,
-                            description: desc,
-                            quantity: i.quantity,
-                            totalValue: (i.quantity * i.unitPrice)
-                        });
-                    }
-                    // 3. Identifica Material
-                    else {
-                        materialItems.push({
-                            id: i.id,
-                            description: desc,
-                            quantity: i.quantity,
-                            unit: 'un',
-                            unitCost: i.unitCost || 0,
-                            unitPrice: i.unitPrice || 0
-                        });
-                    }
-                });
-            }
-
-            renderAllUI();
-            document.getElementById('modalTitle').innerText = `Editar OS: ${data.number || ''}`;
-            document.getElementById('osModal').classList.remove('hidden');
-            document.getElementById('osModal').classList.add('flex');
-
-        } catch (error) {
-            console.error(error);
-            alert("Erro ao abrir OS para edição. Verifique o console.");
+        if (data.items) {
+            data.items.forEach(i => {
+                // Identifica se é Custo Operacional (pela Flag Invisível [OP])
+                if (i.description && i.description.startsWith("[OP] ")) {
+                    const parts = i.description.split(" ||| ");
+                    const meta = parts[0].replace("[OP] ", "").split(" | ");
+                    operationalItems.push({
+                        id: i.id,
+                        category: meta[0] || 'Mão de Obra',
+                        date: meta[1] || '',
+                        obs: meta[2] || '',
+                        description: parts[1] || '',
+                        value: i.unitCost || 0
+                    });
+                }
+                // Identifica se é Item Vendido (Tem Preço e Não Tem Custo)
+                else if (i.unitPrice > 0 && i.unitCost === 0 && !i.description.includes(" ||| ")) {
+                    soldItems.push({
+                        id: i.id,
+                        description: i.description,
+                        quantity: i.quantity,
+                        totalValue: (i.quantity * i.unitPrice) // O Back-end já guardou o total na unitPrice
+                    });
+                }
+                // Se sobrar, é Material
+                else {
+                    materialItems.push({
+                        id: i.id,
+                        description: i.description,
+                        quantity: i.quantity,
+                        unit: 'un',
+                        unitCost: i.unitCost || 0,
+                        unitPrice: i.unitPrice || 0 // A coluna "Venda Un." que você pediu
+                    });
+                }
+            });
         }
+
+        renderAllUI();
+        document.getElementById('modalTitle').innerText = `OS: ${data.number}`;
+        document.getElementById('osModal').classList.remove('hidden');
+        document.getElementById('osModal').classList.add('flex');
     }
 
     // 3. ADICIONAR LINHAS NAS TABELAS
