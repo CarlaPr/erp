@@ -65,10 +65,11 @@
                                   th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'"
                                   th:text="${wo.status == 'completed' or wo.status == 'delivered' ? 'Entregue' : 'Em Andamento'}">Status</span>
                         </div>
-                        <div class="flex items-center gap-4 text-slate-400">
 
+                        <div class="flex items-center gap-4 text-slate-400">
                             <!-- EDITAR -->
                             <button
+                            <button th:data-id="${wo.id}" onclick="editOs(this.getAttribute('data-id'))" class="text-cyan-400 hover:text-cyan-300"><i data-lucide="edit-3" class="w-5 h-5"></i></button>
                                     type="button"
                                     th:data-id="${wo.id}"
                                     onclick="editOs(this.getAttribute('data-id'))"
@@ -78,31 +79,11 @@
                                 <i data-lucide="edit-3"
                                    class="w-5 h-5">
                                 </i>
-
                             </button>
-
-
-
-                            <!-- VISUALIZAR / IMPRIMIR ORÇAMENTO -->
-                            <button
-                                    type="button"
-                                    th:if="${wo.quote != null}"
-                                    th:data-id="${wo.quote.id}"
-                                    onclick="viewReceipt(this.getAttribute('data-id'))"
-                                    class="hover:text-emerald-400 transition-colors"
-                                    title="Visualizar Espelho Comercial">
-
-                                <i data-lucide="file-text"
-                                   class="w-5 h-5">
-                                </i>
-
-                                <span th:text="${wo.quote.number}"></span>
-
-                            </button>
-
 
                             <!-- CANCELAR -->
                             <button
+                            <button th:if="${wo.status != 'cancelled' && wo.status != 'canceled'}" th:data-id="${wo.id}" onclick="openCancelModal(this.getAttribute('data-id'))" class="text-rose-400 hover:text-rose-300" title="Cancelar Ordem de Serviço"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
                                     type="button"
                                     th:if="${wo.status != 'cancelled' && wo.status != 'canceled'}"
                                     th:data-id="${wo.id}"
@@ -115,12 +96,6 @@
                                 </i>
 
                             </button>
-
-
-                            <!-- EXCLUIR -->
-
-
-
                         </div>
 
                     </div>
@@ -132,11 +107,14 @@
                     <div class="flex items-start gap-4 text-[11px] mb-5">
                         <div class="text-slate-400 flex flex-col">
                             <span th:text="${wo.client != null ? wo.client.name : 'Cliente Avulso'}">Nome do Cliente</span>
-                            <span class="text-slate-500 mt-0.5">Selena</span>
                         </div>
 
                         <!-- Botão de Impressão do Orçamento -->
                         <div th:if="${wo.quote != null}" class="flex flex-col ml-6 text-slate-400">
+                            <button type="button" th:if="${wo.quote != null}" th:data-id="${wo.quote.id}" onclick="viewReceipt(this.getAttribute('data-id'))" class="text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1 cursor-pointer" title="Visualizar Espelho Comercial">
+                                <i data-lucide="printer" class="w-3 h-3"></i>
+                                <span th:text="${wo.quote.number}"></span>
+                            </button>
                             <span class="font-bold text-white mb-0.5">Venda: <span th:text="${wo.quote.number}">ORC-00</span></span>
                             <a th:href="@{/quotes/{id}(id=${wo.quote.id})}" target="_blank" class="flex items-center gap-1.5 text-slate-400 hover:text-cyan-400 transition-colors border border-slate-700 bg-slate-800/50 px-2 py-0.5 rounded w-fit">
                                 <i data-lucide="printer" class="w-3 h-3"></i> <span th:text="${wo.quote.number}">ORC 00</span>
@@ -196,7 +174,7 @@
         </div>
     </div>
 
-    <!-- MODAL PRINCIPAL: EDIÇÃO DA O.S. (VISUAL IDÊNTICO ÀS FOTOS) -->
+    <!-- MODAL PRINCIPAL: EDIÇÃO DA O.S.-->
     <div id="osModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-40 overflow-y-auto py-10">
         <!-- Alterado bg para combinar com a foto: bg-[#0B1120] e bg interno-[#111827] -->
         <div class="bg-[#111827] border border-slate-700 w-full max-w-5xl rounded-2xl shadow-2xl relative my-auto">
@@ -342,7 +320,6 @@
 
     <!-- O MODAL DO RECIBO -->
     <div id="receiptModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-[80] overflow-y-auto py-10">
-        <!-- Modal original de impressão ignorado por economia de linhas, mantenha o que estava aqui se quiser! -->
         <div class="bg-white p-12 rounded-xl max-w-3xl w-full relative">
             <button onclick="closeModal('receiptModal')" class="absolute top-4 right-4 text-black font-bold">X Fechar Impressão</button>
             <h1 class="text-2xl font-bold text-black mb-4">Espelho Comercial da Venda</h1>
