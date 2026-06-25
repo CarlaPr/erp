@@ -3,6 +3,7 @@ package com.alfatahi.erp.controller;
 import com.alfatahi.erp.entity.AccountsReceivable;
 import com.alfatahi.erp.repository.AccountsReceivableRepository;
 import com.alfatahi.erp.service.ClientService;
+import com.alfatahi.erp.service.FinanceService;
 import com.alfatahi.erp.service.WorkOrderService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/receivables")
@@ -19,11 +21,24 @@ public class ReceivableController {
     private final AccountsReceivableRepository receivableRepository;
     private final ClientService clientService;
     private final WorkOrderService workOrderService;
+    private final FinanceService financeService;
 
-    public ReceivableController(AccountsReceivableRepository receivableRepository, ClientService clientService, WorkOrderService workOrderService) {
+    public ReceivableController(AccountsReceivableRepository receivableRepository, ClientService clientService, WorkOrderService workOrderService, FinanceService financeService) {
         this.receivableRepository = receivableRepository;
         this.clientService = clientService;
         this.workOrderService = workOrderService;
+        this.financeService = financeService;
+    }
+
+    @PostMapping("/receivables/pay/{id}")
+    public String processPayment(@PathVariable UUID id, @RequestParam BigDecimal amount) {
+        // Validação básica: não permitir valores negativos
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return "redirect:/receivables?error=invalid_amount";
+        }
+
+        financeService.processReceivablePayment(id, amount);
+        return "redirect:/receivables?success=payment_processed";
     }
 
     @GetMapping

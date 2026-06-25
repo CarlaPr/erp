@@ -1,8 +1,12 @@
 package com.alfatahi.erp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -19,51 +23,197 @@ public class AccountsPayable {
 
     @ManyToOne
     @JoinColumn(name = "work_order_id")
-    private WorkOrder workOrder; // Centro de Custo associado à Obra da Vidraçaria
+    private WorkOrder workOrder;
+
+    @OneToMany(
+            mappedBy = "accountsPayable",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JsonIgnore
+    private List<ExpenseAllocation> allocations = new ArrayList<>();
+
 
     @Column(nullable = false)
     private String description;
 
-    @Column(nullable = false)
-    private String category; // variable, fixed, provision
 
-    @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
+    @Column(nullable = false)
+    private String category;
+
+
+    @Column(name = "subcategory")
+    private String subcategory;
+
+
+    @Column(
+            name = "total_amount",
+            nullable = false,
+            precision = 12,
+            scale = 2
+    )
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
-    @Column(name = "due_date", nullable = false)
+    @Column(
+            name = "paid_amount",
+            precision = 12,
+            scale = 2
+    )
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
+    @Column(
+            name = "due_date",
+            nullable = false
+    )
     private LocalDate dueDate;
 
+
+    /*
+     * pending
+     * partial
+     * paid
+     * cancelled
+     */
     @Column(nullable = false)
-    private String status = "pending"; // pending, paid, cancelled
+    private String status = "pending";
 
     @Column(name = "payment_method")
-    private String paymentMethod; // PIX, Boleto, Cartão, Transferência
+    private String paymentMethod;
 
-    // Adicione o Getter e Setter
-    public String getPaymentMethod() { return paymentMethod; }
-    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    @Column(name = "document_number")
+    private String documentNumber;
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    @Column(name = "is_recurring")
+    private Boolean recurring = false;
 
-    public Supplier getSupplier() { return supplier; }
-    public void setSupplier(Supplier supplier) { this.supplier = supplier; }
+    @Column(
+            name = "notes",
+            columnDefinition = "TEXT"
+    )
+    private String notes;
 
-    public WorkOrder getWorkOrder() { return workOrder; }
-    public void setWorkOrder(WorkOrder workOrder) { this.workOrder = workOrder; }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public UUID getId() {
+        return id;
+    }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public BigDecimal getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public Supplier getSupplier() {
+        return supplier;
+    }
 
-    public LocalDate getDueDate() { return dueDate; }
-    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+    public void setSupplier(Supplier supplier) {
+        this.supplier = supplier;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public WorkOrder getWorkOrder() {
+        return workOrder;
+    }
+
+    public void setWorkOrder(WorkOrder workOrder) {
+        this.workOrder = workOrder;
+    }
+
+    public List<ExpenseAllocation> getAllocations() {
+        return allocations;
+    }
+
+    public void setAllocations(List<ExpenseAllocation> allocations) {
+        this.allocations = allocations;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getSubcategory() {
+        return subcategory;
+    }
+
+    public void setSubcategory(String subcategory) {
+        this.subcategory = subcategory;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public BigDecimal getPaidAmount() {
+        return paidAmount != null
+                ? paidAmount
+                : BigDecimal.ZERO;
+    }
+
+    public void setPaidAmount(BigDecimal paidAmount) {
+        this.paidAmount = paidAmount;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getDocumentNumber() {
+        return documentNumber;
+    }
+
+    public void setDocumentNumber(String documentNumber) {
+        this.documentNumber = documentNumber;
+    }
+
+    public Boolean getRecurring() {
+        return recurring;
+    }
+
+    public void setRecurring(Boolean recurring) {
+        this.recurring = recurring;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
 }
+

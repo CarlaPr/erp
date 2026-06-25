@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 public class WebController {
@@ -23,14 +25,18 @@ public class WebController {
     private final AccountsReceivableRepository receivableRepository;
     private final WorkOrderService workOrderService;
 
-    public WebController(AccountsPayableRepository payableRepository, AccountsReceivableRepository receivableRepository, WorkOrderService workOrderService) {
+    public WebController(AccountsPayableRepository payableRepository,
+                         AccountsReceivableRepository receivableRepository,
+                         WorkOrderService workOrderService) {
         this.payableRepository = payableRepository;
         this.receivableRepository = receivableRepository;
         this.workOrderService = workOrderService;
     }
 
     @GetMapping("/")
-    public String root() { return "redirect:/dashboard"; }
+    public String root() {
+        return "redirect:/dashboard";
+    }
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -41,28 +47,48 @@ public class WebController {
         LocalDate today = LocalDate.now();
 
         // ==========================================
-        // 1. CÁLCULOS DOS CARDS (KPIs REAIS)
+        // 1. CÁLCULOS DOS CARDS (KPIs REAIS COM PROTEÇÃO NULL)
         // ==========================================
-        BigDecimal faturado = receivables.stream().map(AccountsReceivable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal recebido = receivables.stream().map(r -> r.getReceivedAmount() != null ? r.getReceivedAmount() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal faturado = receivables.stream()
+                .map(r -> r.getTotalAmount() != null ? r.getTotalAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal recebido = receivables.stream()
+                .map(r -> r.getReceivedAmount() != null ? r.getReceivedAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         dto.setaReceber(faturado.subtract(recebido));
         dto.setRecebido(recebido);
 
-        BigDecimal cadastrado = payables.stream().map(AccountsPayable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal pago = payables.stream().filter(p -> "paid".equals(p.getStatus())).map(AccountsPayable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal cadastrado = payables.stream()
+                .map(p -> p.getTotalAmount() != null ? p.getTotalAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal pago = payables.stream()
+                .filter(p -> "paid".equals(p.getStatus()))
+                .map(p -> p.getTotalAmount() != null ? p.getTotalAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         dto.setaPagar(cadastrado.subtract(pago));
         dto.setPago(pago);
 
         dto.setSaldoAtual(recebido.subtract(pago));
         dto.setSaldoProjetado(dto.getSaldoAtual().add(dto.getaReceber()).subtract(dto.getaPagar()));
 
-        long atrasados = receivables.stream().filter(r -> "pending".equals(r.getStatus()) && r.getDueDate() != null && r.getDueDate().isBefore(today)).count();
+        long atrasados = receivables.stream()
+                .filter(r -> "pending".equals(r.getStatus()) && r.getDueDate() != null && r.getDueDate().isBefore(today))
+                .count();
         dto.setInadimplentes(atrasados);
 
-        long osAtivas = workOrders.stream().filter(wo -> !"completed".equals(wo.getStatus()) && !"cancelled".equals(wo.getStatus())).count();
+        long osAtivas = workOrders.stream()
+                .filter(wo -> !"completed".equals(wo.getStatus()) && !"cancelled".equals(wo.getStatus()))
+                .count();
         dto.setOsAtivas(osAtivas);
 
-        BigDecimal receitaTotalOs = workOrders.stream().map(WorkOrder::getTotalValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal receitaTotalOs = workOrders.stream()
+                .map(wo -> wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         if (!workOrders.isEmpty()) {
             dto.setTicketMedio(receitaTotalOs.divide(new BigDecimal(workOrders.size()), 2, RoundingMode.HALF_UP));
         }
@@ -101,23 +127,32 @@ public class WebController {
         }
 
         // ==========================================
-        // 3. VISÃO 2: CUSTOS POR CATEGORIA
+        // 3. VISÃO 2: CUSTOS POR SUBCATEGORIA
         // ==========================================
-        BigDecimal costVar = BigDecimal.ZERO;
-        BigDecimal costFix = BigDecimal.ZERO;
-        BigDecimal costProv = BigDecimal.ZERO;
+        Map<String, BigDecimal> expensesBySubcategory = new HashMap<>();
+        BigDecimal totalCosts = BigDecimal.ZERO;
 
         for (AccountsPayable p : payables) {
             BigDecimal val = p.getTotalAmount() != null ? p.getTotalAmount() : BigDecimal.ZERO;
-            if ("variable".equals(p.getCategory())) costVar = costVar.add(val);
-            else if ("fixed".equals(p.getCategory())) costFix = costFix.add(val);
-            else if ("provision".equals(p.getCategory())) costProv = costProv.add(val);
+            totalCosts = totalCosts.add(val);
+
+            String sub = p.getSubcategory();
+            if (sub != null && !sub.trim().isEmpty()) {
+                String normalizedSub = sub.toLowerCase().trim();
+                expensesBySubcategory.put(
+                        normalizedSub,
+                        expensesBySubcategory.getOrDefault(normalizedSub, BigDecimal.ZERO).add(val)
+                );
+            } else {
+                expensesBySubcategory.put(
+                        "outros",
+                        expensesBySubcategory.getOrDefault("outros", BigDecimal.ZERO).add(val)
+                );
+            }
         }
 
-        BigDecimal totalCosts = costVar.add(costFix).add(costProv);
-        BigDecimal pctVar = totalCosts.compareTo(BigDecimal.ZERO) > 0 ? costVar.multiply(new BigDecimal("100")).divide(totalCosts, 0, RoundingMode.HALF_UP) : BigDecimal.ZERO;
-        BigDecimal pctFix = totalCosts.compareTo(BigDecimal.ZERO) > 0 ? costFix.multiply(new BigDecimal("100")).divide(totalCosts, 0, RoundingMode.HALF_UP) : BigDecimal.ZERO;
-        BigDecimal pctProv = totalCosts.compareTo(BigDecimal.ZERO) > 0 ? costProv.multiply(new BigDecimal("100")).divide(totalCosts, 0, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        model.addAttribute("expensesBySubcategory", expensesBySubcategory);
+        model.addAttribute("totalCosts", totalCosts);
 
         // ==========================================
         // 4. VISÃO 3: PERFORMANCE POR TIPO DE SERVIÇO
@@ -160,21 +195,25 @@ public class WebController {
         // 5. ALERTAS DINÂMICOS
         // ==========================================
         List<AccountsReceivable> allPendingReceivables = receivables.stream()
-                .filter(r -> "pending".equals(r.getStatus())).toList();
+                .filter(r -> "pending".equals(r.getStatus()))
+                .collect(Collectors.toList());
 
         List<AccountsPayable> allPendingPayables = payables.stream()
-                .filter(p -> "pending".equals(p.getStatus())).toList();
+                .filter(p -> "pending".equals(p.getStatus()))
+                .collect(Collectors.toList());
 
         List<AccountsReceivable> overdueReceivables = allPendingReceivables.stream()
-                .filter(r -> r.getDueDate() != null && r.getDueDate().isBefore(today)).toList();
+                .filter(r -> r.getDueDate() != null && r.getDueDate().isBefore(today))
+                .collect(Collectors.toList());
 
         List<AccountsPayable> overduePayables = allPendingPayables.stream()
-                .filter(p -> p.getDueDate() != null && p.getDueDate().isBefore(today)).toList();
+                .filter(p -> p.getDueDate() != null && p.getDueDate().isBefore(today))
+                .collect(Collectors.toList());
 
         List<WorkOrder> expiringWorkOrders = workOrders.stream()
                 .filter(wo -> !"completed".equals(wo.getStatus()) && !"cancelled".equals(wo.getStatus()))
                 .filter(wo -> wo.getInstallDate() != null && !wo.getInstallDate().isAfter(today.plusDays(3)))
-                .toList();
+                .collect(Collectors.toList());
 
         // ==========================================
         // 6. CALENDÁRIO UNIFICADO (ENTRADAS E SAÍDAS)
@@ -184,22 +223,26 @@ public class WebController {
         for (AccountsReceivable r : allPendingReceivables) {
             Map<String, Object> ev = new HashMap<>();
             ev.put("type", "IN");
-            ev.put("description", r.getDescription() != null ? r.getDescription() : (r.getClient() != null ? "Recebimento: " + r.getClient().getName() : "Entrada"));
+            String clientName = (r.getClient() != null) ? r.getClient().getName() : "Avulso";
+            String desc = (r.getDescription() != null) ? r.getDescription() : "Recebimento";
+            ev.put("description", desc + " - " + clientName);
             ev.put("date", r.getDueDate());
-            ev.put("amount", r.getTotalAmount());
+            ev.put("amount", r.getTotalAmount() != null ? r.getTotalAmount() : BigDecimal.ZERO);
             calendarEvents.add(ev);
         }
 
         for (AccountsPayable p : allPendingPayables) {
             Map<String, Object> ev = new HashMap<>();
             ev.put("type", "OUT");
-            ev.put("description", p.getDescription() != null ? p.getDescription() : "Despesa");
+            String desc = p.getDescription() != null ? p.getDescription() : "Despesa";
+            String sub = p.getSubcategory() != null ? " (" + p.getSubcategory() + ")" : "";
+            ev.put("description", desc + sub);
+            ev.put("subcategory", p.getSubcategory() != null ? p.getSubcategory().toLowerCase().trim() : "outros");
             ev.put("date", p.getDueDate());
-            ev.put("amount", p.getTotalAmount());
+            ev.put("amount", p.getTotalAmount() != null ? p.getTotalAmount() : BigDecimal.ZERO);
             calendarEvents.add(ev);
         }
 
-        // Ordenar por data (os mais próximos ou atrasados primeiro)
         calendarEvents.sort((a, b) -> {
             LocalDate d1 = (LocalDate) a.get("date");
             LocalDate d2 = (LocalDate) b.get("date");
@@ -209,38 +252,23 @@ public class WebController {
             return d1.compareTo(d2);
         });
 
-
         // ==========================================
-        // 7. INJEÇÃO NO HTML
+        // 7. INJEÇÃO NO HTML (MODEL)
         // ==========================================
         model.addAttribute("currentPage", "dashboard");
         model.addAttribute("dash", dto);
-
-        // Alertas
         model.addAttribute("allPendingReceivables", allPendingReceivables);
         model.addAttribute("allPendingPayables", allPendingPayables);
         model.addAttribute("overdueReceivables", overdueReceivables);
         model.addAttribute("overduePayables", overduePayables);
         model.addAttribute("expiringWorkOrders", expiringWorkOrders);
-
-        // Calendário (Limitado a 16 para não quebrar infinito, mas exibe entradas e saídas)
-        model.addAttribute("calendarEvents", calendarEvents.stream().limit(16).toList());
-
+        model.addAttribute("calendarEvents", calendarEvents.stream().limit(16).collect(Collectors.toList()));
         model.addAttribute("monthlyFlow", monthlyFlow);
-        model.addAttribute("costVar", costVar);
-        model.addAttribute("costFix", costFix);
-        model.addAttribute("costProv", costProv);
-        model.addAttribute("pctVar", pctVar);
-        model.addAttribute("pctFix", pctFix);
-        model.addAttribute("pctProv", pctProv);
-
         model.addAttribute("barLabels", catLabels);
         model.addAttribute("barRevenues", catRevenues);
         model.addAttribute("barProfits", catProfits);
 
-        model.addAttribute("donutData", Arrays.asList(costVar, costFix, costProv, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
-
-        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new java.util.Locale("pt", "BR"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("pt", "BR"));
         String dateStr = today.format(formatter);
         String[] parts = dateStr.split(" ");
         if(parts.length > 2) {

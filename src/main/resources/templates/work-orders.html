@@ -329,24 +329,33 @@
 
 <script>
     // ARRAYS INTELIGENTES (A mágia que separa os dados do Java em 3 listas)
-    let soldItems = [];
-    let materialItems = [];
+    // ================================================================
+    // ARRAYS DE ESTADO
+    // ================================================================
+    let soldItems        = [];
+    let materialItems    = [];
     let operationalItems = [];
-    let osIdToCancel = null;
+    let osIdToCancel     = null;
 
+    // ================================================================
+    // HELPER: Formata valor como moeda BR (R$ 1.234,56)
+    // ================================================================
+    function formatBRL(val) {
+        const n = parseFloat(val) || 0;
+        return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // ================================================================
+    // CONTROLE DE MODAIS
+    // ================================================================
     function openModal() {
         document.getElementById('osForm').reset();
-        document.getElementById('osId').value = '';
+        document.getElementById('osId').value    = '';
         document.getElementById('osQuote').value = '';
         document.getElementById('modalTitle').innerText = 'Nova OS';
-
-        soldItems = [];
-        materialItems = [];
-        operationalItems = [];
-
+        soldItems = []; materialItems = []; operationalItems = [];
         handleQuoteChange();
         renderAllUI();
-
         document.getElementById('osModal').classList.remove('hidden');
         document.getElementById('osModal').classList.add('flex');
     }
@@ -356,6 +365,9 @@
         document.getElementById(id).classList.remove('flex');
     }
 
+    // ================================================================
+    // CANCELAMENTO
+    // ================================================================
     function openCancelModal(id) {
         osIdToCancel = id;
         document.getElementById('cancelReason').value = '';
@@ -365,62 +377,60 @@
 
     function executeCancelOS() {
         const reason = document.getElementById('cancelReason').value;
-        if(!reason) return alert('Por favor, informe o motivo.');
+        if (!reason) return alert('Por favor, informe o motivo.');
         fetch(`/work-orders/cancel/${osIdToCancel}`, {
-            method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: reason
-        }).then(res => { if(res.ok) window.location.reload(); });
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: reason
+        }).then(res => { if (res.ok) window.location.reload(); });
     }
 
-    // 1. GATILHO DE CADEADO E IMPORTAÇÃO DO VALOR TOTAL DOS ITENS
+    // ================================================================
+    // GATILHO DE CADEADO E IMPORTAÇÃO DO ORÇAMENTO
+    // ================================================================
     async function handleQuoteChange() {
-        const quoteId = document.getElementById('osQuote').value;
+        const quoteId      = document.getElementById('osQuote').value;
         const clientSelect = document.getElementById('osClient');
-        const totalInput = document.getElementById('osTotalValue');
-        const lockIcon = document.getElementById('lockIcon');
+        const totalInput   = document.getElementById('osTotalValue');
+        const lockIcon     = document.getElementById('lockIcon');
 
-        if(quoteId) {
+        if (quoteId) {
             clientSelect.disabled = true;
             clientSelect.classList.add('opacity-50', 'cursor-not-allowed');
             totalInput.readOnly = true;
             totalInput.classList.add('border-rose-500/50', 'text-slate-400');
             lockIcon.classList.remove('hidden');
 
-            // Se for Nova O.S., Puxa os dados reais (Valor Total) do Orçamento Comercial
             if (!document.getElementById('osId').value) {
                 try {
                     const res = await fetch(`/quotes/view-data/${quoteId}`);
                     if (res.ok) {
                         const qData = await res.json();
                         clientSelect.value = qData.client ? qData.client.id : '';
-                        totalInput.value = qData.totalValue;
-
+                        totalInput.value   = qData.totalValue;
                         soldItems = [];
                         if (qData.items) {
                             qData.items.forEach(qi => {
-                                // O CÁLCULO EXATO DO VALOR TOTAL (Como você pediu)
                                 let m2 = (qi.width > 0 && qi.height > 0) ? (qi.width * qi.height) : 1;
-                                let valorTotalDoProduto = qi.quantity * m2 * qi.unitPrice;
-
+                                let valorTotal = qi.quantity * m2 * qi.unitPrice;
                                 soldItems.push({
                                     id: null,
                                     description: `${qi.category || 'Item'} - ${qi.product || ''} (LxA: ${qi.width || 0}x${qi.height || 0})`,
                                     quantity: qi.quantity,
-                                    totalValue: valorTotalDoProduto
+                                    totalValue: valorTotal
                                 });
                             });
                         }
                         renderAllUI();
                     }
-                } catch(e) { console.error("Erro", e); }
+                } catch (e) { console.error('Erro ao carregar orçamento', e); }
             }
-
         } else {
             clientSelect.disabled = false;
             clientSelect.classList.remove('opacity-50', 'cursor-not-allowed');
             totalInput.readOnly = false;
             totalInput.classList.remove('border-rose-500/50', 'text-slate-400');
             lockIcon.classList.add('hidden');
-
             if (!document.getElementById('osId').value) {
                 soldItems = [];
                 renderAllUI();
@@ -428,57 +438,53 @@
         }
     }
 
+    // ================================================================
+    // EDITAR OS: carrega dados e abre modal de edição
+    // ================================================================
     async function editOs(id) {
         const response = await fetch(`/work-orders/edit-data/${id}`);
-        const data = await response.json();
+        const data     = await response.json();
 
-        document.getElementById('osId').value = data.id;
-        document.getElementById('osTitle').value = data.title;
-        document.getElementById('osStatus').value = data.status;
-        document.getElementById('osQuote').value = data.quoteId || '';
-        document.getElementById('osClient').value = data.client ? data.client.id : '';
-        document.getElementById('osDate').value = data.installDate || '';
+        document.getElementById('osId').value         = data.id;
+        document.getElementById('osTitle').value      = data.title;
+        document.getElementById('osStatus').value     = data.status;
+        document.getElementById('osQuote').value      = data.quoteId || '';
+        document.getElementById('osClient').value     = data.client ? data.client.id : '';
+        document.getElementById('osDate').value       = data.installDate || '';
         document.getElementById('osTotalValue').value = data.totalValue;
 
         handleQuoteChange();
 
-        soldItems = [];
-        materialItems = [];
-        operationalItems = [];
+        soldItems = []; materialItems = []; operationalItems = [];
 
         if (data.items) {
             data.items.forEach(i => {
-                // Identifica se é Custo Operacional (pela Flag Invisível [OP])
-                if (i.description && i.description.startsWith("[OP] ")) {
-                    const parts = i.description.split(" ||| ");
-                    const meta = parts[0].replace("[OP] ", "").split(" | ");
+                if (i.description && i.description.startsWith('[OP] ')) {
+                    const parts = i.description.split(' ||| ');
+                    const meta  = parts[0].replace('[OP] ', '').split(' | ');
                     operationalItems.push({
                         id: i.id,
                         category: meta[0] || 'Mão de Obra',
-                        date: meta[1] || '',
-                        obs: meta[2] || '',
+                        date:     meta[1] || '',
+                        obs:      meta[2] || '',
                         description: parts[1] || '',
                         value: i.unitCost || 0
                     });
-                }
-                // Identifica se é Item Vendido (Tem Preço e Não Tem Custo)
-                else if (i.unitPrice > 0 && i.unitCost === 0 && !i.description.includes(" ||| ")) {
+                } else if (parseFloat(i.unitPrice) > 0 && parseFloat(i.unitCost) === 0 && !i.description.includes(' ||| ')) {
                     soldItems.push({
                         id: i.id,
                         description: i.description,
-                        quantity: i.quantity,
-                        totalValue: (i.quantity * i.unitPrice) // O Back-end já guardou o total na unitPrice
+                        quantity:    i.quantity,
+                        totalValue:  i.quantity * i.unitPrice
                     });
-                }
-                // Se sobrar, é Material
-                else {
+                } else {
                     materialItems.push({
                         id: i.id,
                         description: i.description,
-                        quantity: i.quantity,
-                        unit: 'un',
-                        unitCost: i.unitCost || 0,
-                        unitPrice: i.unitPrice || 0 // A coluna "Venda Un." que você pediu
+                        quantity:    i.quantity,
+                        unit:        'un',
+                        unitCost:    i.unitCost  || 0,
+                        unitPrice:   i.unitPrice || 0
                     });
                 }
             });
@@ -490,7 +496,25 @@
         document.getElementById('osModal').classList.add('flex');
     }
 
-    // 3. ADICIONAR LINHAS NAS TABELAS
+
+
+    // ================================================================
+    // SPINNER HELPER
+    // ================================================================
+    function spinnerHTML() {
+        return `<div style="display:flex;align-items:center;justify-content:center;padding:64px 0;color:#9ca3af;">
+            <svg style="animation:spin 1s linear infinite;width:32px;height:32px;margin-right:12px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+                <circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path style="opacity:.75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            <span style="font-size:14px;">Carregando...</span>
+        </div>`;
+    }
+
+    // ================================================================
+    // ADICIONAR / REMOVER LINHAS NAS TABELAS DO EDITOR
+    // ================================================================
     function addMaterial() {
         materialItems.push({ id: null, description: '', quantity: 1, unit: 'un', unitCost: 0, unitPrice: 0 });
         renderAllUI();
@@ -498,20 +522,21 @@
     function removeMaterial(index) { materialItems.splice(index, 1); renderAllUI(); }
 
     function addOperational() {
-        // Usa a data de hoje como padrão para facilitar
         const today = new Date().toISOString().split('T')[0];
         operationalItems.push({ id: null, description: '', category: 'Mão de Obra', value: 0, date: today, obs: '' });
         renderAllUI();
     }
     function removeOperational(index) { operationalItems.splice(index, 1); renderAllUI(); }
 
-    // 4. RENDERIZADOR DE TODA A UI (IDÊNTICO ÀS FOTOS)
+    // ================================================================
+    // RENDERIZADOR COMPLETO DA UI DO EDITOR
+    // ================================================================
     function renderAllUI() {
 
         // --- TABELA 1: ITENS VENDIDOS ---
         const soldTbody = document.getElementById('soldItemsBody');
         soldTbody.innerHTML = '';
-        if(soldItems.length > 0) {
+        if (soldItems.length > 0) {
             document.getElementById('soldItemsContainer').classList.remove('hidden');
             soldItems.forEach(item => {
                 soldTbody.innerHTML += `
@@ -519,16 +544,16 @@
                         <td class="p-4 text-slate-300 font-bold text-sm border-l-4 border-emerald-500 pl-3">${item.description}</td>
                         <td class="p-4 text-center text-slate-400 font-mono text-sm">${item.quantity} un</td>
                         <td class="p-4 text-right text-emerald-400 font-mono font-bold text-sm">R$ ${item.totalValue.toFixed(2)}</td>
-                    </tr>
-                `;
+                    </tr>`;
             });
-        } else { document.getElementById('soldItemsContainer').classList.add('hidden'); }
+        } else {
+            document.getElementById('soldItemsContainer').classList.add('hidden');
+        }
 
-        // --- TABELA 2: MATERIAIS / PRODUTOS ---
+        // --- TABELA 2: MATERIAIS ---
         const matCont = document.getElementById('materialsContainer');
         matCont.innerHTML = '';
         let totalMatCost = 0;
-
         materialItems.forEach((m, idx) => {
             let rowTotal = m.quantity * m.unitCost;
             totalMatCost += rowTotal;
@@ -536,30 +561,38 @@
                 <div class="grid grid-cols-12 gap-3 items-end border-b border-slate-700/50 pb-3">
                     <div class="col-span-12 md:col-span-4">
                         <label class="text-[10px] text-slate-400 block mb-1">Descrição</label>
-                        <input type="text" value="${m.description}" onchange="materialItems[${idx}].description=this.value" class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-cyan-500 transition-colors">
+                        <input type="text" value="${m.description}" onchange="materialItems[${idx}].description=this.value"
+                               class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-cyan-500 transition-colors">
                     </div>
                     <div class="col-span-4 md:col-span-1">
                         <label class="text-[10px] text-slate-400 block mb-1">Qtd</label>
-                        <input type="number" value="${m.quantity}" onchange="materialItems[${idx}].quantity=parseFloat(this.value)||1; renderAllUI();" class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-center text-sm outline-none focus:border-cyan-500 transition-colors">
+                        <input type="number" value="${m.quantity}" onchange="materialItems[${idx}].quantity=parseFloat(this.value)||1; renderAllUI();"
+                               class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-center text-sm outline-none focus:border-cyan-500 transition-colors">
                     </div>
                     <div class="col-span-4 md:col-span-1">
                         <label class="text-[10px] text-slate-400 block mb-1">Un.</label>
-                        <input type="text" value="${m.unit}" onchange="materialItems[${idx}].unit=this.value" class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-center text-sm outline-none focus:border-cyan-500 transition-colors">
+                        <input type="text" value="${m.unit}" onchange="materialItems[${idx}].unit=this.value"
+                               class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-center text-sm outline-none focus:border-cyan-500 transition-colors">
                     </div>
                     <div class="col-span-4 md:col-span-2">
                         <label class="text-[10px] text-slate-400 block mb-1">Custo Un.</label>
-                        <input type="number" step="0.01" value="${m.unitCost.toFixed(2)}" onchange="materialItems[${idx}].unitCost=parseFloat(this.value)||0; renderAllUI();" class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-cyan-500 transition-colors">
+                        <input type="number" step="0.01" value="${m.unitCost.toFixed(2)}" onchange="materialItems[${idx}].unitCost=parseFloat(this.value)||0; renderAllUI();"
+                               class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-cyan-500 transition-colors">
                     </div>
                     <div class="col-span-6 md:col-span-2">
                         <label class="text-[10px] text-slate-400 block mb-1">Venda Un.</label>
-                        <input type="number" step="0.01" value="${m.unitPrice.toFixed(2)}" onchange="materialItems[${idx}].unitPrice=parseFloat(this.value)||0" class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-cyan-500 transition-colors">
+                        <input type="number" step="0.01" value="${m.unitPrice.toFixed(2)}" onchange="materialItems[${idx}].unitPrice=parseFloat(this.value)||0"
+                               class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-cyan-500 transition-colors">
                     </div>
                     <div class="col-span-6 md:col-span-2 flex justify-between items-center pb-2 pl-2">
-                        <div class="text-slate-400 text-sm w-full"><span class="text-[10px] block mb-1">Total</span>R$ ${rowTotal.toFixed(2)}</div>
-                        <button type="button" onclick="removeMaterial(${idx})" class="text-rose-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <div class="text-slate-400 text-sm w-full">
+                            <span class="text-[10px] block mb-1">Total</span>R$ ${rowTotal.toFixed(2)}
+                        </div>
+                        <button type="button" onclick="removeMaterial(${idx})" class="text-rose-500 hover:text-rose-400">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
         document.getElementById('totalMaterials').innerText = `R$ ${totalMatCost.toFixed(2)}`;
 
@@ -567,13 +600,10 @@
         const opCont = document.getElementById('operationalsContainer');
         opCont.innerHTML = '';
         let totalOpCost = 0;
-
         const catOptions = ['Mão de Obra', 'Combustível', 'Transporte', 'Instalação', 'Equipamento', 'Outros'];
 
         operationalItems.forEach((o, idx) => {
             totalOpCost += o.value;
-
-            // Gerador de Opções do Select
             let selectHtml = `<select onchange="operationalItems[${idx}].category=this.value" class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-2 py-2 text-white text-sm outline-none focus:border-orange-500 transition-colors">`;
             catOptions.forEach(opt => { selectHtml += `<option value="${opt}" ${o.category === opt ? 'selected' : ''}>${opt}</option>`; });
             selectHtml += `</select>`;
@@ -582,7 +612,8 @@
                 <div class="grid grid-cols-12 gap-3 items-end border-b border-slate-700/50 pb-3">
                     <div class="col-span-12 md:col-span-3">
                         <label class="text-[10px] text-slate-400 block mb-1">Descrição</label>
-                        <input type="text" value="${o.description}" onchange="operationalItems[${idx}].description=this.value" class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-orange-500 transition-colors">
+                        <input type="text" value="${o.description}" onchange="operationalItems[${idx}].description=this.value"
+                               class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-orange-500 transition-colors">
                     </div>
                     <div class="col-span-6 md:col-span-2">
                         <label class="text-[10px] text-slate-400 block mb-1">Categoria</label>
@@ -590,90 +621,83 @@
                     </div>
                     <div class="col-span-6 md:col-span-2">
                         <label class="text-[10px] text-slate-400 block mb-1">Valor</label>
-                        <input type="number" step="0.01" value="${o.value.toFixed(2)}" onchange="operationalItems[${idx}].value=parseFloat(this.value)||0; renderAllUI();" class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-orange-500 transition-colors">
+                        <input type="number" step="0.01" value="${o.value.toFixed(2)}" onchange="operationalItems[${idx}].value=parseFloat(this.value)||0; renderAllUI();"
+                               class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-orange-500 transition-colors">
                     </div>
                     <div class="col-span-6 md:col-span-2">
                         <label class="text-[10px] text-slate-400 block mb-1">Data</label>
-                        <input type="date" value="${o.date}" onchange="operationalItems[${idx}].date=this.value" class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-slate-300 text-sm outline-none focus:border-orange-500 transition-colors [color-scheme:dark]">
+                        <input type="date" value="${o.date}" onchange="operationalItems[${idx}].date=this.value"
+                               class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-slate-300 text-sm outline-none focus:border-orange-500 transition-colors [color-scheme:dark]">
                     </div>
                     <div class="col-span-6 md:col-span-3 flex justify-between items-center pb-0 pl-1">
                         <div class="w-full pr-3">
                             <label class="text-[10px] text-slate-400 block mb-1">Obs</label>
-                            <input type="text" value="${o.obs}" onchange="operationalItems[${idx}].obs=this.value" class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-orange-500 transition-colors">
+                            <input type="text" value="${o.obs}" onchange="operationalItems[${idx}].obs=this.value"
+                                   class="w-full bg-[#0B1120] border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-orange-500 transition-colors">
                         </div>
-                        <button type="button" onclick="removeOperational(${idx})" class="text-rose-500 hover:text-rose-400 pb-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="removeOperational(${idx})" class="text-rose-500 hover:text-rose-400 pb-2">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
         document.getElementById('totalOperationals').innerText = `R$ ${totalOpCost.toFixed(2)}`;
 
-        // --- ATUALIZAR RESUMO FINANCEIRO (KPIs da O.S.) ---
-        const receita = parseFloat(document.getElementById('osTotalValue').value) || 0;
+        // --- KPIs DO EDITOR ---
+        const receita     = parseFloat(document.getElementById('osTotalValue').value) || 0;
         const custoGlobal = totalMatCost + totalOpCost;
-        const lucro = receita - custoGlobal;
-        const margem = receita > 0 ? (lucro / receita) * 100 : 0;
+        const lucro       = receita - custoGlobal;
+        const margem      = receita > 0 ? (lucro / receita) * 100 : 0;
 
         document.getElementById('resumoReceita').innerText = `R$ ${receita.toFixed(2)}`;
-        document.getElementById('resumoCusto').innerText = `R$ ${custoGlobal.toFixed(2)}`;
-        document.getElementById('resumoLucro').innerText = `R$ ${lucro.toFixed(2)}`;
-        document.getElementById('resumoMargem').innerText = `${margem.toFixed(1)}%`;
+        document.getElementById('resumoCusto').innerText   = `R$ ${custoGlobal.toFixed(2)}`;
+        document.getElementById('resumoLucro').innerText   = `R$ ${lucro.toFixed(2)}`;
+        document.getElementById('resumoMargem').innerText  = `${margem.toFixed(1)}%`;
 
-        if(typeof lucide !== 'undefined') lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
-    // Ouve a digitação manual do Preço de Venda e atualiza o resumo em tempo real
     function updateLiveKPIs() { renderAllUI(); }
 
-    // 5. EMPACOTAR TUDO NO FORMATO QUE O JAVA ENTENDE ANTES DE SALVAR
+    // ================================================================
+    // SALVAR OS VIA AJAX
+    // ================================================================
     async function saveFullOS(e) {
         e.preventDefault();
 
-        let clientVal = document.getElementById('osClient').value;
+        const clientVal    = document.getElementById('osClient').value;
         const payloadItems = [];
 
-        // Adiciona Itens Vendidos (Grava o valor total na unidade para não perder a matemática)
         soldItems.forEach(si => {
             payloadItems.push({
-                id: si.id,
-                description: si.description,
-                quantity: si.quantity,
-                unitCost: 0,
+                id: si.id, description: si.description,
+                quantity: si.quantity, unitCost: 0,
                 unitPrice: si.totalValue / (si.quantity || 1)
             });
         });
-
-        // Adiciona Materiais Puros
         materialItems.forEach(mi => {
             payloadItems.push({
-                id: mi.id,
-                description: mi.description,
-                quantity: mi.quantity,
-                unitCost: mi.unitCost,
-                unitPrice: mi.unitPrice
+                id: mi.id, description: mi.description,
+                quantity: mi.quantity, unitCost: mi.unitCost, unitPrice: mi.unitPrice
             });
         });
-
-        // Adiciona Operacionais compactados dentro do "Description"
         operationalItems.forEach(oi => {
             payloadItems.push({
                 id: oi.id,
                 description: `[OP] ${oi.category} | ${oi.date} | ${oi.obs} ||| ${oi.description}`,
-                quantity: 1,
-                unitCost: oi.value,
-                unitPrice: 0
+                quantity: 1, unitCost: oi.value, unitPrice: 0
             });
         });
 
         const payload = {
-            id: document.getElementById('osId').value || null,
-            title: document.getElementById('osTitle').value,
-            status: document.getElementById('osStatus').value,
+            id:          document.getElementById('osId').value || null,
+            title:       document.getElementById('osTitle').value,
+            status:      document.getElementById('osStatus').value,
             installDate: document.getElementById('osDate').value || null,
-            totalValue: parseFloat(document.getElementById('osTotalValue').value) || 0,
-            quoteId: document.getElementById('osQuote').value || null,
-            client: clientVal ? { id: clientVal } : null,
-            items: payloadItems
+            totalValue:  parseFloat(document.getElementById('osTotalValue').value) || 0,
+            quoteId:     document.getElementById('osQuote').value || null,
+            client:      clientVal ? { id: clientVal } : null,
+            items:       payloadItems
         };
 
         await fetch('/work-orders/save-ajax', {

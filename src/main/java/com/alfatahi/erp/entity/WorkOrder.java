@@ -21,9 +21,11 @@ public class WorkOrder {
     private String number;
     private String title;
     private String status;
+
     @Lob
     @Column(columnDefinition = "TEXT")
     private String description;
+
     private String notes;
     private BigDecimal totalValue = BigDecimal.ZERO;
     private LocalDate installDate;
@@ -40,6 +42,7 @@ public class WorkOrder {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @JsonIgnore
     private List<WorkOrderItem> items = new ArrayList<>();
 
     @ManyToOne

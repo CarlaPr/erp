@@ -2,6 +2,9 @@ package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.entity.AccountsPayable;
 import com.alfatahi.erp.repository.AccountsPayableRepository;
+import com.alfatahi.erp.repository.SupplierRepository;
+import com.alfatahi.erp.repository.WorkOrderRepository;
+import com.alfatahi.erp.service.FinanceService;
 import com.alfatahi.erp.service.SupplierService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,22 +13,32 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Controller
-@RequestMapping("/payables")
+@RequestMapping("/payables") // Rota base
 public class PayableController {
 
     private final AccountsPayableRepository payableRepository;
     private final SupplierService supplierService;
+    private final FinanceService financeService;
+    private final SupplierRepository supplierRepository;
+    private final WorkOrderRepository workOrderRepository;
 
-    public PayableController(AccountsPayableRepository payableRepository, SupplierService supplierService) {
+    public PayableController(AccountsPayableRepository payableRepository, SupplierService supplierService,
+                             FinanceService financeService, SupplierRepository supplierRepository,
+                             WorkOrderRepository workOrderRepository) {
         this.payableRepository = payableRepository;
         this.supplierService = supplierService;
+        this.financeService = financeService;
+        this.supplierRepository = supplierRepository;
+        this.workOrderRepository = workOrderRepository;
     }
 
+    // Método único para listar tudo (acessado via /payables)
     @GetMapping
     public String index(Model model) {
-        List<AccountsPayable> list = payableRepository.findAllByOrderByDueDateAsc();
+        List<AccountsPayable> list = financeService.listAllPayables();
 
         // KPIs
         BigDecimal cadastrado = list.stream().map(AccountsPayable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -36,11 +49,10 @@ public class PayableController {
                 .map(AccountsPayable::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        model.addAttribute("currentPage", "payables");
         model.addAttribute("payables", list);
-        model.addAttribute("suppliers", supplierService.listAllActive());
         model.addAttribute("newPayable", new AccountsPayable());
-
+        model.addAttribute("suppliers", supplierRepository.findByIsActiveTrueOrderByNameAsc());
+        model.addAttribute("workOrders", workOrderRepository.findAll());
         model.addAttribute("valCadastrado", cadastrado);
         model.addAttribute("valPago", pago);
         model.addAttribute("valPendente", pendente);
@@ -50,8 +62,20 @@ public class PayableController {
     }
 
     @PostMapping("/save")
-    public String save(@ModelAttribute("newPayable") AccountsPayable payable) {
-        payableRepository.save(payable);
+    public String save(@ModelAttribute AccountsPayable payable) {
+        financeService.savePayable(payable);
+        return "redirect:/payables";
+    }
+
+    @PostMapping("/pay/{id}")
+    public String processPayment(@PathVariable UUID id, @RequestParam(required = false) BigDecimal amount) {
+        financeService.processPayablePayment(id, amount != null ? amount : BigDecimal.ZERO);
+        return "redirect:/payables";
+    }
+
+    @PostMapping("/delete/{id}")
+    public String delete(@PathVariable UUID id) {
+        payableRepository.deleteById(id);
         return "redirect:/payables";
     }
 }
