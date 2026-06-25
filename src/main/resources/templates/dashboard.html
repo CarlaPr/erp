@@ -1,131 +1,287 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head(title='Dashboard Executivo - Alfa Tahi')}"></head>
-<body class="bg-[#0B1120] flex font-sans">
+<body class="bg-[#0B1120] flex font-sans selection:bg-cyan-500/30">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
 <main class="ml-64 p-8 w-full min-h-screen text-slate-200">
-    <header class="flex justify-between items-end mb-8 border-b border-slate-800 pb-4">
+
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-800/80 pb-5 gap-4">
         <div>
             <h2 class="text-3xl font-black text-white tracking-tight">Dashboard Executivo</h2>
+            <p class="text-sm text-slate-400 mt-1">Painel gerencial de indicadores e resultados da operação.</p>
         </div>
 
-        <div class="bg-slate-800/60 border border-slate-700/50 px-4 py-2.5 rounded-xl backdrop-blur-sm flex items-center gap-3 shadow-lg shadow-black/20">
-            <i data-lucide="calendar" class="w-5 h-5 text-cyan-400"></i>
-            <span class="text-slate-200 font-medium text-sm tracking-wide" th:text="${currentDateStr}">23 de Junho de 2026</span>
-        </div>
-    </header>
-
-    <!-- GRID DE 8 CARDS -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <!-- Linha 1 -->
-        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50 relative overflow-hidden">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Saldo Atual</span>
-            <p class="text-2xl font-black text-white mt-1" th:text="'R$ ' + ${dash.saldoAtual}">R$ 0,00</p>
-            <p class="text-[10px] text-slate-500 mt-1" th:text="'Projetado: R$ ' + ${dash.saldoProjetado}"></p>
-            <i data-lucide="landmark" class="w-12 h-12 text-slate-700/30 absolute right-[-10px] bottom-[-10px]"></i>
-        </div>
-        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50 relative overflow-hidden">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">A Receber</span>
-            <p class="text-2xl font-black text-emerald-400 mt-1" th:text="'R$ ' + ${dash.aReceber}">R$ 0,00</p>
-            <p class="text-[10px] text-slate-500 mt-1" th:text="'Recebido: R$ ' + ${dash.recebido}"></p>
-            <i data-lucide="trending-up" class="w-12 h-12 text-slate-700/30 absolute right-[-10px] bottom-[-10px]"></i>
-        </div>
-        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50 relative overflow-hidden">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">A Pagar</span>
-            <p class="text-2xl font-black text-rose-400 mt-1" th:text="'R$ ' + ${dash.aPagar}">R$ 0,00</p>
-            <p class="text-[10px] text-slate-500 mt-1" th:text="'Pago: R$ ' + ${dash.pago}"></p>
-            <i data-lucide="trending-down" class="w-12 h-12 text-slate-700/30 absolute right-[-10px] bottom-[-10px]"></i>
-        </div>
-        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50 relative overflow-hidden">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Lucro Bruto (OS)</span>
-            <p class="text-2xl font-black text-cyan-400 mt-1" th:text="'R$ ' + ${dash.lucroBruto}">R$ 0,00</p>
-            <p class="text-[10px] text-slate-500 mt-1" th:text="'Margem média: ' + ${dash.margemMedia} + '%'"></p>
-            <i data-lucide="pie-chart" class="w-12 h-12 text-slate-700/30 absolute right-[-10px] bottom-[-10px]"></i>
-        </div>
-
-        <!-- Linha 2 -->
-        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Ticket Médio</span>
-            <p class="text-xl font-black text-white mt-1" th:text="'R$ ' + ${dash.ticketMedio}">R$ 0,00</p>
-        </div>
-        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">OS Ativas</span>
-            <p class="text-xl font-black text-white mt-1" th:text="${dash.osAtivas}">0</p>
-        </div>
-        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Inadimplentes</span>
-            <p class="text-xl font-black text-rose-400 mt-1" th:text="${dash.inadimplentes}">0</p>
-        </div>
-        <div class="bg-[#131C2F] p-5 rounded-2xl border border-slate-700/50">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Perdas</span>
-            <p class="text-xl font-black text-white mt-1" th:text="'R$ ' + ${dash.perdas}">R$ 0,00</p>
-            <p class="text-[10px] text-slate-500 mt-1" th:text="${dash.perdasPercentual} + '% da receita'"></p>
-        </div>
-    </div>
-
-    <!-- GRÁFICOS (VISÃO 1, 2 e 3) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <!-- Visão 1 -->
-        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 lg:col-span-2">
-            <h3 class="text-white font-bold text-sm mb-1">Visão 1 - Fluxo de caixa</h3>
-            <p class="text-[10px] text-slate-400 mb-4">Entradas x Saídas previstas e realizadas por mês.</p>
-            <div class="h-64 w-full">
-                <canvas id="chartVisao1"></canvas>
+        <div class="flex items-center gap-6">
+            <div class="relative hidden lg:block text-slate-400 focus-within:text-cyan-400">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 transition-colors"></i>
+                <input type="text" placeholder="Pesquisar..." class="bg-[#131C2F] border border-slate-700/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all w-64 placeholder:text-slate-500">
             </div>
-        </div>
 
-        <!-- Visão 2 -->
-        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50">
-            <h3 class="text-white font-bold text-sm mb-1">Visão 2 - Custos por categoria</h3>
-            <p class="text-[10px] text-slate-400 mb-4">Onde o dinheiro está sendo gasto.</p>
-            <div class="h-48 w-full flex justify-center">
-                <canvas id="chartVisao2"></canvas>
+            <div class="flex items-center gap-4">
+                <button class="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-1 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#0B1120]"></span>
+                </button>
+                <div class="hidden md:flex bg-slate-800/40 border border-slate-700/50 px-3 py-1.5 rounded-lg items-center gap-2">
+                    <i data-lucide="calendar" class="w-4 h-4 text-cyan-400"></i>
+                    <span class="text-slate-300 font-medium text-xs tracking-wide" th:text="${currentDateStr}">Data</span>
+                </div>
             </div>
-        </div>
 
-        <!-- Visão 3 -->
-        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50">
-            <h3 class="text-white font-bold text-sm mb-1">Visão 3 - Performance comercial</h3>
-            <p class="text-[10px] text-slate-400 mb-4">Receita e lucro por tipo de serviço.</p>
-            <div class="h-48 w-full">
-                <canvas id="chartVisao3"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- TABELAS INFERIORES -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Ranking -->
-        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50">
-            <h3 class="text-white font-bold text-sm mb-1">Ranking — OS mais rentáveis</h3>
-            <p class="text-[10px] text-slate-400 mb-4">Top 5 ordens por margem.</p>
-            <div class="space-y-4">
-                <div th:each="os : ${topWorkOrders}" class="flex justify-between items-center border-b border-slate-700/50 pb-2">
-                    <div>
-                        <p class="text-sm font-bold text-white" th:text="${os.number} + ' - ' + ${os.title}">OS</p>
-                        <p class="text-[10px] text-slate-400" th:text="${os.client != null ? os.client.name : 'Cliente'}">Cliente</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-bold text-emerald-400" th:text="'R$ ' + ${os.totalValue}"></p>
-                    </div>
+            <div class="flex items-center gap-3 pl-6 border-l border-slate-800">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-white leading-none">Carla Cristina</p>
+                    <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Administrador</span>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-[#0B1120]">
+                    CC
                 </div>
             </div>
         </div>
+    </header>
 
-        <!-- Calendário Financeiro -->
-        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50">
-            <h3 class="text-white font-bold text-sm mb-1">Calendário financeiro</h3>
-            <p class="text-[10px] text-slate-400 mb-4">Próximos vencimentos.</p>
-            <div class="space-y-4">
-                <div th:each="pay : ${upcomingPayables}" class="flex justify-between items-center border-b border-slate-700/50 pb-2">
-                    <div>
-                        <p class="text-sm font-bold text-white" th:text="${pay.description}">Luz</p>
-                        <p class="text-[10px] text-slate-400" th:text="${#temporals.format(pay.dueDate, 'dd/MM/yyyy')}">Data</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 relative overflow-hidden group hover:border-slate-600 transition-all shadow-lg shadow-black/10">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Saldo Atual</span>
+                <div class="bg-slate-800/80 p-2 rounded-lg text-slate-300 group-hover:text-white transition-colors"><i data-lucide="landmark" class="w-5 h-5"></i></div>
+            </div>
+            <p class="text-3xl font-black text-white" th:text="'R$ ' + ${dash.saldoAtual}">R$ 0,00</p>
+            <div class="mt-3 flex items-center gap-2 text-xs">
+                <span class="text-slate-500" th:text="'Projetado: R$ ' + ${dash.saldoProjetado}"></span>
+            </div>
+        </div>
+
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 relative overflow-hidden group hover:border-emerald-500/30 transition-all shadow-lg shadow-black/10">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">A Receber</span>
+                <div class="bg-emerald-500/10 p-2 rounded-lg text-emerald-400 group-hover:scale-110 transition-transform"><i data-lucide="trending-up" class="w-5 h-5"></i></div>
+            </div>
+            <p class="text-3xl font-black text-emerald-400" th:text="'R$ ' + ${dash.aReceber}">R$ 0,00</p>
+            <div class="mt-3 flex items-center gap-2 text-xs">
+                <span class="text-slate-500" th:text="'Recebido: R$ ' + ${dash.recebido}"></span>
+            </div>
+        </div>
+
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 relative overflow-hidden group hover:border-rose-500/30 transition-all shadow-lg shadow-black/10">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">A Pagar</span>
+                <div class="bg-rose-500/10 p-2 rounded-lg text-rose-400 group-hover:scale-110 transition-transform"><i data-lucide="trending-down" class="w-5 h-5"></i></div>
+            </div>
+            <p class="text-3xl font-black text-rose-400" th:text="'R$ ' + ${dash.aPagar}">R$ 0,00</p>
+            <div class="mt-3 flex items-center gap-2 text-xs">
+                <span class="text-slate-500" th:text="'Pago: R$ ' + ${dash.pago}"></span>
+            </div>
+        </div>
+
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 relative overflow-hidden group hover:border-cyan-500/30 transition-all shadow-lg shadow-black/10">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Lucro Bruto (OS)</span>
+                <div class="bg-cyan-500/10 p-2 rounded-lg text-cyan-400 group-hover:scale-110 transition-transform"><i data-lucide="pie-chart" class="w-5 h-5"></i></div>
+            </div>
+            <p class="text-3xl font-black text-cyan-400" th:text="'R$ ' + ${dash.lucroBruto}">R$ 0,00</p>
+            <div class="mt-3 flex items-center gap-2 text-xs">
+                <span class="bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded font-medium" th:text="'Margem: ' + ${dash.margemMedia} + '%'"></span>
+            </div>
+        </div>
+
+        <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 flex flex-col justify-center">
+            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">Ticket Médio</span>
+            <p class="text-xl font-bold text-white" th:text="'R$ ' + ${dash.ticketMedio}">R$ 0,00</p>
+        </div>
+
+        <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 flex flex-col justify-center">
+            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">OS Ativas</span>
+            <p class="text-xl font-bold text-white" th:text="${dash.osAtivas}">0</p>
+        </div>
+
+        <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 flex flex-col justify-center border-l-2 border-l-rose-500/50">
+            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">Inadimplentes</span>
+            <p class="text-xl font-bold text-rose-400" th:text="${dash.inadimplentes}">0</p>
+        </div>
+
+        <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 flex flex-col justify-center">
+            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">Perdas</span>
+            <div class="flex items-end gap-2">
+                <p class="text-xl font-bold text-slate-300" th:text="'R$ ' + ${dash.perdas}">R$ 0,00</p>
+                <span class="text-[10px] text-slate-500 mb-1" th:text="${dash.perdasPercentual} + '% da receita'"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- LINHA 1: LISTA RECEITAS X DESPESAS E GRÁFICO DE PERFORMANCE -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        <!-- Receitas x Despesas -->
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 flex flex-col h-[400px]">
+            <h3 class="text-white font-bold text-sm mb-6">Receitas x Despesas</h3>
+            <div class="flex-1 flex flex-col justify-between text-xs text-slate-400">
+                <div class="flex justify-between items-center border-b border-slate-800/50 pb-2"><span class="w-16">Jan</span> <div class="flex gap-6 w-full justify-end"><span class="text-cyan-400 w-16 text-right">R$ 0,00</span><span class="text-orange-500 w-16 text-right">R$ 0,00</span></div></div>
+                <div class="flex justify-between items-center border-b border-slate-800/50 pb-2"><span class="w-16">Fev</span> <div class="flex gap-6 w-full justify-end"><span class="text-cyan-400 w-16 text-right">R$ 0,00</span><span class="text-orange-500 w-16 text-right">R$ 0,00</span></div></div>
+                <div class="flex justify-between items-center border-b border-slate-800/50 pb-2"><span class="w-16">Mar</span> <div class="flex gap-6 w-full justify-end"><span class="text-cyan-400 w-16 text-right">R$ 0,00</span><span class="text-orange-500 w-16 text-right">R$ 0,00</span></div></div>
+                <div class="flex justify-between items-center border-b border-slate-800/50 pb-2"><span class="w-16">Abr</span> <div class="flex gap-6 w-full justify-end"><span class="text-cyan-400 w-16 text-right">R$ 0,00</span><span class="text-orange-500 w-16 text-right">R$ 0,00</span></div></div>
+                <div class="flex justify-between items-center border-b border-slate-800/50 pb-2"><span class="w-16">Mai</span> <div class="flex gap-6 w-full justify-end"><span class="text-cyan-400 w-16 text-right">R$ 0,00</span><span class="text-orange-500 w-16 text-right">R$ 0,00</span></div></div>
+                <div class="flex justify-between items-center"><span class="w-16">Jun</span> <div class="flex gap-6 w-full justify-end"><span class="text-cyan-400 w-16 text-right">R$ 0,00</span><span class="text-orange-500 w-16 text-right">R$ 0,00</span></div></div>
+            </div>
+            <!-- Legenda -->
+            <div class="mt-6 flex items-center gap-6 text-[11px] text-slate-400">
+                <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#06b6d4]"></span> Receitas</div>
+                <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#f97316]"></span> Despesas</div>
+            </div>
+        </div>
+
+        <!-- Visão 3: Performance Comercial -->
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 flex flex-col h-[400px]">
+            <h3 class="text-white font-bold text-sm mb-1">Performance comercial</h3>
+            <p class="text-xs text-slate-400 mb-6">Receita e lucro por tipo de serviço.</p>
+            <div class="flex-1 w-full relative">
+                <canvas id="chartVisao3"></canvas>
+            </div>
+            <!-- Legenda Customizada p/ Gráfico Barras -->
+            <div class="mt-4 flex justify-center items-center gap-6 text-[11px] text-slate-400">
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[#06b6d4]"></span> receita</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[#4ade80]"></span> lucro</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LINHA 2: ALERTAS E VISÃO DE CUSTOS -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+
+        <!-- Alertas (Coluna da Esquerda) -->
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 lg:col-span-4 flex flex-col gap-4 justify-start">
+            <h3 class="text-white font-bold text-sm flex items-center gap-2 mb-2">
+                <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500"></i> Alertas
+            </h3>
+
+            <!-- Alerta Vermelho -->
+            <div class="bg-[#2A1D27] border border-[#4B2533] rounded-xl p-4 flex flex-col justify-center">
+                <div class="flex items-center gap-2 text-[#fb7185] font-medium text-sm mb-1">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i> Contas vencidas a receber
+                </div>
+                <p class="text-[11px] text-slate-400 pl-6">R$ 57.500,00 em atraso</p>
+            </div>
+
+            <!-- Alerta Amarelo -->
+            <div class="bg-[#27231B] border border-[#483B20] rounded-xl p-4 flex flex-col justify-center">
+                <div class="flex items-center gap-2 text-[#fbbf24] font-medium text-sm mb-1">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i> Contas vencidas a pagar
+                </div>
+                <p class="text-[11px] text-slate-400 pl-6">R$ 17.489,90 em atraso</p>
+            </div>
+
+            <!-- Alerta Laranja (Adicionado conforme pedido) -->
+            <div class="bg-[#28201A] border border-[#4D2D1B] rounded-xl p-4 flex flex-col justify-center">
+                <div class="flex items-center gap-2 text-[#f97316] font-medium text-sm mb-1">
+                    <i data-lucide="clock-alert" class="w-4 h-4"></i> Prazos de Instalação (OS)
+                </div>
+                <p class="text-[11px] text-slate-400 pl-6">2 ordens com prazo expirado</p>
+            </div>
+        </div>
+
+        <!-- Visão 2: Custos por Categoria (Coluna da Direita) -->
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 lg:col-span-8 flex flex-col relative overflow-hidden bg-gradient-to-br from-[#122432] to-[#131C2F]">
+            <h3 class="text-white font-bold text-sm mb-1">Visão 2 - Custos por categoria</h3>
+            <p class="text-xs text-slate-400 mb-2">Onde o dinheiro está saindo.</p>
+
+            <div class="flex-1 flex justify-center items-center w-full relative min-h-[220px]">
+                <canvas id="chartVisao2"></canvas>
+            </div>
+
+            <!-- Legenda Customizada (Idêntica à Imagem) -->
+            <div class="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[10px] text-[#06b6d4] font-bold">
+                <div class="flex items-center gap-1.5"><span class="w-3.5 h-1.5 rounded-full bg-[#06b6d4]"></span> vidro</div>
+                <div class="flex items-center gap-1.5 text-[#fbbf24]"><span class="w-3.5 h-1.5 rounded-full bg-[#fbbf24]"></span> salários</div>
+                <div class="flex items-center gap-1.5 text-[#4ade80]"><span class="w-3.5 h-1.5 rounded-full bg-[#4ade80]"></span> alumínio</div>
+                <div class="flex items-center gap-1.5 text-[#a855f7]"><span class="w-3.5 h-1.5 rounded-full bg-[#a855f7]"></span> aluguel</div>
+                <div class="flex items-center gap-1.5 text-[#fb7185]"><span class="w-3.5 h-1.5 rounded-full bg-[#fb7185]"></span> mão-de-obra</div>
+                <div class="flex items-center gap-1.5 text-[#38bdf8]"><span class="w-3.5 h-1.5 rounded-full bg-[#38bdf8]"></span> ferragens</div>
+                <div class="flex items-center gap-1.5 text-[#fcd34d]"><span class="w-3.5 h-1.5 rounded-full bg-[#fcd34d]"></span> provisionamento</div>
+                <div class="flex items-center gap-1.5 text-[#34d399]"><span class="w-3.5 h-1.5 rounded-full bg-[#34d399]"></span> energia</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LINHA 3: DESPESAS POR CATEGORIA -->
+    <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 mb-6">
+        <h3 class="text-white font-bold text-sm flex items-center gap-2 mb-6">
+            <i data-lucide="package-open" class="w-5 h-5 text-orange-500"></i> Despesas por Categoria
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Variáveis -->
+            <div class="bg-[#1A233A] p-5 rounded-xl border border-slate-800">
+                <p class="text-xs text-slate-400 mb-1">Variáveis</p>
+                <p class="text-2xl font-bold text-white mb-6">R$ 21.300,00</p>
+                <div class="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden">
+                    <div class="bg-[#f97316] h-full rounded-full" style="width: 75%;"></div>
+                </div>
+            </div>
+
+            <!-- Fixas -->
+            <div class="bg-[#1A233A] p-5 rounded-xl border border-slate-800">
+                <p class="text-xs text-slate-400 mb-1">Fixas</p>
+                <p class="text-2xl font-bold text-white mb-6">R$ 8.270,30</p>
+                <div class="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden">
+                    <div class="bg-[#3b82f6] h-full rounded-full" style="width: 30%;"></div>
+                </div>
+            </div>
+
+            <!-- Provisões -->
+            <div class="bg-[#1A233A] p-5 rounded-xl border border-slate-800">
+                <p class="text-xs text-slate-400 mb-1">Provisões</p>
+                <p class="text-2xl font-bold text-white mb-6">R$ 4.200,00</p>
+                <div class="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden">
+                    <div class="bg-[#a855f7] h-full rounded-full" style="width: 15%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LINHA 4: CALENDÁRIO FINANCEIRO -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Encaixado na coluna da direita conforme imagem -->
+        <div class="lg:col-start-3">
+            <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50">
+                <div class="mb-6 border-b border-slate-800/80 pb-4">
+                    <h3 class="text-white font-bold text-sm mb-1">Calendário financeiro</h3>
+                    <p class="text-xs text-slate-400">Próximos vencimentos.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Entrada Positiva Exemplo -->
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#10b981] mt-1.5"></span>
+                            <p class="text-[11px] font-bold text-slate-300">21/06/2026</p>
+                        </div>
+                        <p class="text-xs font-bold text-[#10b981]">+ R$ 0,00</p>
                     </div>
-                    <div class="text-right">
-                        <p class="text-sm font-bold text-rose-400" th:text="'- R$ ' + ${pay.totalAmount}"></p>
+
+                    <!-- Saída Negativa Exemplo / Laço Thymeleaf -->
+                    <div th:each="pay : ${upcomingPayables}" class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#fb7185] mt-1.5"></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-200" th:text="${pay.description}">Vidros Norte — NF 4521</p>
+                                <p class="text-[10px] text-slate-500 mt-0.5" th:text="${#temporals.format(pay.dueDate, 'dd/MM/yyyy')}">24/06/2026</p>
+                            </div>
+                        </div>
+                        <p class="text-xs font-bold text-[#fb7185]" th:text="'- R$ ' + ${pay.totalAmount}">- R$ 3.200,00</p>
+                    </div>
+
+                    <!-- Mock adicional caso a lista do banco venha vazia, para manter o layout -->
+                    <div th:if="${#lists.isEmpty(upcomingPayables)}" class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#fb7185] mt-1.5"></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-200">Vidros Norte — NF 4521</p>
+                                <p class="text-[10px] text-slate-500 mt-0.5">24/06/2026</p>
+                            </div>
+                        </div>
+                        <p class="text-xs font-bold text-[#fb7185]">- R$ 3.200,00</p>
                     </div>
                 </div>
             </div>
@@ -136,63 +292,93 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script th:inline="javascript">
-    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.color = '#64748b';
     Chart.defaults.font.family = 'Inter, sans-serif';
+    Chart.defaults.scale.grid.color = 'rgba(30, 41, 59, 0.4)';
 
     // ==========================================
-    // VISÃO 1: Fluxo de Caixa (12 Meses Dinâmicos)
+    // VISÃO 3: Performance Comercial (Gráfico de Barras)
     // ==========================================
-    const labelsV1 = /*[[${chartMonths}]]*/ "['Jan']";
-    const dataIn = /*[[${chartIn}]]*/ "[0,0,0,0,0,0,0,0,0,0,0,0]";
-    const dataOut = /*[[${chartOut}]]*/ "[0,0,0,0,0,0,0,0,0,0,0,0]";
-
-    new Chart(document.getElementById('chartVisao1'), {
-        type: 'line',
-        data: {
-            labels: eval(labelsV1),
-            datasets: [
-                { label: 'Entradas (Faturado)', data: eval(dataIn), borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.4 },
-                { label: 'Saídas (Custos)', data: eval(dataOut), borderColor: '#f43f5e', backgroundColor: '#f43f5e', tension: 0.4 }
-            ]
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: '#334155' } }, x: { grid: { display: false } } } }
-    });
-
-    // ==========================================
-    // VISÃO 2: Custos por Categoria (Dinâmico)
-    // ==========================================
-    const donutDataArr = /*[[${donutData}]]*/ "[0,0,0]";
-
-    new Chart(document.getElementById('chartVisao2'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Custo Variável (Materiais)', 'Custo Fixo (Operação)', 'Provisões'],
-            datasets: [{
-                data: eval(donutDataArr),
-                backgroundColor: ['#22d3ee', '#f43f5e', '#fbbf24'],
-                borderWidth: 0
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } } }
-    });
-
-    // ==========================================
-    // VISÃO 3: Performance Comercial (Dinâmico)
-    // ==========================================
-    const barLabelsArr = /*[[${barLabels}]]*/ "[]";
-    const barRevArr = /*[[${barRevenues}]]*/ "[]";
-    const barProfArr = /*[[${barProfits}]]*/ "[]";
+    // Usando variáveis reais do DTO ou arrays estáticos baseados na imagem
+    const labelsV3 = ['Box de Banheiro', 'Fechamento de Sacada', 'Janela', 'Espelho'];
+    const dataReceita = [2000, 9000, 14500, 1000];
+    const dataLucro = [1000, 3000, 4000, 500];
 
     new Chart(document.getElementById('chartVisao3'), {
         type: 'bar',
         data: {
-            labels: eval(barLabelsArr),
+            labels: labelsV3,
             datasets: [
-                { label: 'Receita', data: eval(barRevArr), backgroundColor: '#10b981', borderRadius: 4 },
-                { label: 'Lucro', data: eval(barProfArr), backgroundColor: '#2dd4bf', borderRadius: 4 }
+                {
+                    label: 'Receita',
+                    data: dataReceita,
+                    backgroundColor: '#06b6d4',
+                    borderRadius: 2,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.5
+                },
+                {
+                    label: 'Lucro',
+                    data: dataLucro,
+                    backgroundColor: '#4ade80',
+                    borderRadius: 2,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.5
+                }
             ]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: '#334155' } }, x: { grid: { display: false } } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false } // Escondemos a padrão para usar a HTML estilizada
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 9 }, color: '#94a3b8' }
+                },
+                y: {
+                    border: { display: false },
+                    grid: { borderDash: [4, 4] },
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$' + (value / 1000) + 'k';
+                        },
+                        stepSize: 4000,
+                        font: { size: 10 }
+                    }
+                }
+            }
+        }
+    });
+
+    // ==========================================
+    // VISÃO 2: Custos por Categoria (Gráfico Donut)
+    // ==========================================
+    const dataV2 = [25, 20, 10, 15, 10, 8, 7, 5];
+    const colorsV2 = ['#06b6d4', '#fbbf24', '#4ade80', '#a855f7', '#fb7185', '#38bdf8', '#fcd34d', '#34d399'];
+
+    new Chart(document.getElementById('chartVisao2'), {
+        type: 'doughnut',
+        data: {
+            labels: ['vidro', 'salários', 'alumínio', 'aluguel', 'mão-de-obra', 'ferragens', 'provisionamento', 'energia'],
+            datasets: [{
+                data: dataV2,
+                backgroundColor: colorsV2,
+                hoverOffset: 4,
+                borderWidth: 1,
+                borderColor: '#131C2F' // Borda escura para dar separação fina entre as fatias
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%', // Furo maior no meio, idêntico à foto
+            plugins: {
+                legend: { display: false } // Custom legend criada no HTML
+            }
+        }
     });
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>

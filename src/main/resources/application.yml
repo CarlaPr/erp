@@ -1,6 +1,5 @@
 spring:
   datasource:
-    # Adicionado ;AUTO_SERVER=TRUE no final da linha para evitar locks de arquivo
     url: jdbc:h2:file:./data/alfatahi_db;AUTO_SERVER=TRUE
     driverClassName: org.h2.Driver
     username: sa
@@ -10,6 +9,7 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+    open-in-view: false
   h2:
     console:
       enabled: true
