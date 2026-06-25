@@ -1,6 +1,7 @@
 package com.alfatahi.erp.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -28,13 +29,20 @@ public class WorkOrder {
     private LocalDate installDate;
 
     @ManyToOne
+    @JsonIgnoreProperties({
+            "quotes",
+            "workOrders"
+    })
     private Client client;
 
-    // ORPHAN REMOVAL = TRUE: Se remover da lista, remove do banco!
-    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(
+            mappedBy = "workOrder",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<WorkOrderItem> items = new ArrayList<>();
 
-    @OneToOne(mappedBy = "workOrder")
+    @ManyToOne
     @JsonIgnore
     private Quote quote;
 

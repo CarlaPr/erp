@@ -3,6 +3,8 @@ package com.alfatahi.erp.controller;
 import com.alfatahi.erp.entity.*;
 import com.alfatahi.erp.repository.*;
 import com.alfatahi.erp.service.*;
+import org.hibernate.Hibernate;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,38 +27,58 @@ public class WorkOrderController {
     private final ServiceCategoryRepository categoryRepository;
     private final ProfileRepository profileRepository;
     private final QuoteRepository quoteRepository;
+    private final WorkOrderRepository workOrderRepo;
 
     public WorkOrderController(WorkOrderService workOrderService, ClientService clientService,
                                ServiceCategoryRepository categoryRepository, ProfileRepository profileRepository,
-                               QuoteRepository quoteRepository) {
+                               QuoteRepository quoteRepository, WorkOrderRepository workOrderRepo) {
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
         this.profileRepository = profileRepository;
         this.quoteRepository = quoteRepository;
+        this.workOrderRepo = workOrderRepo;
     }
 
     @GetMapping
     @Transactional(readOnly = true)
     public String index(Model model) {
-        List<WorkOrder> allOrders = workOrderService.listAll();
+        // Busca todas as ordens de serviço da mais nova para a mais antiga
+        List<WorkOrder> orders = workOrderRepo.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        // Filtra ativas para KPIs
-        List<WorkOrder> active = allOrders.stream().filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus())).collect(Collectors.toList());
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        BigDecimal totalCost = BigDecimal.ZERO;
 
-        BigDecimal receita = active.stream().map(WorkOrder::getTotalValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal custo = active.stream().map(WorkOrder::getTotalCost).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal lucro = receita.subtract(custo);
-        BigDecimal margem = receita.compareTo(BigDecimal.ZERO) > 0 ? lucro.multiply(new BigDecimal("100")).divide(receita, 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        // Calcula os totais globais
+        for (WorkOrder wo : orders) {
+            if (!"cancelled".equals(wo.getStatus())) {
+                BigDecimal rev = wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO;
+                BigDecimal cost = wo.getTotalCost() != null ? wo.getTotalCost() : BigDecimal.ZERO;
 
-        model.addAttribute("workOrders", allOrders);
-        model.addAttribute("availableQuotes", quoteRepository.findAll().stream().filter(q -> "approved".equals(q.getStatus())).collect(Collectors.toList()));
-        model.addAttribute("clients", clientService.listAllActive());
-        model.addAttribute("profile", profileRepository.findAll().stream().findFirst().orElse(null));
-        model.addAttribute("receitaTotal", receita);
-        model.addAttribute("custoTotal", custo);
-        model.addAttribute("lucroBruto", lucro);
-        model.addAttribute("margemMedia", margem);
+                totalRevenue = totalRevenue.add(rev);
+                totalCost = totalCost.add(cost);
+            }
+        }
+
+        BigDecimal globalProfit = totalRevenue.subtract(totalCost);
+        BigDecimal averageMargin = BigDecimal.ZERO;
+
+        if (totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
+            averageMargin = globalProfit.multiply(new BigDecimal("100")).divide(totalRevenue, 2, RoundingMode.HALF_UP);
+        }
+
+        orders.forEach(wo -> {
+            if (wo.getItems() != null) {
+                wo.getItems().size();
+            }
+        });
+        model.addAttribute("orders", orders);
+        model.addAttribute("totalRevenue", totalRevenue);
+        model.addAttribute("totalCost", totalCost);
+        model.addAttribute("globalProfit", globalProfit);
+        model.addAttribute("averageMargin", averageMargin);
+        model.addAttribute("currentPage", "work-orders");
+
         return "work-orders";
     }
 
@@ -76,9 +99,11 @@ public class WorkOrderController {
                 targetWo.setTotalValue(workOrder.getTotalValue());
                 targetWo.setClient(workOrder.getClient());
 
-                // Limpa a lista atual. Graças ao orphanRemoval=true na Entidade,
-                // o Hibernate apaga os itens antigos sozinho.
-                targetWo.getItems().clear();
+                if (targetWo.getItems() == null) {
+                    targetWo.setItems(new ArrayList<>());
+                } else {
+                    targetWo.getItems().clear();
+                }
             } else {
                 targetWo = workOrder;
             }
@@ -111,7 +136,10 @@ public class WorkOrderController {
 
     @GetMapping("/edit-data/{id}")
     @ResponseBody
-    public ResponseEntity<?> getEditData(@PathVariable UUID id) {
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getEditData(
+            @PathVariable UUID id
+    ) {
 
         WorkOrder wo = workOrderService.findById(id);
 
@@ -119,6 +147,7 @@ public class WorkOrderController {
             return ResponseEntity.notFound().build();
         }
 
+        Hibernate.initialize(wo.getItems());
         return ResponseEntity.ok(wo);
     }
 

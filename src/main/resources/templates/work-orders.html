@@ -6,84 +6,180 @@
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
 <main class="ml-64 p-8 w-full min-h-screen text-slate-200">
-    <header class="flex justify-between items-center mb-8">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
             <h2 class="text-3xl font-black text-white tracking-tight">Ordens de Serviço</h2>
-            <p class="text-slate-400 mt-1">Gestão de projetos, custos operacionais e margens.</p>
+            <p class="text-sm text-slate-400 mt-1">Gestão de projetos, custos operacionais e margens.</p>
         </div>
-        <button onclick="openModal()" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20">
+        <a th:href="@{/work-orders/new}" class="bg-[#06b6d4] hover:bg-[#0891b2] text-[#0B1120] font-bold py-2.5 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-cyan-500/20">
             <i data-lucide="plus-circle" class="w-5 h-5"></i> Nova OS
-        </button>
+        </a>
     </header>
 
+    <!-- KPIs Topo -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Receita Total</span>
-            <p class="text-2xl font-black text-white mt-2" th:text="'R$ ' + ${receitaTotal}">R$ 0,00</p>
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 shadow-lg">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Receita Total</p>
+            <p class="text-2xl font-black text-white" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Custos Totais (CMV)</span>
-            <p class="text-2xl font-black text-rose-400 mt-2" th:text="'R$ ' + ${custoTotal}">R$ 0,00</p>
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 shadow-lg">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Custos Totais (CMV)</p>
+            <p class="text-2xl font-black text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(totalCost, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Lucro Bruto Global</span>
-            <p class="text-2xl font-black text-emerald-400 mt-2" th:text="'R$ ' + ${lucroBruto}">R$ 0,00</p>
+        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 shadow-lg">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Lucro Bruto Global</p>
+            <p class="text-2xl font-black text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(globalProfit, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-cyan-500/10 p-6 rounded-2xl border border-cyan-500/20 backdrop-blur-sm">
-            <span class="text-cyan-400 text-xs font-bold uppercase tracking-wider">Margem Média</span>
-            <p class="text-2xl font-black text-cyan-400 mt-2" th:text="${margemMedia} + '%'">0%</p>
+        <div class="bg-[#122432] p-6 rounded-2xl border border-cyan-500/30 shadow-lg">
+            <p class="text-[10px] font-bold text-cyan-500 uppercase tracking-wider mb-2">Margem Média</p>
+            <p class="text-2xl font-black text-cyan-400" th:text="${#numbers.formatDecimal(averageMargin, 1, 'POINT', 2, 'COMMA')} + '%'">0.00%</p>
         </div>
     </div>
 
-    <div class="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
-        <table class="w-full text-left border-collapse">
-            <thead>
-            <tr class="border-b border-slate-700/50 bg-slate-800/80 text-slate-400 font-bold text-xs uppercase tracking-wider">
-                <th class="p-5">OS / Cliente</th>
-                <th class="p-5">Status</th>
-                <th class="p-5 text-right">Receita (R$)</th>
-                <th class="p-5 text-right">Custo (R$)</th>
-                <th class="p-5 text-right">Lucro</th>
-                <th class="p-5 text-center">Entrega</th>
-                <th class="p-5 text-center">Ações</th>
-            </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-700/50 text-sm">
-            <tr th:each="wo : ${workOrders}" class="hover:bg-slate-700/30 transition-colors">
-                <td class="p-5">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-slate-700/50 px-2 py-1 rounded text-xs font-mono font-bold text-cyan-400" th:text="${wo.number}">OS-01</div>
-                        <div>
-                            <div class="font-bold text-white" th:text="${wo.title}">Titulo</div>
-                            <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
-                                <span th:text="${wo.client != null ? wo.client.name : 'S/ Cliente'}">Cliente</span>
-                                <button type="button" th:if="${wo.quote != null}" th:data-id="${wo.quote.id}" onclick="viewReceipt(this.getAttribute('data-id'))" class="text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1 cursor-pointer" title="Visualizar Espelho Comercial">
-                                    <i data-lucide="printer" class="w-3 h-3"></i>
-                                    <span th:text="${wo.quote.number}"></span>
-                                </button>
-                            </div>
+    <!-- Container Lista de OS -->
+    <div class="bg-[#131C2F]/40 border border-slate-700/50 rounded-3xl p-4 sm:p-6 shadow-xl">
+        <div class="space-y-4">
+
+            <!-- Card Individual OS -->
+            <div th:each="wo : ${orders}"
+                 th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}"
+                 class="bg-[#131C2F] border border-slate-700/50 rounded-2xl p-5 relative overflow-hidden flex gap-5 hover:border-slate-600 transition-colors">
+
+                <!-- Indicador de Status Colorido (Borda Esquerda) -->
+                <div class="absolute left-0 top-0 bottom-0 w-1"
+                     th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-500' : 'bg-blue-500'"></div>
+
+                <!-- Ícone da OS -->
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0 mt-1">
+                    <i data-lucide="clipboard-list" class="w-6 h-6 text-cyan-400"></i>
+                </div>
+
+                <!-- Conteúdo Central -->
+                <div class="flex-1">
+
+                    <!-- Linha 1: Numeração, Status e Ações -->
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-white text-sm" th:text="${wo.number}">OS-0000</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide"
+                                  th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'"
+                                  th:text="${wo.status == 'completed' or wo.status == 'delivered' ? 'Entregue' : 'Em Andamento'}">Status</span>
+                        </div>
+                        <div class="flex items-center gap-4 text-slate-400">
+
+                            <!-- EDITAR -->
+                            <button
+                                    type="button"
+                                    th:data-id="${wo.id}"
+                                    onclick="editOs(this.getAttribute('data-id'))"
+                                    class="hover:text-cyan-400 transition-colors"
+                                    title="Editar Ordem de Serviço">
+
+                                <i data-lucide="edit-3"
+                                   class="w-5 h-5">
+                                </i>
+
+                            </button>
+
+
+
+                            <!-- VISUALIZAR / IMPRIMIR ORÇAMENTO -->
+                            <button
+                                    type="button"
+                                    th:if="${wo.quote != null}"
+                                    th:data-id="${wo.quote.id}"
+                                    onclick="viewReceipt(this.getAttribute('data-id'))"
+                                    class="hover:text-emerald-400 transition-colors"
+                                    title="Visualizar Espelho Comercial">
+
+                                <i data-lucide="file-text"
+                                   class="w-5 h-5">
+                                </i>
+
+                                <span th:text="${wo.quote.number}"></span>
+
+                            </button>
+
+
+                            <!-- CANCELAR -->
+                            <button
+                                    type="button"
+                                    th:if="${wo.status != 'cancelled' && wo.status != 'canceled'}"
+                                    th:data-id="${wo.id}"
+                                    onclick="openCancelModal(this.getAttribute('data-id'))"
+                                    class="hover:text-yellow-400 transition-colors"
+                                    title="Cancelar Ordem de Serviço">
+
+                                <i data-lucide="x-circle"
+                                   class="w-5 h-5">
+                                </i>
+
+                            </button>
+
+
+                            <!-- EXCLUIR -->
+
+
+
+                        </div>
+
+                    </div>
+
+                    <!-- Linha 2: Título -->
+                    <h3 class="text-sm font-bold text-white mb-2" th:text="${wo.title != null ? wo.title : 'Ordem de Serviço Sem Título'}">Título da OS</h3>
+
+                    <!-- Linha 3: Cliente e Referência de Venda (Orçamento) -->
+                    <div class="flex items-start gap-4 text-[11px] mb-5">
+                        <div class="text-slate-400 flex flex-col">
+                            <span th:text="${wo.client != null ? wo.client.name : 'Cliente Avulso'}">Nome do Cliente</span>
+                            <span class="text-slate-500 mt-0.5">Selena</span>
+                        </div>
+
+                        <!-- Botão de Impressão do Orçamento -->
+                        <div th:if="${wo.quote != null}" class="flex flex-col ml-6 text-slate-400">
+                            <span class="font-bold text-white mb-0.5">Venda: <span th:text="${wo.quote.number}">ORC-00</span></span>
+                            <a th:href="@{/quotes/{id}(id=${wo.quote.id})}" target="_blank" class="flex items-center gap-1.5 text-slate-400 hover:text-cyan-400 transition-colors border border-slate-700 bg-slate-800/50 px-2 py-0.5 rounded w-fit">
+                                <i data-lucide="printer" class="w-3 h-3"></i> <span th:text="${wo.quote.number}">ORC 00</span>
+                            </a>
                         </div>
                     </div>
-                </td>
-                <td class="p-5">
-                    <span th:if="${wo.status == 'in_progress'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-400 uppercase">Em Obra</span>
-                    <span th:if="${wo.status == 'completed'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">Concluído</span>
-                    <span th:if="${wo.status == 'cancelled' || wo.status == 'canceled'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 uppercase">Cancelada</span>
-                </td>
-                <td class="p-5 text-right font-mono font-bold text-slate-300" th:text="'R$ ' + ${wo.totalValue}">0,00</td>
-                <td class="p-5 text-right font-mono font-bold text-orange-400" th:text="'R$ ' + ${wo.getTotalCost()}">0,00</td>
-                <td class="p-5 text-right">
-                    <div class="font-mono font-bold text-emerald-400" th:text="'R$ ' + ${wo.getProfit()}">0,00</div>
-                    <div class="text-[10px] text-emerald-500/70 font-bold" th:text="${wo.getMargin()} + '%'">0%</div>
-                </td>
-                <td class="p-5 text-center text-slate-400" th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : '-'}">-</td>
-                <td class="p-5 text-center space-x-3">
-                    <button th:data-id="${wo.id}" onclick="editOs(this.getAttribute('data-id'))" class="text-cyan-400 hover:text-cyan-300"><i data-lucide="edit-3" class="w-5 h-5"></i></button>
-                    <button th:if="${wo.status != 'cancelled' && wo.status != 'canceled'}" th:data-id="${wo.id}" onclick="openCancelModal(this.getAttribute('data-id'))" class="text-rose-400 hover:text-rose-300" title="Cancelar Ordem de Serviço"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+
+                    <!-- Linha 4: Indicadores Financeiros Individuais -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                        <div>
+                            <p class="text-[10px] text-slate-500 mb-0.5">Receita</p>
+                            <p class="text-xs font-bold text-white" th:text="'R$ ' + ${#numbers.formatDecimal(receita, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 mb-0.5">Custos</p>
+                            <p class="text-xs font-bold text-[#f97316]" th:text="'R$ ' + ${#numbers.formatDecimal(custo, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 mb-0.5">Lucro</p>
+                            <p class="text-xs font-bold text-[#4ade80]" th:text="'R$ ' + ${#numbers.formatDecimal(lucro, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 mb-0.5">Margem</p>
+                            <p class="text-xs font-bold text-[#06b6d4]" th:text="${#numbers.formatDecimal(margem, 1, 'POINT', 1, 'COMMA')} + '%'">0.0%</p>
+                        </div>
+                    </div>
+
+                    <!-- Linha 5: Rodapé (Categoria, Data e Endereço) -->
+                    <div class="flex items-center gap-6 text-[11px] text-slate-500">
+                        <div class="flex items-center gap-1.5"><i data-lucide="package" class="w-3.5 h-3.5"></i> <span th:text="${wo.category != null ? wo.category.name : 'Sem categoria'}">Categoria</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> <span th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : 'Sem data definida'}">Data</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> <span class="truncate max-w-[250px]" th:text="${wo.client != null ? wo.client.address : 'Sem endereço'}">Endereço</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado Vazio -->
+            <div th:if="${#lists.isEmpty(orders)}" class="text-center py-10">
+                <i data-lucide="inbox" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+                <p class="text-slate-400 font-medium">Nenhuma Ordem de Serviço encontrada no momento.</p>
+            </div>
+
+        </div>
     </div>
 
     <!-- MODAL DE CANCELAMENTO -->
@@ -356,7 +452,6 @@
         }
     }
 
-    // 2. PARSER INTELIGENTE QUE LÊ DO JAVA E SEPARA EM 3 LISTAS
     async function editOs(id) {
         const response = await fetch(`/work-orders/edit-data/${id}`);
         const data = await response.json();
