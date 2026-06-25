@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
@@ -38,7 +39,19 @@ public class QuoteService {
 
         os.setClient(quote.getClient());
         os.setTitle("Venda: " + quote.getNumber());
-        os.setDescription("Gerado via Orçamento. OBS: " + quote.getObservations());
+
+        String description = "Gerado via Orçamento";
+
+        if (quote.getObservations() != null && !quote.getObservations().isBlank()) {
+            description += ". OBS: " + quote.getObservations();
+        }
+
+
+        if (description.length() > 255) {
+            description = description.substring(0, 255);
+        }
+
+        os.setDescription(description);
         os.setStatus("in_progress");
         os.setTotalValue(quote.getTotalValue());
 
@@ -51,6 +64,12 @@ public class QuoteService {
                 osItem.setQuantity(qi.getQuantity());
                 osItem.setUnitPrice(qi.getUnitPrice());
                 osItem.setUnitCost(BigDecimal.ZERO);
+
+                osItem.setWorkOrder(os);
+
+                if (os.getItems() == null) {
+                    os.setItems(new ArrayList<>());
+                }
 
                 os.getItems().add(osItem);
             }

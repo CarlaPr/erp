@@ -20,8 +20,10 @@ public class WorkOrder {
     private String number;
     private String title;
     private String status;
-    private String description; // Adicionado conforme solicitado
-    private String notes;       // Adicionado conforme solicitado
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    private String notes;
     private BigDecimal totalValue = BigDecimal.ZERO;
     private LocalDate installDate;
 

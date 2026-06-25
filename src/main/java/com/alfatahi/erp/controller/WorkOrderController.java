@@ -107,6 +107,19 @@ public class WorkOrderController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/edit-data/{id}")
+    @ResponseBody
+    public ResponseEntity<?> getEditData(@PathVariable UUID id) {
+
+        WorkOrder wo = workOrderService.findById(id);
+
+        if (wo == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(wo);
+    }
+
     @PostMapping("/cancel/{id}")
     @ResponseBody
     public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody String reason) {
