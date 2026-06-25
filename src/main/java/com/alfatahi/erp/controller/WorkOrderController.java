@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -35,6 +36,7 @@ public class WorkOrderController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public String index(Model model) {
         List<WorkOrder> allOrders = workOrderService.listAll();
 

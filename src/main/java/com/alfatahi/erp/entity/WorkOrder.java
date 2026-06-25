@@ -31,7 +31,7 @@ public class WorkOrder {
     private Client client;
 
     // ORPHAN REMOVAL = TRUE: Se remover da lista, remove do banco!
-    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<WorkOrderItem> items = new ArrayList<>();
 
     @OneToOne(mappedBy = "workOrder")

@@ -38,6 +38,7 @@ public class WebController {
         List<AccountsReceivable> receivables = receivableRepository.findAllByOrderByDueDateAsc();
         List<AccountsPayable> payables = payableRepository.findAllByOrderByDueDateAsc();
         List<WorkOrder> workOrders = workOrderService.listAll();
+        LocalDate today = LocalDate.now();
 
         // ==========================================
         // 1. CÁLCULOS DOS CARDS (KPIs REAIS)
@@ -55,7 +56,7 @@ public class WebController {
         dto.setSaldoAtual(recebido.subtract(pago));
         dto.setSaldoProjetado(dto.getSaldoAtual().add(dto.getaReceber()).subtract(dto.getaPagar()));
 
-        long atrasados = receivables.stream().filter(r -> "pending".equals(r.getStatus()) && r.getDueDate().isBefore(LocalDate.now())).count();
+        long atrasados = receivables.stream().filter(r -> "pending".equals(r.getStatus()) && r.getDueDate() != null && r.getDueDate().isBefore(today)).count();
         dto.setInadimplentes(atrasados);
 
         long osAtivas = workOrders.stream().filter(wo -> !"completed".equals(wo.getStatus()) && !"cancelled".equals(wo.getStatus())).count();
@@ -69,7 +70,7 @@ public class WebController {
         // ==========================================
         // 2. VISÃO 1: FLUXO DE CAIXA (12 MESES REAIS)
         // ==========================================
-        int currentYear = LocalDate.now().getYear();
+        int currentYear = today.getYear();
         BigDecimal[] monthRevenues = new BigDecimal[12];
         BigDecimal[] monthExpenses = new BigDecimal[12];
         Arrays.fill(monthRevenues, BigDecimal.ZERO);
@@ -89,6 +90,16 @@ public class WebController {
             }
         }
 
+        List<Map<String, Object>> monthlyFlow = new ArrayList<>();
+        String[] monthNames = {"Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"};
+        for(int i = 0; i < 12; i++) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("month", monthNames[i]);
+            map.put("in", monthRevenues[i]);
+            map.put("out", monthExpenses[i]);
+            monthlyFlow.add(map);
+        }
+
         // ==========================================
         // 3. VISÃO 2: CUSTOS POR CATEGORIA
         // ==========================================
@@ -103,34 +114,40 @@ public class WebController {
             else if ("provision".equals(p.getCategory())) costProv = costProv.add(val);
         }
 
+        BigDecimal totalCosts = costVar.add(costFix).add(costProv);
+        BigDecimal pctVar = totalCosts.compareTo(BigDecimal.ZERO) > 0 ? costVar.multiply(new BigDecimal("100")).divide(totalCosts, 0, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        BigDecimal pctFix = totalCosts.compareTo(BigDecimal.ZERO) > 0 ? costFix.multiply(new BigDecimal("100")).divide(totalCosts, 0, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        BigDecimal pctProv = totalCosts.compareTo(BigDecimal.ZERO) > 0 ? costProv.multiply(new BigDecimal("100")).divide(totalCosts, 0, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+
         // ==========================================
         // 4. VISÃO 3: PERFORMANCE POR TIPO DE SERVIÇO
         // ==========================================
         Map<String, BigDecimal> revenueByCat = new HashMap<>();
         Map<String, BigDecimal> profitByCat = new HashMap<>();
-        BigDecimal lucroBrutoTotal = BigDecimal.ZERO;
+        BigDecimal lucroBrutoTotalGeral = BigDecimal.ZERO;
 
         for (WorkOrder wo : workOrders) {
-            String catName = (wo.getCategory() != null && wo.getCategory().getName() != null) ? wo.getCategory().getName() : "Diversos";
             BigDecimal receita = wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO;
-
-            // Custo real mapeado dos materiais (Vidros, alumínios)
             BigDecimal custo = workOrderService.calculateObraCost(wo.getId());
             if(custo == null) custo = BigDecimal.ZERO;
-
             BigDecimal lucro = receita.subtract(custo);
-            lucroBrutoTotal = lucroBrutoTotal.add(lucro);
 
-            revenueByCat.put(catName, revenueByCat.getOrDefault(catName, BigDecimal.ZERO).add(receita));
-            profitByCat.put(catName, profitByCat.getOrDefault(catName, BigDecimal.ZERO).add(lucro));
+            if (!"cancelled".equals(wo.getStatus())) {
+                lucroBrutoTotalGeral = lucroBrutoTotalGeral.add(lucro);
+            }
+
+            if ("completed".equals(wo.getStatus())) {
+                String catName = (wo.getCategory() != null && wo.getCategory().getName() != null) ? wo.getCategory().getName() : "Diversos";
+                revenueByCat.put(catName, revenueByCat.getOrDefault(catName, BigDecimal.ZERO).add(receita));
+                profitByCat.put(catName, profitByCat.getOrDefault(catName, BigDecimal.ZERO).add(lucro));
+            }
         }
 
-        dto.setLucroBruto(lucroBrutoTotal);
+        dto.setLucroBruto(lucroBrutoTotalGeral);
         if (receitaTotalOs.compareTo(BigDecimal.ZERO) > 0) {
-            dto.setMargemMedia(lucroBrutoTotal.multiply(new BigDecimal("100")).divide(receitaTotalOs, 2, RoundingMode.HALF_UP));
+            dto.setMargemMedia(lucroBrutoTotalGeral.multiply(new BigDecimal("100")).divide(receitaTotalOs, 2, RoundingMode.HALF_UP));
         }
 
-        // Converte os Mapas para Listas que o Gráfico entenda
         List<String> catLabels = new ArrayList<>(revenueByCat.keySet());
         List<BigDecimal> catRevenues = new ArrayList<>();
         List<BigDecimal> catProfits = new ArrayList<>();
@@ -140,28 +157,91 @@ public class WebController {
         }
 
         // ==========================================
-        // 5. INJEÇÃO NO HTML
+        // 5. ALERTAS DINÂMICOS
+        // ==========================================
+        List<AccountsReceivable> allPendingReceivables = receivables.stream()
+                .filter(r -> "pending".equals(r.getStatus())).toList();
+
+        List<AccountsPayable> allPendingPayables = payables.stream()
+                .filter(p -> "pending".equals(p.getStatus())).toList();
+
+        List<AccountsReceivable> overdueReceivables = allPendingReceivables.stream()
+                .filter(r -> r.getDueDate() != null && r.getDueDate().isBefore(today)).toList();
+
+        List<AccountsPayable> overduePayables = allPendingPayables.stream()
+                .filter(p -> p.getDueDate() != null && p.getDueDate().isBefore(today)).toList();
+
+        List<WorkOrder> expiringWorkOrders = workOrders.stream()
+                .filter(wo -> !"completed".equals(wo.getStatus()) && !"cancelled".equals(wo.getStatus()))
+                .filter(wo -> wo.getInstallDate() != null && !wo.getInstallDate().isAfter(today.plusDays(3)))
+                .toList();
+
+        // ==========================================
+        // 6. CALENDÁRIO UNIFICADO (ENTRADAS E SAÍDAS)
+        // ==========================================
+        List<Map<String, Object>> calendarEvents = new ArrayList<>();
+
+        for (AccountsReceivable r : allPendingReceivables) {
+            Map<String, Object> ev = new HashMap<>();
+            ev.put("type", "IN");
+            ev.put("description", r.getDescription() != null ? r.getDescription() : (r.getClient() != null ? "Recebimento: " + r.getClient().getName() : "Entrada"));
+            ev.put("date", r.getDueDate());
+            ev.put("amount", r.getTotalAmount());
+            calendarEvents.add(ev);
+        }
+
+        for (AccountsPayable p : allPendingPayables) {
+            Map<String, Object> ev = new HashMap<>();
+            ev.put("type", "OUT");
+            ev.put("description", p.getDescription() != null ? p.getDescription() : "Despesa");
+            ev.put("date", p.getDueDate());
+            ev.put("amount", p.getTotalAmount());
+            calendarEvents.add(ev);
+        }
+
+        // Ordenar por data (os mais próximos ou atrasados primeiro)
+        calendarEvents.sort((a, b) -> {
+            LocalDate d1 = (LocalDate) a.get("date");
+            LocalDate d2 = (LocalDate) b.get("date");
+            if (d1 == null && d2 == null) return 0;
+            if (d1 == null) return 1;
+            if (d2 == null) return -1;
+            return d1.compareTo(d2);
+        });
+
+
+        // ==========================================
+        // 7. INJEÇÃO NO HTML
         // ==========================================
         model.addAttribute("currentPage", "dashboard");
         model.addAttribute("dash", dto);
-        model.addAttribute("topWorkOrders", workOrders.stream().limit(5).toList());
-        model.addAttribute("upcomingPayables", payables.stream().filter(p -> "pending".equals(p.getStatus())).limit(4).toList());
 
-        // Variáveis Dinâmicas para o Chart.js
-        model.addAttribute("chartMonths", "['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']");
-        model.addAttribute("chartIn", Arrays.toString(monthRevenues));
-        model.addAttribute("chartOut", Arrays.toString(monthExpenses));
+        // Alertas
+        model.addAttribute("allPendingReceivables", allPendingReceivables);
+        model.addAttribute("allPendingPayables", allPendingPayables);
+        model.addAttribute("overdueReceivables", overdueReceivables);
+        model.addAttribute("overduePayables", overduePayables);
+        model.addAttribute("expiringWorkOrders", expiringWorkOrders);
 
-        model.addAttribute("donutData", "[" + costVar + ", " + costFix + ", " + costProv + "]");
+        // Calendário (Limitado a 16 para não quebrar infinito, mas exibe entradas e saídas)
+        model.addAttribute("calendarEvents", calendarEvents.stream().limit(16).toList());
 
-        model.addAttribute("barLabels", catLabels.isEmpty() ? "[]" : "['" + String.join("', '", catLabels) + "']");
-        model.addAttribute("barRevenues", catRevenues.toString());
-        model.addAttribute("barProfits", catProfits.toString());
+        model.addAttribute("monthlyFlow", monthlyFlow);
+        model.addAttribute("costVar", costVar);
+        model.addAttribute("costFix", costFix);
+        model.addAttribute("costProv", costProv);
+        model.addAttribute("pctVar", pctVar);
+        model.addAttribute("pctFix", pctFix);
+        model.addAttribute("pctProv", pctProv);
 
-        // --- NOVO: GERADOR DA DATA EXTENSA NO FORMATO EXATO DO VÍDEO ---
+        model.addAttribute("barLabels", catLabels);
+        model.addAttribute("barRevenues", catRevenues);
+        model.addAttribute("barProfits", catProfits);
+
+        model.addAttribute("donutData", Arrays.asList(costVar, costFix, costProv, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
+
         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new java.util.Locale("pt", "BR"));
-        String dateStr = LocalDate.now().format(formatter);
-        // Capitaliza a primeira letra do mês (ex: "junho" para "Junho")
+        String dateStr = today.format(formatter);
         String[] parts = dateStr.split(" ");
         if(parts.length > 2) {
             parts[2] = parts[2].substring(0, 1).toUpperCase() + parts[2].substring(1);
