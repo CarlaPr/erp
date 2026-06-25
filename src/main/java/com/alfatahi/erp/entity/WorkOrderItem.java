@@ -1,5 +1,6 @@
 package com.alfatahi.erp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -12,9 +13,9 @@ public class WorkOrderItem {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "work_order_id", nullable = false)
-    @com.fasterxml.jackson.annotation.JsonIgnore
     private WorkOrder workOrder;
 
     @Column(nullable = false)

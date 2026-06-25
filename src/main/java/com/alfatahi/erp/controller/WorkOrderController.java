@@ -84,6 +84,7 @@ public class WorkOrderController {
 
     @PostMapping(value = "/save-ajax", consumes = "application/json")
     @ResponseBody
+    @Transactional
     public ResponseEntity<?> saveAjax(@RequestBody WorkOrder workOrder) {
         WorkOrder targetWo;
 
@@ -134,38 +135,62 @@ public class WorkOrderController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/delete/{id}")
+    public String delete(@PathVariable UUID id) {
+        workOrderService.delete(id);
+        return "redirect:/work-orders";
+    }
+
     @GetMapping("/edit-data/{id}")
     @ResponseBody
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getEditData(
-            @PathVariable UUID id
-    ) {
-
+    public ResponseEntity<?> getEditData(@PathVariable UUID id) {
         WorkOrder wo = workOrderService.findById(id);
 
         if (wo == null) {
             return ResponseEntity.notFound().build();
         }
 
+        // Inicialização explícita para evitar o erro de Proxy no JSON
         Hibernate.initialize(wo.getItems());
+
+        if (wo.getClient() != null) {
+            Hibernate.initialize(wo.getClient());
+        }
+
+        if (wo.getQuote() != null) {
+            Hibernate.initialize(wo.getQuote());
+        }
+
         return ResponseEntity.ok(wo);
     }
 
     @PostMapping("/cancel/{id}")
     @ResponseBody
+    @Transactional // <--- ADICIONE ESTA ANOTAÇÃO AQUI
     public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody String reason) {
         WorkOrder wo = workOrderService.findById(id);
-        if(wo != null) {
-            wo.setStatus("cancelled");
-            wo.setNotes((wo.getNotes() != null ? wo.getNotes() : "") + "\n>>> CANCELADA: " + reason);
-            if(wo.getQuote() != null) {
-                Quote q = wo.getQuote();
-                q.setWorkOrder(null);
-                quoteRepository.save(q);
-                wo.setQuote(null);
-            }
-            workOrderService.save(wo);
+
+        if (wo == null) {
+            return ResponseEntity.notFound().build();
         }
+
+        wo.setStatus("cancelled");
+        // Opcional: Adiciona o motivo ao final das notas
+        String currentNotes = wo.getNotes() != null ? wo.getNotes() : "";
+        wo.setNotes(currentNotes + "\n>>> CANCELADA: " + reason);
+
+        // Se houver orçamento vinculado, desvincula
+        if (wo.getQuote() != null) {
+            Quote q = wo.getQuote();
+            q.setWorkOrder(null);
+            quoteRepository.save(q);
+            wo.setQuote(null);
+        }
+
+
+        workOrderService.save(wo);
+
         return ResponseEntity.ok().build();
     }
 }
