@@ -80,9 +80,10 @@ public class QuoteService {
         quote.setWorkOrder(os);
         quoteRepo.saveAndFlush(quote);
 
-        // CORREÇÃO: Cria e salva APENAS as parcelas reais
+        BigDecimal totalOrcamento = (quote.getTotalValue() != null) ? quote.getTotalValue() : BigDecimal.ZERO;
+
         int numParcelas = (quote.getInstallments() != null && quote.getInstallments() > 0) ? quote.getInstallments() : 1;
-        BigDecimal valorParcela = quote.getTotalValue().divide(new BigDecimal(numParcelas), 2, RoundingMode.HALF_UP);
+        BigDecimal valorParcela = totalOrcamento.divide(new BigDecimal(numParcelas), 2, RoundingMode.HALF_UP);
 
         for (int i = 0; i < numParcelas; i++) {
             AccountsReceivable parcela = new AccountsReceivable();

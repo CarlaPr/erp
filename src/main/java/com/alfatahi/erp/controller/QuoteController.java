@@ -2,6 +2,8 @@ package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.entity.Quote;
 import com.alfatahi.erp.entity.QuoteItem;
+import com.alfatahi.erp.entity.WorkOrder;
+import com.alfatahi.erp.entity.WorkOrderItem;
 import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.QuoteRepository;
 import com.alfatahi.erp.service.QuoteService;
@@ -12,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional; // IMPORT NECES
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -171,8 +175,9 @@ public class QuoteController {
         try {
             quoteService.approveQuote(id);
             return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(500).body("Erro ao aprovar orçamento: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Erro ao aprovar: " + e.getMessage());
         }
     }
 

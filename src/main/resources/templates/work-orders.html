@@ -113,22 +113,27 @@
                     </div>
 
                     <!-- Linha 4: Indicadores Financeiros Individuais -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5"
+                         th:with="receita=${wo.totalValue != null ? wo.totalValue : 0},
+                          custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0},
+                          lucro=${receita - custo},
+                          margem=${receita > 0 ? (lucro * 100 / receita) : 0}">
+
                         <div>
                             <p class="text-[10px] text-slate-500 mb-0.5">Receita</p>
-                            <p class="text-xs font-bold text-white" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                            <p class="text-xs font-bold text-white" th:text="'R$ ' + ${#numbers.formatDecimal(receita, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
                         </div>
                         <div>
                             <p class="text-[10px] text-slate-500 mb-0.5">Custos</p>
-                            <p class="text-xs font-bold text-[#f97316]" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                            <p class="text-xs font-bold text-[#f97316]" th:text="'R$ ' + ${#numbers.formatDecimal(custo, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
                         </div>
                         <div>
                             <p class="text-[10px] text-slate-500 mb-0.5">Lucro</p>
-                            <p class="text-xs font-bold text-[#4ade80]" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                            <p class="text-xs font-bold text-[#4ade80]" th:text="'R$ ' + ${#numbers.formatDecimal(lucro, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
                         </div>
                         <div>
                             <p class="text-[10px] text-slate-500 mb-0.5">Margem</p>
-                            <p class="text-xs font-bold text-[#06b6d4]" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')} + '%'">0.0%</p>
+                            <p class="text-xs font-bold text-[#06b6d4]" th:text="${#numbers.formatDecimal(margem, 1, 'POINT', 2, 'COMMA')} + '%'">0.0%</p>
                         </div>
                     </div>
 
@@ -190,7 +195,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-slate-400 font-bold mb-2">Entregar Até</label>
+                            <label class="block text-slate-400 font-bold mb-2">Previsão Entrega</label>
                             <input type="date" id="osDate" class="w-full bg-[#1E293B] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-300 focus:border-cyan-500 outline-none [color-scheme:dark]" />
                         </div>
 
@@ -415,23 +420,7 @@
             </div>
 
             <div class="mt-8 border-t-2 border-dashed border-slate-200 pt-6">
-                <div class="grid grid-cols-2 gap-4 text-sm t// CORREÇÃO: Usar ${} em vez de {} dentro das Backticks
-itemsTbody.innerHTML += `
-    <tr class="border-b border-slate-100 hover:bg-slate-50/50">
-        <td class="p-4 pl-4 text-slate-900 alignment-top">
-            <span class="font-extrabold text-base text-slate-950 uppercase tracking-wide leading-none block m-0 p-0">
-                ${item.category || 'Item Comercial'}
-            </span>
-            <span class="text-xs sm:text-sm text-slate-500 font-normal whitespace-pre-line leading-tight block -mt-1 p-0">
-                ${item.product}
-            </span>
-        </td>
-        <td class="p-4 text-center text-slate-500 font-mono text-sm">un</td>
-        <td class="p-4 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
-        <td class="p-4 text-right font-mono text-slate-600 text-sm">${formatarMoeda(precoPecaUnitaria)}</td>
-        <td class="p-4 text-right pr-4 font-mono font-bold text-slate-900 text-sm">${formatarMoeda(sub)}</td>
-    </tr>
-`;ext-slate-500">
+                <div class="grid grid-cols-2 gap-4 text-sm text-slate-500">
                     <div>
                         <h5 class="font-bold text-slate-900 font-mono text-xs uppercase mb-1">GARANTIA</h5>
                         <p id="recWarrantyText" class="text-slate-800 font-sans font-bold text-base text-cyan-600">--</p>
@@ -555,42 +544,34 @@ itemsTbody.innerHTML += `
         handleQuoteChange();
     }
 
-    function formatarMoeda(valor) {
-        if (valor === null || valor === undefined) return "R$ 0,00";
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(valor);
-    }
-
     async function viewReceipt(id) {
         try {
             const res = await fetch(`/quotes/view-data/${id}`);
             if (!res.ok) throw new Error("Erro ao buscar dados");
             const q = await res.json();
 
-                // Captura dos dados para o nome automático do arquivo PDF
-                currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
-                currentActiveNumberForPdf = q.number;
+            // Captura dos dados para o nome automático do arquivo PDF
+            currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
+            currentActiveNumberForPdf = q.number;
 
-                document.getElementById('recNum').innerText = `N° ${q.number.replace('ORC-', '')}`;
-                document.getElementById('recDate').innerText = new Date(q.dateCreated).toLocaleDateString('pt-BR');
-                document.getElementById('recClient').innerText = q.client ? q.client.name : 'Consumidor Final';
-                document.getElementById('recSignatureClientName').innerText = q.client ? q.client.name : 'Assinatura do Cliente';
+            document.getElementById('recNum').innerText = `N° ${q.number.replace('ORC-', '')}`;
+            document.getElementById('recDate').innerText = new Date(q.dateCreated).toLocaleDateString('pt-BR');
+            document.getElementById('recClient').innerText = q.client ? q.client.name : 'Consumidor Final';
+            document.getElementById('recSignatureClientName').innerText = q.client ? q.client.name : 'Assinatura do Cliente';
 
-                document.getElementById('recObs').innerText = q.observations || 'Sem observações adicionais.';
-                document.getElementById('recWarrantyText').innerText = q.warranty || DEFAULT_WARRANTY;
+            document.getElementById('recObs').innerText = q.observations || 'Sem observações adicionais.';
+            document.getElementById('recWarrantyText').innerText = q.warranty || DEFAULT_WARRANTY;
 
-                // Alimenta o Valor Total real do orçamento
-                document.getElementById('recTotal').innerText = `R$ ${q.totalValue.toFixed(2)}`;
+            // Alimenta o Valor Total real do orçamento
+            document.getElementById('recTotal').innerText = `R$ ${q.totalValue.toFixed(2)}`;
 
-                // Controla dinamicamente a exibição da linha de parcelas (Apenas para Cartão de Crédito)
             // Controla dinamicamente a exibição da linha de parcelas (Apenas para Cartão de Crédito)
             const recFinalRow = document.getElementById('recFinalRow');
             if (q.paymentMethod === 'Cartao_Credito') {
                 if (recFinalRow) recFinalRow.style.display = 'flex';
                 let valorParcela = q.totalValue / (q.installments || 10);
-                document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x ${formatarMoeda(valorParcela)}`;                } else {
+                document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x R$ ${valorParcela.toFixed(2)}`;
+            } else {
                 if (recFinalRow) recFinalRow.style.display = 'none';
             }
 
@@ -617,14 +598,14 @@ itemsTbody.innerHTML += `
                                     </span>
                                 </td>
                                 <td class="p-4 text-center text-slate-500 font-mono text-sm">un</td>
-                                    <td class="p-4 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
-                                    <td class="p-4 text-right font-mono text-slate-600 text-sm">${formatarMoeda(precoPecaUnitaria)}</td>
-                                    <td class="p-4 text-right pr-4 font-mono font-bold text-slate-900 text-sm">${formatarMoeda(sub)}</td>
-                                </tr>
+                                <td class="p-4 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
+                                <td class="p-4 text-right font-mono text-slate-600 text-sm">R$ ${precoPecaUnitaria.toFixed(2)}</td>
+                                <td class="p-4 text-right pr-4 font-mono font-bold text-slate-900 text-sm">R$ ${sub.toFixed(2)}</td>
+                            </tr>
                         `;
-                    });
-                }
-                toggleModal('receiptModal', true);
+                });
+            }
+            toggleModal('receiptModal', true);
             document.getElementById('receiptModal').classList.remove('hidden');
             document.getElementById('receiptModal').classList.add('flex');
         } catch (err) {
