@@ -71,10 +71,13 @@ public class ConciliationController {
 
     @GetMapping("/toggle/{id}")
     public String toggleStatus(@PathVariable("id") UUID id) {
-        BankTransaction tx = bankRepo.findById(id).orElse(null);
-        if (tx != null) {
-            tx.setStatus("conciliated".equals(tx.getStatus()) ? "pending" : "conciliated");
-            bankRepo.save(tx);
+        if ("conciliated".equals(newStatus)) {
+            BankAccount account = tx.getBankAccount();
+            if (account != null) {
+                if ("IN".equals(tx.getType())) account.setCurrentBalance(account.getCurrentBalance().add(tx.getAmount()));
+                else account.setCurrentBalance(account.getCurrentBalance().subtract(tx.getAmount()));
+                bankAccountRepository.save(account);
+            }
         }
         return "redirect:/conciliation";
     }
@@ -83,6 +86,7 @@ public class ConciliationController {
     // NOVO: ROBÔ DE IMPORTAÇÃO OFX E BAIXA AUTOMÁTICA
     // =======================================================
     @PostMapping("/upload")
+    @Transactional
     public String uploadOfx(@RequestParam("file") MultipartFile file) {
         try {
             List<BankTransaction> transactions = ofxParserService.parse(file);

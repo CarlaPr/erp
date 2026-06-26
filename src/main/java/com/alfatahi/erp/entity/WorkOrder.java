@@ -47,6 +47,7 @@ public class WorkOrder {
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(name = "quote_id")
     private Quote quote;
 
     @Transient

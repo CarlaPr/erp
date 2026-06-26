@@ -29,91 +29,171 @@ public class DreController {
 
     @GetMapping("/dre")
     public String generateDre(
-            @RequestParam(required = false, defaultValue = "comparative") String type,
+            @RequestParam(defaultValue = "comparative") String type,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
             Model model) {
 
-        // Valores por defeito (Mês e Ano atuais)
         LocalDate now = LocalDate.now();
-        if (year == null) year = now.getYear();
-        if (month == null) month = now.getMonthValue();
+
+        if (year == null)
+            year = now.getYear();
+
+        if (month == null)
+            month = now.getMonthValue();
 
         List<AccountsReceivable> receivables = recRepo.findAll();
         List<AccountsPayable> payables = payRepo.findAll();
 
         List<DreReportDto> colunas = new ArrayList<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM / yyyy", new Locale("pt", "PT"));
+
+        DateTimeFormatter fmt =
+                DateTimeFormatter.ofPattern(
+                        "MMM / yyyy",
+                        new Locale("pt", "BR")
+                );
 
         if ("annual".equals(type)) {
-            // ==========================================
-            // VISÃO ANUAL (1 Coluna com o total do ano)
-            // ==========================================
-            DreReportDto coluna = new DreReportDto("ANUAL " + year);
+
+            DreReportDto coluna =
+                    new DreReportDto("ANUAL " + year);
 
             for (AccountsReceivable r : receivables) {
-                if (r.getDueDate() != null && r.getDueDate().getYear() == year) {
-                    coluna.addReceita(r.getTotalAmount());
-                }
-            }
-            for (AccountsPayable p : payables) {
-                if (p.getDueDate() != null && p.getDueDate().getYear() == year) {
-                    if ("variable".equals(p.getCategory())) coluna.addCmv(p.getTotalAmount());
-                    else coluna.addDespesa(p.getTotalAmount());
-                }
-            }
-            colunas.add(coluna);
 
-        } else if ("single".equals(type)) {
-            // ==========================================
-            // VISÃO MENSAL ÚNICA (1 Coluna)
-            // ==========================================
-            LocalDate target = LocalDate.of(year, month, 1);
-            DreReportDto coluna = new DreReportDto(target.format(fmt).toUpperCase());
+                if (r.getDueDate() != null
+                        && r.getDueDate().getYear() == year
+                        && ("received".equals(r.getStatus())
+                        || "partial".equals(r.getStatus()))) {
 
-            for (AccountsReceivable r : receivables) {
-                if (r.getDueDate() != null && r.getDueDate().getMonthValue() == month && r.getDueDate().getYear() == year) {
-                    coluna.addReceita(r.getTotalAmount());
+                    coluna.addReceita(
+                            Optional.ofNullable(
+                                    r.getReceivedAmount()
+                            ).orElse(BigDecimal.ZERO)
+                    );
                 }
             }
+
             for (AccountsPayable p : payables) {
-                if (p.getDueDate() != null && p.getDueDate().getMonthValue() == month && p.getDueDate().getYear() == year) {
-                    if ("variable".equals(p.getCategory())) coluna.addCmv(p.getTotalAmount());
-                    else coluna.addDespesa(p.getTotalAmount());
+
+                if (p.getDueDate() != null
+                        && p.getDueDate().getYear() == year) {
+
+                    BigDecimal valor =
+                            Optional.ofNullable(
+                                    p.getTotalAmount()
+                            ).orElse(BigDecimal.ZERO);
+
+                    if ("variable".equalsIgnoreCase(
+                            p.getCategory())) {
+
+                        coluna.addCmv(valor);
+
+                    } else {
+
+                        coluna.addDespesa(valor);
+                    }
                 }
             }
+
             colunas.add(coluna);
 
         } else {
-            // ==========================================
-            // VISÃO COMPARATIVA (4 Meses terminando no mês escolhido)
-            // ==========================================
-            LocalDate baseDate = LocalDate.of(year, month, 1);
-            for (int i = 3; i >= 0; i--) {
-                LocalDate target = baseDate.minusMonths(i);
-                DreReportDto coluna = new DreReportDto(target.format(fmt).toUpperCase());
+
+            int quantidade =
+                    "single".equals(type) ? 1 : 4;
+
+            LocalDate base =
+                    LocalDate.of(year, month, 1);
+
+            for (int i = quantidade - 1; i >= 0; i--) {
+
+                LocalDate target =
+                        quantidade == 1
+                                ? base
+                                : base.minusMonths(i);
+
+                DreReportDto coluna =
+                        new DreReportDto(
+                                target.format(fmt)
+                        );
 
                 for (AccountsReceivable r : receivables) {
-                    if (r.getDueDate() != null && r.getDueDate().getMonth() == target.getMonth() && r.getDueDate().getYear() == target.getYear()) {
-                        coluna.addReceita(r.getTotalAmount());
+
+                    if (r.getDueDate() != null
+                            && r.getDueDate().getMonth()
+                            == target.getMonth()
+                            && r.getDueDate().getYear()
+                            == target.getYear()
+                            && ("received".equals(
+                            r.getStatus())
+                            || "partial".equals(
+                            r.getStatus()))) {
+
+                        coluna.addReceita(
+                                Optional.ofNullable(
+                                        r.getReceivedAmount()
+                                ).orElse(
+                                        BigDecimal.ZERO
+                                )
+                        );
                     }
                 }
+
                 for (AccountsPayable p : payables) {
-                    if (p.getDueDate() != null && p.getDueDate().getMonth() == target.getMonth() && p.getDueDate().getYear() == target.getYear()) {
-                        if ("variable".equals(p.getCategory())) coluna.addCmv(p.getTotalAmount());
-                        else coluna.addDespesa(p.getTotalAmount());
+
+                    if (p.getDueDate() != null
+                            && p.getDueDate().getMonth()
+                            == target.getMonth()
+                            && p.getDueDate().getYear()
+                            == target.getYear()) {
+
+                        BigDecimal valor =
+                                Optional.ofNullable(
+                                        p.getTotalAmount()
+                                ).orElse(
+                                        BigDecimal.ZERO
+                                );
+
+                        if ("variable".equalsIgnoreCase(
+                                p.getCategory())) {
+
+                            coluna.addCmv(valor);
+
+                        } else {
+
+                            coluna.addDespesa(valor);
+                        }
                     }
                 }
+
                 colunas.add(coluna);
             }
         }
 
-        // Injetar dados no HTML
-        model.addAttribute("currentPage", "dre");
-        model.addAttribute("dreColumns", colunas);
-        model.addAttribute("selectedType", type);
-        model.addAttribute("selectedMonth", month);
-        model.addAttribute("selectedYear", year);
+        model.addAttribute(
+                "currentPage",
+                "dre"
+        );
+
+        model.addAttribute(
+                "dreColumns",
+                colunas
+        );
+
+        model.addAttribute(
+                "selectedType",
+                type
+        );
+
+        model.addAttribute(
+                "selectedMonth",
+                month
+        );
+
+        model.addAttribute(
+                "selectedYear",
+                year
+        );
 
         return "dre";
     }

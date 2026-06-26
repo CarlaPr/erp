@@ -119,7 +119,9 @@ public class FinanceService {
                 .orElseThrow(() -> new RuntimeException("OS não encontrada"));
 
         // Cálculo do valor rateado
-        BigDecimal value = ap.getTotalAmount().multiply(percentage).divide(new BigDecimal("100"));
+        BigDecimal value = ap.getTotalAmount()
+                .multiply(percentage)
+                .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
 
         ExpenseAllocation allocation = new ExpenseAllocation();
         allocation.setAccountsPayable(ap);

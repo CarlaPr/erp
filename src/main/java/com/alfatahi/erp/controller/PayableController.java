@@ -41,7 +41,11 @@ public class PayableController {
         List<AccountsPayable> list = financeService.listAllPayables();
 
         // KPIs
-        BigDecimal cadastrado = list.stream().map(AccountsPayable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal cadastrado = list.stream()
+                .filter(p -> !"cancelled".equals(p.getStatus()))
+                .map(AccountsPayable::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         BigDecimal pago = list.stream().filter(p -> "paid".equals(p.getStatus())).map(AccountsPayable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal pendente = list.stream().filter(p -> "pending".equals(p.getStatus())).map(AccountsPayable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal emAtraso = list.stream()

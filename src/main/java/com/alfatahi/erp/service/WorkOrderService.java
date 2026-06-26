@@ -30,9 +30,17 @@ public class WorkOrderService {
     public WorkOrder save(WorkOrder workOrder) {
         // 1. Gera o número da OS apenas se for nova (ID nulo)
         if (workOrder.getId() == null) {
-            if (workOrder.getNumber() == null || workOrder.getNumber().isEmpty()) {
-                long count = workOrderRepository.count();
-                workOrder.setNumber("OS-" + (1001 + count));
+
+            if (workOrder.getNumber() == null
+                    || workOrder.getNumber().isBlank()) {
+
+                Integer ultimoNumero =
+                        workOrderRepository
+                                .findMaxWorkOrderSequence();
+
+                workOrder.setNumber(
+                        "OS-" + (ultimoNumero + 1)
+                );
             }
         }
 
@@ -52,6 +60,8 @@ public class WorkOrderService {
         // 4. Save and Flush para garantir que o Hibernate valida a integridade AGORA
         return workOrderRepository.saveAndFlush(workOrder);
     }
+
+
 
     public WorkOrder findById(UUID id) {
         return workOrderRepository.findById(id)

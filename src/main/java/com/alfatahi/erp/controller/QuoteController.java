@@ -39,13 +39,11 @@ public class QuoteController {
             @RequestParam(required = false) String name,
             Model model) {
 
-        // 1. Validação de expiração usando LocalDateTime nativo
         java.time.LocalDateTime limiteValidade = java.time.LocalDateTime.now().minusMonths(1);
         quoteRepo.expirePendingQuotes(limiteValidade);
 
         List<Quote> todosOrcamentos = quoteRepo.findAll();
 
-        // 2. Ordenação rigorosa decrescente
         todosOrcamentos.sort((q1, q2) -> {
             if (q1.getDateCreated() == null || q2.getDateCreated() == null) return 0;
             int dataCompare = q2.getDateCreated().compareTo(q1.getDateCreated());
@@ -55,7 +53,6 @@ public class QuoteController {
             return q2.getNumber().compareTo(q1.getNumber());
         });
 
-        // 3. FIX DO ERRO: Modificado de LocalDate.now() para LocalDateTime.now()
         if (month == null || month.isEmpty()) {
             if (!"all".equals(month)) {
                 month = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM").format(java.time.LocalDateTime.now());
@@ -124,21 +121,36 @@ public class QuoteController {
     @ResponseBody
     public ResponseEntity<?> saveAjax(@RequestBody Quote quote) {
 
-        if (quote.getNumber() == null || quote.getNumber().isEmpty()) {
-            long nextQuoteNum = quoteRepo.count() + 1;
-            quote.setNumber(String.format("ORC-%02d", nextQuoteNum));
+        if (quote.getId() != null) {
+            // EDIÇÃO: carregar entidade gerenciada e atualizar campos
+            Quote existing = quoteRepo.findById(quote.getId()).orElseThrow();
+            existing.setClient(quote.getClient());
+            existing.setPaymentMethod(quote.getPaymentMethod());
+            existing.setInstallments(quote.getInstallments());
+            existing.setObservations(quote.getObservations());
+            existing.setWarranty(quote.getWarranty());
+            existing.setTotalValue(quote.getTotalValue());
+            existing.setItems(quote.getItems()); // clear() + addAll() pelo setter da entidade
+            for (QuoteItem item : existing.getItems()) {
+                item.setQuote(existing); // vínculo bidirecional correto
+            }
+            quoteRepo.save(existing);
+            return ResponseEntity.ok().build();
         }
 
+        // CRIAÇÃO: orçamento novo — gerar número e data
+        if (quote.getNumber() == null || quote.getNumber().isEmpty()) {
+            int next = quoteRepo.findMaxQuoteSequence() + 1;
+            quote.setNumber(String.format("ORC-%04d", next));
+        }
         if (quote.getDateCreated() == null) {
             quote.setDateCreated(java.time.LocalDateTime.now());
         }
-
         if (quote.getItems() != null) {
             for (QuoteItem item : quote.getItems()) {
-                item.setQuote(quote);
+                item.setQuote(quote); // vínculo bidirecional para itens novos
             }
         }
-
         quoteRepo.save(quote);
         return ResponseEntity.ok().build();
     }
@@ -146,8 +158,12 @@ public class QuoteController {
     @PostMapping("/approve/{id}")
     @ResponseBody
     public ResponseEntity<?> approve(@PathVariable UUID id) {
-        quoteService.approveQuote(id);
-        return ResponseEntity.ok().build();
+        try {
+            quoteService.approveQuote(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(500).body("Erro ao aprovar orçamento: " + e.getMessage());
+        }
     }
 
     @PostMapping("/cancel/{id}")
@@ -155,7 +171,10 @@ public class QuoteController {
     public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody String reason) {
         Quote quote = quoteRepo.findById(id).orElseThrow();
         quote.setStatus("cancelled");
-        quote.setObservations(quote.getObservations() + "\n[Motivo Cancelamento: " + reason + "]");
+
+        String obs = quote.getObservations() != null ? quote.getObservations() : "";
+        quote.setObservations(obs + "\n[Motivo Cancelamento: " + reason + "]");
+
         quoteRepo.save(quote);
         return ResponseEntity.ok().build();
     }
@@ -163,7 +182,6 @@ public class QuoteController {
     @PostMapping(value = "/add-client-ajax", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<com.alfatahi.erp.entity.Client> addClientAjax(@RequestBody com.alfatahi.erp.entity.Client client) {
-        // Define o cliente como ativo por padrão no sistema
         client.setActive(true);
         com.alfatahi.erp.entity.Client savedClient = clientRepo.save(client);
         return ResponseEntity.ok(savedClient);

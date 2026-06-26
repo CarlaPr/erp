@@ -30,7 +30,7 @@ public class ReceivableController {
         this.financeService = financeService;
     }
 
-    @PostMapping("/receivables/pay/{id}")
+    @PostMapping("/pay/{id}")
     public String processPayment(@PathVariable UUID id, @RequestParam BigDecimal amount) {
         // Validação básica: não permitir valores negativos
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {

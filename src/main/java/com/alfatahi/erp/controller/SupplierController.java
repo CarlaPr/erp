@@ -41,8 +41,8 @@ public class SupplierController {
         return "suppliers";
     }
 
-    @GetMapping("/delete/{id}")
-    public String delete(@PathVariable("id") UUID id) {
+    @PostMapping("/delete/{id}")
+    public String delete(@PathVariable UUID id) {
         supplierService.delete(id);
         return "redirect:/suppliers";
     }

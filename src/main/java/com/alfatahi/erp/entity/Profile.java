@@ -23,6 +23,8 @@ public class Profile {
     private String city;
     private String document;
 
+    private BigDecimal taxRate = new BigDecimal("0.06");
+
     @Column(name = "logo_url")
     private String logoUrl;
 

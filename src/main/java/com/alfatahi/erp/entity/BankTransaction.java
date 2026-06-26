@@ -19,6 +19,10 @@ public class BankTransaction {
     @Column(name = "transaction_date", nullable = false)
     private LocalDate transactionDate;
 
+    @ManyToOne
+    @JoinColumn(name = "bank_account_id")
+    private BankAccount bankAccount;
+
     @Column(nullable = false)
     private String type; // "IN" (Entrada) ou "OUT" (Saída)
 

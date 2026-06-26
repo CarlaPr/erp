@@ -20,7 +20,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Desabilitado para permitir requisições assíncronas/fetch sem travas
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers(
+                                "/quotes/save-ajax",
+                                "/quotes/approve/**",
+                                "/quotes/cancel/**",
+                                "/work-orders/save-ajax",
+                                "/work-orders/cancel/**"
+                        )
+                )
+
                 .headers(headers -> headers.frameOptions(frame -> frame.disable())) // Permite renderizar o H2 console
                 .authorizeHttpRequests(auth -> auth
                         // Rotas Públicas estáticas e de login

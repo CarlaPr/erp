@@ -32,8 +32,8 @@ public class CommercialController {
         // Contadores dinâmicos por status (alinhado com as grafias do banco de dados)
         long pending = allQuotes.stream().filter(q -> "pending".equals(q.getStatus())).count();
         long approved = allQuotes.stream().filter(q -> "approved".equals(q.getStatus())).count();
-        long cancelled = allQuotes.stream().filter(q -> "canceled".equals(q.getStatus()) || "cancelled".equals(q.getStatus())).count();
         long expired = allQuotes.stream().filter(q -> "expired".equals(q.getStatus())).count();
+        long cancelled = allQuotes.stream().filter(q -> "cancelled".equals(q.getStatus())).count();
 
         // Soma do valor total vendido (apenas orçamentos aprovados)
         BigDecimal valorVendido = allQuotes.stream()

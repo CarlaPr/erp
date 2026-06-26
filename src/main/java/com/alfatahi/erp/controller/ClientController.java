@@ -41,8 +41,8 @@ public class ClientController {
         return "clients";
     }
 
-    @GetMapping("/delete/{id}")
-    public String deleteClient(@PathVariable("id") UUID id) {
+    @PostMapping("/delete/{id}")
+    public String delete(@PathVariable UUID id) {
         clientService.delete(id);
         return "redirect:/clients";
     }

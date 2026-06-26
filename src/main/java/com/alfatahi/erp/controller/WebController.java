@@ -93,6 +93,19 @@ public class WebController {
             dto.setTicketMedio(receitaTotalOs.divide(new BigDecimal(workOrders.size()), 2, RoundingMode.HALF_UP));
         }
 
+        // Inject LossRepository via construtor
+        BigDecimal totalPerdas = lossRepository.findAll().stream()
+                .map(Loss::getFinancialImpact)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        dto.setPerdas(totalPerdas);
+
+        if (faturado.compareTo(BigDecimal.ZERO) > 0) {
+            dto.setPerdasPercentual(
+                    totalPerdas.multiply(new BigDecimal("100"))
+                            .divide(faturado, 2, RoundingMode.HALF_UP)
+            );
+        }
+
         // ==========================================
         // 2. VISÃO 1: FLUXO DE CAIXA (12 MESES REAIS)
         // ==========================================

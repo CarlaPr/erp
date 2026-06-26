@@ -80,8 +80,8 @@ public class LossController {
         return "redirect:/losses";
     }
 
-    @GetMapping("/delete/{id}")
-    public String delete(@PathVariable("id") UUID id) {
+    @PostMapping("/delete/{id}")
+    public String delete(@PathVariable UUID id) {
         lossRepo.deleteById(id);
         return "redirect:/losses";
     }
