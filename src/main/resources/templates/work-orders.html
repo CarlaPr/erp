@@ -913,38 +913,44 @@
         e.preventDefault();
 
         const clientVal    = document.getElementById('osClient').value;
-        const payloadItems = [];
+        const allItems = [];
 
         soldItems.forEach(si => {
-            payloadItems.push({
-                id: si.id, description: si.description,
-                quantity: si.quantity, unitCost: 0,
+            allItems.push({
+                description: si.description,
+                quantity: si.quantity,
+                unitCost: 0,
                 unitPrice: si.totalValue / (si.quantity || 1)
             });
         });
+
         materialItems.forEach(mi => {
-            payloadItems.push({
-                id: mi.id, description: mi.description,
-                quantity: mi.quantity, unitCost: mi.unitCost, unitPrice: mi.unitPrice
+            allItems.push({
+                description: mi.description,
+                quantity: mi.quantity,
+                unitCost: mi.unitCost,
+                unitPrice: mi.unitPrice
             });
         });
+
         operationalItems.forEach(oi => {
-            payloadItems.push({
-                id: oi.id,
+            allItems.push({
                 description: `[OP] ${oi.category} | ${oi.date} | ${oi.obs} ||| ${oi.description}`,
-                quantity: 1, unitCost: oi.value, unitPrice: 0
+                quantity: 1,
+                unitCost: oi.value,
+                unitPrice: 0
             });
         });
 
         const payload = {
-            id:          document.getElementById('osId').value || null,
-            title:       document.getElementById('osTitle').value,
-            status:      document.getElementById('osStatus').value,
+            id: document.getElementById('osId').value || null,
+            title: document.getElementById('osTitle').value,
+            status: document.getElementById('osStatus').value,
             installDate: document.getElementById('osDate').value || null,
-            totalValue:  parseFloat(document.getElementById('osTotalValue').value) || 0,
-            quoteId:     document.getElementById('osQuote').value || null,
-            client:      clientVal ? { id: clientVal } : null,
-            items: [...soldItems, ...materialItems, ...operationalItems],
+            totalValue: parseFloat(document.getElementById('osTotalValue').value) || 0,
+            quoteId: document.getElementById('osQuote').value || null,
+            client: clientVal ? { id: clientVal } : null,
+            items: allItems // AQUI ESTÁ A CORREÇÃO: Enviando a lista padronizada
         };
 
         await fetch('/work-orders/save-ajax', {

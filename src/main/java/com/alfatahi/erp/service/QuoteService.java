@@ -50,6 +50,8 @@ public class QuoteService {
         os.setStatus("in_progress");
         os.setTotalValue(quote.getTotalValue());
 
+
+
         if (quote.getItems() != null) {
             for (QuoteItem qi : quote.getItems()) {
                 WorkOrderItem osItem = new WorkOrderItem();
