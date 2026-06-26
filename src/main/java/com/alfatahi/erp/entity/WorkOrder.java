@@ -42,7 +42,7 @@ public class WorkOrder {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    @JsonIgnore
+    @JsonIgnoreProperties("workOrder")
     private List<WorkOrderItem> items = new ArrayList<>();
 
     @OneToOne
@@ -115,4 +115,7 @@ public class WorkOrder {
     public BigDecimal getTotalCost() { return items.stream().map(WorkOrderItem::getTotalCost).reduce(BigDecimal.ZERO, BigDecimal::add); }
     public BigDecimal getProfit() { return getTotalValue().subtract(getTotalCost()); }
     public String getMargin() { return getTotalValue().compareTo(BigDecimal.ZERO) > 0 ? getProfit().multiply(new BigDecimal("100")).divide(getTotalValue(), 1, java.math.RoundingMode.HALF_UP).toString() : "0"; }
+
+    public void setCreatedDate(LocalDateTime now) {
+    }
 }

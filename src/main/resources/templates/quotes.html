@@ -55,9 +55,8 @@
             <tr class="border-b border-slate-700/50 bg-slate-800/80 text-slate-400 font-bold text-xs uppercase tracking-wider">
                 <th class="p-5">Orçamento</th>
                 <th class="p-5">Cliente</th>
-                <th class="p-5 text-right">Valor Venda</th>
                 <th class="p-5 text-center">Status</th>
-                <th class="p-5 text-center">Vínculo Gestão</th>
+                <th class="p-5 text-center">Vínculo Comercial (Ordem de Serviço)</th>
                 <th class="p-5 text-center">Ações</th>
             </tr>
             </thead>
@@ -68,7 +67,6 @@
                     <div class="text-[10px] text-slate-400" th:text="${#temporals.format(q.dateCreated, 'dd/MM/yyyy')}">Data</div>
                 </td>
                 <td class="p-5 font-bold text-white" th:text="${q.client != null ? q.client.name : 'Consumidor Final'}">Cliente</td>
-                <td class="p-5 text-right font-mono font-bold text-emerald-400" th:text="'R$ ' + ${q.totalValue}">R$ 0,00</td>
                 <td class="p-5 text-center">
                     <span th:if="${q.status == 'pending'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase">Pendente</span>
                     <span th:if="${q.status == 'approved'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">Aprovado</span>
@@ -440,6 +438,14 @@
         toggleModal(id, false);
     }
 
+    function formatarMoeda(valor) {
+        if (valor === null || valor === undefined) return "R$ 0,00";
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(valor);
+    }
+
     const DEFAULT_WARRANTY = "90 Dias (cobre apenas regulagens, vedação e vícios de instalação).";
     const DEFAULT_OBSERVATIONS = "Prazo de Entrega: Até 15 dias úteis após a confirmação do pedido.\n* Forma de Execução: Início dos serviços mediante sinal de 50%.\nO saldo restante (50%) deve ser quitado na conclusão da instalação.\n* Observação: Em caso de desistência após o pagamento do sinal, o valor não será reembolsado devido aos custos de reserva de material e produção personalizada.";
 
@@ -491,32 +497,30 @@
 
         currentItems.forEach((item, idx) => {
             let m2Unitario = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 0;
-
             let m2Total = m2Unitario * item.quantity;
-
             let multiplicadorM2 = m2Unitario > 0 ? m2Unitario : 1;
             let precoPecaUnitaria = multiplicadorM2 * item.unitPrice;
             let sub = item.quantity * precoPecaUnitaria;
             totalGeneral += sub;
 
             tbody.innerHTML += `
-                    <tr class="bg-slate-800/40 border-b border-slate-800 hover:bg-slate-700/20 transition-colors">
-                        <td class="p-3"><span class="font-bold text-cyan-400">[${item.category}]</span> ${item.product}</td>
-                        <td class="p-3 text-center text-slate-400 font-mono">${item.width > 0 ? item.width + 'x' + item.height + 'm' : 'un'}</td>
-                        <td class="p-3 text-center text-slate-300 font-bold">${item.quantity}</td>
+            <tr class="bg-slate-800/40 border-b border-slate-800 hover:bg-slate-700/20 transition-colors">
+                <td class="p-3"><span class="font-bold text-cyan-400">[${item.category}]</span> ${item.product}</td>
+                <td class="p-3 text-center text-slate-400 font-mono">${item.width > 0 ? item.width + 'x' + item.height + 'm' : 'un'}</td>
+                <td class="p-3 text-center text-slate-300 font-bold">${item.quantity}</td>
+                <td class="p-3 text-center text-slate-400 font-mono">${m2Unitario > 0 ? m2Unitario.toFixed(2) + ' m²' : '—'}</td>
+                <td class="p-3 text-center text-cyan-400 font-mono font-bold">${m2Total > 0 ? m2Total.toFixed(2) + ' m²' : '—'}</td>
 
-                        <!-- MONITORAMENTO DE M² (EXCLUSIVO INTERNO) -->
-                        <td class="p-3 text-center text-slate-400 font-mono">${m2Unitario > 0 ? m2Unitario.toFixed(2) + ' m²' : '—'}</td>
-                        <td class="p-3 text-center text-cyan-400 font-mono font-bold">${m2Total > 0 ? m2Total.toFixed(2) + ' m²' : '—'}</td>
+                <td class="p-3 text-right text-slate-400 font-mono">${formatarMoeda(precoPecaUnitaria)}</td>
+                <td class="p-3 text-right text-emerald-400 font-bold font-mono">${formatarMoeda(sub)}</td>
 
-                        <td class="p-3 text-right text-slate-400 font-mono">R$ ${precoPecaUnitaria.toFixed(2)}</td>
-                        <td class="p-3 text-right text-emerald-400 font-bold font-mono">R$ ${sub.toFixed(2)}</td>
-                        <td class="p-3 text-center"><button type="button" onclick="removeQuoteItem(${idx})" class="text-rose-500 hover:text-rose-400 font-bold">X</button></td>
-                    </tr>
-                `;
+                <td class="p-3 text-center"><button type="button" onclick="removeQuoteItem(${idx})" class="text-rose-500 hover:text-rose-400 font-bold">X</button></td>
+            </tr>
+        `;
         });
+
         const totalEl = document.getElementById('liveQuoteTotal');
-        if(totalEl) totalEl.innerText = `R$ ${totalGeneral.toFixed(2)}`;
+        if(totalEl) totalEl.innerText = formatarMoeda(totalGeneral);
     }
 
     function saveQuote(e) {
@@ -618,15 +622,14 @@
                 document.getElementById('recWarrantyText').innerText = q.warranty || DEFAULT_WARRANTY;
 
                 // Alimenta o Valor Total real do orçamento
-                document.getElementById('recTotal').innerText = `R$ ${q.totalValue.toFixed(2)}`;
+                document.getElementById('recTotal').innerText = formatarMoeda(q.totalValue);
 
                 // Controla dinamicamente a exibição da linha de parcelas (Apenas para Cartão de Crédito)
                 const recFinalRow = document.getElementById('recFinalRow');
                 if (q.paymentMethod === 'Cartao_Credito') {
                     if (recFinalRow) recFinalRow.style.display = 'flex';
                     let valorParcela = q.totalValue / (q.installments || 10);
-                    document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x R$ ${valorParcela.toFixed(2)}`;
-                } else {
+                    document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x ${formatarMoeda(valorParcela)}`;                } else {
                     if (recFinalRow) recFinalRow.style.display = 'none';
                 }
 
@@ -653,10 +656,10 @@
                                     </span>
                                 </td>
                                 <td class="p-4 text-center text-slate-500 font-mono text-sm">un</td>
-                                <td class="p-4 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
-                                <td class="p-4 text-right font-mono text-slate-600 text-sm">R$ ${precoPecaUnitaria.toFixed(2)}</td>
-                                <td class="p-4 text-right pr-4 font-mono font-bold text-slate-900 text-sm">R$ ${sub.toFixed(2)}</td>
-                            </tr>
+                                    <td class="p-4 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
+                                    <td class="p-4 text-right font-mono text-slate-600 text-sm">${formatarMoeda(precoPecaUnitaria)}</td>
+                                    <td class="p-4 text-right pr-4 font-mono font-bold text-slate-900 text-sm">${formatarMoeda(sub)}</td>
+                                </tr>
                         `;
                     });
                 }

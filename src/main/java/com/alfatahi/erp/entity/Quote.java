@@ -1,6 +1,7 @@
 package com.alfatahi.erp.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties; // 1. NOVO IMPORT
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -20,6 +21,7 @@ public class Quote {
 
     @ManyToOne
     @JoinColumn(name = "client_id")
+    @JsonIgnoreProperties({"quotes", "workOrders"}) // 2. CORREÇÃO: Quebra o loop com Cliente
     private Client client;
 
     @Column(nullable = false, length = 50)
@@ -43,10 +45,12 @@ public class Quote {
     private LocalDateTime dateCreated = LocalDateTime.now();
 
     @OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("quote") // 3. CORREÇÃO: Quebra o loop com os Itens do Orçamento
     private List<QuoteItem> items = new ArrayList<>();
 
     @OneToOne(mappedBy = "quote")
     @JoinColumn(name = "work_order_id", referencedColumnName = "id")
+    @JsonIgnoreProperties("quote") // 4. CORREÇÃO: Quebra o loop com a OS vinculada
     private WorkOrder workOrder;
 
     public WorkOrder getWorkOrder() { return workOrder; }

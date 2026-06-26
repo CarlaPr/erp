@@ -22,28 +22,39 @@ import java.util.stream.Collectors;
 @RequestMapping("/work-orders")
 public class WorkOrderController {
 
+
     private final WorkOrderService workOrderService;
     private final ClientService clientService;
     private final ServiceCategoryRepository categoryRepository;
     private final ProfileRepository profileRepository;
-    private final QuoteRepository quoteRepository;
+    private final QuoteRepository quoteRepository; // Adicione este
     private final WorkOrderRepository workOrderRepo;
+    private final ClientRepository clientRepository; // Adicione este
 
     public WorkOrderController(WorkOrderService workOrderService, ClientService clientService,
                                ServiceCategoryRepository categoryRepository, ProfileRepository profileRepository,
-                               QuoteRepository quoteRepository, WorkOrderRepository workOrderRepo) {
+                               QuoteRepository quoteRepository, WorkOrderRepository workOrderRepo,
+                               ClientRepository clientRepository) { // Adicione no construtor
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
         this.profileRepository = profileRepository;
         this.quoteRepository = quoteRepository;
         this.workOrderRepo = workOrderRepo;
+        this.clientRepository = clientRepository; // Inicialize
     }
 
     @GetMapping
     @Transactional(readOnly = true)
     public String index(Model model) {
         List<WorkOrder> orders = workOrderRepo.findAllWithItemsOrderByCreatedAtDesc();
+
+        // Carrega perfil
+        com.alfatahi.erp.entity.Profile profile = profileRepository.findAll().stream().findFirst().orElseGet(() -> {
+            com.alfatahi.erp.entity.Profile p = new com.alfatahi.erp.entity.Profile();
+            p.setCompanyName("Alfa Tahi");
+            return profileRepository.save(p);
+        });
 
         BigDecimal totalRevenue = workOrderRepo.sumTotalRevenue();
         BigDecimal totalCost = workOrderRepo.sumTotalCost();
@@ -59,10 +70,15 @@ public class WorkOrderController {
         }
 
         model.addAttribute("orders", orders);
+
         model.addAttribute("totalRevenue", totalRevenue);
         model.addAttribute("totalCost", totalCost);
         model.addAttribute("globalProfit", globalProfit);
         model.addAttribute("averageMargin", averageMargin);
+
+        model.addAttribute("profile", profile);
+        model.addAttribute("clients", clientRepository.findAll()); // Busca direta no Repo
+        model.addAttribute("availableQuotes", quoteRepository.findAll()); // Busca direta no Repo
         model.addAttribute("currentPage", "work-orders");
 
         return "work-orders";
@@ -70,49 +86,39 @@ public class WorkOrderController {
 
     @PostMapping(value = "/save-ajax", consumes = "application/json")
     @ResponseBody
+    @Transactional // NECESSÁRIO PARA MANTER A SESSÃO ABERTA
     public ResponseEntity<?> saveAjax(@RequestBody WorkOrder workOrder) {
         WorkOrder targetWo;
 
         if (workOrder.getId() != null) {
             targetWo = workOrderService.findById(workOrder.getId());
-            if (targetWo != null) {
-                // Atualiza campos
-                targetWo.setTitle(workOrder.getTitle());
-                targetWo.setStatus(workOrder.getStatus());
-                targetWo.setDescription(workOrder.getDescription());
-                targetWo.setNotes(workOrder.getNotes());
-                targetWo.setInstallDate(workOrder.getInstallDate());
-                targetWo.setTotalValue(workOrder.getTotalValue());
-                targetWo.setClient(workOrder.getClient());
+            if (targetWo == null) return ResponseEntity.notFound().build();
 
-                if (targetWo.getItems() == null) {
-                    targetWo.setItems(new ArrayList<>());
-                } else {
-                    targetWo.getItems().clear();
-                }
-            } else {
-                targetWo = workOrder;
-            }
+            targetWo.setTitle(workOrder.getTitle());
+            targetWo.setStatus(workOrder.getStatus());
+            targetWo.setDescription(workOrder.getDescription());
+            targetWo.setNotes(workOrder.getNotes());
+            targetWo.setInstallDate(workOrder.getInstallDate());
+            targetWo.setTotalValue(workOrder.getTotalValue());
+            targetWo.setClient(workOrder.getClient());
+
+            targetWo.getItems().clear();
         } else {
             targetWo = workOrder;
         }
 
-        // Adiciona os itens novos corretamente
         if (workOrder.getItems() != null) {
             for (WorkOrderItem item : workOrder.getItems()) {
-                item.setId(null); // Garante que não duplica
                 item.setWorkOrder(targetWo);
                 targetWo.getItems().add(item);
             }
         }
 
-        // Vinculação com Orçamento
         if (workOrder.getQuoteId() != null) {
             Quote q = quoteRepository.findById(workOrder.getQuoteId()).orElse(null);
             if (q != null) {
                 targetWo.setQuote(q);
                 q.setWorkOrder(targetWo);
-                quoteRepository.save(q);
             }
         }
 
@@ -120,12 +126,21 @@ public class WorkOrderController {
         return ResponseEntity.ok().build();
     }
 
+    // Adicione este método ao WorkOrderController.java
+    @GetMapping("/new")
+    @ResponseBody
+    public ResponseEntity<WorkOrder> newOs() {
+        WorkOrder wo = new WorkOrder();
+        wo.setStatus("pending");
+        wo.setCreatedDate(java.time.LocalDateTime.now());
+
+        return ResponseEntity.ok(wo);
+    }
+
     @GetMapping("/edit-data/{id}")
     @ResponseBody
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getEditData(
-            @PathVariable UUID id
-    ) {
+    public ResponseEntity<?> getEditData(@PathVariable UUID id) {
 
         WorkOrder wo = workOrderService.findById(id);
 
@@ -139,8 +154,8 @@ public class WorkOrderController {
 
     @PostMapping("/cancel/{id}")
     @ResponseBody
-    public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody String reason) {
-        WorkOrder wo = workOrderService.findById(id);
+    @Transactional
+    public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody String reason) {WorkOrder wo = workOrderService.findById(id);
         if(wo != null) {
             wo.setStatus("cancelled");
             wo.setNotes((wo.getNotes() != null ? wo.getNotes() : "") + "\n>>> CANCELADA: " + reason);
@@ -152,6 +167,13 @@ public class WorkOrderController {
             }
             workOrderService.save(wo);
         }
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseBody
+    public ResponseEntity<?> delete(@PathVariable UUID id) {
+        workOrderService.delete(id); // Certifique-se que o Service faz um deleteById
         return ResponseEntity.ok().build();
     }
 }

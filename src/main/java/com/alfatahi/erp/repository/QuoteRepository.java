@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime; // IMPORTANTE: Importar LocalDateTime
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface QuoteRepository extends JpaRepository<Quote, UUID> {
@@ -15,10 +15,8 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
     @Modifying
     @Transactional
     @Query("UPDATE Quote q SET q.status = 'expired' WHERE q.status = 'pending' AND q.dateCreated < :limite")
-    int expirePendingQuotes(@Param("limite") LocalDateTime limite); // CORRIGIDO PARA LocalDateTime
+    int expirePendingQuotes(@Param("limite") LocalDateTime limite);
 
-    @Modifying
-    @Transactional
     @Query("""
     SELECT COALESCE(
     MAX(CAST(SUBSTRING(q.number, 5) AS integer)),

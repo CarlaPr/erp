@@ -5,8 +5,10 @@ import com.alfatahi.erp.entity.QuoteItem;
 import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.QuoteRepository;
 import com.alfatahi.erp.service.QuoteService;
+import org.hibernate.Hibernate; // IMPORT NECESSÁRIO
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional; // IMPORT NECESSÁRIO
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -109,10 +111,20 @@ public class QuoteController {
         return "quotes";
     }
 
+    // AQUI OCORREU A CORREÇÃO:
     @GetMapping("/view-data/{id}")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity<Quote> getQuoteData(@PathVariable UUID id) {
-        return ResponseEntity.ok(quoteRepo.findById(id).orElseThrow());
+        Quote quote = quoteRepo.findById(id).orElseThrow();
+
+        Hibernate.initialize(quote.getItems());
+
+        if (quote.getWorkOrder() != null) {
+            Hibernate.initialize(quote.getWorkOrder().getItems());
+        }
+
+        return ResponseEntity.ok(quote);
     }
 
     @PostMapping(value = "/save-ajax", consumes = "application/json")
