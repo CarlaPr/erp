@@ -6,166 +6,484 @@
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
 <main class="ml-64 p-8 w-full min-h-screen text-slate-200">
+
+    <!-- ── HEADER ── -->
     <header class="flex justify-between items-center mb-8">
         <div>
             <h2 class="text-3xl font-black text-white tracking-tight">Contas a Pagar</h2>
             <p class="text-slate-400 mt-1">Controlo de fornecedores, despesas fixas e CMV.</p>
         </div>
-        <button onclick="toggleModal('payableModal', true)" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-rose-500/20">
+        <button onclick="openModal('payableModal')"
+                class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-rose-500/20">
             <i data-lucide="plus" class="w-5 h-5"></i> Nova Despesa
         </button>
     </header>
 
+    <!-- ── KPIs ── -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Cadastrado</span>
-            <p class="text-2xl font-black text-white mt-2" th:text="'R$ ' + ${valCadastrado}">R$ 0,00</p>
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Total</span>
+            <p class="text-2xl font-black text-white mt-2"
+               th:text="'R$ ' + ${#numbers.formatDecimal(valTotal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Pago (Liquidado)</span>
-            <p class="text-2xl font-black text-emerald-400 mt-2" th:text="'R$ ' + ${valPago}">R$ 0,00</p>
+        <div class="bg-emerald-500/10 p-6 rounded-2xl border border-emerald-500/20 backdrop-blur-sm">
+            <span class="text-emerald-400 text-xs font-bold uppercase tracking-wider">Pago</span>
+            <p class="text-2xl font-black text-emerald-400 mt-2"
+               th:text="'R$ ' + ${#numbers.formatDecimal(valPago, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Pendente</span>
-            <p class="text-2xl font-black text-amber-400 mt-2" th:text="'R$ ' + ${valPendente}">R$ 0,00</p>
+        <div class="bg-amber-500/10 p-6 rounded-2xl border border-amber-500/20 backdrop-blur-sm">
+            <span class="text-amber-400 text-xs font-bold uppercase tracking-wider">Pendente</span>
+            <p class="text-2xl font-black text-amber-400 mt-2"
+               th:text="'R$ ' + ${#numbers.formatDecimal(valPendente, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-rose-500/10 p-6 rounded-2xl border border-rose-500/20 backdrop-blur-sm">
-            <span class="text-rose-400 text-xs font-bold uppercase tracking-wider">Em Atraso</span>
-            <p class="text-2xl font-black text-rose-400 mt-2" th:text="'R$ ' + ${valAtraso}">R$ 0,00</p>
+            <span class="text-rose-400 text-xs font-bold uppercase tracking-wider">Vencido</span>
+            <p class="text-2xl font-black text-rose-400 mt-2"
+               th:text="'R$ ' + ${#numbers.formatDecimal(valAtraso, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
     </div>
 
-    <div class="flex gap-2 mb-6 bg-slate-800/50 p-1.5 rounded-xl border border-slate-700/50 w-fit backdrop-blur-sm">
-        <button onclick="filterTable('all')" class="tab-btn active px-4 py-2 rounded-lg text-sm font-bold text-white bg-slate-700 shadow-sm transition-all">Todos</button>
-        <button onclick="filterTable('variable')" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition-all">Variáveis (CMV)</button>
-        <button onclick="filterTable('fixed')" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition-all">Despesas Fixas</button>
-        <button onclick="filterTable('provision')" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition-all">Provisões</button>
-    </div>
+    <!-- ── FILTROS ── -->
+    <form method="GET" action="/payables" class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5 mb-6 backdrop-blur-sm">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            <div class="col-span-2">
+                <input type="text" name="search" th:value="${filterSearch}" placeholder="🔍 Buscar descrição, fornecedor..."
+                       class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2 text-sm text-white outline-none focus:border-rose-500 transition-all placeholder-slate-500"/>
+            </div>
+            <select name="status" class="bg-[#0f172a] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-rose-500 transition-all">
+                <option value="">Status</option>
+                <option value="pending" th:selected="${filterStatus == 'pending'}">Pendente</option>
+                <option value="partial" th:selected="${filterStatus == 'partial'}">Parcial</option>
+                <option value="paid" th:selected="${filterStatus == 'paid'}">Pago</option>
+                <option value="cancelled" th:selected="${filterStatus == 'cancelled'}">Cancelado</option>
+            </select>
+            <select name="category" class="bg-[#0f172a] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-rose-500 transition-all">
+                <option value="">Categoria</option>
+                <option value="variable" th:selected="${filterCategory == 'variable'}">Variável (CMV)</option>
+                <option value="fixed" th:selected="${filterCategory == 'fixed'}">Custo Fixo</option>
+                <option value="provision" th:selected="${filterCategory == 'provision'}">Provisão</option>
+            </select>
+            <select name="supplierId" class="bg-[#0f172a] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-rose-500 transition-all">
+                <option value="">Fornecedor</option>
+                <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"
+                        th:selected="${filterSupplierId != null and filterSupplierId == s.id}"></option>
+            </select>
+            <div class="flex gap-1.5">
+                <input type="date" name="dateFrom" th:value="${filterDateFrom}"
+                       class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-300 outline-none focus:border-rose-500 transition-all"/>
+                <input type="date" name="dateTo" th:value="${filterDateTo}"
+                       class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-300 outline-none focus:border-rose-500 transition-all"/>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg px-3 py-2 text-sm transition-all">Filtrar</button>
+                <a href="/payables" class="flex items-center justify-center bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold rounded-lg px-3 py-2 text-sm transition-all">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </form>
 
+    <!-- ── TABELA ── -->
     <div class="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
         <table class="w-full text-left border-collapse" id="payablesTable">
             <thead>
             <tr class="border-b border-slate-700/50 bg-slate-800/80 text-slate-400 font-bold text-xs uppercase tracking-wider">
-                <th class="p-5">Vencimento</th>
-                <th class="p-5">Fornecedor / Descrição</th>
-                <th class="p-5">Categoria</th>
-                <th class="p-5 text-right">Valor Total</th>
-                <th class="p-5 text-center">Status</th>
+                <th class="p-4">Vencimento</th>
+                <th class="p-4">Descrição / Fornecedor</th>
+                <th class="p-4">Categoria</th>
+                <th class="p-4">O.S.</th>
+                <th class="p-4 text-right">Total</th>
+                <th class="p-4 text-right">Pago</th>
+                <th class="p-4 text-right">Saldo</th>
+                <th class="p-4 text-center">Status</th>
+                <th class="p-4 text-center">Ações</th>
             </tr>
             </thead>
             <tbody class="divide-y divide-slate-700/50 text-sm">
-            <tr th:each="p : ${payables}" class="hover:bg-slate-700/30 transition-colors" th:data-category="${p.category}">
-                <td class="p-5 text-slate-300 font-medium" th:text="${#temporals.format(p.dueDate, 'dd/MM/yyyy')}">01/01/2026</td>
-                <td class="p-5">
-                    <div class="font-bold text-white" th:text="${p.supplier != null ? p.supplier.name : 'Avulso'}">Fornecedor</div>
-                    <div class="text-xs text-slate-400 mt-0.5" th:text="${p.description}">Desc</div>
-                </td>
-                <td class="p-5">
-                    <span th:if="${p.category == 'variable'}" class="text-cyan-400 text-xs font-bold uppercase tracking-wider">Variável (CMV)</span>
-                    <span th:if="${p.category == 'fixed'}" class="text-indigo-400 text-xs font-bold uppercase tracking-wider">Custo Fixo</span>
-                    <span th:if="${p.category == 'provision'}" class="text-amber-400 text-xs font-bold uppercase tracking-wider">Provisão</span>
-                </td>
-                <td class="p-5 text-right font-mono font-bold text-rose-400" th:text="'R$ ' + ${p.totalAmount}">0,00</td>
-                <td class="p-5 text-center">
-                    <span th:if="${p.status == 'paid'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase tracking-wide">Pago</span>
-                    <span th:if="${p.status == 'pending'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 uppercase tracking-wide">Pendente</span>
+
+            <tr th:if="${#lists.isEmpty(payables)}">
+                <td colspan="9" class="p-12 text-center">
+                    <div class="flex flex-col items-center gap-3 text-slate-500">
+                        <i data-lucide="inbox" class="w-10 h-10 opacity-40"></i>
+                        <p class="text-sm">Nenhuma conta encontrada.</p>
+                        <a href="/payables" class="text-xs text-rose-400 hover:text-rose-300 underline">Limpar filtros</a>
+                    </div>
                 </td>
             </tr>
+
+            <tr th:each="p : ${payables}"
+                class="hover:bg-slate-700/30 transition-colors"
+                th:data-category="${p.category}"
+                th:classappend="${p.status == 'cancelled'} ? 'opacity-50' : ''">
+
+                <!-- Vencimento -->
+                <td class="p-4">
+                    <span th:text="${#temporals.format(p.dueDate, 'dd/MM/yyyy')}"
+                          th:classappend="${(p.status == 'pending' or p.status == 'partial') and p.dueDate.isBefore(T(java.time.LocalDate).now())} ? 'text-rose-400 font-bold' : 'text-slate-300'">
+                        01/01/2026
+                    </span>
+                </td>
+
+                <!-- Descrição / Fornecedor -->
+                <td class="p-4">
+                    <div class="font-semibold text-white" th:text="${p.supplier != null ? p.supplier.name : 'Avulso'}">Fornecedor</div>
+                    <div class="text-xs text-slate-400 mt-0.5" th:text="${p.description}">Desc</div>
+                    <div th:if="${p.documentNumber != null and !p.documentNumber.isEmpty()}"
+                         class="text-[10px] text-slate-500 font-mono mt-0.5" th:text="'Doc: ' + ${p.documentNumber}"></div>
+                </td>
+
+                <!-- Categoria -->
+                <td class="p-4">
+                    <span th:if="${p.category == 'variable'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/15 text-cyan-400 uppercase tracking-wide">CMV</span>
+                    <span th:if="${p.category == 'fixed'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/15 text-indigo-400 uppercase tracking-wide">Fixo</span>
+                    <span th:if="${p.category == 'provision'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 uppercase tracking-wide">Provisão</span>
+                    <div th:if="${p.subcategory != null and !p.subcategory.isEmpty()}" class="text-[10px] text-slate-500 mt-0.5" th:text="${p.subcategory}"></div>
+                </td>
+
+                <!-- O.S. -->
+                <td class="p-4 text-cyan-400 font-mono text-xs" th:text="${p.workOrder != null ? p.workOrder.number : '-'}">-</td>
+
+                <!-- Total -->
+                <td class="p-4 text-right font-mono font-semibold text-white"
+                    th:text="'R$ ' + ${#numbers.formatDecimal(p.totalAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
+
+                <!-- Pago -->
+                <td class="p-4 text-right font-mono text-emerald-400"
+                    th:text="'R$ ' + ${#numbers.formatDecimal(p.paidAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
+
+                <!-- Saldo -->
+                <td class="p-4 text-right font-mono font-bold"
+                    th:classappend="${p.balance.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? 'text-rose-400' : 'text-slate-500'"
+                    th:text="'R$ ' + ${#numbers.formatDecimal(p.balance, 1, 'POINT', 2, 'COMMA')}">0,00</td>
+
+                <!-- Status -->
+                <td class="p-4 text-center">
+                    <span th:if="${p.status == 'paid'}"     class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase tracking-wide">Pago</span>
+                    <span th:if="${p.status == 'partial'}"  class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 uppercase tracking-wide">Parcial</span>
+                    <span th:if="${p.status == 'pending'}"  class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase tracking-wide">Pendente</span>
+                    <span th:if="${p.status == 'cancelled'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-500/20 text-slate-400 uppercase tracking-wide">Cancelado</span>
+                </td>
+
+                <!-- Ações -->
+                <td class="p-4 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                        <!-- Pagar (apenas se não pago/cancelado) -->
+                        <button
+                                th:if="${p.status != 'paid' and p.status != 'cancelled'}"
+
+                                th:data-id="${p.id}"
+                                th:data-balance="${p.balance}"
+
+                                onclick="openPayModal(
+                                        this.dataset.id,
+                                        this.dataset.balance
+                                    )"
+
+                                class="p-1.5 rounded-lg bg-emerald-500/15">
+
+                            <i data-lucide="check-circle"></i>
+
+                        </button>
+                        <!-- Editar -->
+                        <button
+                                th:if="${p.status != 'cancelled'}"
+
+                                th:data-id="${p.id}"
+                                th:data-description="${p.description}"
+                                th:data-category="${p.category}"
+                                th:data-subcategory="${p.subcategory}"
+                                th:data-total="${p.totalAmount}"
+                                th:data-duedate="${p.dueDate}"
+                                th:data-payment="${p.paymentMethod}"
+                                th:data-document="${p.documentNumber}"
+                                th:data-recurring="${p.recurring}"
+                                th:data-notes="${p.notes}"
+                                th:data-supplier="${p.supplier != null ? p.supplier.id : ''}"
+                                th:data-workorder="${p.workOrder != null ? p.workOrder.id : ''}"
+
+                                onclick="openEditModal(
+                                    this.dataset.id,
+                                    this.dataset.description,
+                                    this.dataset.category,
+                                    this.dataset.subcategory,
+                                    this.dataset.total,
+                                    this.dataset.duedate,
+                                    this.dataset.payment,
+                                    this.dataset.document,
+                                    this.dataset.recurring==='true',
+                                    this.dataset.notes,
+                                    this.dataset.supplier,
+                                    this.dataset.workorder
+                                    )"
+
+                                class="p-1.5 rounded-lg bg-blue-500/15">
+
+                            <i data-lucide='pencil'></i>
+
+                        </button>
+                        <!-- Cancelar -->
+                        <button
+                                th:if="${p.status != 'cancelled'}"
+                                th:data-id="${p.id}"
+
+                                onclick="confirmCancel(this.dataset.id)"
+
+                                title="Cancelar"
+                                class="p-1.5 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-500/30 transition-all">
+
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+
+                        </button>
+                    </div>
+                </td>
+            </tr>
+
             </tbody>
         </table>
     </div>
 
+    <!-- ======================================================
+         MODAL — Nova Conta a Pagar
+    ======================================================= -->
     <div id="payableModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-[#1e293b] border border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden">
-
             <div class="p-6 border-b border-slate-700/50 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-white tracking-tight">Nova Conta a Pagar</h2>
-                <button type="button" onclick="toggleModal('payableModal', false)" class="text-slate-400 hover:text-white transition-colors">
+                <h2 class="text-xl font-bold text-white">Nova Conta a Pagar</h2>
+                <button type="button" onclick="closeModal('payableModal')" class="text-slate-400 hover:text-white">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-
-            <form th:action="@{/payables/save}" th:object="${newPayable}" method="POST" class="p-6 space-y-4">
-
+            <form th:action="@{/payables/save}" th:object="${newPayable}" method="POST" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
                 <div>
-                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Descrição *</label>
-                    <input type="text" th:field="*{description}" required placeholder="Ex: Compra de materiais" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all">
+                    <label class="label-form">Descrição *</label>
+                    <input type="text" th:field="*{description}" required placeholder="Ex: Compra de materiais" class="input-form">
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Categoria *</label>
-                        <select id="categorySelect" th:field="*{category}" onchange="updateSubcategories()" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500 transition-all">
+                        <label class="label-form">Categoria *</label>
+                        <select id="categorySelect" th:field="*{category}" onchange="updateSubcategories(this,'subcategorySelect')" class="input-form">
                             <option value="variable">Variável (CMV)</option>
                             <option value="fixed">Fixa</option>
                             <option value="provision">Provisão</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Subcategoria</label>
-                        <select id="subcategorySelect" th:field="*{subcategory}" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500 transition-all">
-                        </select>
+                        <label class="label-form">Subcategoria</label>
+                        <select id="subcategorySelect" th:field="*{subcategory}" class="input-form"></select>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Fornecedor</label>
-                        <select th:field="*{supplier}" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500 transition-all">
+                        <label class="label-form">Fornecedor</label>
+                        <select th:field="*{supplier}" class="input-form">
                             <option value="">Selecione...</option>
-                            <option th:each="s:${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                            <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">O.S. Relacionada</label>
-                        <select th:field="*{workOrder}" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500 transition-all">
+                        <label class="label-form">O.S. Relacionada</label>
+                        <select th:field="*{workOrder}" class="input-form">
                             <option value="">Nenhuma</option>
-                            <option th:each="wo:${workOrders}" th:value="${wo.id}" th:text="${wo.number}"></option>
+                            <option th:each="wo : ${workOrders}" th:value="${wo.id}" th:text="${wo.number}"></option>
                         </select>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Valor Total *</label>
-                        <input type="number" step="0.01" th:field="*{totalAmount}" required placeholder="0.00" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500 transition-all font-mono">
+                        <label class="label-form">Valor Total *</label>
+                        <input type="number" step="0.01" th:field="*{totalAmount}" required placeholder="0.00" class="input-form font-mono">
                     </div>
                     <div>
-                        <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Vencimento *</label>
-                        <input type="date" th:field="*{dueDate}" required class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500 transition-all text-slate-300">
+                        <label class="label-form">Vencimento *</label>
+                        <input type="date" th:field="*{dueDate}" required class="input-form text-slate-300">
                     </div>
                     <div>
-                        <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Núm. Documento</label>
-                        <input type="text" th:field="*{documentNumber}" placeholder="NF, Recibo..." class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500 transition-all">
+                        <label class="label-form">Núm. Documento</label>
+                        <input type="text" th:field="*{documentNumber}" placeholder="NF, Recibo..." class="input-form">
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4 items-end">
                     <div>
-                        <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Forma de Pagamento</label>
-                        <select th:field="*{paymentMethod}" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500 transition-all">
+                        <label class="label-form">Forma de Pagamento</label>
+                        <select th:field="*{paymentMethod}" class="input-form">
                             <option value="PIX">PIX</option>
                             <option value="CARD">Cartão</option>
                             <option value="BOLETO">Boleto</option>
                             <option value="CASH">Dinheiro</option>
+                            <option value="TRANSFER">Transferência</option>
                         </select>
                     </div>
                     <div class="pb-2.5">
-                        <label class="flex items-center gap-2 cursor-pointer w-fit">
-                            <input type="checkbox" th:field="*{recurring}" class="w-4 h-4 rounded border-slate-700 bg-[#0f172a] accent-blue-600 focus:ring-blue-500 focus:ring-offset-0">
-                            <span class="text-sm font-medium text-slate-300">Conta Recorrente</span>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" th:field="*{recurring}" class="w-4 h-4 rounded border-slate-700 bg-[#0f172a] accent-blue-600">
+                            <span class="text-sm text-slate-300">Recorrente</span>
                         </label>
                     </div>
                 </div>
-
                 <div>
-                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Observações</label>
-                    <textarea th:field="*{notes}" rows="2" placeholder="Detalhes adicionais..." class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500 transition-all resize-none"></textarea>
+                    <label class="label-form">Observações</label>
+                    <textarea th:field="*{notes}" rows="2" placeholder="Detalhes..." class="input-form resize-none"></textarea>
                 </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-700/50">
+                    <button type="button" onclick="closeModal('payableModal')" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary bg-rose-500 hover:bg-rose-600">Salvar Conta</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                <div class="flex justify-end gap-3 pt-6 mt-2 border-t border-slate-700/50">
-                    <button type="button" onclick="toggleModal('payableModal', false)" class="px-5 py-2.5 rounded-lg bg-transparent text-slate-300 font-bold hover:bg-slate-800 transition-all text-sm">Cancelar</button>
-                    <button type="submit" class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 transition-all text-white font-bold shadow-lg shadow-blue-500/20 text-sm">Salvar Conta</button>
+    <!-- ======================================================
+         MODAL — Registrar Pagamento
+    ======================================================= -->
+    <div id="payModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1e293b] border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+            <div class="p-6 border-b border-slate-700/50 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white">Registrar Pagamento</h2>
+                <button type="button" onclick="closeModal('payModal')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="payForm" method="POST" class="p-6 space-y-4">
+                <div>
+                    <label class="label-form">Valor a Pagar (R$) *</label>
+                    <input type="number" step="0.01" name="amount" id="payAmount" required placeholder="0.00" class="input-form font-mono text-lg">
+                    <p class="text-xs text-slate-500 mt-1">Saldo restante: <span id="payBalance" class="text-amber-400 font-bold"></span></p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-form">Data de Pagamento</label>
+                        <input type="date" name="paymentDate" id="payDate" class="input-form text-slate-300">
+                    </div>
+                    <div>
+                        <label class="label-form">Forma de Pagamento</label>
+                        <select name="paymentMethod" class="input-form">
+                            <option value="PIX">PIX</option>
+                            <option value="CARD">Cartão</option>
+                            <option value="BOLETO">Boleto</option>
+                            <option value="CASH">Dinheiro</option>
+                            <option value="TRANSFER">Transferência</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="label-form">Observação</label>
+                    <textarea name="notes" rows="2" placeholder="Referência do pagamento..." class="input-form resize-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-700/50">
+                    <button type="button" onclick="closeModal('payModal')" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary bg-emerald-500 hover:bg-emerald-600 text-slate-900">Confirmar Pagamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         MODAL — Editar Conta
+    ======================================================= -->
+    <div id="editModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1e293b] border border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden">
+            <div class="p-6 border-b border-slate-700/50 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white">Editar Conta a Pagar</h2>
+                <button type="button" onclick="closeModal('editModal')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="editForm" method="POST" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                <input type="hidden" name="id" id="editId">
+                <div>
+                    <label class="label-form">Descrição *</label>
+                    <input type="text" name="description" id="editDescription" required class="input-form">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-form">Categoria *</label>
+                        <select name="category" id="editCategory" onchange="updateSubcategories(this,'editSubcategory')" class="input-form">
+                            <option value="variable">Variável (CMV)</option>
+                            <option value="fixed">Fixa</option>
+                            <option value="provision">Provisão</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-form">Subcategoria</label>
+                        <select name="subcategory" id="editSubcategory" class="input-form"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-form">Fornecedor</label>
+                        <select name="supplier" id="editSupplier" class="input-form">
+                            <option value="">Nenhum</option>
+                            <th:block th:each="s : ${suppliers}">
+                                <option th:value="${s.id}" th:text="${s.name}"></option>
+                            </th:block>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-form">O.S. Relacionada</label>
+                        <select name="workOrder" id="editWorkOrder" class="input-form">
+                            <option value="">Nenhuma</option>
+                            <th:block th:each="wo : ${workOrders}">
+                                <option th:value="${wo.id}" th:text="${wo.number}"></option>
+                            </th:block>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="label-form">Valor Total *</label>
+                        <input type="number" step="0.01" name="totalAmount" id="editTotalAmount" required class="input-form font-mono">
+                    </div>
+                    <div>
+                        <label class="label-form">Vencimento *</label>
+                        <input type="date" name="dueDate" id="editDueDate" required class="input-form text-slate-300">
+                    </div>
+                    <div>
+                        <label class="label-form">Núm. Documento</label>
+                        <input type="text" name="documentNumber" id="editDocumentNumber" class="input-form">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 items-end">
+                    <div>
+                        <label class="label-form">Forma de Pagamento</label>
+                        <select name="paymentMethod" id="editPaymentMethod" class="input-form">
+                            <option value="PIX">PIX</option>
+                            <option value="CARD">Cartão</option>
+                            <option value="BOLETO">Boleto</option>
+                            <option value="CASH">Dinheiro</option>
+                            <option value="TRANSFER">Transferência</option>
+                        </select>
+                    </div>
+                    <div class="pb-2.5">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="recurring" id="editRecurring" class="w-4 h-4 accent-blue-600">
+                            <span class="text-sm text-slate-300">Recorrente</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="label-form">Observações</label>
+                    <textarea name="notes" id="editNotes" rows="2" class="input-form resize-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-700/50">
+                    <button type="button" onclick="closeModal('editModal')" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary bg-blue-600 hover:bg-blue-500">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal confirm cancel -->
+    <div id="cancelModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1e293b] border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center">
+            <div class="w-14 h-14 bg-rose-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-triangle" class="w-7 h-7 text-rose-400"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Cancelar Conta?</h3>
+            <p class="text-sm text-slate-400 mb-6">A conta será marcada como cancelada e removida dos cálculos. O histórico será preservado.</p>
+            <form id="cancelForm" method="POST">
+                <div class="flex gap-3 justify-center">
+                    <button type="button" onclick="closeModal('cancelModal')" class="btn-secondary">Não</button>
+                    <button type="submit" class="btn-primary bg-rose-500 hover:bg-rose-600">Sim, Cancelar</button>
                 </div>
             </form>
         </div>
@@ -173,91 +491,122 @@
 
 </main>
 
+<style>
+    .label-form{
+        display:block;
+        color:#94a3b8;
+        font-size:10px;
+        font-weight:700;
+        text-transform:uppercase;
+        margin-bottom:6px;
+    }
+
+    .input-form{
+        width:100%;
+        background:#0f172a;
+        border:1px solid #334155;
+        border-radius:8px;
+        padding:10px 14px;
+        color:white;
+    }
+
+    .btn-primary{
+        padding:10px 24px;
+        border-radius:8px;
+        font-weight:700;
+    }
+
+    .btn-secondary{
+        padding:10px 20px;
+        border-radius:8px;
+        color:#cbd5e1;
+    }
+</style>
+
 <script>
+    const TODAY = new Date().toISOString().split('T')[0];
 
-    function toggleModal(id, show) {
-        const modal = document.getElementById(id);
-        if (show) {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        } else {
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        }
+    function openModal(id)  { const m = document.getElementById(id); m.classList.remove('hidden'); m.classList.add('flex'); }
+    function closeModal(id) { const m = document.getElementById(id); m.classList.remove('flex'); m.classList.add('hidden'); }
+
+    // Pagar
+    function openPayModal(id, balance) {
+        document.getElementById('payForm').action = '/payables/pay/' + id;
+        document.getElementById('payBalance').textContent = 'R$ ' + balance;
+        document.getElementById('payAmount').value =
+            Number(balance).toFixed(2);
+        document.getElementById('payDate').value = TODAY;
+        openModal('payModal');
     }
 
-    function filterTable(category) {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
-            btn.classList.add('text-slate-400');
-        });
-        event.target.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
-        event.target.classList.remove('text-slate-400');
-
-        const rows = document.querySelectorAll('#payablesTable tbody tr');
-        rows.forEach(row => {
-            if (category === 'all' || row.dataset.category === category) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
+    // Cancelar
+    function confirmCancel(id) {
+        document.getElementById('cancelForm').action = '/payables/cancel/' + id;
+        openModal('cancelModal');
     }
 
+    // Editar
+    function openEditModal(id, description, category, subcategory, totalAmount, dueDate, paymentMethod, documentNumber, recurring, notes, supplierId, workOrderId) {
+        document.getElementById('editForm').action = '/payables/edit/' + id;
+        document.getElementById('editId').value = id;
+        document.getElementById('editDescription').value = description;
+        document.getElementById('editCategory').value = category;
+        document.getElementById('editTotalAmount').value = totalAmount;
+        document.getElementById('editDueDate').value = dueDate;
+        document.getElementById('editPaymentMethod').value = paymentMethod || 'PIX';
+        document.getElementById('editDocumentNumber').value = documentNumber;
+        document.getElementById('editRecurring').checked = recurring;
+        document.getElementById('editNotes').value = notes;
+
+        updateSubcategories(document.getElementById('editCategory'), 'editSubcategory', subcategory);
+
+        const supSel = document.getElementById('editSupplier');
+        supSel.value = supplierId || '';
+
+        const woSel = document.getElementById('editWorkOrder');
+        woSel.value = workOrderId || '';
+
+        openModal('editModal');
+    }
+
+    // Subcategorias dinâmicas
     const subcategories = {
         variable: [
-            { value: "vidro", text: "Vidro" },
-            { value: "aluminio", text: "Alumínio" },
-            { value: "ferragens", text: "Ferragens" },
-            { value: "silicone", text: "Silicone" },
-            { value: "ferramentas", text: "Ferramentas" },
-            { value: "insumos de serviços", text: "Insumos de Serviços" },
-            { value: "frete", text: "Frete" },
-            { value: "combustivel", text: "Combustível" },
-            { value: "outros", text: "Outros" }
+            { value: "vidro", text: "Vidro" }, { value: "aluminio", text: "Alumínio" },
+            { value: "ferragens", text: "Ferragens" }, { value: "silicone", text: "Silicone" },
+            { value: "ferramentas", text: "Ferramentas" }, { value: "insumos de serviços", text: "Insumos de Serviços" },
+            { value: "frete", text: "Frete" }, { value: "combustivel", text: "Combustível" }, { value: "outros", text: "Outros" }
         ],
         fixed: [
-            { value: "aluguel", text: "Aluguel" },
-            { value: "energia", text: "Energia" },
-            { value: "agua", text: "Água" },
-            { value: "internet", text: "Internet" },
-            { value: "salarios", text: "Salários" },
-            { value: "pro-labore", text: "Pró-labore" },
-            { value: "marketing", text: "Marketing" },
-            { value: "software", text: "Software" },
-            { value: "outros", text: "Outros" }
+            { value: "aluguel", text: "Aluguel" }, { value: "energia", text: "Energia" },
+            { value: "agua", text: "Água" }, { value: "internet", text: "Internet" },
+            { value: "salarios", text: "Salários" }, { value: "pro-labore", text: "Pró-labore" },
+            { value: "marketing", text: "Marketing" }, { value: "software", text: "Software" }, { value: "outros", text: "Outros" }
         ],
         provision: [
-            { value: "provisionamento", text: "Provisionamento" },
-            { value: "outros", text: "Outros" }
+            { value: "provisionamento", text: "Provisionamento" }, { value: "outros", text: "Outros" }
         ]
     };
 
-    function updateSubcategories() {
-        const categorySelect = document.getElementById('categorySelect');
-        const subcategorySelect = document.getElementById('subcategorySelect');
-        const selectedCategory = categorySelect.value;
-
-        // Limpar opções atuais
-        subcategorySelect.innerHTML = '<option value="">Selecione...</option>';
-
-        // Adicionar novas opções
-        if (selectedCategory && subcategories[selectedCategory]) {
-            subcategories[selectedCategory].forEach(sub => {
-                const option = document.createElement('option');
-                option.value = sub.value;
-                option.textContent = sub.text;
-                subcategorySelect.appendChild(option);
-            });
-        }
+    function updateSubcategories(selectEl, targetId, currentValue) {
+        const cat = selectEl.value;
+        const target = document.getElementById(targetId);
+        target.innerHTML = '<option value="">Selecione...</option>';
+        (subcategories[cat] || []).forEach(sub => {
+            const o = document.createElement('option');
+            o.value = sub.value;
+            o.textContent = sub.text;
+            if (currentValue && sub.value === currentValue) o.selected = true;
+            target.appendChild(o);
+        });
     }
 
-    // Chamar a função na carga inicial para preencher o select caso a página abra com valor default
-    document.addEventListener("DOMContentLoaded", function() {
-        updateSubcategories();
+    document.addEventListener('DOMContentLoaded', () => {
+        const catSel = document.getElementById('categorySelect');
+        if (catSel) updateSubcategories(catSel, 'subcategorySelect', '');
     });
-
 </script>
+
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 </body>
 </html>

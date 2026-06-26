@@ -8,9 +8,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+
 public interface AccountsReceivableRepository extends JpaRepository<AccountsReceivable, UUID> {
+
     List<AccountsReceivable> findAllByOrderByDueDateAsc();
 
+    List<AccountsReceivable> findByStatusNotOrderByDueDateAsc(String status);
 
     @Query("SELECT SUM(a.totalAmount) FROM AccountsReceivable a " +
             "WHERE a.status IN ('received', 'partial') " +
@@ -19,5 +22,4 @@ public interface AccountsReceivableRepository extends JpaRepository<AccountsRece
 
     @Query("SELECT SUM(a.totalAmount) FROM AccountsReceivable a WHERE a.status != 'cancelled'")
     BigDecimal sumTotalAmount();
-
 }

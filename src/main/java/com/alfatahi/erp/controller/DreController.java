@@ -40,16 +40,20 @@ public class DreController {
         if (month == null) month = now.getMonthValue();
 
         List<DreReportDto> colunas = new ArrayList<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM / yyyy", new Locale("pt", "BR"));
+        DateTimeFormatter fmt =
+                DateTimeFormatter.ofPattern("MMM / yyyy", Locale.of("pt", "BR"));
 
         if ("annual".equals(type)) {
             DreReportDto coluna = new DreReportDto("ANUAL " + year);
 
             // Loop eficiente (chamando o banco mês a mês para poupar RAM)
             for (int m = 1; m <= 12; m++) {
-                BigDecimal receita = recRepo.sumReceivedByMonthAndYear(m, year);
-                BigDecimal cmv = payRepo.sumCmvByMonthAndYear(m, year);
-                BigDecimal fixa = payRepo.sumDespesasFixasByMonthAndYear(m, year);
+                LocalDate inicio = LocalDate.of(year, m, 1);
+                LocalDate fim    = inicio.plusMonths(1);
+                BigDecimal receita = recRepo.sumReceivedByMonthAndYear(inicio, fim);
+                BigDecimal cmv     = payRepo.sumCmvByMonthAndYear(inicio, fim);
+
+                BigDecimal fixa = payRepo.sumDespesasFixasByMonthAndYear(inicio, fim);
 
                 coluna.addReceita(receita != null ? receita : BigDecimal.ZERO);
                 coluna.addCmv(cmv != null ? cmv : BigDecimal.ZERO);
@@ -62,15 +66,25 @@ public class DreController {
 
             for (int i = quantidade - 1; i >= 0; i--) {
                 LocalDate target = quantidade == 1 ? base : base.minusMonths(i);
+
+                LocalDate inicio = target.withDayOfMonth(1);
+                LocalDate fim = inicio.plusMonths(1);
+
                 DreReportDto coluna = new DreReportDto(target.format(fmt));
 
-                BigDecimal receita = recRepo.sumReceivedByMonthAndYear(target.getMonthValue(), target.getYear());
-                BigDecimal cmv = payRepo.sumCmvByMonthAndYear(target.getMonthValue(), target.getYear());
-                BigDecimal fixa = payRepo.sumDespesasFixasByMonthAndYear(target.getMonthValue(), target.getYear());
+                BigDecimal receita =
+                        recRepo.sumReceivedByMonthAndYear(inicio, fim);
+
+                BigDecimal cmv =
+                        payRepo.sumCmvByMonthAndYear(inicio, fim);
+
+                BigDecimal fixa =
+                        payRepo.sumDespesasFixasByMonthAndYear(inicio, fim);
 
                 coluna.addReceita(receita != null ? receita : BigDecimal.ZERO);
                 coluna.addCmv(cmv != null ? cmv : BigDecimal.ZERO);
                 coluna.addDespesa(fixa != null ? fixa : BigDecimal.ZERO);
+
                 colunas.add(coluna);
             }
         }

@@ -8,6 +8,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "accounts_receivable")
 public class AccountsReceivable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -35,15 +36,25 @@ public class AccountsReceivable {
     @Column(name = "due_date", nullable = false)
     private LocalDate dueDate;
 
+    @Column(name = "payment_date")
+    private LocalDate paymentDate;
+
     @Column(nullable = false)
-    private String status = "pending"; // Valores: pending, partial, received, cancelled
+    private String status = "pending"; // pending | partial | received | cancelled
+
+    @Column(name = "payment_method")
+    private String paymentMethod;
 
     private Integer installments = 1;
 
     @Column(name = "card_fee_percentage", precision = 5, scale = 2)
     private BigDecimal cardFeePercentage = BigDecimal.ZERO;
 
-    // Getters e Setters
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+
+    // ─── Getters & Setters ───────────────────────────────────────────────────
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public Client getClient() { return client; }
@@ -54,16 +65,28 @@ public class AccountsReceivable {
     public void setDescription(String description) { this.description = description; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
-    public BigDecimal getReceivedAmount() { return receivedAmount; }
+    public BigDecimal getReceivedAmount() { return receivedAmount != null ? receivedAmount : BigDecimal.ZERO; }
     public void setReceivedAmount(BigDecimal receivedAmount) { this.receivedAmount = receivedAmount; }
-    public BigDecimal getDiscount() { return discount; }
+    public BigDecimal getDiscount() { return discount != null ? discount : BigDecimal.ZERO; }
     public void setDiscount(BigDecimal discount) { this.discount = discount; }
     public LocalDate getDueDate() { return dueDate; }
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+    public LocalDate getPaymentDate() { return paymentDate; }
+    public void setPaymentDate(LocalDate paymentDate) { this.paymentDate = paymentDate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     public Integer getInstallments() { return installments; }
     public void setInstallments(Integer installments) { this.installments = installments; }
     public BigDecimal getCardFeePercentage() { return cardFeePercentage; }
     public void setCardFeePercentage(BigDecimal cardFeePercentage) { this.cardFeePercentage = cardFeePercentage; }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
+
+    // ─── Helpers para a view ─────────────────────────────────────────────────
+
+    public BigDecimal getBalance() {
+        return totalAmount.subtract(getReceivedAmount());
+    }
 }

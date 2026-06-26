@@ -28,7 +28,6 @@ public class WorkOrderService {
 
     @Transactional
     public WorkOrder save(WorkOrder workOrder) {
-        // 1. Gera o número da OS apenas se for nova (ID nulo)
         if (workOrder.getId() == null) {
 
             if (workOrder.getNumber() == null
@@ -44,22 +43,19 @@ public class WorkOrderService {
             }
         }
 
-        // 2. Cálculo da Área (Seguro contra nulos)
         if (workOrder.getWidth() != null && workOrder.getHeight() != null) {
             workOrder.setArea(workOrder.getWidth().multiply(workOrder.getHeight()));
         }
 
-        // 3. Garante a bidirecionalidade dos itens antes de salvar
-        // Isto evita que o Hibernate perca a referência de qual OS pertence ao item
         if (workOrder.getItems() != null) {
             for (WorkOrderItem item : workOrder.getItems()) {
                 item.setWorkOrder(workOrder);
             }
         }
 
-        // 4. Save and Flush para garantir que o Hibernate valida a integridade AGORA
         return workOrderRepository.saveAndFlush(workOrder);
     }
+
 
 
 

@@ -6,9 +6,9 @@ import java.math.RoundingMode;
 public class DreReportDto {
     private String mesAno;
     private BigDecimal receitaBruta = BigDecimal.ZERO;
-    private BigDecimal impostos = BigDecimal.ZERO; // Fictício: 6% Simples Nacional
     private BigDecimal cmv = BigDecimal.ZERO;
     private BigDecimal despesasFixas = BigDecimal.ZERO;
+    private BigDecimal taxRate = new BigDecimal("0.06");
 
     public DreReportDto(String mesAno) { this.mesAno = mesAno; }
 

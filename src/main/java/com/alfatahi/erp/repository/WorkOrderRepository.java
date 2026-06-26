@@ -29,7 +29,6 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, UUID> {
     @Query("SELECT DISTINCT w FROM WorkOrder w LEFT JOIN FETCH w.items ORDER BY w.createdAt DESC")
     List<WorkOrder> findAllWithItemsOrderByCreatedAtDesc();
 
-    @Modifying
     @Transactional
     @Query("""
     SELECT COALESCE(MAX(CAST(SUBSTRING(w.number, 4) AS integer)), 1000)
