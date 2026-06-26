@@ -31,10 +31,11 @@ public class SecurityConfig {
                         )
                 )
 
-                .headers(headers -> headers.frameOptions(frame -> frame.disable())) // Permite renderizar o H2 console
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
                         // Rotas Públicas estáticas e de login
-                        .requestMatchers("/login", "/css/**", "/js/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/login", "/css/**", "/js/**").permitAll()
 
                         // REQUISITO: Bloqueios Exclusivos do Perfil GESTAO
                         .requestMatchers("/dashboard", "/work-orders/**", "/payables/**", "/receivables/**", "/losses/**", "/dre/**", "/conciliation/**", "/suppliers/**", "/settings/**").hasRole("GESTAO")

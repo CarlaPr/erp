@@ -71,7 +71,9 @@ public class WorkOrder {
     public void setCategory(ServiceCategory category) {
         this.category = category;
     }
-    private LocalDateTime createdAt = LocalDateTime.now(); // Valor padrão para evitar nulos
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
@@ -117,5 +119,6 @@ public class WorkOrder {
     public String getMargin() { return getTotalValue().compareTo(BigDecimal.ZERO) > 0 ? getProfit().multiply(new BigDecimal("100")).divide(getTotalValue(), 1, java.math.RoundingMode.HALF_UP).toString() : "0"; }
 
     public void setCreatedDate(LocalDateTime now) {
+        this.createdAt = now;
     }
 }

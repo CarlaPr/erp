@@ -49,7 +49,6 @@ public class Quote {
     private List<QuoteItem> items = new ArrayList<>();
 
     @OneToOne(mappedBy = "quote")
-    @JoinColumn(name = "work_order_id", referencedColumnName = "id")
     @JsonIgnoreProperties("quote") // 4. CORREÇÃO: Quebra o loop com a OS vinculada
     private WorkOrder workOrder;
 

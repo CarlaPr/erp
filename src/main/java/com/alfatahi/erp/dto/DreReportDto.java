@@ -14,10 +14,18 @@ public class DreReportDto {
 
     public String getMesAno() { return mesAno; }
 
+    public DreReportDto(String mesAno, BigDecimal taxRate) {
+        this.mesAno = mesAno;
+        this.taxRate = taxRate;
+    }
+
+    public BigDecimal getImpostos() {
+        return receitaBruta.multiply(taxRate).setScale(2, RoundingMode.HALF_UP);
+    }
+
     public BigDecimal getReceitaBruta() { return receitaBruta; }
     public void addReceita(BigDecimal valor) { this.receitaBruta = this.receitaBruta.add(valor); }
 
-    public BigDecimal getImpostos() { return receitaBruta.multiply(new BigDecimal("0.06")).setScale(2, RoundingMode.HALF_UP); }
 
     public BigDecimal getReceitaLiquida() { return receitaBruta.subtract(getImpostos()); }
 

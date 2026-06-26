@@ -32,12 +32,8 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, UUID> {
     @Modifying
     @Transactional
     @Query("""
-    SELECT COALESCE(
-    MAX(CAST(SUBSTRING(w.number, 4) AS integer)),
-    1000
-    )
-    FROM WorkOrder w
-    WHERE w.number LIKE 'OS-%'
+    SELECT COALESCE(MAX(CAST(SUBSTRING(w.number, 4) AS integer)), 1000)
+    FROM WorkOrder w WHERE w.number LIKE 'OS-%'
     """)
     Integer findMaxWorkOrderSequence();
 }

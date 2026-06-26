@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -58,9 +60,7 @@ public class QuoteController {
         });
 
         if (month == null || month.isEmpty()) {
-            if (!"all".equals(month)) {
-                month = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM").format(java.time.LocalDateTime.now());
-            }
+            month = DateTimeFormatter.ofPattern("yyyy-MM").format(LocalDateTime.now());
         }
 
         // 4. Filtro por Stream

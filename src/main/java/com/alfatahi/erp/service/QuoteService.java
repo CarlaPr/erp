@@ -48,6 +48,7 @@ public class QuoteService {
 
         os.setDescription(description);
         os.setStatus("in_progress");
+        quoteRepo.save(quote);
         os.setTotalValue(quote.getTotalValue());
 
 

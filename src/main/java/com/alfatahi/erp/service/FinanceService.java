@@ -68,7 +68,9 @@ public class FinanceService {
         AccountsReceivable ar = receivableRepository.findById(receivableId)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
 
-        BigDecimal newTotalReceived = ar.getReceivedAmount().add(amountReceived);
+        BigDecimal current = ar.getReceivedAmount() != null ? ar.getReceivedAmount() : BigDecimal.ZERO;
+        BigDecimal newTotalReceived = current.add(amountReceived);
+
         ar.setReceivedAmount(newTotalReceived);
 
         // Regra de Status Automático

@@ -65,6 +65,7 @@ public class WebController {
         dto.setRecebido(recebido);
 
         BigDecimal cadastrado = payables.stream()
+                .filter(p -> !"cancelled".equals(p.getStatus()))
                 .map(p -> p.getTotalAmount() != null ? p.getTotalAmount() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
