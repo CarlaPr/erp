@@ -45,9 +45,9 @@ public class WorkOrder {
     @JsonIgnore
     private List<WorkOrderItem> items = new ArrayList<>();
 
-    @ManyToOne
-    @JsonIgnore
+    @OneToOne
     @JoinColumn(name = "quote_id")
+    @JsonIgnore
     private Quote quote;
 
     @Transient

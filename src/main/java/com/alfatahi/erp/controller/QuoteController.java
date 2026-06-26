@@ -39,8 +39,6 @@ public class QuoteController {
             @RequestParam(required = false) String name,
             Model model) {
 
-        java.time.LocalDateTime limiteValidade = java.time.LocalDateTime.now().minusMonths(1);
-        quoteRepo.expirePendingQuotes(limiteValidade);
 
         List<Quote> todosOrcamentos = quoteRepo.findAll();
 

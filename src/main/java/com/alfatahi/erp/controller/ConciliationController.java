@@ -2,12 +2,15 @@ package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.entity.AccountsPayable;
 import com.alfatahi.erp.entity.AccountsReceivable;
+import com.alfatahi.erp.entity.BankAccount;
 import com.alfatahi.erp.entity.BankTransaction;
 import com.alfatahi.erp.repository.AccountsPayableRepository;
 import com.alfatahi.erp.repository.AccountsReceivableRepository;
 import com.alfatahi.erp.repository.BankTransactionRepository;
+import com.alfatahi.erp.repository.BankAccountRepository;
 import com.alfatahi.erp.service.OfxParserService;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,14 +28,17 @@ public class ConciliationController {
     private final AccountsPayableRepository payRepo;
     private final AccountsReceivableRepository recRepo;
     private final OfxParserService ofxParserService;
+    private final BankAccountRepository bankAccountRepository;
 
     // Injetamos todos os repositórios necessários para dar as baixas
     public ConciliationController(BankTransactionRepository bankRepo, AccountsPayableRepository payRepo,
-                                  AccountsReceivableRepository recRepo, OfxParserService ofxParserService) {
+                                  AccountsReceivableRepository recRepo, OfxParserService ofxParserService,
+                                  BankAccountRepository bankAccountRepository) {
         this.bankRepo = bankRepo;
         this.payRepo = payRepo;
         this.recRepo = recRepo;
         this.ofxParserService = ofxParserService;
+        this.bankAccountRepository = bankAccountRepository;
     }
 
     @GetMapping
@@ -70,15 +76,41 @@ public class ConciliationController {
     }
 
     @GetMapping("/toggle/{id}")
+    @Transactional
     public String toggleStatus(@PathVariable("id") UUID id) {
-        if ("conciliated".equals(newStatus)) {
+        // 1. Busca a transação no banco de dados usando o ID recebido
+        BankTransaction tx = bankRepo.findById(id).orElse(null);
+
+        if (tx != null) {
+            // 2. Define o newStatus (se estava pendente vira conciliado, e vice-versa)
+            String newStatus = "conciliated".equals(tx.getStatus()) ? "pending" : "conciliated";
+            tx.setStatus(newStatus);
+
             BankAccount account = tx.getBankAccount();
             if (account != null) {
-                if ("IN".equals(tx.getType())) account.setCurrentBalance(account.getCurrentBalance().add(tx.getAmount()));
-                else account.setCurrentBalance(account.getCurrentBalance().subtract(tx.getAmount()));
+                // 3. Atualiza o saldo da conta bancária
+                if ("conciliated".equals(newStatus)) {
+                    // Conciliando: Adiciona se for entrada (IN), subtrai se for saída (OUT)
+                    if ("IN".equals(tx.getType())) {
+                        account.setCurrentBalance(account.getCurrentBalance().add(tx.getAmount()));
+                    } else {
+                        account.setCurrentBalance(account.getCurrentBalance().subtract(tx.getAmount()));
+                    }
+                } else {
+                    // Desfazendo a conciliação (Estorno): Subtrai se for entrada, adiciona se for saída
+                    if ("IN".equals(tx.getType())) {
+                        account.setCurrentBalance(account.getCurrentBalance().subtract(tx.getAmount()));
+                    } else {
+                        account.setCurrentBalance(account.getCurrentBalance().add(tx.getAmount()));
+                    }
+                }
                 bankAccountRepository.save(account);
             }
+
+            // 4. Salva a transação com o status atualizado
+            bankRepo.save(tx);
         }
+
         return "redirect:/conciliation";
     }
 

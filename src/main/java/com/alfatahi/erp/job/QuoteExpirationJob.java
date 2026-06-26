@@ -18,9 +18,9 @@ public class QuoteExpirationJob {
         this.quoteRepo = quoteRepo;
     }
 
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(cron = "0 0 0 * * ?")
     public void executeExpirationRoutine() {
-        // CORREÇÃO: Utilizando LocalDateTime para não dar conflito no Banco de Dados
+
         LocalDateTime limitDate = LocalDateTime.now().minusMonths(1);
 
         log.info("Iniciando varredura noturna de orçamentos (Expirando anteriores a: {})...", limitDate);

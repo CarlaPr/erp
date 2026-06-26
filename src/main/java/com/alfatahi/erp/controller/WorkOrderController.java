@@ -43,22 +43,13 @@ public class WorkOrderController {
     @GetMapping
     @Transactional(readOnly = true)
     public String index(Model model) {
-        // Busca todas as ordens de serviço da mais nova para a mais antiga
-        List<WorkOrder> orders = workOrderRepo.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<WorkOrder> orders = workOrderRepo.findAllWithItemsOrderByCreatedAtDesc();
 
-        BigDecimal totalRevenue = BigDecimal.ZERO;
-        BigDecimal totalCost = BigDecimal.ZERO;
+        BigDecimal totalRevenue = workOrderRepo.sumTotalRevenue();
+        BigDecimal totalCost = workOrderRepo.sumTotalCost();
 
-        // Calcula os totais globais
-        for (WorkOrder wo : orders) {
-            if (!"cancelled".equals(wo.getStatus())) {
-                BigDecimal rev = wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO;
-                BigDecimal cost = wo.getTotalCost() != null ? wo.getTotalCost() : BigDecimal.ZERO;
-
-                totalRevenue = totalRevenue.add(rev);
-                totalCost = totalCost.add(cost);
-            }
-        }
+        totalRevenue = totalRevenue != null ? totalRevenue : BigDecimal.ZERO;
+        totalCost = totalCost != null ? totalCost : BigDecimal.ZERO;
 
         BigDecimal globalProfit = totalRevenue.subtract(totalCost);
         BigDecimal averageMargin = BigDecimal.ZERO;
@@ -67,11 +58,6 @@ public class WorkOrderController {
             averageMargin = globalProfit.multiply(new BigDecimal("100")).divide(totalRevenue, 2, RoundingMode.HALF_UP);
         }
 
-        orders.forEach(wo -> {
-            if (wo.getItems() != null) {
-                wo.getItems().size();
-            }
-        });
         model.addAttribute("orders", orders);
         model.addAttribute("totalRevenue", totalRevenue);
         model.addAttribute("totalCost", totalCost);

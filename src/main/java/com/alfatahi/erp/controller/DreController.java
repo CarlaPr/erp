@@ -10,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -35,165 +36,50 @@ public class DreController {
             Model model) {
 
         LocalDate now = LocalDate.now();
-
-        if (year == null)
-            year = now.getYear();
-
-        if (month == null)
-            month = now.getMonthValue();
-
-        List<AccountsReceivable> receivables = recRepo.findAll();
-        List<AccountsPayable> payables = payRepo.findAll();
+        if (year == null) year = now.getYear();
+        if (month == null) month = now.getMonthValue();
 
         List<DreReportDto> colunas = new ArrayList<>();
-
-        DateTimeFormatter fmt =
-                DateTimeFormatter.ofPattern(
-                        "MMM / yyyy",
-                        new Locale("pt", "BR")
-                );
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM / yyyy", new Locale("pt", "BR"));
 
         if ("annual".equals(type)) {
+            DreReportDto coluna = new DreReportDto("ANUAL " + year);
 
-            DreReportDto coluna =
-                    new DreReportDto("ANUAL " + year);
+            // Loop eficiente (chamando o banco mês a mês para poupar RAM)
+            for (int m = 1; m <= 12; m++) {
+                BigDecimal receita = recRepo.sumReceivedByMonthAndYear(m, year);
+                BigDecimal cmv = payRepo.sumCmvByMonthAndYear(m, year);
+                BigDecimal fixa = payRepo.sumDespesasFixasByMonthAndYear(m, year);
 
-            for (AccountsReceivable r : receivables) {
-
-                if (r.getDueDate() != null
-                        && r.getDueDate().getYear() == year
-                        && ("received".equals(r.getStatus())
-                        || "partial".equals(r.getStatus()))) {
-
-                    coluna.addReceita(
-                            Optional.ofNullable(
-                                    r.getReceivedAmount()
-                            ).orElse(BigDecimal.ZERO)
-                    );
-                }
+                coluna.addReceita(receita != null ? receita : BigDecimal.ZERO);
+                coluna.addCmv(cmv != null ? cmv : BigDecimal.ZERO);
+                coluna.addDespesa(fixa != null ? fixa : BigDecimal.ZERO);
             }
-
-            for (AccountsPayable p : payables) {
-
-                if (p.getDueDate() != null
-                        && p.getDueDate().getYear() == year) {
-
-                    BigDecimal valor =
-                            Optional.ofNullable(
-                                    p.getTotalAmount()
-                            ).orElse(BigDecimal.ZERO);
-
-                    if ("variable".equalsIgnoreCase(
-                            p.getCategory())) {
-
-                        coluna.addCmv(valor);
-
-                    } else {
-
-                        coluna.addDespesa(valor);
-                    }
-                }
-            }
-
             colunas.add(coluna);
-
         } else {
-
-            int quantidade =
-                    "single".equals(type) ? 1 : 4;
-
-            LocalDate base =
-                    LocalDate.of(year, month, 1);
+            int quantidade = "single".equals(type) ? 1 : 4;
+            LocalDate base = LocalDate.of(year, month, 1);
 
             for (int i = quantidade - 1; i >= 0; i--) {
+                LocalDate target = quantidade == 1 ? base : base.minusMonths(i);
+                DreReportDto coluna = new DreReportDto(target.format(fmt));
 
-                LocalDate target =
-                        quantidade == 1
-                                ? base
-                                : base.minusMonths(i);
+                BigDecimal receita = recRepo.sumReceivedByMonthAndYear(target.getMonthValue(), target.getYear());
+                BigDecimal cmv = payRepo.sumCmvByMonthAndYear(target.getMonthValue(), target.getYear());
+                BigDecimal fixa = payRepo.sumDespesasFixasByMonthAndYear(target.getMonthValue(), target.getYear());
 
-                DreReportDto coluna =
-                        new DreReportDto(
-                                target.format(fmt)
-                        );
-
-                for (AccountsReceivable r : receivables) {
-
-                    if (r.getDueDate() != null
-                            && r.getDueDate().getMonth()
-                            == target.getMonth()
-                            && r.getDueDate().getYear()
-                            == target.getYear()
-                            && ("received".equals(
-                            r.getStatus())
-                            || "partial".equals(
-                            r.getStatus()))) {
-
-                        coluna.addReceita(
-                                Optional.ofNullable(
-                                        r.getReceivedAmount()
-                                ).orElse(
-                                        BigDecimal.ZERO
-                                )
-                        );
-                    }
-                }
-
-                for (AccountsPayable p : payables) {
-
-                    if (p.getDueDate() != null
-                            && p.getDueDate().getMonth()
-                            == target.getMonth()
-                            && p.getDueDate().getYear()
-                            == target.getYear()) {
-
-                        BigDecimal valor =
-                                Optional.ofNullable(
-                                        p.getTotalAmount()
-                                ).orElse(
-                                        BigDecimal.ZERO
-                                );
-
-                        if ("variable".equalsIgnoreCase(
-                                p.getCategory())) {
-
-                            coluna.addCmv(valor);
-
-                        } else {
-
-                            coluna.addDespesa(valor);
-                        }
-                    }
-                }
-
+                coluna.addReceita(receita != null ? receita : BigDecimal.ZERO);
+                coluna.addCmv(cmv != null ? cmv : BigDecimal.ZERO);
+                coluna.addDespesa(fixa != null ? fixa : BigDecimal.ZERO);
                 colunas.add(coluna);
             }
         }
 
-        model.addAttribute(
-                "currentPage",
-                "dre"
-        );
-
-        model.addAttribute(
-                "dreColumns",
-                colunas
-        );
-
-        model.addAttribute(
-                "selectedType",
-                type
-        );
-
-        model.addAttribute(
-                "selectedMonth",
-                month
-        );
-
-        model.addAttribute(
-                "selectedYear",
-                year
-        );
+        model.addAttribute("currentPage", "dre");
+        model.addAttribute("dreColumns", colunas);
+        model.addAttribute("selectedType", type);
+        model.addAttribute("selectedMonth", month);
+        model.addAttribute("selectedYear", year);
 
         return "dre";
     }

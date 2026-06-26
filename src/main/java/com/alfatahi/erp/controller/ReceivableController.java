@@ -45,8 +45,11 @@ public class ReceivableController {
     public String index(Model model) {
         List<AccountsReceivable> list = receivableRepository.findAllByOrderByDueDateAsc();
 
-        // KPIs
-        BigDecimal faturado = list.stream().map(AccountsReceivable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal faturado = list.stream()
+                .filter(r -> !"cancelled".equals(r.getStatus()))
+                .map(AccountsReceivable::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         BigDecimal recebido = list.stream().map(r -> r.getReceivedAmount() != null ? r.getReceivedAmount() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal aReceber = faturado.subtract(recebido);
         BigDecimal emAtraso = list.stream()

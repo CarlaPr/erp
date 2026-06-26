@@ -45,19 +45,13 @@ public class Quote {
     @OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuoteItem> items = new ArrayList<>();
 
-    // =========================================================================
-    // FIX DO ERRO CRÍTICO: RASTREABILIDADE (LADO PROPRIETÁRIO DA CHAVE ESTRANGEIRA)
-    // Se esta propriedade não existir, o Hibernate não liga a OS ao Orçamento!
-    // =========================================================================
-    @OneToOne
+    @OneToOne(mappedBy = "quote")
     @JoinColumn(name = "work_order_id", referencedColumnName = "id")
     private WorkOrder workOrder;
 
     public WorkOrder getWorkOrder() { return workOrder; }
     public void setWorkOrder(WorkOrder workOrder) { this.workOrder = workOrder; }
-    // =========================================================================
 
-    // Getters and Setters padrões
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 

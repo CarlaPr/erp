@@ -1,6 +1,8 @@
 package com.alfatahi.erp.entity;
 
 import jakarta.persistence.*;
+
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity

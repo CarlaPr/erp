@@ -3,9 +3,11 @@ package com.alfatahi.erp.controller;
 import com.alfatahi.erp.dto.DashboardDto;
 import com.alfatahi.erp.entity.AccountsPayable;
 import com.alfatahi.erp.entity.AccountsReceivable;
+import com.alfatahi.erp.entity.Loss;
 import com.alfatahi.erp.entity.WorkOrder;
 import com.alfatahi.erp.repository.AccountsPayableRepository;
 import com.alfatahi.erp.repository.AccountsReceivableRepository;
+import com.alfatahi.erp.repository.LossRepository;
 import com.alfatahi.erp.service.WorkOrderService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,13 +26,15 @@ public class WebController {
     private final AccountsPayableRepository payableRepository;
     private final AccountsReceivableRepository receivableRepository;
     private final WorkOrderService workOrderService;
+    private final LossRepository lossRepository;
 
     public WebController(AccountsPayableRepository payableRepository,
                          AccountsReceivableRepository receivableRepository,
-                         WorkOrderService workOrderService) {
+                         WorkOrderService workOrderService, LossRepository lossRepository) {
         this.payableRepository = payableRepository;
         this.receivableRepository = receivableRepository;
         this.workOrderService = workOrderService;
+        this.lossRepository = lossRepository;
     }
 
     @GetMapping("/")
