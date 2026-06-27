@@ -527,14 +527,20 @@
         if(e) e.preventDefault();
         if(currentItems.length === 0) return alert('Adicione pelo menos um item ao orçamento!');
 
+        // Calcula o valor total com base nos itens do array
+        let calculatedTotal = currentItems.reduce((acc, item) => {
+            let m2 = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 1;
+            return acc + (item.quantity * m2 * item.unitPrice);
+        }, 0);
+
         const payload = {
             id: document.getElementById('quoteId').value || null,
             client: { id: document.getElementById('quoteClient').value },
             paymentMethod: document.getElementById('quotePayment').value,
             installments: parseInt(document.getElementById('quoteInstallments').value) || 1,
-            observations: document.getElementById('quoteObs').value, // Observações customizadas
-            warranty: document.getElementById('quoteWarranty').value, // Garantia customizada
-            totalValue: parseFloat(document.getElementById('liveQuoteTotal').innerText.replace('R$ ', '').replace(',', '.')),
+            observations: document.getElementById('quoteObs').value,
+            warranty: document.getElementById('quoteWarranty').value,
+            totalValue: calculatedTotal, // Usando o total calculado corretamente
             items: currentItems
         };
 
@@ -560,10 +566,18 @@
         console.log("⚙️ Iniciando barramento de integração automática para o orçamento:", quoteIdToApprove);
 
         try {
+            // Vai buscar as meta tags que adicionámos no layout
             const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+
+            const headers = {};
+            if (csrfToken) {
+                headers[csrfHeader] = csrfToken; // Aplica o token de forma segura
+            }
+
             const response = await fetch(`/quotes/approve/${quoteIdToApprove}`, {
                 method: 'POST',
-                headers: csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}
+                headers: headers
             });
 
             if (response.ok) {
@@ -582,14 +596,17 @@
         console.log("🚫 Desativando orçamento diretamente no sistema para o ID:", id);
 
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+
+        const headers = { 'Content-Type': 'text/plain' };
+        if (csrfToken) {
+            headers[csrfHeader] = csrfToken;
+        }
+
         fetch(`/quotes/cancel/${id}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain',
-                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
-            },
+            headers: headers,
             body: "Cancelado via Painel de Controle Comercial"
-        })
         }).then(response => {
             if (response.ok) {
                 window.location.reload();

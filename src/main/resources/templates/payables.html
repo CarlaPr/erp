@@ -43,10 +43,9 @@
         </div>
     </div>
 
-    <!-- ── FILTROS ── -->
     <form method="GET" action="/payables" class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5 mb-6 backdrop-blur-sm">
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            <div class="col-span-2">
+        <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            <div class="col-span-1 md:col-span-2">
                 <input type="text" name="search" th:value="${filterSearch}" placeholder="🔍 Buscar descrição, fornecedor..."
                        class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2 text-sm text-white outline-none focus:border-rose-500 transition-all placeholder-slate-500"/>
             </div>
@@ -68,13 +67,13 @@
                 <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"
                         th:selected="${filterSupplierId != null and filterSupplierId == s.id}"></option>
             </select>
-            <div class="flex gap-1.5">
+            <div class="col-span-1 md:col-span-2 flex gap-1.5">
                 <input type="date" name="dateFrom" th:value="${filterDateFrom}"
                        class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-300 outline-none focus:border-rose-500 transition-all"/>
                 <input type="date" name="dateTo" th:value="${filterDateTo}"
                        class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-300 outline-none focus:border-rose-500 transition-all"/>
             </div>
-            <div class="flex gap-2">
+            <div class="col-span-1 flex gap-2">
                 <button type="submit" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg px-3 py-2 text-sm transition-all">Filtrar</button>
                 <a href="/payables" class="flex items-center justify-center bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold rounded-lg px-3 py-2 text-sm transition-all">
                     <i data-lucide="x" class="w-4 h-4"></i>
