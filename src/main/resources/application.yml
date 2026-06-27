@@ -1,12 +1,15 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/alfatahi_db}
-    driverClassName: org.postgresql.Driver
-    username: ${DB_USER:alfatahi}
-    password: ${DB_PASS:changeme}
+    url: jdbc:postgresql://localhost:5432/erp_db
+    username: postgres
+    password: PRS823
+    driver-class-name: org.postgresql.Driver
+
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
-    show-sql: false
-    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true

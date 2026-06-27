@@ -2,8 +2,8 @@ package com.alfatahi.erp.service;
 
 import com.alfatahi.erp.entity.AppUser;
 import com.alfatahi.erp.repository.AppUserRepository;
+import com.alfatahi.erp.security.CustomUserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,10 +25,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         AppUser appUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
 
-        return new User(
+        return new CustomUserDetails(
                 appUser.getUsername(),
                 appUser.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + appUser.getRole()))
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + appUser.getRole())),
+                appUser.getRole()  // expõe o role para os templates Thymeleaf
         );
     }
 }

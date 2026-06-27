@@ -2,6 +2,7 @@ package com.alfatahi.erp.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,7 +25,8 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 "/quotes/save-ajax",
                                 "/quotes/add-client-ajax",
-                                "/work-orders/save-ajax"
+                                "/work-orders/save-ajax",
+                                "/admin/users/**"   // chamadas via curl/Postman não enviam CSRF token
                         )
                 )
 
@@ -35,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/css/**", "/js/**").permitAll()
 
                         // REQUISITO: Bloqueios Exclusivos do Perfil GESTAO
+                        .requestMatchers("/admin/users/**").hasRole("GESTAO")
                         .requestMatchers("/dashboard", "/work-orders/**", "/payables/**", "/receivables/**", "/losses/**", "/dre/**", "/conciliation/**", "/suppliers/**", "/settings/**").hasRole("GESTAO")
 
                         // REQUISITO: Módulos acessíveis por ambos ou pelo perfil VENDAS
@@ -51,8 +54,8 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
-                );
-
+                )
+                .httpBasic(Customizer.withDefaults());
         return http.build();
     }
 }

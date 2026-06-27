@@ -21,8 +21,8 @@ public class Client {
     private String city;
     private String document;
 
-    @Column(columnDefinition = "varchar(20) default 'individual'")
-    private String type; // 'individual' or 'company'
+    @Column(length = 20)
+    private String type = "individual";
 
     @Column(columnDefinition = "text")
     private String notes;
