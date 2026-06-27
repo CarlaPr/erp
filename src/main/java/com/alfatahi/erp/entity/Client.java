@@ -107,7 +107,6 @@ public class Client {
         this.document = document;
     }
 
-    // ESSES DOIS MÉTODOS RESOLVEM O SEU ERRO ATUAL:
     public String getType() {
         return type;
     }
@@ -140,7 +139,4 @@ public class Client {
         return updatedAt;
     }
 
-    public void setActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
 }

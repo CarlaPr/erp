@@ -17,10 +17,6 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, UUID> {
     @Query("SELECT SUM(w.totalValue) FROM WorkOrder w WHERE w.status <> 'cancelled'")
     BigDecimal sumTotalRevenue();
 
-    // Em WorkOrderRepository.java
-    @Query("SELECT DISTINCT w FROM WorkOrder w LEFT JOIN FETCH w.items ORDER BY w.createdAt DESC")
-    List<WorkOrder> findAllWithItems();
-
     // 2. Calcula o Custo Total direto no SQL (Ignorando canceladas)
     @Query("SELECT SUM(i.quantity * i.unitCost) FROM WorkOrderItem i WHERE i.workOrder.status <> 'cancelled'")
     BigDecimal sumTotalCost();

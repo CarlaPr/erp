@@ -627,11 +627,15 @@
     function executeCancelOS() {
         const reason = document.getElementById('cancelReason').value;
         if (!reason) return alert('Por favor, informe o motivo.');
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         fetch(`/work-orders/cancel/${osIdToCancel}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
+            headers: {
+                'Content-Type': 'text/plain',
+                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
+            },
             body: reason
-        }).then(res => { if (res.ok) window.location.reload(); });
+        })
     }
 
     // ================================================================

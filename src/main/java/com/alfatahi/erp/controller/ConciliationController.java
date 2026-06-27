@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
@@ -119,7 +120,8 @@ public class ConciliationController {
     // =======================================================
     @PostMapping("/upload")
     @Transactional
-    public String uploadOfx(@RequestParam("file") MultipartFile file) {
+    public String uploadOfx(@RequestParam("file") MultipartFile file,
+                            RedirectAttributes redirectAttributes) {
         try {
             List<BankTransaction> transactions = ofxParserService.parse(file);
             List<AccountsReceivable> receivables = recRepo.findAll();
@@ -141,6 +143,10 @@ public class ConciliationController {
                                 tx.setStatus("conciliated");
                                 tx.setDescription(tx.getDescription() + " (Auto-baixa: " + r.getDescription() + ")");
                                 matched = true;
+
+                                redirectAttributes.addFlashAttribute("successMsg",
+                                        "Extrato importado com sucesso!");
+
                                 break; // Já encontrou a conta, vai para a próxima transação
                             }
                         }
@@ -157,6 +163,9 @@ public class ConciliationController {
                                 tx.setStatus("conciliated");
                                 tx.setDescription(tx.getDescription() + " (Auto-baixa: " + p.getDescription() + ")");
                                 matched = true;
+
+                                redirectAttributes.addFlashAttribute("successMsg",
+                                        "Extrato importado com sucesso!");
                                 break;
                             }
                         }
@@ -165,8 +174,8 @@ public class ConciliationController {
                 bankRepo.save(tx); // Grava a transação do banco (conciliada ou pendente)
             }
         } catch (Exception e) {
-            // Em produção, deveria injetar uma mensagem de erro no Model
-            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("errorMsg",
+                    "Erro ao processar o arquivo OFX: " + e.getMessage());
         }
         return "redirect:/conciliation";
     }

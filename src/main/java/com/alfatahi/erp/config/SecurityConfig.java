@@ -23,11 +23,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
                                 "/quotes/save-ajax",
-                                "/quotes/approve/**",
-                                "/quotes/cancel/**",
-                                "/quotes/add-client-ajax", // 1. CORREÇÃO: Adicionada rota do modal de cliente na exceção do CSRF
-                                "/work-orders/save-ajax",
-                                "/work-orders/cancel/**"
+                                "/quotes/add-client-ajax",
+                                "/work-orders/save-ajax"
                         )
                 )
 

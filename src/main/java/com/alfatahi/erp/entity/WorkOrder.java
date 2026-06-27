@@ -118,7 +118,4 @@ public class WorkOrder {
     public BigDecimal getProfit() { return getTotalValue().subtract(getTotalCost()); }
     public String getMargin() { return getTotalValue().compareTo(BigDecimal.ZERO) > 0 ? getProfit().multiply(new BigDecimal("100")).divide(getTotalValue(), 1, java.math.RoundingMode.HALF_UP).toString() : "0"; }
 
-    public void setCreatedDate(LocalDateTime now) {
-        this.createdAt = now;
-    }
 }

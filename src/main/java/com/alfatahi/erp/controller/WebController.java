@@ -8,6 +8,7 @@ import com.alfatahi.erp.entity.WorkOrder;
 import com.alfatahi.erp.repository.AccountsPayableRepository;
 import com.alfatahi.erp.repository.AccountsReceivableRepository;
 import com.alfatahi.erp.repository.LossRepository;
+import com.alfatahi.erp.repository.WorkOrderRepository;
 import com.alfatahi.erp.service.WorkOrderService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,14 +28,16 @@ public class WebController {
     private final AccountsReceivableRepository receivableRepository;
     private final WorkOrderService workOrderService;
     private final LossRepository lossRepository;
+    private final WorkOrderRepository workOrderRepository;
 
     public WebController(AccountsPayableRepository payableRepository,
                          AccountsReceivableRepository receivableRepository,
-                         WorkOrderService workOrderService, LossRepository lossRepository) {
+                         WorkOrderService workOrderService, LossRepository lossRepository, WorkOrderRepository workOrderRepository) {
         this.payableRepository = payableRepository;
         this.receivableRepository = receivableRepository;
         this.workOrderService = workOrderService;
         this.lossRepository = lossRepository;
+        this.workOrderRepository = workOrderRepository;
     }
 
     @GetMapping("/")
@@ -47,7 +50,7 @@ public class WebController {
         DashboardDto dto = new DashboardDto();
         List<AccountsReceivable> receivables = receivableRepository.findAllByOrderByDueDateAsc();
         List<AccountsPayable> payables = payableRepository.findAllByOrderByDueDateAsc();
-        List<WorkOrder> workOrders = workOrderService.listAll();
+        List<WorkOrder> workOrders = workOrderRepository.findAllWithItemsOrderByCreatedAtDesc();
         LocalDate today = LocalDate.now();
 
         // ==========================================
@@ -181,8 +184,8 @@ public class WebController {
 
         for (WorkOrder wo : workOrders) {
             BigDecimal receita = wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO;
-            BigDecimal custo = workOrderService.calculateObraCost(wo.getId());
-            if(custo == null) custo = BigDecimal.ZERO;
+            BigDecimal custo = wo.getTotalCost();
+            if (custo == null) custo = BigDecimal.ZERO;
             BigDecimal lucro = receita.subtract(custo);
 
             if (!"cancelled".equals(wo.getStatus())) {

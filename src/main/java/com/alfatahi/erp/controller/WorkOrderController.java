@@ -132,7 +132,7 @@ public class WorkOrderController {
     public ResponseEntity<WorkOrder> newOs() {
         WorkOrder wo = new WorkOrder();
         wo.setStatus("pending");
-        wo.setCreatedDate(java.time.LocalDateTime.now());
+        wo.setCreatedAt(java.time.LocalDateTime.now());
 
         return ResponseEntity.ok(wo);
     }

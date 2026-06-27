@@ -197,7 +197,7 @@ public class QuoteController {
     @PostMapping(value = "/add-client-ajax", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<com.alfatahi.erp.entity.Client> addClientAjax(@RequestBody com.alfatahi.erp.entity.Client client) {
-        client.setActive(true);
+        client.setIsActive(true);
         com.alfatahi.erp.entity.Client savedClient = clientRepo.save(client);
         return ResponseEntity.ok(savedClient);
     }

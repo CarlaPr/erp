@@ -560,8 +560,10 @@
         console.log("⚙️ Iniciando barramento de integração automática para o orçamento:", quoteIdToApprove);
 
         try {
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
             const response = await fetch(`/quotes/approve/${quoteIdToApprove}`, {
-                method: 'POST'
+                method: 'POST',
+                headers: csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}
             });
 
             if (response.ok) {
@@ -579,10 +581,15 @@
     function cancelQuote(id) {
         console.log("🚫 Desativando orçamento diretamente no sistema para o ID:", id);
 
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         fetch(`/quotes/cancel/${id}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
+            headers: {
+                'Content-Type': 'text/plain',
+                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
+            },
             body: "Cancelado via Painel de Controle Comercial"
+        })
         }).then(response => {
             if (response.ok) {
                 window.location.reload();

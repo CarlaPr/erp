@@ -28,7 +28,6 @@ public class FinanceService {
         this.workOrderRepository = workOrderRepository;
     }
 
-    // --- MÉTODOS EXISTENTES (Mantidos intactos) ---
     public List<AccountsPayable> listAllPayables() { return payableRepository.findAllByOrderByDueDateAsc(); }
     public List<AccountsReceivable> listAllReceivables() { return receivableRepository.findAllByOrderByDueDateAsc(); }
     public List<BankAccount> listAllAccounts() { return bankAccountRepository.findAll(); }
@@ -62,38 +61,28 @@ public class FinanceService {
         }
     }
 
-    @Transactional
-    public void processReceivablePayment(UUID receivableId, BigDecimal amountReceived) {
-        AccountsReceivable ar = receivableRepository.findById(receivableId)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
-
-        BigDecimal current = ar.getReceivedAmount() != null ? ar.getReceivedAmount() : BigDecimal.ZERO;
-        BigDecimal newTotalReceived = current.add(amountReceived);
-
-        ar.setReceivedAmount(newTotalReceived);
-
-        // Regra de Status Automático
-        if (newTotalReceived.compareTo(BigDecimal.ZERO) > 0 && newTotalReceived.compareTo(ar.getTotalAmount()) < 0) {
-            ar.setStatus("partial");
-        } else if (newTotalReceived.compareTo(ar.getTotalAmount()) >= 0) {
-            ar.setStatus("received");
-        }
-        receivableRepository.save(ar);
-    }
 
     @Transactional
-    public void processPayablePayment(UUID payableId, BigDecimal amountPaid, LocalDate paymentDate, String paymentMethod, String notes) {
+    public void processPayablePayment(UUID payableId, BigDecimal amountPaid,
+                                      LocalDate paymentDate, String paymentMethod, String notes) {
         AccountsPayable ap = payableRepository.findById(payableId)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
+                .orElseThrow(() -> new RuntimeException("Conta não encontrada: " + payableId));
 
         BigDecimal newTotalPaid = ap.getPaidAmount().add(amountPaid);
         ap.setPaidAmount(newTotalPaid);
-        ap.setPaymentDate(paymentDate); // Nova regra
-        if (paymentMethod != null && !paymentMethod.isEmpty()) ap.setPaymentMethod(paymentMethod);
-        if (notes != null && !notes.isEmpty()) ap.setNotes(notes);
 
-        // Regra de Status Automático (Parcial / Pago)
-        if (newTotalPaid.compareTo(BigDecimal.ZERO) > 0 && newTotalPaid.compareTo(ap.getTotalAmount()) < 0) {
+        if (paymentDate != null) {
+            ap.setPaymentDate(paymentDate);
+        }
+        if (paymentMethod != null && !paymentMethod.isBlank()) {
+            ap.setPaymentMethod(paymentMethod);
+        }
+        if (notes != null && !notes.isBlank()) {
+            ap.setNotes(notes);
+        }
+
+        if (newTotalPaid.compareTo(BigDecimal.ZERO) > 0
+                && newTotalPaid.compareTo(ap.getTotalAmount()) < 0) {
             ap.setStatus("partial");
         } else if (newTotalPaid.compareTo(ap.getTotalAmount()) >= 0) {
             ap.setStatus("paid");
@@ -109,18 +98,25 @@ public class FinanceService {
     }
 
     @Transactional
-    public void processReceivablePayment(UUID receivableId, BigDecimal amountReceived, LocalDate paymentDate, String notes) {
+    public void processReceivablePayment(UUID receivableId, BigDecimal amountReceived,
+                                         LocalDate paymentDate, String notes) {
         AccountsReceivable ar = receivableRepository.findById(receivableId)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
+                .orElseThrow(() -> new RuntimeException("Conta não encontrada: " + receivableId));
 
         BigDecimal current = ar.getReceivedAmount() != null ? ar.getReceivedAmount() : BigDecimal.ZERO;
         BigDecimal newTotalReceived = current.add(amountReceived);
 
         ar.setReceivedAmount(newTotalReceived);
-        ar.setPaymentDate(paymentDate);
-        // Nota: Pode adicionar campo notes na entidade AccountsReceivable também se desejar persistir.
 
-        if (newTotalReceived.compareTo(BigDecimal.ZERO) > 0 && newTotalReceived.compareTo(ar.getTotalAmount()) < 0) {
+        if (paymentDate != null) {
+            ar.setPaymentDate(paymentDate);
+        }
+        if (notes != null && !notes.isBlank()) {
+            ar.setNotes(notes);
+        }
+
+        if (newTotalReceived.compareTo(BigDecimal.ZERO) > 0
+                && newTotalReceived.compareTo(ar.getTotalAmount()) < 0) {
             ar.setStatus("partial");
         } else if (newTotalReceived.compareTo(ar.getTotalAmount()) >= 0) {
             ar.setStatus("received");
@@ -148,23 +144,6 @@ public class FinanceService {
                                 java.math.BigDecimal::add
                         )
                 ));
-    }
-
-    @Transactional
-    public void processPayablePayment(UUID payableId, BigDecimal amountPaid) {
-        AccountsPayable ap = payableRepository.findById(payableId)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
-
-        BigDecimal newTotalPaid = ap.getPaidAmount().add(amountPaid);
-        ap.setPaidAmount(newTotalPaid);
-
-        // Regra de Status Automático
-        if (newTotalPaid.compareTo(BigDecimal.ZERO) > 0 && newTotalPaid.compareTo(ap.getTotalAmount()) < 0) {
-            ap.setStatus("partial");
-        } else if (newTotalPaid.compareTo(ap.getTotalAmount()) >= 0) {
-            ap.setStatus("paid");
-        }
-        payableRepository.save(ap);
     }
 
     @Transactional

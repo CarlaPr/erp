@@ -84,7 +84,6 @@ public class AccountsReceivable {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
-    // ─── Helpers para a view ─────────────────────────────────────────────────
 
     public BigDecimal getBalance() {
         return totalAmount.subtract(getReceivedAmount());

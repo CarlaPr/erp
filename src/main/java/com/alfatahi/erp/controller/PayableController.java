@@ -163,7 +163,7 @@ public class PayableController {
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
 
         BigDecimal toPayAmount = (amount != null) ? amount : ap.getBalance();
-        financeService.processPayablePayment(id, toPayAmount);
+        financeService.processPayablePayment(id, toPayAmount, paymentDate, paymentMethod, notes);
 
         // Atualiza metadados de pagamento
         ap = payableRepository.findById(id).get();

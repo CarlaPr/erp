@@ -42,9 +42,12 @@
                     <a th:href="@{/suppliers/edit/{id}(id=${sup.id})}" class="text-cyan-400 hover:text-cyan-300 inline-block">
                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                     </a>
-                    <a th:href="@{/suppliers/delete/{id}(id=${sup.id})}" onclick="return confirm('Excluir fornecedor?')" class="text-rose-400 hover:text-rose-300 inline-block">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </a>
+                    <form th:action="@{/suppliers/delete/{id}(id=${sup.id})}" method="POST" style="display:inline">
+                        <button type="submit" onclick="return confirm('Excluir fornecedor?')"
+                                class="text-rose-400 hover:text-rose-300 bg-transparent border-0 cursor-pointer p-0">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </form>
                 </td>
             </tr>
             <tr th:if="${#lists.isEmpty(suppliers)}">

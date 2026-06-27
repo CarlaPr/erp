@@ -29,6 +29,9 @@ public class SupplierService {
     }
 
     public void delete(UUID id) {
-        supplierRepository.deleteById(id);
+        Supplier supplier = findById(id);
+        supplier.setIsActive(false);
+        supplierRepository.save(supplier);
     }
+
 }

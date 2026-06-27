@@ -76,11 +76,11 @@ public class QuoteService {
             }
         }
 
-        os = osRepo.saveAndFlush(os);
-        os.setQuote(quote);
-
         quote.setStatus("approved");
+        os.setQuote(quote);
         quote.setWorkOrder(os);
+
+        os = osRepo.saveAndFlush(os);
         quoteRepo.saveAndFlush(quote);
 
         BigDecimal totalOrcamento = (quote.getTotalValue() != null) ? quote.getTotalValue() : BigDecimal.ZERO;

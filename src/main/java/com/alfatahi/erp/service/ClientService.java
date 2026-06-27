@@ -32,7 +32,8 @@ public class ClientService {
     }
 
     public void delete(UUID id) {
-        // Exclusão lógica ou física. Conforme o script SQL original, faremos a deleção física
-        clientRepository.deleteById(id);
+        Client client = findById(id);
+        client.setIsActive(false);
+        clientRepository.save(client);
     }
 }

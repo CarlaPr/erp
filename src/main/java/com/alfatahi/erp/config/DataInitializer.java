@@ -19,20 +19,31 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Criar usuário administrativo padrão (GESTAO)
+        String adminPass = System.getenv("ADMIN_PASSWORD");
+        String vendorPass = System.getenv("VENDOR_PASSWORD");
+
+        if (adminPass == null || adminPass.isBlank()) {
+            throw new IllegalStateException(
+                    "Variável de ambiente ADMIN_PASSWORD não definida. " +
+                            "Defina antes de iniciar a aplicação.");
+        }
+        if (vendorPass == null || vendorPass.isBlank()) {
+            throw new IllegalStateException(
+                    "Variável de ambiente VENDOR_PASSWORD não definida.");
+        }
+
         if (userRepository.findByUsername("admin").isEmpty()) {
             AppUser gestor = new AppUser();
             gestor.setUsername("admin");
-            gestor.setPassword(passwordEncoder.encode("admin123"));
+            gestor.setPassword(passwordEncoder.encode(adminPass));
             gestor.setRole("GESTAO");
             userRepository.save(gestor);
         }
 
-        // Criar usuário de vendas padrão (VENDAS)
         if (userRepository.findByUsername("vendedor").isEmpty()) {
             AppUser vendedor = new AppUser();
             vendedor.setUsername("vendedor");
-            vendedor.setPassword(passwordEncoder.encode("venda123"));
+            vendedor.setPassword(passwordEncoder.encode(vendorPass));
             vendedor.setRole("VENDAS");
             userRepository.save(vendedor);
         }
