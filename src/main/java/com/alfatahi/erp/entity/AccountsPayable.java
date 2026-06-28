@@ -60,6 +60,11 @@ public class AccountsPayable {
     @Column(nullable = false)
     private String status = "pending";
 
+    // REGRA DE NEGÓCIO (A1): mesmo conceito do lado de Contas a Receber — "Pago"
+    // (empresa confirmou) é diferente de "Conciliado" (banco confirmou).
+    @Column(name = "reconciliation_status")
+    private String reconciliationStatus = "NAO_CONCILIADO";
+
     @Column(name = "payment_method")
     private String paymentMethod;
 
@@ -98,6 +103,8 @@ public class AccountsPayable {
     public void setPaymentDate(LocalDate paymentDate) { this.paymentDate = paymentDate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getReconciliationStatus() { return reconciliationStatus != null ? reconciliationStatus : "NAO_CONCILIADO"; }
+    public void setReconciliationStatus(String reconciliationStatus) { this.reconciliationStatus = reconciliationStatus; }
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     public String getDocumentNumber() { return documentNumber; }

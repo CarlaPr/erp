@@ -9,6 +9,7 @@ import com.alfatahi.erp.service.FinanceService;
 import com.alfatahi.erp.service.WorkOrderService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,6 +44,7 @@ public class ReceivableController {
         this.workOrderRepository = workOrderRepository;
     }
 
+    @Transactional(readOnly = true)
     @GetMapping
     public String index(
             @RequestParam(required = false) String search,
@@ -92,7 +94,8 @@ public class ReceivableController {
                 .collect(Collectors.toList());
 
         BigDecimal faturado = all.stream().map(AccountsReceivable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal recebido = all.stream().map(AccountsReceivable::getReceivedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        // KPI "Recebido" = valor líquido que entrou no caixa (bruto - taxa maquininha)
+        BigDecimal recebido = all.stream().map(AccountsReceivable::getNetReceivedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal aReceber = faturado.subtract(recebido);
         BigDecimal emAtraso = all.stream()
                 .filter(r -> ("pending".equals(r.getStatus()) || "partial".equals(r.getStatus())) && r.getDueDate().isBefore(LocalDate.now()))
@@ -227,13 +230,13 @@ public class ReceivableController {
             return "redirect:/receivables?error=invalid_amount";
         }
 
-        financeService.processReceivablePayment(id, amount, paymentDate, notes);
+        financeService.processReceivablePayment(id, amount, paymentDate, cardFee, notes);
 
         AccountsReceivable ar = receivableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
         if (paymentMethod != null && !paymentMethod.isBlank()) ar.setPaymentMethod(paymentMethod);
         if (discount != null) ar.setDiscount(discount);
-        if (cardFee != null) ar.setCardFeePercentage(cardFee);
+        if (cardFee != null) ar.setCardFeePercentage(cardFee); // último % informado, usado para exibição
         receivableRepository.save(ar);
 
         return "redirect:/receivables?success=payment_processed";

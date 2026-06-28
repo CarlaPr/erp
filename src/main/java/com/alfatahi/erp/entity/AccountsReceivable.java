@@ -42,6 +42,14 @@ public class AccountsReceivable {
     @Column(nullable = false)
     private String status = "pending"; // pending | partial | received | cancelled
 
+    // REGRA DE NEGÓCIO (A1): "Recebido" (empresa confirmou) e "Conciliado" (banco
+    // confirmou) são coisas diferentes. Este campo é independente do "status" acima
+    // e representa só o lado do banco: NAO_CONCILIADO | CONCILIADO | DIVERGENTE.
+    // Ex.: um título pode estar status=received e reconciliationStatus=NAO_CONCILIADO
+    // até o extrato bancário confirmar (ou não) aquele valor.
+    @Column(name = "reconciliation_status")
+    private String reconciliationStatus = "NAO_CONCILIADO";
+
     @Column(name = "payment_method")
     private String paymentMethod;
 
@@ -49,6 +57,13 @@ public class AccountsReceivable {
 
     @Column(name = "card_fee_percentage", precision = 5, scale = 2)
     private BigDecimal cardFeePercentage = BigDecimal.ZERO;
+
+    // REGRA DE NEGÓCIO (A2): valor_taxa acumulado — quanto do total já "recebido"
+    // (receivedAmount) corresponde a taxa de cartão (não é dinheiro que entrou,
+    // é custo da operação). Mantido separado para nunca perder essa informação,
+    // mesmo quando o saldo da conta já foi totalmente liquidado.
+    @Column(name = "fee_amount", precision = 12, scale = 2)
+    private BigDecimal feeAmount = BigDecimal.ZERO;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
@@ -75,16 +90,28 @@ public class AccountsReceivable {
     public void setPaymentDate(LocalDate paymentDate) { this.paymentDate = paymentDate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getReconciliationStatus() { return reconciliationStatus != null ? reconciliationStatus : "NAO_CONCILIADO"; }
+    public void setReconciliationStatus(String reconciliationStatus) { this.reconciliationStatus = reconciliationStatus; }
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     public Integer getInstallments() { return installments; }
     public void setInstallments(Integer installments) { this.installments = installments; }
     public BigDecimal getCardFeePercentage() { return cardFeePercentage; }
     public void setCardFeePercentage(BigDecimal cardFeePercentage) { this.cardFeePercentage = cardFeePercentage; }
+    public BigDecimal getFeeAmount() { return feeAmount != null ? feeAmount : BigDecimal.ZERO; }
+    public void setFeeAmount(BigDecimal feeAmount) { this.feeAmount = feeAmount; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
 
+    // Valor líquido efetivamente recebido (bruto - taxa de maquininha)
+    public BigDecimal getNetReceivedAmount() {
+        return getReceivedAmount().subtract(getFeeAmount());
+    }
+
+    // Saldo correto: total da OS menos o valor bruto abatido (= o que ainda falta receber)
+    // O receivedAmount já é o valor bruto (OS), então o saldo é totalAmount - receivedAmount.
+    // Para exibição do "quanto entrou no caixa" use getNetReceivedAmount().
     public BigDecimal getBalance() {
         return totalAmount.subtract(getReceivedAmount());
     }

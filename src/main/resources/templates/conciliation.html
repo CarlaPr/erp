@@ -31,7 +31,7 @@
         </div>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-indigo-500/10 p-6 rounded-2xl border border-indigo-500/30 backdrop-blur-sm">
             <span class="text-indigo-400 text-xs font-bold uppercase tracking-wider">Saldo Real (Conciliado)</span>
             <p class="text-3xl font-black text-indigo-400 mt-2" th:text="'R$ ' + ${saldoConciliado}">R$ 0,00</p>
@@ -43,6 +43,10 @@
         <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
             <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Saídas Pendentes (ERP)</span>
             <p class="text-2xl font-black text-rose-400 mt-2" th:text="'R$ ' + ${saidasPendentes}">R$ 0,00</p>
+        </div>
+        <div class="bg-amber-500/10 p-6 rounded-2xl border border-amber-500/30 backdrop-blur-sm">
+            <span class="text-amber-400 text-xs font-bold uppercase tracking-wider">Divergências</span>
+            <p class="text-2xl font-black text-amber-400 mt-2" th:text="${divergentesCount}">0</p>
         </div>
     </div>
 
@@ -61,14 +65,20 @@
             <tbody class="divide-y divide-slate-700/50 text-sm">
             <tr th:each="t : ${transactions}" class="hover:bg-slate-700/30 transition-colors">
                 <td class="p-5 text-slate-300 font-medium" th:text="${#temporals.format(t.transactionDate, 'dd/MM/yyyy')}">Data</td>
-                <td class="p-5 font-bold text-white" th:text="${t.description}">Desc</td>
+                <td class="p-5">
+                    <p class="font-bold text-white" th:text="${t.description}">Desc</p>
+                    <p th:if="${t.reconciliationNote != null}" class="text-[11px] mt-1"
+                       th:class="${t.divergente} ? 'text-amber-400' : 'text-slate-500'"
+                       th:text="${t.reconciliationNote}">Nota</p>
+                </td>
                 <td class="p-5 text-center">
                     <i th:if="${t.type == 'IN'}" data-lucide="arrow-down-left" class="w-5 h-5 text-emerald-400 inline"></i>
                     <i th:if="${t.type == 'OUT'}" data-lucide="arrow-up-right" class="w-5 h-5 text-rose-400 inline"></i>
                 </td>
                 <td class="p-5 text-right font-mono font-bold" th:classappend="${t.type == 'IN' ? 'text-emerald-400' : 'text-rose-400'}" th:text="'R$ ' + ${t.amount}">0,00</td>
                 <td class="p-5 text-center">
-                    <span th:if="${t.status == 'conciliated'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-400 uppercase">Conciliado</span>
+                    <span th:if="${t.status == 'conciliated' && !t.divergente}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-400 uppercase">Conciliado</span>
+                    <span th:if="${t.status == 'conciliated' && t.divergente}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase">Divergente</span>
                     <span th:if="${t.status == 'pending'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-500/20 text-slate-400 uppercase">Pendente</span>
                 </td>
                 <td class="p-5 text-center">
@@ -83,6 +93,12 @@
         <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8">
             <h3 class="text-2xl font-black text-white mb-6">Lançamento Extrato</h3>
             <form th:action="@{/conciliation/save}" th:object="${newTx}" method="POST" class="space-y-4 text-sm">
+                <div>
+                    <label>Conta bancária</label>
+                    <select th:field="*{bankAccount.id}">
+                        <option value="">— nenhuma —</option>
+                    </select>
+                </div>
                 <div>
                     <label class="block text-slate-400 font-bold mb-2">Descrição</label>
                     <input type="text" th:field="*{description}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
@@ -144,7 +160,7 @@
 
                 <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
                     <p class="text-[10px] text-slate-400">
-                        <i data-lucide="info" class="w-3 h-3 inline"></i> O sistema tentará encontrar faturas com o **mesmo valor** num intervalo de até **5 dias** da data da transação bancária e dar baixa automática.
+                        <i data-lucide="info" class="w-3 h-3 inline"></i> O sistema procura, entre os títulos já marcados como <strong>Recebido/Pago</strong>, um com valor compatível (considerando a taxa de cartão já informada) dentro de até <strong>5 dias</strong> da data do lançamento. Se bater, concilia; se a diferença não for explicada pela taxa, marca como <strong>Divergente</strong> para revisão. O mesmo extrato não pode ser importado duas vezes.
                     </p>
                 </div>
 

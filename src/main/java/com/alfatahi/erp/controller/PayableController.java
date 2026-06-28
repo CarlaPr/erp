@@ -8,6 +8,7 @@ import com.alfatahi.erp.service.FinanceService;
 import com.alfatahi.erp.service.SupplierService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +40,7 @@ public class PayableController {
         this.workOrderRepository = workOrderRepository;
     }
 
+    @Transactional(readOnly = true)
     @GetMapping
     public String index(
             @RequestParam(required = false) String search,
@@ -164,13 +166,6 @@ public class PayableController {
 
         BigDecimal toPayAmount = (amount != null) ? amount : ap.getBalance();
         financeService.processPayablePayment(id, toPayAmount, paymentDate, paymentMethod, notes);
-
-        // Atualiza metadados de pagamento
-        ap = payableRepository.findById(id).get();
-        if (paymentDate != null) ap.setPaymentDate(paymentDate);
-        if (paymentMethod != null && !paymentMethod.isBlank()) ap.setPaymentMethod(paymentMethod);
-        if (notes != null && !notes.isBlank()) ap.setNotes(notes);
-        payableRepository.save(ap);
 
         return "redirect:/payables";
     }

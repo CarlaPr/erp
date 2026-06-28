@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public interface BankTransactionRepository extends JpaRepository<BankTransaction, UUID> {
     List<BankTransaction> findAllByOrderByTransactionDateDesc();
+    boolean existsByExternalId(String externalId);
 }

@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -25,13 +26,17 @@ import java.util.UUID;
 @RequestMapping("/conciliation")
 public class ConciliationController {
 
+    private static final BigDecimal TOLERANCIA = new BigDecimal("0.05"); // arredondamento
+    private static final long JANELA_DIAS = 5;
+    private static final BigDecimal FAIXA_MIN = new BigDecimal("0.50"); // 50% do esperado
+    private static final BigDecimal FAIXA_MAX = new BigDecimal("1.10"); // 110% do esperado
+
     private final BankTransactionRepository bankRepo;
     private final AccountsPayableRepository payRepo;
     private final AccountsReceivableRepository recRepo;
     private final OfxParserService ofxParserService;
     private final BankAccountRepository bankAccountRepository;
 
-    // Injetamos todos os repositórios necessários para dar as baixas
     public ConciliationController(BankTransactionRepository bankRepo, AccountsPayableRepository payRepo,
                                   AccountsReceivableRepository recRepo, OfxParserService ofxParserService,
                                   BankAccountRepository bankAccountRepository) {
@@ -49,11 +54,13 @@ public class ConciliationController {
         BigDecimal saldoConciliado = BigDecimal.ZERO;
         BigDecimal entradasPendentes = BigDecimal.ZERO;
         BigDecimal saidasPendentes = BigDecimal.ZERO;
+        long divergentesCount = 0;
 
         for (BankTransaction t : transactions) {
             if ("conciliated".equals(t.getStatus())) {
                 if ("IN".equals(t.getType())) saldoConciliado = saldoConciliado.add(t.getAmount());
                 else saldoConciliado = saldoConciliado.subtract(t.getAmount());
+                if (t.getDivergenceAmount().compareTo(BigDecimal.ZERO) != 0) divergentesCount++;
             } else {
                 if ("IN".equals(t.getType())) entradasPendentes = entradasPendentes.add(t.getAmount());
                 else saidasPendentes = saidasPendentes.add(t.getAmount());
@@ -65,6 +72,7 @@ public class ConciliationController {
         model.addAttribute("saldoConciliado", saldoConciliado);
         model.addAttribute("entradasPendentes", entradasPendentes);
         model.addAttribute("saidasPendentes", saidasPendentes);
+        model.addAttribute("divergentesCount", divergentesCount);
         model.addAttribute("newTx", new BankTransaction());
 
         return "conciliation";
@@ -79,104 +87,198 @@ public class ConciliationController {
     @GetMapping("/toggle/{id}")
     @Transactional
     public String toggleStatus(@PathVariable("id") UUID id) {
-        // 1. Busca a transação no banco de dados usando o ID recebido
         BankTransaction tx = bankRepo.findById(id).orElse(null);
+        if (tx == null) {
+            return "redirect:/conciliation";
+        }
 
-        if (tx != null) {
-            // 2. Define o newStatus (se estava pendente vira conciliado, e vice-versa)
-            String newStatus = "conciliated".equals(tx.getStatus()) ? "pending" : "conciliated";
-            tx.setStatus(newStatus);
+        boolean estavaConciliado = "conciliated".equals(tx.getStatus());
 
-            BankAccount account = tx.getBankAccount();
+        if (estavaConciliado) {
+            revertLink(tx);
+            tx.setStatus("pending");
+            tx.setDivergenceAmount(BigDecimal.ZERO);
+            tx.setReconciliationNote(null);
+        } else {
+
+            attemptMatch(tx);
+            tx.setStatus("conciliated");
+        }
+
+        BankAccount account = tx.getBankAccount();
             if (account != null) {
-                // 3. Atualiza o saldo da conta bancária
-                if ("conciliated".equals(newStatus)) {
-                    // Conciliando: Adiciona se for entrada (IN), subtrai se for saída (OUT)
+                if (!estavaConciliado) {
                     if ("IN".equals(tx.getType())) {
                         account.setCurrentBalance(account.getCurrentBalance().add(tx.getAmount()));
                     } else {
                         account.setCurrentBalance(account.getCurrentBalance().subtract(tx.getAmount()));
                     }
                 } else {
-                    // Desfazendo a conciliação (Estorno): Subtrai se for entrada, adiciona se for saída
                     if ("IN".equals(tx.getType())) {
                         account.setCurrentBalance(account.getCurrentBalance().subtract(tx.getAmount()));
                     } else {
                         account.setCurrentBalance(account.getCurrentBalance().add(tx.getAmount()));
                     }
                 }
-                bankAccountRepository.save(account);
+            bankAccountRepository.save(account);
+        }
+        if (tx.getBankAccount() != null
+                && tx.getBankAccount().getId() != null) {
+                BankAccount ba = bankAccountRepository
+                        .findById(tx.getBankAccount().getId()).orElse(null);
+                tx.setBankAccount(ba);
             }
 
-            // 4. Salva a transação com o status atualizado
-            bankRepo.save(tx);
-        }
-
+        bankRepo.save(tx);
         return "redirect:/conciliation";
     }
 
-    // =======================================================
-    // NOVO: ROBÔ DE IMPORTAÇÃO OFX E BAIXA AUTOMÁTICA
-    // =======================================================
     @PostMapping("/upload")
     @Transactional
     public String uploadOfx(@RequestParam("file") MultipartFile file,
                             RedirectAttributes redirectAttributes) {
         try {
             List<BankTransaction> transactions = ofxParserService.parse(file);
-            List<AccountsReceivable> receivables = recRepo.findAll();
-            List<AccountsPayable> payables = payRepo.findAll();
+
+            int novos = 0, duplicados = 0, conciliados = 0, divergentes = 0;
 
             for (BankTransaction tx : transactions) {
-                boolean matched = false;
 
-                if ("IN".equals(tx.getType())) {
-                    // Procura Contas a Receber compatíveis (Mesmo valor, diferença máx 5 dias)
-                    for (AccountsReceivable r : receivables) {
-                        if ("pending".equals(r.getStatus()) && r.getTotalAmount().compareTo(tx.getAmount()) == 0) {
-                            long daysDiff = Math.abs(ChronoUnit.DAYS.between(r.getDueDate(), tx.getTransactionDate()));
-                            if (daysDiff <= 5) {
-                                r.setStatus("received");
-                                r.setReceivedAmount(tx.getAmount());
-                                recRepo.save(r);
-
-                                tx.setStatus("conciliated");
-                                tx.setDescription(tx.getDescription() + " (Auto-baixa: " + r.getDescription() + ")");
-                                matched = true;
-
-                                redirectAttributes.addFlashAttribute("successMsg",
-                                        "Extrato importado com sucesso!");
-
-                                break; // Já encontrou a conta, vai para a próxima transação
-                            }
-                        }
-                    }
-                } else if ("OUT".equals(tx.getType())) {
-                    // Procura Contas a Pagar compatíveis
-                    for (AccountsPayable p : payables) {
-                        if ("pending".equals(p.getStatus()) && p.getTotalAmount().compareTo(tx.getAmount()) == 0) {
-                            long daysDiff = Math.abs(ChronoUnit.DAYS.between(p.getDueDate(), tx.getTransactionDate()));
-                            if (daysDiff <= 5) {
-                                p.setStatus("paid");
-                                payRepo.save(p);
-
-                                tx.setStatus("conciliated");
-                                tx.setDescription(tx.getDescription() + " (Auto-baixa: " + p.getDescription() + ")");
-                                matched = true;
-
-                                redirectAttributes.addFlashAttribute("successMsg",
-                                        "Extrato importado com sucesso!");
-                                break;
-                            }
-                        }
-                    }
+                if (tx.getExternalId() != null && bankRepo.existsByExternalId(tx.getExternalId())) {
+                    duplicados++;
+                    continue;
                 }
-                bankRepo.save(tx); // Grava a transação do banco (conciliada ou pendente)
+
+                attemptMatch(tx);
+                if ("conciliated".equals(tx.getStatus())) {
+                    conciliados++;
+                    if (tx.getDivergenceAmount().compareTo(BigDecimal.ZERO) != 0) divergentes++;
+                }
+                bankRepo.save(tx);
+                novos++;
             }
+
+            StringBuilder msg = new StringBuilder(novos + " lançamento(s) importado(s)");
+            if (conciliados > 0) msg.append(", ").append(conciliados).append(" conciliado(s) automaticamente");
+            if (divergentes > 0) msg.append(" (").append(divergentes).append(" com divergência — revisar)");
+            if (duplicados > 0) msg.append(". ").append(duplicados).append(" já tinham sido importados antes e foram ignorados");
+            msg.append(".");
+
+            redirectAttributes.addFlashAttribute("successMsg", msg.toString());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMsg",
                     "Erro ao processar o arquivo OFX: " + e.getMessage());
         }
         return "redirect:/conciliation";
+    }
+
+    private void attemptMatch(BankTransaction tx) {
+        if ("IN".equals(tx.getType())) {
+            AccountsReceivable best = null;
+            BigDecimal bestDiff = null;
+
+            for (AccountsReceivable r : recRepo.findAllByOrderByDueDateAsc()) {
+
+                if (!"received".equals(r.getStatus()) && !"partial".equals(r.getStatus())) continue;
+                if ("CONCILIADO".equals(r.getReconciliationStatus())) continue; // ja resolvido
+                if (r.getDueDate() == null) continue;
+
+                long daysDiff = Math.abs(ChronoUnit.DAYS.between(r.getDueDate(), tx.getTransactionDate()));
+                if (daysDiff > JANELA_DIAS) continue;
+
+                BigDecimal expectedNet = r.getTotalAmount().subtract(r.getFeeAmount());
+                if (expectedNet.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+                BigDecimal ratio = tx.getAmount().divide(expectedNet, 4, RoundingMode.HALF_UP);
+                if (ratio.compareTo(FAIXA_MIN) < 0 || ratio.compareTo(FAIXA_MAX) > 0) continue;
+
+                BigDecimal diff = expectedNet.subtract(tx.getAmount()).abs();
+                if (bestDiff == null || diff.compareTo(bestDiff) < 0) {
+                    best = r;
+                    bestDiff = diff;
+                }
+            }
+
+            if (best != null) {
+                applyReceivableMatch(tx, best, bestDiff);
+            }
+
+        } else if ("OUT".equals(tx.getType())) {
+            AccountsPayable best = null;
+            BigDecimal bestDiff = null;
+
+            for (AccountsPayable p : payRepo.findAllByOrderByDueDateAsc()) {
+                if (!"paid".equals(p.getStatus()) && !"partial".equals(p.getStatus())) continue;
+                if ("CONCILIADO".equals(p.getReconciliationStatus())) continue;
+                if (p.getDueDate() == null) continue;
+
+                long daysDiff = Math.abs(ChronoUnit.DAYS.between(p.getDueDate(), tx.getTransactionDate()));
+                if (daysDiff > JANELA_DIAS) continue;
+
+                BigDecimal expected = p.getTotalAmount(); // contas a pagar nao tem taxa de cartao neste app
+                if (expected == null || expected.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+                BigDecimal ratio = tx.getAmount().divide(expected, 4, RoundingMode.HALF_UP);
+                if (ratio.compareTo(FAIXA_MIN) < 0 || ratio.compareTo(FAIXA_MAX) > 0) continue;
+
+                BigDecimal diff = expected.subtract(tx.getAmount()).abs();
+                if (bestDiff == null || diff.compareTo(bestDiff) < 0) {
+                    best = p;
+                    bestDiff = diff;
+                }
+            }
+
+            if (best != null) {
+                applyPayableMatch(tx, best, bestDiff);
+            }
+        }
+    }
+
+    private void applyReceivableMatch(BankTransaction tx, AccountsReceivable r, BigDecimal diff) {
+        BigDecimal expectedNet = r.getTotalAmount().subtract(r.getFeeAmount());
+        boolean divergente = diff.compareTo(TOLERANCIA) > 0;
+
+        r.setReconciliationStatus(divergente ? "DIVERGENTE" : "CONCILIADO");
+        recRepo.save(r);
+
+        tx.setMatchedReceivable(r);
+        tx.setDivergenceAmount(divergente ? expectedNet.subtract(tx.getAmount()) : BigDecimal.ZERO);
+        tx.setDescription(tx.getDescription() + " (Vínculo: " + r.getDescription() + ")");
+        tx.setReconciliationNote(divergente
+                ? String.format("DIVERGENTE: esperado líquido R$ %.2f, recebido R$ %.2f no extrato (diferença R$ %.2f)",
+                expectedNet, tx.getAmount(), expectedNet.subtract(tx.getAmount()))
+                : (r.getFeeAmount().compareTo(BigDecimal.ZERO) > 0
+                   ? String.format("Conciliado — diferença de R$ %.2f já explicada pela taxa de cartão", r.getFeeAmount())
+                   : "Conciliado sem divergência"));
+    }
+
+    private void applyPayableMatch(BankTransaction tx, AccountsPayable p, BigDecimal diff) {
+        boolean divergente = diff.compareTo(TOLERANCIA) > 0;
+
+        p.setReconciliationStatus(divergente ? "DIVERGENTE" : "CONCILIADO");
+        payRepo.save(p);
+
+        tx.setMatchedPayable(p);
+        tx.setDivergenceAmount(divergente ? p.getTotalAmount().subtract(tx.getAmount()) : BigDecimal.ZERO);
+        tx.setDescription(tx.getDescription() + " (Vínculo: " + p.getDescription() + ")");
+        tx.setReconciliationNote(divergente
+                ? String.format("DIVERGENTE: esperado R$ %.2f, pago R$ %.2f no extrato (diferença R$ %.2f)",
+                p.getTotalAmount(), tx.getAmount(), p.getTotalAmount().subtract(tx.getAmount()))
+                : "Conciliado sem divergência");
+    }
+
+    private void revertLink(BankTransaction tx) {
+        if (tx.getMatchedReceivable() != null) {
+            AccountsReceivable r = tx.getMatchedReceivable();
+            r.setReconciliationStatus("NAO_CONCILIADO");
+            recRepo.save(r);
+            tx.setMatchedReceivable(null);
+        }
+        if (tx.getMatchedPayable() != null) {
+            AccountsPayable p = tx.getMatchedPayable();
+            p.setReconciliationStatus("NAO_CONCILIADO");
+            payRepo.save(p);
+            tx.setMatchedPayable(null);
+        }
     }
 }

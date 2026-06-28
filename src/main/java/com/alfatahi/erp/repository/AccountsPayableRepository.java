@@ -15,16 +15,21 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
 
     List<AccountsPayable> findByStatusNotOrderByDueDateAsc(String status);
 
-    @Query("SELECT SUM(a.totalAmount) FROM AccountsPayable a WHERE a.category = :category AND MONTH(a.dueDate) = :month AND YEAR(a.dueDate) = :year")
-    BigDecimal sumPayablesByCategoryAndMonthAndYear(@Param("category") String category, @Param("month") int month, @Param("year") int year);
+    @Query("SELECT SUM(a.totalAmount) FROM AccountsPayable a "
+            + "WHERE a.category = :category "
+            + "AND a.dueDate >= :inicio AND a.dueDate < :fim")
+    BigDecimal sumPayablesByCategoryAndMonthAndYear(
+            @Param("category") String category,
+            @Param("inicio") LocalDate inicio,
+            @Param("fim") LocalDate fim);
 
     @Query("SELECT SUM(a.totalAmount) FROM AccountsPayable a " +
-            "WHERE LOWER(a.category) = 'variable' " +
+            "WHERE LOWER(a.category) = 'variable' AND a.status != 'cancelled' " +
             "AND a.dueDate >= :inicio AND a.dueDate < :fim")
     BigDecimal sumCmvByMonthAndYear(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
     @Query("SELECT SUM(a.totalAmount) FROM AccountsPayable a " +
-            "WHERE LOWER(a.category) != 'variable' " +
+            "WHERE LOWER(a.category) != 'variable' AND a.status != 'cancelled' " +
             "AND a.dueDate >= :inicio AND a.dueDate < :fim")
     BigDecimal sumDespesasFixasByMonthAndYear(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 }

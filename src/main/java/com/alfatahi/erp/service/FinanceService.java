@@ -35,17 +35,23 @@ public class FinanceService {
     public AccountsReceivable saveReceivable(AccountsReceivable r) { return receivableRepository.save(r); }
     public BankAccount saveAccount(BankAccount a) { return bankAccountRepository.save(a); }
 
+    // CORREÇÃO (bug #5): estes métodos não são usados em nenhuma tela hoje, mas
+    // tinham o mesmo bug do dashboard (#4): somavam totalAmount só de status "paid"/
+    // "received", ignorando recebimentos/pagamentos parciais. Corrigido para refletir
+    // o valor efetivamente movimentado (receivedAmount/paidAmount), igual ao critério
+    // já usado pela tela de Contas a Pagar.
     public BigDecimal getTotalReceivables() {
         return receivableRepository.findAllByOrderByDueDateAsc().stream()
-                .filter(r -> "received".equals(r.getStatus()))
-                .map(AccountsReceivable::getTotalAmount)
+                .filter(r -> "received".equals(r.getStatus()) || "partial".equals(r.getStatus()))
+                // Valor líquido: bruto gravado - taxa de maquininha
+                .map(AccountsReceivable::getNetReceivedAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public BigDecimal getTotalPayables() {
         return payableRepository.findAllByOrderByDueDateAsc().stream()
-                .filter(p -> "paid".equals(p.getStatus()))
-                .map(AccountsPayable::getTotalAmount)
+                .filter(p -> "paid".equals(p.getStatus()) || "partial".equals(p.getStatus()))
+                .map(AccountsPayable::getPaidAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -99,20 +105,52 @@ public class FinanceService {
 
     @Transactional
     public void processReceivablePayment(UUID receivableId, BigDecimal amountReceived,
-                                         LocalDate paymentDate, String notes) {
+                                         LocalDate paymentDate, BigDecimal cardFeePercent, String notes) {
         AccountsReceivable ar = receivableRepository.findById(receivableId)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada: " + receivableId));
 
+        // REGRA DE NEGÓCIO (A2): a taxa de cartão é informada no momento do
+        // recebimento (ela não é fixa — o banco pode mudar a taxa a qualquer mês).
+        // "amountReceived" é o valor líquido que de fato chegou (ex.: o que aparece
+        // no extrato). A partir da taxa informada, calculamos o valor bruto
+        // equivalente, e é esse valor bruto que abate o saldo da conta a receber.
+        // Assim, uma venda de R$10.000 com 5% de taxa, recebendo R$9.500 líquidos,
+        // fecha a conta (saldo zero) em vez de ficar "parcial" para sempre — que era
+        // o bug #9 da auditoria.
+        BigDecimal fee = (cardFeePercent != null) ? cardFeePercent : BigDecimal.ZERO;
+        BigDecimal grossAmount;
+        BigDecimal feeForThisPayment;
+
+        if (fee.compareTo(BigDecimal.ZERO) > 0) {
+            if (fee.compareTo(new BigDecimal("100")) >= 0) {
+                throw new IllegalArgumentException("Taxa de cartão inválida: deve ser menor que 100%.");
+            }
+            BigDecimal divisor = BigDecimal.ONE.subtract(fee.divide(new BigDecimal("100"), 10, RoundingMode.HALF_UP));
+            grossAmount = amountReceived.divide(divisor, 2, RoundingMode.HALF_UP);
+            feeForThisPayment = grossAmount.subtract(amountReceived);
+        } else {
+            grossAmount = amountReceived;
+            feeForThisPayment = BigDecimal.ZERO;
+        }
+
         BigDecimal current = ar.getReceivedAmount() != null ? ar.getReceivedAmount() : BigDecimal.ZERO;
-        BigDecimal newTotalReceived = current.add(amountReceived);
+        BigDecimal newTotalReceived = current.add(grossAmount);
 
         ar.setReceivedAmount(newTotalReceived);
+        ar.setFeeAmount(ar.getFeeAmount().add(feeForThisPayment));
 
         if (paymentDate != null) {
             ar.setPaymentDate(paymentDate);
         }
         if (notes != null && !notes.isBlank()) {
             ar.setNotes(notes);
+        }
+        if (feeForThisPayment.compareTo(BigDecimal.ZERO) > 0) {
+            String autoNote = String.format(
+                    "[Taxa cartão %.2f%% sobre este recebimento = R$ %.2f | líquido informado R$ %.2f | valor bruto liquidado R$ %.2f]",
+                    fee, feeForThisPayment, amountReceived, grossAmount);
+            String existing = ar.getNotes();
+            ar.setNotes((existing != null && !existing.isBlank() ? existing + " " : "") + autoNote);
         }
 
         if (newTotalReceived.compareTo(BigDecimal.ZERO) > 0

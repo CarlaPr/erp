@@ -39,6 +39,7 @@ public class QuoteController {
         this.profileRepo = profileRepo;
     }
 
+    @Transactional(readOnly = true)
     @GetMapping
     public String index(
             @RequestParam(required = false) String status,
@@ -115,7 +116,6 @@ public class QuoteController {
         return "quotes";
     }
 
-    // AQUI OCORREU A CORREÇÃO:
     @GetMapping("/view-data/{id}")
     @ResponseBody
     @Transactional(readOnly = true)

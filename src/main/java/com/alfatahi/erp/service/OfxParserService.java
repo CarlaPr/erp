@@ -44,6 +44,15 @@ public class OfxParserService {
                     tx.setTransactionDate(LocalDate.now());
                 }
 
+                // CORREÇÃO (A4): extrair o FITID (identificador único do lançamento no
+                // extrato). Sem isso, reimportar o mesmo arquivo OFX duplicava lançamentos
+                // e baixas. Quando o banco não informa FITID, geramos uma chave alternativa
+                // (data+valor+tipo+descrição) só para fins de detecção de duplicidade.
+                Matcher fitIdMatcher = Pattern.compile("<FITID>([^<\\s]+)").matcher(trn);
+                if (fitIdMatcher.find()) {
+                    tx.setExternalId(fitIdMatcher.group(1).trim());
+                }
+
                 // 2. Extrair Valor e Tipo (TRNAMT)
                 Matcher amtMatcher = Pattern.compile("<TRNAMT>([\\-\\d\\.]+)").matcher(trn);
                 if (amtMatcher.find()) {
@@ -61,6 +70,15 @@ public class OfxParserService {
                 }
 
                 tx.setStatus("pending");
+
+                // Sem FITID no extrato (alguns bancos não enviam): cai para uma chave
+                // alternativa baseada em data+valor+tipo+descrição. Não é tão confiável
+                // quanto o FITID, mas evita reimportar o arquivo idêntico duas vezes.
+                if (tx.getExternalId() == null || tx.getExternalId().isBlank()) {
+                    tx.setExternalId("GERADO:" + tx.getTransactionDate() + ":" + tx.getType() + ":"
+                            + tx.getAmount() + ":" + tx.getDescription());
+                }
+
                 transactions.add(tx);
             }
         }

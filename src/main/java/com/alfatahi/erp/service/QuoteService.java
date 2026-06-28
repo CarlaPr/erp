@@ -85,16 +85,33 @@ public class QuoteService {
 
         BigDecimal totalOrcamento = (quote.getTotalValue() != null) ? quote.getTotalValue() : BigDecimal.ZERO;
 
-        int numParcelas = (quote.getInstallments() != null && quote.getInstallments() > 0) ? quote.getInstallments() : 1;
+        String paymentMethod = quote.getPaymentMethod();
+        boolean isCardSale = "Cartao_Credito".equals(paymentMethod) || "Cartao_Debito".equals(paymentMethod);
+
+        int numParcelas = isCardSale
+                ? 1
+                : (quote.getInstallments() != null && quote.getInstallments() > 0) ? quote.getInstallments() : 1;
         BigDecimal valorParcela = totalOrcamento.divide(new BigDecimal(numParcelas), 2, RoundingMode.HALF_UP);
 
+
+        BigDecimal somaParcelasAnteriores = valorParcela.multiply(new BigDecimal(numParcelas - 1));
+        BigDecimal valorUltimaParcela = totalOrcamento.subtract(somaParcelasAnteriores);
+
         for (int i = 0; i < numParcelas; i++) {
+            boolean isUltima = (i == numParcelas - 1);
             AccountsReceivable parcela = new AccountsReceivable();
             parcela.setClient(quote.getClient());
             parcela.setWorkOrder(os);
-            parcela.setDescription("Ref. " + quote.getNumber() + " — Parcela " + (i+1) + "/" + numParcelas);
-            parcela.setTotalAmount(valorParcela);
-            parcela.setDueDate(LocalDate.now().plusMonths(i + 1));
+            parcela.setPaymentMethod(paymentMethod);
+            parcela.setDescription(numParcelas == 1
+                    ? "Ref. " + quote.getNumber()
+                    : "Ref. " + quote.getNumber() + " — Parcela " + (i+1) + "/" + numParcelas);
+            parcela.setTotalAmount(isUltima ? valorUltimaParcela : valorParcela);
+            parcela.setDueDate(
+                    numParcelas == 1
+                            ? LocalDate.now()              // à vista = hoje
+                            : LocalDate.now().plusMonths(i + 1) // parcelado normal
+            );
             parcela.setStatus("pending");
             finRepo.save(parcela);
         }

@@ -144,9 +144,9 @@
                 <td class="p-4 text-right font-mono font-semibold text-white"
                     th:text="'R$ ' + ${#numbers.formatDecimal(r.totalAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
 
-                <!-- Recebido -->
+                <!-- Recebido (valor líquido = bruto - taxa maquininha) -->
                 <td class="p-4 text-right font-mono text-emerald-400"
-                    th:text="'R$ ' + ${#numbers.formatDecimal(r.receivedAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
+                    th:text="'R$ ' + ${#numbers.formatDecimal(r.netReceivedAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
 
                 <!-- Saldo -->
                 <td class="p-4 text-right font-mono font-bold"
@@ -159,6 +159,10 @@
                     <span th:if="${r.status == 'partial'}"   class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 uppercase tracking-wide">Parcial</span>
                     <span th:if="${r.status == 'pending'}"   class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase tracking-wide">Pendente</span>
                     <span th:if="${r.status == 'cancelled'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-500/20 text-slate-400 uppercase tracking-wide">Cancelado</span>
+                    <!-- Conciliação bancária (A1): "Recebido" é a empresa confirmando; este
+                         badge mostra se o banco já confirmou (ou divergiu) esse valor. -->
+                    <div th:if="${r.reconciliationStatus == 'CONCILIADO'}" class="text-[9px] text-indigo-400 font-bold uppercase tracking-wide mt-1">✓ Conciliado</div>
+                    <div th:if="${r.reconciliationStatus == 'DIVERGENTE'}" class="text-[9px] text-rose-400 font-bold uppercase tracking-wide mt-1">⚠ Divergente</div>
                 </td>
 
                 <!-- Ações -->
@@ -424,8 +428,8 @@
                         th:value="${_csrf.token}">
 
                 <div>
-                    <label class="label-form">Valor Recebido (R$) *</label>
-                    <input type="number" step="0.01" name="amount" id="receiveAmount" required placeholder="0.00" class="input-form font-mono text-lg">
+                    <label class="label-form">Valor Recebido Líquido (R$) *</label>
+                    <input type="number" step="0.01" name="amount" id="receiveAmount" required placeholder="0.00" class="input-form font-mono text-lg" oninput="updateReceivePreview()">
                     <p class="text-xs text-slate-500 mt-1">Saldo restante: <span id="receiveBalance" class="text-amber-400 font-bold"></span></p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -447,13 +451,14 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="label-form">Desconto (R$)</label>
-                        <input type="number" step="0.01" name="discount" value="0.00" class="input-form">
+                        <input type="number" step="0.01" name="discount" id="receiveDiscount" value="0.00" class="input-form">
                     </div>
                     <div>
                         <label class="label-form">Taxa Cartão (%)</label>
-                        <input type="number" step="0.01" name="cardFee" value="0.00" class="input-form">
+                        <input type="number" step="0.01" name="cardFee" id="receiveCardFee" value="0.00" class="input-form" oninput="updateReceivePreview()">
                     </div>
                 </div>
+                <p id="receivePreview" class="text-xs text-slate-500 -mt-2"></p>
                 <div>
                     <label class="label-form">Observação</label>
                     <textarea name="notes" rows="2" placeholder="Comprovante, referência..." class="input-form resize-none"></textarea>
@@ -609,6 +614,11 @@
 
         balance = parseFloat(balance) || 0;
 
+        // Reseta o formulário para não herdar taxa/desconto/observação digitados
+        // na última conta recebida (necessário agora que a taxa de cartão afeta
+        // o cálculo do saldo — ver A2 da auditoria).
+        document.getElementById("receiveForm").reset();
+
         document.getElementById("receiveForm").action =
             "/receivables/pay/" + id;
 
@@ -621,8 +631,28 @@
         document.getElementById("receiveDate").value =
             new Date().toISOString().split("T")[0];
 
+        updateReceivePreview();
+
         document.getElementById("receiveModal")
             .classList.remove("hidden");
+    }
+
+    // Mostra, em tempo real, como o valor líquido informado + a taxa de cartão
+    // vão se traduzir no valor bruto que efetivamente abate o saldo da conta.
+    function updateReceivePreview() {
+        const amount = parseFloat(document.getElementById("receiveAmount").value) || 0;
+        const fee = parseFloat(document.getElementById("receiveCardFee").value) || 0;
+        const preview = document.getElementById("receivePreview");
+
+        if (fee > 0 && amount > 0) {
+            const gross = amount / (1 - (fee / 100));
+            const feeAmount = gross - amount;
+            preview.innerText =
+                "Com " + fee.toFixed(2) + "% de taxa: valor bruto liquidado R$ " + gross.toFixed(2) +
+                " (taxa R$ " + feeAmount.toFixed(2) + ")";
+        } else {
+            preview.innerText = "";
+        }
     }
 
     // Cancelar

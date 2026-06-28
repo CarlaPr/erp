@@ -10,6 +10,7 @@ import com.alfatahi.erp.repository.AccountsReceivableRepository;
 import com.alfatahi.erp.repository.LossRepository;
 import com.alfatahi.erp.repository.WorkOrderRepository;
 import com.alfatahi.erp.service.WorkOrderService;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,15 +41,18 @@ public class WebController {
         this.workOrderRepository = workOrderRepository;
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/")
     public String root() {
         return "redirect:/dashboard";
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         DashboardDto dto = new DashboardDto();
-        List<AccountsReceivable> receivables = receivableRepository.findAllByOrderByDueDateAsc();
+        List<AccountsReceivable> receivables =
+                receivableRepository.findByStatusNotOrderByDueDateAsc("cancelled");
         List<AccountsPayable> payables = payableRepository.findAllByOrderByDueDateAsc();
         List<WorkOrder> workOrders = workOrderRepository.findAllWithItemsOrderByCreatedAtDesc();
         LocalDate today = LocalDate.now();
@@ -61,7 +65,8 @@ public class WebController {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal recebido = receivables.stream()
-                .map(r -> r.getReceivedAmount() != null ? r.getReceivedAmount() : BigDecimal.ZERO)
+                // Valor líquido = bruto gravado - taxa de maquininha acumulada
+                .map(r -> r.getNetReceivedAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         dto.setaReceber(faturado.subtract(recebido));

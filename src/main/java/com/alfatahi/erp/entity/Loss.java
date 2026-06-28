@@ -20,7 +20,7 @@ public class Loss {
     @Column(nullable = false)
     private String type;
 
-    // ESTE É O CAMPO QUE RESOLVE O ERRO DE SQL!
+
     @Column(nullable = false)
     private String material = "N/A"; // Valor default seguro
 
