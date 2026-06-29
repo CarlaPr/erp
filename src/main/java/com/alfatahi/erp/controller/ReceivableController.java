@@ -236,7 +236,7 @@ public class ReceivableController {
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
         if (paymentMethod != null && !paymentMethod.isBlank()) ar.setPaymentMethod(paymentMethod);
         if (discount != null) ar.setDiscount(discount);
-        if (cardFee != null) ar.setCardFeePercentage(cardFee); // último % informado, usado para exibição
+        if (cardFee != null) ar.setCardFeePercentage(cardFee);
         receivableRepository.save(ar);
 
         return "redirect:/receivables?success=payment_processed";
@@ -251,7 +251,6 @@ public class ReceivableController {
         return "redirect:/receivables";
     }
 
-    // Mantido por compatibilidade
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable UUID id) {
         return cancel(id);

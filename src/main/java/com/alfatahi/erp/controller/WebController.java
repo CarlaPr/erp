@@ -65,7 +65,6 @@ public class WebController {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal recebido = receivables.stream()
-                // Valor líquido = bruto gravado - taxa de maquininha acumulada
                 .map(r -> r.getNetReceivedAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -120,7 +119,7 @@ public class WebController {
         }
 
         // ==========================================
-        // 2. VISÃO 1: FLUXO DE CAIXA (12 MESES REAIS)
+        // 2.  FLUXO DE CAIXA (12 MESES REAIS)
         // ==========================================
         int currentYear = today.getYear();
         BigDecimal[] monthRevenues = new BigDecimal[12];
@@ -153,7 +152,7 @@ public class WebController {
         }
 
         // ==========================================
-        // 3. VISÃO 2: CUSTOS POR SUBCATEGORIA
+        // 3. CUSTOS POR SUBCATEGORIA
         // ==========================================
         Map<String, BigDecimal> expensesBySubcategory = new HashMap<>();
         BigDecimal totalCosts = BigDecimal.ZERO;
@@ -181,7 +180,7 @@ public class WebController {
         model.addAttribute("totalCosts", totalCosts);
 
         // ==========================================
-        // 4. VISÃO 3: PERFORMANCE POR TIPO DE SERVIÇO
+        // 4. PERFORMANCE POR TIPO DE SERVIÇO
         // ==========================================
         Map<String, BigDecimal> revenueByCat = new HashMap<>();
         Map<String, BigDecimal> profitByCat = new HashMap<>();
@@ -278,9 +277,6 @@ public class WebController {
             return d1.compareTo(d2);
         });
 
-        // ==========================================
-        // 7. INJEÇÃO NO HTML (MODEL)
-        // ==========================================
         model.addAttribute("currentPage", "dashboard");
         model.addAttribute("dash", dto);
         model.addAttribute("allPendingReceivables", allPendingReceivables);

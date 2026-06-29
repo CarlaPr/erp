@@ -428,7 +428,7 @@
                         th:value="${_csrf.token}">
 
                 <div>
-                    <label class="label-form">Valor Recebido Líquido (R$) *</label>
+                    <label class="label-form">Valor da OS / Cobrança (R$) *</label>
                     <input type="number" step="0.01" name="amount" id="receiveAmount" required placeholder="0.00" class="input-form font-mono text-lg" oninput="updateReceivePreview()">
                     <p class="text-xs text-slate-500 mt-1">Saldo restante: <span id="receiveBalance" class="text-amber-400 font-bold"></span></p>
                 </div>
@@ -637,19 +637,18 @@
             .classList.remove("hidden");
     }
 
-    // Mostra, em tempo real, como o valor líquido informado + a taxa de cartão
-    // vão se traduzir no valor bruto que efetivamente abate o saldo da conta.
+    // Mostra em tempo real: valor bruto informado → taxa descontada → líquido que entra no caixa
     function updateReceivePreview() {
         const amount = parseFloat(document.getElementById("receiveAmount").value) || 0;
         const fee = parseFloat(document.getElementById("receiveCardFee").value) || 0;
         const preview = document.getElementById("receivePreview");
 
         if (fee > 0 && amount > 0) {
-            const gross = amount / (1 - (fee / 100));
-            const feeAmount = gross - amount;
+            const feeAmount = amount * (fee / 100);
+            const net = amount - feeAmount;
             preview.innerText =
-                "Com " + fee.toFixed(2) + "% de taxa: valor bruto liquidado R$ " + gross.toFixed(2) +
-                " (taxa R$ " + feeAmount.toFixed(2) + ")";
+                "Taxa " + fee.toFixed(2) + "%: R$ " + feeAmount.toFixed(2) +
+                " → você receberá R$ " + net.toFixed(2) + " líquido no caixa";
         } else {
             preview.innerText = "";
         }

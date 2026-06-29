@@ -65,6 +65,12 @@ public class AccountsReceivable {
     @Column(name = "fee_amount", precision = 12, scale = 2)
     private BigDecimal feeAmount = BigDecimal.ZERO;
 
+    // Valor bruto acumulado cobrado do cliente (soma dos valores da OS pagos).
+    // Usado apenas para verificar se a OS foi totalmente quitada (status).
+    // NÃO é o que entrou no caixa — use receivedAmount para isso.
+    @Column(name = "gross_received_amount", precision = 12, scale = 2)
+    private BigDecimal grossReceivedAmount = BigDecimal.ZERO;
+
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
@@ -100,19 +106,18 @@ public class AccountsReceivable {
     public void setCardFeePercentage(BigDecimal cardFeePercentage) { this.cardFeePercentage = cardFeePercentage; }
     public BigDecimal getFeeAmount() { return feeAmount != null ? feeAmount : BigDecimal.ZERO; }
     public void setFeeAmount(BigDecimal feeAmount) { this.feeAmount = feeAmount; }
+    public BigDecimal getGrossReceivedAmount() { return grossReceivedAmount != null ? grossReceivedAmount : BigDecimal.ZERO; }
+    public void setGrossReceivedAmount(BigDecimal grossReceivedAmount) { this.grossReceivedAmount = grossReceivedAmount; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
-
-    // Valor líquido efetivamente recebido (bruto - taxa de maquininha)
+    // receivedAmount JÁ é o líquido (bruto - taxa). getNetReceivedAmount() é alias para clareza.
     public BigDecimal getNetReceivedAmount() {
-        return getReceivedAmount().subtract(getFeeAmount());
+        return getReceivedAmount();
     }
 
-    // Saldo correto: total da OS menos o valor bruto abatido (= o que ainda falta receber)
-    // O receivedAmount já é o valor bruto (OS), então o saldo é totalAmount - receivedAmount.
-    // Para exibição do "quanto entrou no caixa" use getNetReceivedAmount().
+    // Saldo da OS: quanto do valor bruto do cliente ainda não foi quitado
     public BigDecimal getBalance() {
-        return totalAmount.subtract(getReceivedAmount());
+        return totalAmount.subtract(getGrossReceivedAmount());
     }
 }

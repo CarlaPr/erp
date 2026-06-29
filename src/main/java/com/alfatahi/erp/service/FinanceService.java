@@ -109,34 +109,46 @@ public class FinanceService {
         AccountsReceivable ar = receivableRepository.findById(receivableId)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada: " + receivableId));
 
-        // REGRA DE NEGÓCIO (A2): a taxa de cartão é informada no momento do
-        // recebimento (ela não é fixa — o banco pode mudar a taxa a qualquer mês).
-        // "amountReceived" é o valor líquido que de fato chegou (ex.: o que aparece
-        // no extrato). A partir da taxa informada, calculamos o valor bruto
-        // equivalente, e é esse valor bruto que abate o saldo da conta a receber.
-        // Assim, uma venda de R$10.000 com 5% de taxa, recebendo R$9.500 líquidos,
-        // fecha a conta (saldo zero) em vez de ficar "parcial" para sempre — que era
-        // o bug #9 da auditoria.
+        // REGRA DE NEGÓCIO (A2): "amountReceived" é o valor BRUTO da OS (o que foi
+        // cobrado do cliente). A taxa da maquininha é calculada sobre esse bruto:
+        //   feeAmount   = bruto × (taxa% / 100)        ← quanto a operadora retém
+        //   netAmount   = bruto - feeAmount             ← o que de fato entra no caixa
+        //
+        // Exemplo: OS R$13.200, taxa 5%
+        //   feeAmount = 13.200 × 0,05 = 660,00
+        //   netAmount = 13.200 - 660  = 12.540,00  ← isso é gravado em receivedAmount
+        //
+        // O saldo da conta (getBalance = totalAmount - receivedAmount) é comparado
+        // contra totalAmount usando o valor BRUTO para determinar se a conta fechou;
+        // por isso usamos 'amountReceived' (bruto) para a verificação de status,
+        // mas gravamos apenas o líquido em receivedAmount (o que realmente entrou).
         BigDecimal fee = (cardFeePercent != null) ? cardFeePercent : BigDecimal.ZERO;
-        BigDecimal grossAmount;
         BigDecimal feeForThisPayment;
+        BigDecimal netAmount;
 
         if (fee.compareTo(BigDecimal.ZERO) > 0) {
             if (fee.compareTo(new BigDecimal("100")) >= 0) {
                 throw new IllegalArgumentException("Taxa de cartão inválida: deve ser menor que 100%.");
             }
-            BigDecimal divisor = BigDecimal.ONE.subtract(fee.divide(new BigDecimal("100"), 10, RoundingMode.HALF_UP));
-            grossAmount = amountReceived.divide(divisor, 2, RoundingMode.HALF_UP);
-            feeForThisPayment = grossAmount.subtract(amountReceived);
+            feeForThisPayment = amountReceived
+                    .multiply(fee)
+                    .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+            netAmount = amountReceived.subtract(feeForThisPayment);
         } else {
-            grossAmount = amountReceived;
             feeForThisPayment = BigDecimal.ZERO;
+            netAmount = amountReceived;
         }
 
+        // receivedAmount acumula o valor líquido (o que entrou no caixa de verdade)
         BigDecimal current = ar.getReceivedAmount() != null ? ar.getReceivedAmount() : BigDecimal.ZERO;
-        BigDecimal newTotalReceived = current.add(grossAmount);
+        BigDecimal newTotalReceived = current.add(netAmount);
+
+        // grossReceived acumula o bruto cobrado — usado só para decidir se a OS fechou
+        BigDecimal newTotalGross = (ar.getGrossReceivedAmount() != null ? ar.getGrossReceivedAmount() : BigDecimal.ZERO)
+                .add(amountReceived);
 
         ar.setReceivedAmount(newTotalReceived);
+        ar.setGrossReceivedAmount(newTotalGross);
         ar.setFeeAmount(ar.getFeeAmount().add(feeForThisPayment));
 
         if (paymentDate != null) {
@@ -147,16 +159,17 @@ public class FinanceService {
         }
         if (feeForThisPayment.compareTo(BigDecimal.ZERO) > 0) {
             String autoNote = String.format(
-                    "[Taxa cartão %.2f%% sobre este recebimento = R$ %.2f | líquido informado R$ %.2f | valor bruto liquidado R$ %.2f]",
-                    fee, feeForThisPayment, amountReceived, grossAmount);
+                    "[Taxa cartão %.2f%% = R$ %.2f | bruto R$ %.2f | líquido recebido R$ %.2f]",
+                    fee, feeForThisPayment, amountReceived, netAmount);
             String existing = ar.getNotes();
             ar.setNotes((existing != null && !existing.isBlank() ? existing + " " : "") + autoNote);
         }
 
-        if (newTotalReceived.compareTo(BigDecimal.ZERO) > 0
-                && newTotalReceived.compareTo(ar.getTotalAmount()) < 0) {
+        // Status: usa o bruto acumulado para comparar com o total da OS
+        if (newTotalGross.compareTo(BigDecimal.ZERO) > 0
+                && newTotalGross.compareTo(ar.getTotalAmount()) < 0) {
             ar.setStatus("partial");
-        } else if (newTotalReceived.compareTo(ar.getTotalAmount()) >= 0) {
+        } else if (newTotalGross.compareTo(ar.getTotalAmount()) >= 0) {
             ar.setStatus("received");
         }
         receivableRepository.save(ar);
