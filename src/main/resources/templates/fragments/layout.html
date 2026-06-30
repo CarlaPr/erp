@@ -41,9 +41,6 @@
             <a href="/clients" th:classappend="${currentPage == 'clients'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
                 <i data-lucide="users" class="w-5 h-5"></i> Clientes
             </a>
-            <a href="/quotes" class="text-slate-400 hover:bg-slate-800 hover:text-slate-200 flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
-                <i data-lucide="receipt" class="w-5 h-5"></i> Recibos
-            </a>
 
             <div sec:authorize="hasRole('GESTAO')" class="space-y-1">
                 <div class="pt-4 pb-1 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Setor Administrativo</div>

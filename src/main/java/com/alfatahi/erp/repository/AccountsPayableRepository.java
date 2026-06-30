@@ -32,4 +32,7 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
             "WHERE LOWER(a.category) != 'variable' AND a.status != 'cancelled' " +
             "AND a.dueDate >= :inicio AND a.dueDate < :fim")
     BigDecimal sumDespesasFixasByMonthAndYear(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+
+    @Query("SELECT COALESCE(SUM(p.paidAmount), 0) FROM AccountsPayable p WHERE p.status IN ('paid', 'partial')")
+    BigDecimal sumTotalPayables();
 }

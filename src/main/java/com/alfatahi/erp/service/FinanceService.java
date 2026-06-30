@@ -35,24 +35,22 @@ public class FinanceService {
     public AccountsReceivable saveReceivable(AccountsReceivable r) { return receivableRepository.save(r); }
     public BankAccount saveAccount(BankAccount a) { return bankAccountRepository.save(a); }
 
-    // CORREÇÃO (bug #5): estes métodos não são usados em nenhuma tela hoje, mas
-    // tinham o mesmo bug do dashboard (#4): somavam totalAmount só de status "paid"/
-    // "received", ignorando recebimentos/pagamentos parciais. Corrigido para refletir
-    // o valor efetivamente movimentado (receivedAmount/paidAmount), igual ao critério
-    // já usado pela tela de Contas a Pagar.
+
     public BigDecimal getTotalReceivables() {
-        return receivableRepository.findAllByOrderByDueDateAsc().stream()
+        /* return receivableRepository.findAllByOrderByDueDateAsc().stream()
                 .filter(r -> "received".equals(r.getStatus()) || "partial".equals(r.getStatus()))
                 // Valor líquido: bruto gravado - taxa de maquininha
                 .map(AccountsReceivable::getNetReceivedAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add); */
+        return receivableRepository.sumTotalReceivables();
     }
 
     public BigDecimal getTotalPayables() {
-        return payableRepository.findAllByOrderByDueDateAsc().stream()
+        /* return payableRepository.findAllByOrderByDueDateAsc().stream()
                 .filter(p -> "paid".equals(p.getStatus()) || "partial".equals(p.getStatus()))
                 .map(AccountsPayable::getPaidAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add); */
+        return payableRepository.sumTotalPayables();
     }
 
     @Transactional

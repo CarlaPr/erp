@@ -21,33 +21,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers(
-                                "/quotes/save-ajax",
-                                "/quotes/add-client-ajax",
-                                "/work-orders/save-ajax",
-                                "/admin/users/**"   // chamadas via curl/Postman não enviam CSRF token
-                        )
-                )
+                .csrf(Customizer.withDefaults())
 
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
-                        // Rotas Públicas estáticas e de login
                         .requestMatchers("/login", "/css/**", "/js/**").permitAll()
-
-                        // REQUISITO: Bloqueios Exclusivos do Perfil GESTAO
                         .requestMatchers("/admin/users/**").hasRole("GESTAO")
                         .requestMatchers("/dashboard", "/work-orders/**", "/payables/**", "/receivables/**", "/losses/**", "/dre/**", "/conciliation/**", "/suppliers/**", "/settings/**").hasRole("GESTAO")
-
-                        // REQUISITO: Módulos acessíveis por ambos ou pelo perfil VENDAS
                         .requestMatchers("/commercial/**", "/quotes/**", "/clients/**", "/login-success").hasAnyRole("GESTAO", "VENDAS")
-
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/login-success", true) // Rota neutra inteligente para direcionar cada perfil
+                        .defaultSuccessUrl("/login-success", true)
                         .permitAll()
                 )
                 .logout(logout -> logout

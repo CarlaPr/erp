@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -22,6 +23,18 @@ public class QuoteService {
         this.quoteRepo = quoteRepo;
         this.osRepo = osRepo;
         this.finRepo = finRepo;
+    }
+
+    private LocalDate calculateBusinessDays(LocalDate startDate, int businessDays) {
+        LocalDate result = startDate;
+        int addedDays = 0;
+        while (addedDays < businessDays) {
+            result = result.plusDays(1);
+            if (result.getDayOfWeek() != DayOfWeek.SATURDAY && result.getDayOfWeek() != DayOfWeek.SUNDAY) {
+                addedDays++;
+            }
+        }
+        return result;
     }
 
     @Transactional
@@ -51,7 +64,8 @@ public class QuoteService {
 
         os.setTotalValue(quote.getTotalValue());
 
-
+        LocalDate dataEntrega = calculateBusinessDays(LocalDate.now(), 15);
+        os.setInstallDate(dataEntrega);
 
         if (quote.getItems() != null) {
             for (QuoteItem qi : quote.getItems()) {
@@ -109,8 +123,8 @@ public class QuoteService {
             parcela.setTotalAmount(isUltima ? valorUltimaParcela : valorParcela);
             parcela.setDueDate(
                     numParcelas == 1
-                            ? LocalDate.now()              // à vista = hoje
-                            : LocalDate.now().plusMonths(i + 1) // parcelado normal
+                            ? LocalDate.now()
+                            : LocalDate.now().plusMonths(i + 1)
             );
             parcela.setStatus("pending");
             finRepo.save(parcela);

@@ -527,7 +527,6 @@
         if(e) e.preventDefault();
         if(currentItems.length === 0) return alert('Adicione pelo menos um item ao orçamento!');
 
-        // Calcula o valor total com base nos itens do array
         let calculatedTotal = currentItems.reduce((acc, item) => {
             let m2 = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 1;
             return acc + (item.quantity * m2 * item.unitPrice);
@@ -540,16 +539,25 @@
             installments: parseInt(document.getElementById('quoteInstallments').value) || 1,
             observations: document.getElementById('quoteObs').value,
             warranty: document.getElementById('quoteWarranty').value,
-            totalValue: calculatedTotal, // Usando o total calculado corretamente
+            totalValue: calculatedTotal,
             items: currentItems
         };
 
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
         fetch('/quotes/save-ajax', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
             body: JSON.stringify(payload)
         }).then(() => {
             window.location.reload();
+        }).catch(err => {
+            console.error("Erro ao salvar orçamento:", err);
+            alert("Erro ao salvar o orçamento.");
         });
     }
 
@@ -566,13 +574,12 @@
         console.log("⚙️ Iniciando barramento de integração automática para o orçamento:", quoteIdToApprove);
 
         try {
-            // Vai buscar as meta tags que adicionámos no layout
             const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
 
             const headers = {};
             if (csrfToken) {
-                headers[csrfHeader] = csrfToken; // Aplica o token de forma segura
+                headers[csrfHeader] = csrfToken;
             }
 
             const response = await fetch(`/quotes/approve/${quoteIdToApprove}`, {
@@ -633,7 +640,7 @@
         fetch(`/quotes/view-data/${id}`)
             .then(res => res.json())
             .then(q => {
-                // Captura dos dados para o nome automático do arquivo PDF
+
                 currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
                 currentActiveNumberForPdf = q.number;
 
@@ -645,10 +652,8 @@
                 document.getElementById('recObs').innerText = q.observations || 'Sem observações adicionais.';
                 document.getElementById('recWarrantyText').innerText = q.warranty || DEFAULT_WARRANTY;
 
-                // Alimenta o Valor Total real do orçamento
                 document.getElementById('recTotal').innerText = formatarMoeda(q.totalValue);
 
-                // Controla dinamicamente a exibição da linha de parcelas (Apenas para Cartão de Crédito)
                 const recFinalRow = document.getElementById('recFinalRow');
                 if (q.paymentMethod === 'Cartao_Credito') {
                     if (recFinalRow) recFinalRow.style.display = 'flex';
@@ -665,16 +670,13 @@
                         let precoPecaUnitaria = m2 * item.unitPrice;
                         let sub = item.quantity * precoPecaUnitaria;
 
-                        // CORREÇÃO EXATA: Trocado para spans com blocos e margem superior negativa (-mt-1)
                         itemsTbody.innerHTML += `
                             <tr class="border-b border-slate-100 hover:bg-slate-50/50">
                                 <td class="p-4 pl-4 text-slate-900 alignment-top">
-                                    <!-- 1. Nome do Item Principal (Grande e colado) -->
                                     <span class="font-extrabold text-base text-slate-950 uppercase tracking-wide leading-none block m-0 p-0">
                                         ${item.category || 'Item Comercial'}
                                     </span>
 
-                                    <!-- 2. Descrição (Puxada para cima com -mt-1 para colar no título) -->
                                     <span class="text-xs sm:text-sm text-slate-500 font-normal whitespace-pre-line leading-tight block -mt-1 p-0">
                                         ${item.product}
                                     </span>
@@ -717,9 +719,15 @@
             city: cityEl ? cityEl.value.trim() : ''
         };
 
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
         fetch('/quotes/add-client-ajax', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
             body: JSON.stringify(payload)
         })
             .then(res => {
@@ -733,11 +741,10 @@
                     const newOption = document.createElement('option');
                     newOption.value = savedClient.id;
                     newOption.textContent = savedClient.name;
-                    newOption.selected = true; // Mantém selecionado auto
+                    newOption.selected = true;
                     clientSelect.appendChild(newOption);
                 }
 
-                // Limpa os campos após gravação
                 if (nameEl) nameEl.value = '';
                 if (docEl) docEl.value = '';
                 if (emailEl) emailEl.value = '';

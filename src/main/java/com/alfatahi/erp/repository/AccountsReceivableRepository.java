@@ -22,4 +22,7 @@ public interface AccountsReceivableRepository extends JpaRepository<AccountsRece
 
     @Query("SELECT SUM(a.totalAmount) FROM AccountsReceivable a WHERE a.status != 'cancelled'")
     BigDecimal sumTotalAmount();
+
+    @Query("SELECT COALESCE(SUM(r.receivedAmount), 0) FROM AccountsReceivable r WHERE r.status IN ('received', 'partial')")
+    BigDecimal sumTotalReceivables();
 }
