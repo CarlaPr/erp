@@ -163,7 +163,7 @@
                                 <option value="Cobertura Policarbonato">Cobertura Policarbonato</option>
                                 <option value="Cobertura Habitat">Cobertura Habitat</option>
                                 <option value="Cobertura Retratil">Cobertura Retratil</option>
-                                <option value="Vidro Comum Incolor">Vidro Comum</option>
+                                <option value="Vidro Comum">Vidro Comum</option>
                                 <option value="Manutenção">Manutenção</option>
                                 <option value="Película de segurança">Película de segurança</option>
                                 <option value="Adesivo">Adesivo</option>
@@ -244,9 +244,7 @@
         </div>
     </div>
 
-    <!-- Modal Recibo (Adaptado para tela e Print) -->
     <div id="receiptModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-10">
-        <!-- O Recibo sempre será branco para garantir que pareça um documento A4 em tela também -->
         <div class="bg-white text-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl p-12 relative font-sans border border-slate-200 print:p-0 print:shadow-none print:w-full print:border-none" id="printableReceiptArea">
             <button onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full print:hidden transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
 
@@ -399,54 +397,88 @@
         </div>
     </div>
 
-    <div id="clientInlineModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60]">
+    <div id="clientInlineModal"
+         class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60]">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
-            <button type="button" onclick="closeModal('clientInlineModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+            <button type="button" onclick="closeModal('clientInlineModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
-
             <h4 class="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
-                <i data-lucide="user-plus" class="text-brand-600 dark:text-cyan-400 w-6 h-6"></i> Cadastro Rápido de Cliente
+                <i data-lucide="user-plus" class="text-brand-600 dark:text-cyan-400 w-6 h-6"></i>
+                Cadastro de Cliente
             </h4>
 
             <div class="space-y-5 text-sm">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome Completo / Razão Social</label>
-                        <input type="text" id="inlineClientName" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                            Nome Completo / Razão Social *
+                        </label>
+                        <input type="text" id="inlineClientName" required maxlength="150" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
                     </div>
-
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tipo de Pessoa</label>
-                        <select id="inlineClientType" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base">
-                            <option value="individual">Pessoa Física (CPF)</option>
-                            <option value="company">Pessoa Jurídica (CNPJ)</option>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                            Tipo de Pessoa
+                        </label>
+                        <select id="inlineClientType" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5">
+                            <option value="individual">
+                                Pessoa Física (CPF)
+                            </option>
+                            <option value="company">
+                                Pessoa Jurídica (CNPJ)
+                            </option>
                         </select>
                     </div>
-
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">CPF / CNPJ</label>
-                        <input type="text" id="inlineClientDoc" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                            CPF / CNPJ
+                        </label>
+                        <input
+                                type="text"
+                                id="inlineClientDoc"
+                                maxlength="18"
+                                autocomplete="off"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <p id="inlineDocumentError" class="hidden text-red-500 text-xs mt-1"></p>
                     </div>
-
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">E-mail</label>
-                        <input type="email" id="inlineClientEmail" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                            E-mail
+                        </label>
+                        <input
+                                type="email"
+                                id="inlineClientEmail"
+                                maxlength="120"
+                                autocomplete="off"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <p id="inlineEmailError" class="hidden text-red-500 text-xs mt-1"></p>
                     </div>
-
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Telefone</label>
-                        <input type="text" id="inlineClientPhone" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                            Telefone
+                        </label>
+                        <input
+                                type="text"
+                                id="inlineClientPhone"
+                                maxlength="15"
+                                placeholder="(11) 99999-9999"
+                                autocomplete="off"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <p id="inlinePhoneError" class="hidden text-red-500 text-xs mt-1"></p>
                     </div>
                 </div>
-
                 <div class="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-800 mt-6">
-                    <button type="button" onclick="closeModal('clientInlineModal')" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-base">Cancelar</button>
-                    <button type="button" onclick="saveInlineClient()" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 font-black hover:bg-brand-700 dark:hover:bg-cyan-600 transition-colors shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 text-base">Salvar e Inserir</button>
+                    <button type="button" onclick="closeModal('clientInlineModal')" class="px-5 py-2.5 rounded-xl border">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="saveInlineClient()" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white">
+                        Salvar e Inserir
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+
 </main>
 
 <script>
@@ -717,55 +749,141 @@
         const emailEl = document.getElementById('inlineClientEmail');
         const phoneEl = document.getElementById('inlineClientPhone');
 
-        if (!nameEl || !nameEl.value.trim()) {
+        if (!nameEl.value.trim()) {
             alert('Por favor, insira o Nome Completo / Razão Social!');
+            nameEl.focus();
+            return;
+        }
+        function numbers(v) {
+            return v.replace(/\D/g, '');
+        }
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (!msg) {
+                el.textContent = '';
+                el.classList.add('hidden');
+                return;
+            }
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+        let valid = true;
+        const documentValue =
+            docEl.value.trim();
+        if (documentValue) {
+            const digits =
+                numbers(documentValue);
+            const required =
+                typeEl.value === 'company'
+                    ? 14
+                    : 11;
+            if (digits.length !== required) {
+                showError(
+                    'inlineDocumentError',
+                    typeEl.value === 'company'
+                        ? 'CNPJ deve ter 14 números'
+                        : 'CPF deve ter 11 números'
+                );
+                valid = false;
+            } else {
+                showError('inlineDocumentError', '');
+            }
+        }
+        const email =
+            emailEl.value.trim();
+        if (email) {
+            const regex =
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!regex.test(email)) {
+                showError('inlineEmailError', 'E-mail inválido');
+                valid = false;
+            } else {
+                showError('inlineEmailError', '');
+            }
+        }
+
+        const phone =
+            phoneEl.value.trim();
+        if (phone) {
+            const digits =
+                numbers(phone);
+            if (digits.length < 10 || digits.length > 11
+            ) {
+                showError(
+                    'inlinePhoneError',
+                    'Telefone inválido'
+                );
+                valid = false;
+            } else {
+                showError('inlinePhoneError', '');
+            }
+        }
+
+        if (!valid) {
             return;
         }
 
         const payload = {
             name: nameEl.value.trim(),
-            type: typeEl ? typeEl.value : 'individual',
-            document: docEl ? docEl.value.trim() : '',
-            email: emailEl ? emailEl.value.trim() : '',
-            phone: phoneEl ? phoneEl.value.trim() : '',
+            type: typeEl.value,
+            document: documentValue,
+            email: email,
+            phone: phone,
             address: '',
             city: ''
         };
+        const csrfToken =
+            document
+                .querySelector('meta[name="_csrf"]')
+                ?.content;
 
-        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-
-        fetch('/quotes/add-client-ajax', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                [csrfHeader]: csrfToken
-            },
-            body: JSON.stringify(payload)
-        })
+        const csrfHeader =
+            document
+                .querySelector('meta[name="_csrf_header"]')
+                ?.content;
+        fetch(
+            '/quotes/add-client-ajax',
+            {
+                method:
+                    'POST',
+                headers: {
+                    'Content-Type':
+                        'application/json',
+                    [csrfHeader]:
+                    csrfToken
+                },
+                body:
+                    JSON.stringify(payload)
+            }
+        )
             .then(res => {
-                if(res.ok) return res.json();
-                throw new Error("Erro de resposta do servidor");
+                if (!res.ok) {
+                    throw new Error('Erro do servidor');
+                }
+                return res.json();
             })
             .then(savedClient => {
-                const clientSelect = document.getElementById('quoteClient');
-                if (clientSelect) {
-                    const newOption = document.createElement('option');
-                    newOption.value = savedClient.id;
-                    newOption.textContent = savedClient.name;
-                    newOption.selected = true;
-                    clientSelect.appendChild(newOption);
+                const select =
+                    document.getElementById('quoteClient');
+                if (select) {
+                    const option =
+                        document.createElement('option');
+                    option.value = savedClient.id;
+                    option.textContent = savedClient.name;
+                    option.selected = true;
+                    select.appendChild(option);
                 }
-
-                if (nameEl) nameEl.value = '';
-                if (docEl) docEl.value = '';
-                if (emailEl) emailEl.value = '';
-                if (phoneEl) phoneEl.value = '';
-
+                [
+                    nameEl,
+                    docEl,
+                    emailEl,
+                    phoneEl
+                ].forEach(el => el.value = '');
                 closeModal('clientInlineModal');
             })
             .catch(err => {
-                console.error("❌ Erro:", err);
+                console.error(err);
                 alert('Erro ao guardar o cliente.');
             });
     }
