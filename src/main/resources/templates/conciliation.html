@@ -1,172 +1,111 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(title='Conciliação Bancária - Alfa Tahi')}"></head>
-<body class="bg-[#0B1120] flex font-sans">
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Conciliação Bancária - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
-<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
+<main class="ml-72 p-8 w-full min-h-screen transition-colors duration-300">
 
-    <div th:if="${successMsg}" class="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm font-medium">
-        <i data-lucide="check-circle" class="w-4 h-4 inline mr-2"></i>
+    <div th:if="${successMsg}" class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl text-emerald-700 dark:text-emerald-400 text-sm font-bold flex items-center shadow-sm">
+        <i data-lucide="check-circle" class="w-5 h-5 mr-3"></i>
         <span th:text="${successMsg}"></span>
     </div>
-    <div th:if="${errorMsg}" class="mb-4 p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-sm font-medium">
-        <i data-lucide="alert-circle" class="w-4 h-4 inline mr-2"></i>
+    <div th:if="${errorMsg}" class="mb-6 p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl text-rose-700 dark:text-rose-400 text-sm font-bold flex items-center shadow-sm">
+        <i data-lucide="alert-circle" class="w-5 h-5 mr-3"></i>
         <span th:text="${errorMsg}"></span>
     </div>
 
-    <header class="flex justify-between items-center mb-8">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
-            <h2 class="text-3xl font-black text-white tracking-tight">Conciliação Bancária</h2>
-            <p class="text-slate-400 mt-1">Sincronize o ERP com o extrato real da conta corrente.</p>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Conciliação Bancária</h2>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Importação de extratos OFX e auditoria de caixa.</p>
         </div>
-        <div class="flex gap-3">
-            <button onclick="toggleModal('bankModal', true)" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20">
-                <i data-lucide="plus" class="w-5 h-5"></i> Manual
-            </button>
-            <button onclick="toggleModal('ofxModal', true)" class="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-black px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20">
-                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Importar OFX
-            </button>
-        </div>
+        <button onclick="toggleModal('ofxModal', true)" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm">
+            <i data-lucide="upload-cloud" class="w-5 h-5"></i> Importar Extrato (OFX)
+        </button>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-indigo-500/10 p-6 rounded-2xl border border-indigo-500/30 backdrop-blur-sm">
-            <span class="text-indigo-400 text-xs font-bold uppercase tracking-wider">Saldo Real (Conciliado)</span>
-            <p class="text-3xl font-black text-indigo-400 mt-2" th:text="'R$ ' + ${saldoConciliado}">R$ 0,00</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 flex flex-col justify-center shadow-sm hover:shadow-md transition-all">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Transações OFX Lidas</span>
+            <p class="text-3xl font-black text-slate-900 dark:text-white" th:text="${totalLidas}">0</p>
         </div>
-        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Entradas Pendentes (ERP)</span>
-            <p class="text-2xl font-black text-emerald-400 mt-2" th:text="'R$ ' + ${entradasPendentes}">R$ 0,00</p>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 flex flex-col justify-center shadow-sm hover:shadow-md transition-all">
+            <span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">Conciliadas Sucesso</span>
+            <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400" th:text="${totalConciliadas}">0</p>
         </div>
-        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Saídas Pendentes (ERP)</span>
-            <p class="text-2xl font-black text-rose-400 mt-2" th:text="'R$ ' + ${saidasPendentes}">R$ 0,00</p>
-        </div>
-        <div class="bg-amber-500/10 p-6 rounded-2xl border border-amber-500/30 backdrop-blur-sm">
-            <span class="text-amber-400 text-xs font-bold uppercase tracking-wider">Divergências</span>
-            <p class="text-2xl font-black text-amber-400 mt-2" th:text="${divergentesCount}">0</p>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-amber-200 dark:border-amber-500/30 flex flex-col justify-center shadow-sm hover:shadow-md transition-all">
+            <span class="text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-wider mb-2">Avisos / Divergências</span>
+            <p class="text-3xl font-black text-amber-600 dark:text-amber-400" th:text="${totalDivergencias}">0</p>
         </div>
     </div>
 
-    <div class="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
-        <table class="w-full text-left border-collapse">
-            <thead>
-            <tr class="border-b border-slate-700/50 bg-slate-800/80 text-slate-400 font-bold text-xs uppercase tracking-wider">
-                <th class="p-5">Data</th>
-                <th class="p-5">Descrição</th>
-                <th class="p-5 text-center">Tipo</th>
-                <th class="p-5 text-right">Valor</th>
-                <th class="p-5 text-center">Status no Banco</th>
-                <th class="p-5 text-center">Ação</th>
-            </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-700/50 text-sm">
-            <tr th:each="t : ${transactions}" class="hover:bg-slate-700/30 transition-colors">
-                <td class="p-5 text-slate-300 font-medium" th:text="${#temporals.format(t.transactionDate, 'dd/MM/yyyy')}">Data</td>
-                <td class="p-5">
-                    <p class="font-bold text-white" th:text="${t.description}">Desc</p>
-                    <p th:if="${t.reconciliationNote != null}" class="text-[11px] mt-1"
-                       th:class="${t.divergente} ? 'text-amber-400' : 'text-slate-500'"
-                       th:text="${t.reconciliationNote}">Nota</p>
-                </td>
-                <td class="p-5 text-center">
-                    <i th:if="${t.type == 'IN'}" data-lucide="arrow-down-left" class="w-5 h-5 text-emerald-400 inline"></i>
-                    <i th:if="${t.type == 'OUT'}" data-lucide="arrow-up-right" class="w-5 h-5 text-rose-400 inline"></i>
-                </td>
-                <td class="p-5 text-right font-mono font-bold" th:classappend="${t.type == 'IN' ? 'text-emerald-400' : 'text-rose-400'}" th:text="'R$ ' + ${t.amount}">0,00</td>
-                <td class="p-5 text-center">
-                    <span th:if="${t.status == 'conciliated' && !t.divergente}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-400 uppercase">Conciliado</span>
-                    <span th:if="${t.status == 'conciliated' && t.divergente}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase">Divergente</span>
-                    <span th:if="${t.status == 'pending'}" class="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-500/20 text-slate-400 uppercase">Pendente</span>
-                </td>
-                <td class="p-5 text-center">
-                    <a th:href="@{/conciliation/toggle/{id}(id=${t.id})}" class="text-cyan-400 hover:text-cyan-300 text-xs font-bold underline">Alternar</a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
+        <h3 class="text-slate-800 dark:text-white font-bold text-sm m-6 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <i data-lucide="list" class="w-4 h-4 text-brand-600 dark:text-cyan-400"></i> Histórico de Transações Importadas
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-y border-slate-200 dark:border-slate-700/50">
+                    <th class="p-5">Data/Hora</th>
+                    <th class="p-5">Descrição do Banco</th>
+                    <th class="p-5 text-center">Tipo</th>
+                    <th class="p-5 text-right">Valor Extrato</th>
+                    <th class="p-5 text-center">Status Conciliação</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50 font-medium">
+                <tr th:each="t : ${transactions}" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td class="p-5 text-slate-600 dark:text-slate-400 font-mono" th:text="${#temporals.format(t.transactionDate, 'dd/MM/yyyy HH:mm')}">Data</td>
+                    <td class="p-5 text-slate-900 dark:text-white font-bold" th:text="${t.description}">Desc</td>
+                    <td class="p-5 text-center">
+                        <span th:if="${t.type == 'CREDIT'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-transparent">Crédito</span>
+                        <span th:if="${t.type == 'DEBIT'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200 dark:border-transparent">Débito</span>
+                    </td>
+                    <td class="p-5 text-right font-mono font-bold" th:classappend="${t.type == 'CREDIT' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}" th:text="${t.type == 'CREDIT' ? '+' : '-'} + ' R$ ' + ${#numbers.formatDecimal(t.amount, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                    <td class="p-5 text-center">
+                        <span th:if="${t.status == 'CONCILIADO'}" class="flex items-center justify-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold"><i data-lucide="check-circle" class="w-4 h-4"></i> OK</span>
+                        <span th:if="${t.status == 'DIVERGENTE'}" class="flex items-center justify-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Divergente</span>
+                        <span th:if="${t.status == 'PENDENTE'}" class="flex items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400 font-bold"><i data-lucide="clock" class="w-4 h-4"></i> Pendente</span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(transactions)}">
+                    <td colspan="5" class="p-10 text-center text-slate-500 font-medium text-base">Nenhum extrato importado até o momento.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div id="bankModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50">
-        <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8">
-            <h3 class="text-2xl font-black text-white mb-6">Lançamento Extrato</h3>
-            <form th:action="@{/conciliation/save}" th:object="${newTx}" method="POST" class="space-y-4 text-sm">
+    <div id="ofxModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
+            <button type="button" onclick="toggleModal('ofxModal', false)" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Importar Extrato</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">Faça o upload do arquivo .OFX exportado do seu banco.</p>
+
+            <form th:action="@{/conciliation/upload-ofx}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 <div>
-                    <label>Conta bancária</label>
-                    <select th:field="*{bankAccount.id}">
-                        <option value="">— nenhuma —</option>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2">Conta Bancária (Destino)</label>
+                    <select name="bankAccountId" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base">
+                        <option value="">Selecione a Conta...</option>
+                        <option th:each="acc : ${bankAccounts}" th:value="${acc.id}" th:text="${acc.bankName + ' - ' + acc.accountNumber}"></option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-slate-400 font-bold mb-2">Descrição</label>
-                    <input type="text" th:field="*{description}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2">Ficheiro (.ofx)</label>
+                    <input type="file" name="file" accept=".ofx" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-brand-100 file:text-brand-700 dark:file:bg-cyan-500/20 dark:file:text-cyan-400 hover:file:bg-brand-200 transition-all cursor-pointer" />
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-slate-400 font-bold mb-2">Data</label>
-                        <input type="date" th:field="*{transactionDate}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
-                    </div>
-                    <div>
-                        <label class="block text-slate-400 font-bold mb-2">Valor</label>
-                        <input type="number" step="0.01" th:field="*{amount}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-slate-400 font-bold mb-2">Tipo Movimento</label>
-                        <select th:field="*{type}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none">
-                            <option value="IN">Entrada (+)</option>
-                            <option value="OUT">Saída (-)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-slate-400 font-bold mb-2">Status</label>
-                        <select th:field="*{status}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none">
-                            <option value="pending">Pendente</option>
-                            <option value="conciliated">Conciliado Banco</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-3 pt-4 mt-4 border-t border-slate-800">
-                    <button type="button" onclick="toggleModal('bankModal', false)" class="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-6 py-3 rounded-xl bg-indigo-500 text-white font-black hover:bg-indigo-600 transition-colors">Gravar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    <div id="ofxModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50">
-        <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="bg-emerald-500/20 p-3 rounded-xl">
-                    <i data-lucide="upload-cloud" class="w-6 h-6 text-emerald-400"></i>
-                </div>
-                <div>
-                    <h3 class="text-2xl font-black text-white">Importar Extrato OFX</h3>
-                    <p class="text-xs text-slate-400">Baixa automática inteligente.</p>
-                </div>
-            </div>
-
-            <form th:action="@{/conciliation/upload}" method="POST" enctype="multipart/form-data" class="space-y-4 text-sm">
-                <div class="border-2 border-dashed border-slate-700 rounded-xl p-6 text-center hover:border-emerald-500 transition-colors">
-                    <i data-lucide="file-text" class="w-8 h-8 text-slate-500 mx-auto mb-3"></i>
-                    <label class="block text-slate-300 font-bold mb-1 cursor-pointer">
-                        Clique para escolher o ficheiro .OFX
-                        <input type="file" name="file" accept=".ofx" required class="hidden" id="fileInput" onchange="document.getElementById('fileName').innerText = this.files[0].name" />
-                    </label>
-                    <p class="text-xs text-slate-500 mt-2" id="fileName">Nenhum ficheiro selecionado</p>
+                <div class="bg-blue-50 dark:bg-slate-800/50 p-4 rounded-xl border border-blue-100 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-400 leading-relaxed font-medium">
+                    <p class="mb-2"><strong class="text-blue-700 dark:text-white">Como funciona:</strong> O sistema lerá cada linha do extrato e buscará no <strong>Contas a Receber</strong> ou <strong>Contas a Pagar</strong> um título pendente com valor compatível (considerando a taxa de cartão já informada) dentro de até <strong>5 dias</strong> da data do lançamento.</p>
+                    <p>Se bater, concilia; se a diferença não for explicada pela taxa, marca como <strong>Divergente</strong> para revisão. O mesmo extrato não pode ser importado duas vezes.</p>
                 </div>
 
-                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
-                    <p class="text-[10px] text-slate-400">
-                        <i data-lucide="info" class="w-3 h-3 inline"></i> O sistema procura, entre os títulos já marcados como <strong>Recebido/Pago</strong>, um com valor compatível (considerando a taxa de cartão já informada) dentro de até <strong>5 dias</strong> da data do lançamento. Se bater, concilia; se a diferença não for explicada pela taxa, marca como <strong>Divergente</strong> para revisão. O mesmo extrato não pode ser importado duas vezes.
-                    </p>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-4 mt-4 border-t border-slate-800">
-                    <button type="button" onclick="toggleModal('ofxModal', false)" class="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-6 py-3 rounded-xl bg-emerald-500 text-slate-900 font-black hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20">Processar Ficheiro</button>
+                <div class="flex justify-end gap-3 pt-4 mt-6 border-t border-slate-200 dark:border-slate-800">
+                    <button type="button" onclick="toggleModal('ofxModal', false)" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-base">Cancelar</button>
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-500 dark:hover:bg-emerald-600 dark:text-slate-900 font-black transition-colors shadow-lg shadow-emerald-500/20 text-base">Processar Ficheiro</button>
                 </div>
             </form>
         </div>
@@ -174,7 +113,6 @@
 </main>
 
 <script>
-
     const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 

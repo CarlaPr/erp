@@ -1,175 +1,165 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(title='Ordens de Serviço - Alfa Tahi')}"></head>
-<body class="bg-[#0B1120] flex font-sans">
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Ordens de Serviço - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
-<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<main class="ml-72 p-8 w-full min-h-screen">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
-            <h2 class="text-3xl font-black text-white tracking-tight">Ordens de Serviço</h2>
-            <p class="text-sm text-slate-400 mt-1">Gestão de projetos, custos operacionais e margens.</p>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Ordens de Serviço</h2>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Gestão de projetos, custos operacionais e margens.</p>
         </div>
 
         <button type="button"
                 onclick="openNewOsModal()"
-                class="bg-[#06b6d4] hover:bg-[#0891b2] text-[#0B1120] font-bold py-2.5 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-cyan-500/20">
+                class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm">
             <i data-lucide="plus-circle" class="w-5 h-5"></i> Nova OS
         </button>
     </header>
 
-    <!-- KPIs Topo -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 shadow-lg">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Receita Total</p>
-            <p class="text-2xl font-black text-white" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Receita Total</p>
+            <p class="text-2xl font-black text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 shadow-lg">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Custos Totais (CMV)</p>
-            <p class="text-2xl font-black text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(totalCost, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Custos Totais (CMV)</p>
+            <p class="text-2xl font-black text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(totalCost, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-[#131C2F] p-6 rounded-2xl border border-slate-700/50 shadow-lg">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Lucro Bruto Global</p>
-            <p class="text-2xl font-black text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(globalProfit, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Lucro Bruto Global</p>
+            <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(globalProfit, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-[#122432] p-6 rounded-2xl border border-cyan-500/30 shadow-lg">
-            <p class="text-[10px] font-bold text-cyan-500 uppercase tracking-wider mb-2">Margem Média</p>
-            <p class="text-2xl font-black text-cyan-400" th:text="${#numbers.formatDecimal(averageMargin, 1, 'POINT', 2, 'COMMA')} + '%'">0.00%</p>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-brand-600 dark:border-l-cyan-500">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Margem Média</p>
+            <p class="text-2xl font-black text-brand-700 dark:text-cyan-400" th:text="${#numbers.formatDecimal(averageMargin, 1, 'POINT', 2, 'COMMA')} + '%'">0.00%</p>
         </div>
     </div>
 
-    <!-- Container Lista de OS -->
-    <div class="bg-[#131C2F]/40 border border-slate-700/50 rounded-3xl p-4 sm:p-6 shadow-xl">
+    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 shadow-sm">
         <div class="space-y-4">
 
-            <!-- Card Individual OS -->
             <div th:each="wo : ${orders}"
                  th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}"
-                 class="bg-[#131C2F] border border-slate-700/50 rounded-2xl p-5 relative overflow-hidden flex gap-5 hover:border-slate-600 transition-colors">
+                 class="bg-slate-50 dark:bg-[#1A2533] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 relative overflow-hidden flex gap-6 hover:border-brand-300 dark:hover:border-slate-600 transition-all hover:shadow-md">
 
-                <!-- Indicador de Status Colorido (Borda Esquerda) -->
-                <div class="absolute left-0 top-0 bottom-0 w-1"
-                     th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-500' : 'bg-blue-500'"></div>
+                <div class="absolute left-0 top-0 bottom-0 w-1.5"
+                     th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-500' : 'bg-brand-600 dark:bg-cyan-500'"></div>
 
-                <!-- Ícone da OS -->
-                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0 mt-1">
-                    <i data-lucide="clipboard-list" class="w-6 h-6 text-cyan-400"></i>
+                <div class="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-slate-800 flex items-center justify-center shrink-0 border border-brand-100 dark:border-slate-700">
+                    <i data-lucide="clipboard-list" class="w-7 h-7 text-brand-600 dark:text-cyan-400"></i>
                 </div>
 
-                <!-- Conteúdo Central -->
                 <div class="flex-1">
 
-                    <!-- Linha 1: Numeração, Status e Ações -->
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex items-center gap-3">
-                            <span class="font-bold text-white text-sm" th:text="${wo.number}">OS-0000</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide"
-                                  th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'"
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-4">
+                            <span class="font-black text-slate-900 dark:text-white text-lg tracking-tight" th:text="${wo.number}">OS-0000</span>
+                            <span class="px-3 py-1 rounded-lg text-xs font-bold tracking-wider uppercase border"
+                                  th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent' : 'bg-brand-50 text-brand-700 border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent'"
                                   th:text="${wo.status == 'completed' or wo.status == 'delivered' ? 'Entregue' : 'Em Andamento'}">Status</span>
                         </div>
 
-                        <div class="flex items-center gap-4 text-slate-400">
-
-                            <button type="button"
-                                    th:data-id="${wo.id}"
-                                    onclick="editOs(this.getAttribute('data-id'))"
-                                    class="hover:text-cyan-400"
-                                    title="Editar">
-                                <i data-lucide="edit" class="w-4 h-4"></i>
+                        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                            <button type="button" th:data-id="${wo.id}" onclick="editOs(this.getAttribute('data-id'))"
+                                    class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar">
+                                <i data-lucide="edit" class="w-5 h-5"></i>
                             </button>
-
-                            <button type="button"
-                                    th:if="${wo.status != 'cancelled' && wo.status != 'canceled'}"
-                                    th:data-id="${wo.id}"
-                                    onclick="openCancelModal(this.getAttribute('data-id'))"
-                                    class="hover:text-rose-400"
-                                    title="Cancelar">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            <button type="button" th:if="${wo.status != 'cancelled' && wo.status != 'canceled'}" th:data-id="${wo.id}" onclick="openCancelModal(this.getAttribute('data-id'))"
+                                    class="p-2 hover:bg-rose-100 dark:hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg transition-colors" title="Cancelar">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
                             </button>
                         </div>
-
                     </div>
 
-                    <!-- Linha 2: Título -->
-                    <h3 class="text-sm font-bold text-white mb-2" th:text="${wo.title != null ? wo.title : 'Ordem de Serviço Sem Título'}">Título da OS</h3>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4" th:text="${wo.title != null ? wo.title : 'Ordem de Serviço Sem Título'}">Título</h3>
 
-                    <!-- Linha 3: Cliente e Referência de Venda (Orçamento) -->
-                    <div class="flex items-start gap-4 text-[11px] mb-5">
-                        <div class="text-slate-400 flex flex-col">
-                            <span th:text="${wo.client != null ? wo.client.name : 'Cliente Avulso'}">Nome do Cliente</span>
+                    <div class="flex flex-wrap items-center gap-6 text-sm mb-6">
+                        <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-bold">
+                            <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                            <span th:text="${wo.client != null ? wo.client.name : 'Cliente Avulso'}">Nome</span>
                         </div>
 
-                        <!-- Botão de Impressão do Orçamento -->
-                        <div th:if="${wo.quote != null}" class="flex flex-col ml-6 text-slate-400">
-                            <button type="button"
-                                    th:data-id="${wo.quote.id}"
-                                    onclick="viewReceipt(this.getAttribute('data-id'))"
-                                    class="flex items-center gap-1.5 text-slate-400 hover:text-cyan-400 transition-colors border border-slate-700 bg-slate-800/50 px-2 py-0.5 rounded w-fit cursor-pointer">
-                                <i data-lucide="printer" class="w-3 h-3"></i>
+                        <div th:if="${wo.quote != null}">
+                            <button type="button" th:data-id="${wo.quote.id}" onclick="viewReceipt(this.getAttribute('data-id'))"
+                                    class="flex items-center gap-2 text-brand-700 dark:text-cyan-400 font-bold hover:underline">
+                                <i data-lucide="printer" class="w-4 h-4"></i>
                                 <span th:text="${wo.quote.number}">ORC 00</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Linha 4: Indicadores Financeiros Individuais -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5"
-                         th:with="receita=${wo.totalValue != null ? wo.totalValue : 0},
-                          custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0},
-                          lucro=${receita - custo},
-                          margem=${receita > 0 ? (lucro * 100 / receita) : 0}">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6"
+                         th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}">
 
-                        <div>
-                            <p class="text-[10px] text-slate-500 mb-0.5">Receita</p>
-                            <p class="text-xs font-bold text-white" th:text="'R$ ' + ${#numbers.formatDecimal(receita, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                        <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Receita</p>
+                            <p class="text-sm font-black text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(receita, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
                         </div>
-                        <div>
-                            <p class="text-[10px] text-slate-500 mb-0.5">Custos</p>
-                            <p class="text-xs font-bold text-[#f97316]" th:text="'R$ ' + ${#numbers.formatDecimal(custo, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                        <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Custos</p>
+                            <p class="text-sm font-black text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(custo, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
                         </div>
-                        <div>
-                            <p class="text-[10px] text-slate-500 mb-0.5">Lucro</p>
-                            <p class="text-xs font-bold text-[#4ade80]" th:text="'R$ ' + ${#numbers.formatDecimal(lucro, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                        <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Lucro</p>
+                            <p class="text-sm font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(lucro, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
                         </div>
-                        <div>
-                            <p class="text-[10px] text-slate-500 mb-0.5">Margem</p>
-                            <p class="text-xs font-bold text-[#06b6d4]" th:text="${#numbers.formatDecimal(margem, 1, 'POINT', 2, 'COMMA')} + '%'">0.0%</p>
+                        <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Margem</p>
+                            <p class="text-sm font-black text-brand-700 dark:text-cyan-400" th:text="${#numbers.formatDecimal(margem, 1, 'POINT', 2, 'COMMA')} + '%'">0.0%</p>
                         </div>
                     </div>
 
-                    <!-- Linha 5: Rodapé (Categoria, Data e Endereço) -->
-                    <div class="flex items-center gap-6 text-[11px] text-slate-500">
-                        <div class="flex items-center gap-1.5"><i data-lucide="package" class="w-3.5 h-3.5"></i> <span th:text="${wo.category != null ? wo.category.name : 'Sem categoria'}">Categoria</span></div>
-                        <div class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> <span th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : 'Sem data definida'}">Data</span></div>
-                        <div class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> <span class="truncate max-w-[250px]" th:text="${wo.client != null ? wo.client.address : 'Sem endereço'}">Endereço</span></div>
+                    <div class="flex flex-wrap items-center gap-6 text-xs text-slate-500 dark:text-slate-400 font-bold">
+                        <div class="flex items-center gap-1.5"><i data-lucide="package" class="w-4 h-4"></i> <span th:text="${wo.category != null ? wo.category.name : 'Sem categoria'}">Cat</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4"></i> <span th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : 'Sem data'}">Data</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i> <span class="truncate max-w-[200px]" th:text="${wo.client != null ? wo.client.address : 'Sem endereço'}">Endereço</span></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Estado Vazio -->
-            <div th:if="${#lists.isEmpty(orders)}" class="text-center py-10">
-                <i data-lucide="inbox" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-                <p class="text-slate-400 font-medium">Nenhuma Ordem de Serviço encontrada no momento.</p>
+            <div th:if="${#lists.isEmpty(orders)}" class="text-center py-16 bg-white dark:bg-[#131C2F] rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                <i data-lucide="inbox" class="w-12 h-12 text-slate-400 mx-auto mb-3"></i>
+                <p class="text-slate-600 dark:text-slate-400 font-bold text-base">Nenhuma Ordem de Serviço encontrada no momento.</p>
             </div>
-
         </div>
     </div>
 
-    <!-- MODAL DE CANCELAMENTO -->
-    <div id="cancelOsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] overflow-y-auto py-10">
-        <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-6 relative">
-            <button onclick="closeModal('cancelOsModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            <h3 class="text-xl font-black text-white mb-4 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 text-rose-500"></i> Cancelar Ordem</h3>
-            <p class="text-sm text-slate-400 mb-4">Informe o motivo do cancelamento. A OS <b>não</b> será apagada, ficará no histórico com status cancelado.</p>
-            <textarea id="cancelReason" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white outline-none focus:border-rose-500 mb-4" placeholder="Ex: Cliente desistiu da obra..."></textarea>
+    <div id="cancelOsModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
+
+            <button type="button" onclick="closeModal('cancelOsModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="bg-rose-100 dark:bg-rose-500/10 p-4 rounded-full w-fit mb-5 text-rose-600 dark:text-rose-400">
+                <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+            </div>
+
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">Cancelar Ordem de Serviço</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+                Esta OS não será apagada, mas ficará arquivada no histórico com status <b>cancelado</b>. Por favor, informe o motivo:
+            </p>
+
+            <textarea id="cancelReason" rows="3"
+                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-slate-900 dark:text-white outline-none focus:border-rose-500 transition-all text-base mb-6"
+                      placeholder="Ex: Cliente desistiu da obra..."></textarea>
+
             <div class="flex justify-end gap-3">
-                <button type="button" onclick="closeModal('cancelOsModal')" class="px-4 py-2.5 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Voltar</button>
-                <button type="button" onclick="executeCancelOS()" class="px-4 py-2.5 rounded-xl bg-rose-500 text-white font-black hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-colors">Confirmar Cancelamento</button>
+                <button type="button" onclick="closeModal('cancelOsModal')"
+                        class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">
+                    Voltar
+                </button>
+                <button type="button" onclick="executeCancelOS()"
+                        class="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-base">
+                    Confirmar Cancelamento
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL PRINCIPAL: EDIÇÃO DA O.S.-->
     <div id="osModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-40 overflow-y-auto py-10">
         <div class="bg-[#111827] border border-slate-700 w-full max-w-5xl rounded-2xl shadow-2xl relative my-auto">
 
@@ -180,7 +170,6 @@
                 <form id="osForm" onsubmit="saveFullOS(event)" class="space-y-8 text-sm">
                     <input type="hidden" id="osId" />
 
-                    <!-- 1. CABEÇALHO DA OS -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5 bg-slate-800/30 p-5 rounded-xl border border-slate-700/50">
                         <div>
                             <label class="block text-slate-400 font-bold mb-2">OS (Título)</label>
@@ -219,7 +208,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. ITENS VENDIDOS (TRAVADOS PARA EDIÇÃO) -->
                     <div id="soldItemsContainer" class="hidden">
                         <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
                             <i data-lucide="package-check" class="w-4 h-4 text-emerald-400"></i> Itens Vendidos (Origem do Orçamento)
@@ -239,20 +227,17 @@
                         </div>
                     </div>
 
-                    <!-- 3. CUSTOS DE PRODUÇÃO E MATERIAIS (CMV) (ABERTOS PARA EDIÇÃO) -->
                     <div>
                         <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
                             Custos de Produção e Materiais (CMV)
                         </h4>
 
-                        <!-- CARD 3.1: MATERIAIS / PRODUTOS -->
                         <div class="bg-[#1E293B] rounded-xl border border-slate-700 p-5 mb-4 shadow-sm">
                             <div class="flex justify-between items-center mb-4">
                                 <h5 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="package" class="w-5 h-5 text-cyan-400"></i> Materiais / Produtos</h5>
                                 <button type="button" onclick="addMaterial()" class="text-cyan-400 hover:text-cyan-300 font-bold text-sm flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar</button>
                             </div>
 
-                            <!-- Lista Dinâmica de Materiais -->
                             <div id="materialsContainer" class="space-y-3"></div>
 
                             <div class="border-t border-slate-700/80 mt-5 pt-4 flex justify-between text-slate-400 text-sm">
@@ -261,14 +246,12 @@
                             </div>
                         </div>
 
-                        <!-- CARD 3.2: CUSTOS OPERACIONAIS -->
                         <div class="bg-[#1E293B] rounded-xl border border-slate-700 p-5 mb-4 shadow-sm">
                             <div class="flex justify-between items-center mb-4">
                                 <h5 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="wrench" class="w-5 h-5 text-orange-400"></i> Custos Operacionais</h5>
                                 <button type="button" onclick="addOperational()" class="text-orange-400 hover:text-orange-300 font-bold text-sm flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar</button>
                             </div>
 
-                            <!-- Lista Dinâmica de Operacionais -->
                             <div id="operationalsContainer" class="space-y-3"></div>
 
                             <div class="border-t border-slate-700/80 mt-5 pt-4 flex justify-between text-slate-400 text-sm">
@@ -277,7 +260,6 @@
                             </div>
                         </div>
 
-                        <!-- CARD 3.3: RESUMO FINANCEIRO -->
                         <div class="bg-cyan-900/10 border border-cyan-800/40 rounded-xl p-5 shadow-sm">
                             <h5 class="text-base font-bold text-white flex items-center gap-2 mb-4"><i data-lucide="dollar-sign" class="w-5 h-5 text-cyan-400"></i> Resumo Financeiro</h5>
                             <div class="grid grid-cols-4 gap-4">
@@ -304,7 +286,6 @@
                 </form>
             </div>
 
-            <!-- 4. FOOTER -->
             <div class="bg-[#0F172A] border-t border-slate-800 p-6 flex justify-end gap-3 rounded-b-2xl">
                 <button type="button" onclick="closeModal('osModal')" class="px-8 py-2.5 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Sair</button>
                 <button type="button" onclick="saveFullOS(event)" class="px-8 py-2.5 rounded-xl bg-cyan-500 text-slate-900 font-black hover:bg-cyan-600 transition-colors shadow-lg shadow-cyan-500/20">Salvar O.S.</button>
@@ -313,9 +294,10 @@
     </div>
 
 
-    <div id="receiptModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-10">
-        <div class="bg-white text-slate-900 w-full max-w-3xl rounded-xl shadow-2xl p-12 relative font-sans print:p-0 print:shadow-none print:w-full" id="printableReceiptArea">
-            <button onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 print:hidden"><i data-lucide="x" class="w-6 h-6"></i></button>
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-10">
+
+        <div class="bg-white text-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl p-12 relative font-sans border border-slate-200 print:p-0 print:shadow-none print:w-full print:border-none" id="printableReceiptArea">
+            <button onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full print:hidden transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
 
             <style>
                 @media print {
@@ -342,18 +324,15 @@
                         background: #ffffff !important;
                         color: #000000 !important;
                     }
-                    @page {
-                        size: A4;
-                        margin: 10mm 12mm 10mm 12mm;
-                    }
+                    @page { size: A4; margin: 10mm 12mm 10mm 12mm; }
                     .print\:hidden { display: none !important; }
                 }
             </style>
 
-            <div class="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-6">
+            <div class="flex justify-between items-start border-b-[3px] border-slate-900 pb-6 mb-8">
                 <div class="flex flex-col">
-                    <div th:if="${profile.logoUrl != null && !profile.logoUrl.isEmpty()}" class="mb-3">
-                        <img th:src="${profile.logoUrl}" class="max-h-20 max-w-[240px] object-contain text-left mix-blend-multiply print:mix-blend-normal" alt="Logo" />
+                    <div th:if="${profile.logoUrl != null && !profile.logoUrl.isEmpty()}" class="mb-4">
+                        <img th:src="${profile.logoUrl}" class="max-h-24 max-w-[280px] object-contain text-left mix-blend-multiply" alt="Logo" />
                     </div>
                     <h2 class="text-3xl font-black tracking-tight text-slate-900 uppercase" th:text="${profile.companyName}"></h2>
                     <div class="text-sm text-slate-600 mt-4 space-y-1 font-medium">
@@ -364,10 +343,10 @@
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="bg-slate-100 p-5 rounded-xl border border-slate-200 inline-block min-w-[220px]">
-                        <h3 class="text-xs font-bold font-mono text-slate-500 uppercase tracking-wider">ORÇAMENTO</h3>
-                        <p class="text-2xl font-black text-slate-900 font-mono" id="recNum">N° --</p>
-                        <div class="text-xs text-slate-500 mt-2 border-t pt-2 border-slate-200">
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 inline-block min-w-[240px]">
+                        <h3 class="text-sm font-bold font-mono text-slate-500 uppercase tracking-widest mb-1">ORÇAMENTO</h3>
+                        <p class="text-3xl font-black text-slate-900 font-mono" id="recNum">N° --</p>
+                        <div class="text-sm text-slate-500 mt-3 border-t pt-3 border-slate-200">
                             <span class="font-bold block text-slate-700">Data de emissão:</span>
                             <span id="recDate">--/--/----</span>
                         </div>
@@ -375,21 +354,20 @@
                 </div>
             </div>
 
-            <div class="mb-6">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block font-mono">Orçamento para</span>
-                <h4 class="text-xl font-black text-slate-900" id="recClient">Nome do Cliente</h4>
-                <p class="text-sm text-slate-500 italic mt-0.5">Aqui está o orçamento conforme solicitado:</p>
+            <div class="mb-8">
+                <span class="text-sm font-bold text-slate-500 uppercase tracking-wider block font-mono">Orçamento elaborado para:</span>
+                <h4 class="text-2xl font-black text-slate-900 mt-1" id="recClient">Nome do Cliente</h4>
             </div>
 
-            <div class="border border-slate-300 rounded-xl overflow-hidden mb-6 bg-white shadow-sm">
-                <table class="w-full text-left border-collapse text-sm">
+            <div class="border-[2px] border-slate-200 rounded-2xl overflow-hidden mb-8 bg-white shadow-sm">
+                <table class="w-full text-left border-collapse text-base">
                     <thead>
-                    <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider border-b border-slate-900">
-                        <th class="p-4 pl-4 w-[50%]">Descrição do Projeto</th>
-                        <th class="p-4 text-center">Unid.</th>
-                        <th class="p-4 text-center">Qtd</th>
-                        <th class="p-4 text-right">Preço Unit.</th>
-                        <th class="p-4 text-right pr-4">Total</th>
+                    <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider text-sm">
+                        <th class="p-5 pl-6 w-[50%]">Descrição do Serviço / Produto</th>
+                        <th class="p-5 text-center">Unid.</th>
+                        <th class="p-5 text-center">Qtd</th>
+                        <th class="p-5 text-right">V. Unit.</th>
+                        <th class="p-5 text-right pr-6">Subtotal</th>
                     </tr>
                     </thead>
                     <tbody id="recItems" class="divide-y divide-slate-200 font-medium text-slate-800">
@@ -397,58 +375,55 @@
                 </table>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 border-t pt-6 border-slate-200">
-                <div class="text-sm text-slate-600 space-y-2">
-                    <h5 class="font-bold text-slate-900 uppercase font-mono tracking-wide text-xs">OBSERVAÇÕES ADICIONAIS</h5>
-                    <div id="recObs" class="whitespace-pre-line text-sm text-slate-600 font-sans leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10 border-t-2 pt-8 border-slate-100">
+                <div class="text-base text-slate-700 space-y-3">
+                    <h5 class="font-bold text-slate-900 uppercase font-mono tracking-wide text-sm border-b pb-2">Condições & Observações</h5>
+                    <div id="recObs" class="whitespace-pre-line text-sm text-slate-600 font-sans leading-relaxed bg-slate-50 p-5 rounded-xl border border-slate-200">
                         --
                     </div>
                 </div>
 
-                <div class="flex flex-col justify-end items-end w-full">
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 w-full max-w-[340px] font-mono shadow-sm">
-                        <div class="flex justify-between items-center text-xs text-slate-500 font-bold pb-2.5">
-                            <span>VALOR TOTAL:</span>
-                            <span id="recTotal" class="text-slate-900 text-base font-black tracking-tight">R$ 0,00</span>
+                <div class="flex flex-col justify-start items-end w-full">
+                    <div class="bg-slate-50 border-[2px] border-slate-200 rounded-2xl p-6 w-full max-w-[380px] font-mono shadow-sm">
+                        <div class="flex justify-between items-center text-sm text-slate-500 font-bold pb-3">
+                            <span>TOTAL:</span>
+                            <span id="recTotal" class="text-slate-900 text-2xl font-black tracking-tight">R$ 0,00</span>
                         </div>
-                        <div id="recFinalRow" class="flex justify-between items-center pt-2.5 border-t border-slate-200" style="display: none;">
-                            <span class="text-xs text-slate-500 font-bold">VALOR FINAL:</span>
-                            <span id="recFinalInstallments" class="text-xl font-black text-emerald-600 tracking-tight">10x R$ 0,00</span>
+                        <div id="recFinalRow" class="flex justify-between items-center pt-3 border-t-2 border-slate-200" style="display: none;">
+                            <span class="text-sm text-slate-500 font-bold">Total Parcelado:</span>
+                            <span id="recFinalInstallments" class="text-xl font-black text-brand-600 tracking-tight">10x R$ 0,00</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-8 border-t-2 border-dashed border-slate-200 pt-6">
-                <div class="grid grid-cols-2 gap-4 text-sm text-slate-500">
+            <div class="mt-10 border-t-[2px] border-dashed border-slate-200 pt-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-base text-slate-700">
                     <div>
-                        <h5 class="font-bold text-slate-900 font-mono text-xs uppercase mb-1">GARANTIA</h5>
-                        <p id="recWarrantyText" class="text-slate-800 font-sans font-bold text-base text-cyan-600">--</p>
+                        <h5 class="font-bold text-slate-900 font-mono text-sm uppercase mb-2">TERMOS DE GARANTIA</h5>
+                        <p id="recWarrantyText" class="text-slate-800 font-sans font-bold text-sm bg-brand-50 text-brand-800 p-4 rounded-xl border border-brand-100">--</p>
                     </div>
-                    <div class="text-right flex flex-col justify-between">
-                        <p class="text-[10px] font-mono text-slate-400 mt-4">Documento Comercial Processado Digitalmente — <span th:text="${profile.companyName}">Vidraçaria Ruglass</span></p>
+                    <div class="text-right flex flex-col justify-end">
+                        <p class="text-xs font-mono text-slate-400 mt-4 font-bold">Documento Comercial Processado Digitalmente — <span th:text="${profile.companyName}">Vidraçaria</span></p>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-16 pt-12 border-t border-slate-200 grid grid-cols-2 gap-12 text-center text-sm font-sans">
-                <div class="relative flex flex-col items-center justify-end min-h-[90px]">
-                    <img th:if="${profile.signatureUrl != null && !profile.signatureUrl.isEmpty()}" th:src="${profile.signatureUrl}" class="absolute bottom-6 max-h-20 object-contain pointer-events-none mix-blend-multiply" />
-                    <div class="w-full border-t border-slate-400 pt-2 font-bold text-slate-800" th:text="${profile.companyName}"></div>
-                    <div class="text-xs text-slate-400" th:text="'CNPJ: ' + ${profile.document}"></div>
+            <div class="mt-20 pt-16 border-t border-slate-200 grid grid-cols-2 gap-16 text-center text-base font-sans">
+                <div class="relative flex flex-col items-center justify-end min-h-[100px]">
+                    <img th:if="${profile.signatureUrl != null && !profile.signatureUrl.isEmpty()}" th:src="${profile.signatureUrl}" class="absolute bottom-10 max-h-24 object-contain pointer-events-none mix-blend-multiply" />
+                    <div class="w-full border-t-2 border-slate-900 pt-3 font-black text-slate-900" th:text="${profile.companyName}"></div>
+                    <div class="text-sm text-slate-500 font-bold mt-1" th:text="'CNPJ: ' + ${profile.document}"></div>
                 </div>
-                <div class="flex flex-col items-center justify-end min-h-[90px]">
-                    <div class="w-full border-t border-slate-400 pt-2 font-bold text-slate-800" id="recSignatureClientName">Assinatura do Cliente</div>
-                    <div class="text-xs text-slate-400"></div>
+                <div class="flex flex-col items-center justify-end min-h-[100px]">
+                    <div class="w-full border-t-2 border-slate-900 pt-3 font-black text-slate-900" id="recSignatureClientName">Assinatura do Cliente</div>
+                    <div class="text-sm text-slate-500 font-bold mt-1">De Acordo</div>
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3 print:hidden border-t border-slate-100 pt-4 mt-8">
-                <button onclick="closeModal('receiptModal')" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs hover:bg-slate-200 transition">Fechar</button>
-                <button onclick="generateDynamicPdfNameAndPrint()"
-                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                    Imprimir Orçamento
-                </button>
+            <div class="flex justify-end gap-4 print:hidden border-t border-slate-200 pt-6 mt-10">
+                <button onclick="closeModal('receiptModal')" class="bg-white border border-slate-300 text-slate-700 px-6 py-3 rounded-xl font-bold text-base hover:bg-slate-50 transition">Fechar Visualização</button>
+                <button onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-black flex items-center gap-3 text-base hover:bg-slate-800 transition shadow-lg shadow-black/20"><i data-lucide="printer" class="w-5 h-5"></i> Imprimir Orçamento A4</button>
             </div>
         </div>
     </div>
@@ -465,11 +440,13 @@
     const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-    function formatBRL(val) {
-        const n = parseFloat(val) || 0;
-        return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function formatarMoeda(valor) {
+        if (valor === null || valor === undefined) return "R$ 0,00";
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(valor);
     }
-
 
     function openModal() {
         document.getElementById('osForm').reset();
@@ -552,14 +529,13 @@
             document.getElementById('recObs').innerText = q.observations || 'Sem observações adicionais.';
             document.getElementById('recWarrantyText').innerText = q.warranty || DEFAULT_WARRANTY;
 
-            document.getElementById('recTotal').innerText = formatBRL(q.totalValue);
+            document.getElementById('recTotal').innerText = formatarMoeda(q.totalValue);
 
             const recFinalRow = document.getElementById('recFinalRow');
             if (q.paymentMethod === 'Cartao_Credito') {
                 if (recFinalRow) recFinalRow.style.display = 'flex';
                 let valorParcela = q.totalValue / (q.installments || 10);
-                document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x R$ ${valorParcela.toFixed(2)}`;
-            } else {
+                document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x ${formatarMoeda(valorParcela)}`;                } else {
                 if (recFinalRow) recFinalRow.style.display = 'none';
             }
 
@@ -583,14 +559,15 @@
                                     </span>
                                 </td>
                                 <td class="p-4 text-center text-slate-500 font-mono text-sm">un</td>
-                                <td class="p-4 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
-                                <td class="p-4 text-right font-mono text-slate-600 text-sm">R$ ${precoPecaUnitaria.toFixed(2)}</td>
-                                <td class="p-4 text-right pr-4 font-mono font-bold text-slate-900 text-sm">R$ ${sub.toFixed(2)}</td>
-                            </tr>
+                                    <td class="p-4 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
+                                    <td class="p-4 text-right font-mono text-slate-600 text-sm">${formatarMoeda(precoPecaUnitaria)}</td>
+                                    <td class="p-4 text-right pr-4 font-mono font-bold text-slate-900 text-sm">${formatarMoeda(sub)}</td>
+                                </tr>
                         `;
                 });
             }
             toggleModal('receiptModal', true);
+
             document.getElementById('receiptModal').classList.remove('hidden');
             document.getElementById('receiptModal').classList.add('flex');
         } catch (err) {

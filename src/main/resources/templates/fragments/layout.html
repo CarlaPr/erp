@@ -1,84 +1,129 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
-    <title th:text="${title}">Alfa Tahi ERP</title>
+    <title th:text="${title}">Tahi Glass ERP</title>
+
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7', // Azul corporativo
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>body { font-family: 'Inter', sans-serif; }
 
-
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Transições suaves para mudança de tema */
+        html.transition-theme * {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 dark:bg-[#0B1120] dark:text-slate-200 antialiased">
 
-
-<div th:fragment="sidebar" class="w-64 bg-slate-900 min-h-screen fixed left-0 top-0 p-4 border-r border-slate-800 shadow-2xl flex flex-col justify-between z-40">
+<div th:fragment="sidebar" class="w-72 bg-white dark:bg-slate-900 min-h-screen fixed left-0 top-0 p-5 border-r border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-2xl flex flex-col justify-between z-40 overflow-y-auto">
     <div>
-        <div class="flex items-center gap-3 mb-8 pl-2 mt-2">
-            <div class="bg-gradient-to-br from-cyan-400 to-blue-500 p-2 rounded-xl shadow-lg shadow-cyan-500/20">
-                <i data-lucide="layers" class="text-slate-900 w-6 h-6"></i>
+        <div class="flex items-center gap-4 mb-8 pl-2 mt-2">
+            <div class="bg-brand-50 dark:bg-gradient-to-br dark:from-cyan-400 dark:to-blue-500 p-2.5 rounded-xl shadow-sm dark:shadow-cyan-500/20 border border-brand-100 dark:border-none">
+                <i data-lucide="layers" class="text-brand-600 dark:text-slate-900 w-7 h-7"></i>
             </div>
             <div>
-                <h1 class="text-xl font-black text-white tracking-tight leading-tight">Alfa Tahi</h1>
-                <span class="text-[10px] text-cyan-400 font-bold tracking-widest uppercase">Vidraçaria - Gestão</span>
+                <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">Alfa Tahi</h1>
+                <span class="text-xs text-brand-600 dark:text-cyan-400 font-bold tracking-widest uppercase">ERP Gestão</span>
             </div>
         </div>
 
-        <nav class="space-y-1 text-sm font-medium">
+        <nav class="space-y-2 text-base font-medium">
 
-            <div class="pt-2 pb-1 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Setor Comercial</div>
+            <div class="pt-3 pb-2 px-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Comercial</div>
 
-            <a href="/commercial" th:classappend="${currentPage == 'commercial'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+            <a href="/commercial" th:classappend="${currentPage == 'commercial'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                 <i data-lucide="line-chart" class="w-5 h-5"></i> Dashboard Vendas
             </a>
-            <a href="/quotes" th:classappend="${currentPage == 'quotes'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+            <a href="/quotes" th:classappend="${currentPage == 'quotes'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                 <i data-lucide="file-signature" class="w-5 h-5"></i> Orçamentos
             </a>
-            <a href="/clients" th:classappend="${currentPage == 'clients'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+            <a href="/clients" th:classappend="${currentPage == 'clients'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                 <i data-lucide="users" class="w-5 h-5"></i> Clientes
             </a>
 
-            <div sec:authorize="hasRole('GESTAO')" class="space-y-1">
-                <div class="pt-4 pb-1 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Setor Administrativo</div>
+            <div sec:authorize="hasRole('GESTAO')" class="space-y-1 mt-4">
+                <div class="pt-4 pb-2 px-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Administrativo</div>
 
-                <a href="/dashboard" th:classappend="${currentPage == 'dashboard'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <a href="/dashboard" th:classappend="${currentPage == 'dashboard'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard Executivo
                 </a>
-                <a href="/work-orders" th:classappend="${currentPage == 'work-orders'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <a href="/work-orders" th:classappend="${currentPage == 'work-orders'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                     <i data-lucide="file-text" class="w-5 h-5"></i> Ordens de Serviço
                 </a>
-                <a href="/receivables" th:classappend="${currentPage == 'receivables'} ? 'bg-emerald-500/10 text-emerald-400 border-r-2 border-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <a href="/receivables" th:classappend="${currentPage == 'receivables'} ? 'bg-emerald-50 text-emerald-600 border-l-4 border-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                     <i data-lucide="trending-up" class="w-5 h-5"></i> Contas a Receber
                 </a>
-                <a href="/payables" th:classappend="${currentPage == 'payables'} ? 'bg-rose-500/10 text-rose-400 border-r-2 border-rose-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <a href="/payables" th:classappend="${currentPage == 'payables'} ? 'bg-rose-50 text-rose-600 border-l-4 border-rose-600 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                     <i data-lucide="trending-down" class="w-5 h-5"></i> Contas a Pagar
                 </a>
-                <a href="/losses" th:classappend="${currentPage == 'losses'} ? 'bg-amber-500/10 text-amber-400 border-r-2 border-amber-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <a href="/losses" th:classappend="${currentPage == 'losses'} ? 'bg-amber-50 text-amber-600 border-l-4 border-amber-500 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                     <i data-lucide="alert-triangle" class="w-5 h-5"></i> Controle de Perdas
                 </a>
-                <a href="/dre" th:classappend="${currentPage == 'dre'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <a href="/dre" th:classappend="${currentPage == 'dre'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                     <i data-lucide="bar-chart-3" class="w-5 h-5"></i> DRE Gerencial
                 </a>
-                <a href="/conciliation" th:classappend="${currentPage == 'conciliation'} ? 'bg-indigo-500/10 text-indigo-400 border-r-2 border-indigo-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <a href="/conciliation" th:classappend="${currentPage == 'conciliation'} ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                     <i data-lucide="landmark" class="w-5 h-5"></i> Conciliação
                 </a>
-                <a href="/suppliers" th:classappend="${currentPage == 'suppliers'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <a href="/suppliers" th:classappend="${currentPage == 'suppliers'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                     <i data-lucide="truck" class="w-5 h-5"></i> Fornecedores
                 </a>
-                <a href="/settings" th:classappend="${currentPage == 'settings'} ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all">
+                <a href="/settings" th:classappend="${currentPage == 'settings'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-3 rounded-r-lg transition-all">
                     <i data-lucide="settings" class="w-5 h-5"></i> Configurações
                 </a>
             </div>
         </nav>
     </div>
 
-    <div class="border-t border-slate-800 pt-4 mt-auto">
+    <div class="border-t border-slate-200 dark:border-slate-800 pt-5 mt-6 flex flex-col gap-2">
+        <button id="themeToggle" class="w-full flex items-center justify-between px-3 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
+            <span class="flex items-center gap-3">
+                <i id="themeIcon" data-lucide="moon" class="w-5 h-5"></i> Modo Escuro
+            </span>
+            <div class="w-8 h-4 bg-slate-300 dark:bg-brand-600 rounded-full relative">
+                <div class="w-4 h-4 bg-white rounded-full absolute top-0 left-0 dark:translate-x-4 transition-transform shadow-sm border border-slate-200 dark:border-transparent"></div>
+            </div>
+        </button>
+
         <form th:action="@{/logout}" method="POST" class="w-full">
-            <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-all font-bold text-sm text-left">
+            <button type="submit" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all font-bold text-sm text-left">
                 <i data-lucide="log-out" class="w-5 h-5"></i> Sair da Conta
             </button>
         </form>
@@ -87,7 +132,45 @@
 
 <div th:fragment="lucide-script">
     <script>
+        // Inicializa ícones
         lucide.createIcons();
+
+        // Lógica do botão de alternância de Tema
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+
+        function updateThemeIcon() {
+            if (document.documentElement.classList.contains('dark')) {
+                themeIcon.setAttribute('data-lucide', 'sun');
+                themeToggleBtn.querySelector('span').innerHTML = `<i data-lucide="sun" class="w-5 h-5"></i> Modo Claro`;
+            } else {
+                themeIcon.setAttribute('data-lucide', 'moon');
+                themeToggleBtn.querySelector('span').innerHTML = `<i data-lucide="moon" class="w-5 h-5"></i> Modo Escuro`;
+            }
+            lucide.createIcons(); // Recarrega o ícone atualizado
+        }
+
+        if(themeToggleBtn) {
+            updateThemeIcon();
+            themeToggleBtn.addEventListener('click', () => {
+                document.documentElement.classList.add('transition-theme');
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+                updateThemeIcon();
+
+                // Dispara evento customizado para gráficos recarregarem cores se necessário
+                window.dispatchEvent(new Event('themeChanged'));
+
+                setTimeout(() => {
+                    document.documentElement.classList.remove('transition-theme');
+                }, 300);
+            });
+        }
     </script>
 </div>
 

@@ -1,58 +1,60 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Clientes - Alfatahi ERP')}"></head>
-<body class="bg-slate-900 flex">
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Clientes - Tahi Glass ERP')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
-<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
-    <header class="flex justify-between items-center mb-8">
+<main class="ml-72 p-8 w-full min-h-screen transition-colors duration-300">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
-            <h2 class="text-3xl font-bold text-white">Clientes</h2>
-            <p class="text-slate-400">Gerenciamento da carteira de clientes do sistema.</p>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Clientes</h2>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Gerenciamento da carteira de clientes do sistema.</p>
         </div>
-        <button onclick="toggleModal(true)" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-semibold px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <button onclick="toggleModal(true)" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20">
             <i data-lucide="user-plus" class="w-5 h-5"></i> Novo Cliente
         </button>
     </header>
 
-    <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-hidden">
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
         <table class="w-full text-left border-collapse">
             <thead>
-            <tr class="border-b border-slate-700 bg-slate-800/50 text-slate-400 font-semibold text-sm">
-                <th class="p-4">Nome</th>
-                <th class="p-4">Documento</th>
-                <th class="p-4">Contato</th>
-                <th class="p-4">Cidade</th>
-                <th class="p-4">Tipo</th>
-                <th class="p-4 text-center">Ações</th>
+            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
+                <th class="p-5">Nome</th>
+                <th class="p-5">Documento</th>
+                <th class="p-5">Contato</th>
+                <th class="p-5">Cidade</th>
+                <th class="p-5">Tipo</th>
+                <th class="p-5 text-center">Ações</th>
             </tr>
             </thead>
-            <tbody class="divide-y divide-slate-700 text-sm">
-            <tr th:each="client : ${clients}" class="hover:bg-slate-700/30 transition-colors">
-                <td class="p-4 font-medium text-white" th:text="${client.name}">Nome do Cliente</td>
-                <td class="p-4 text-slate-300" th:text="${client.document}">000.000.000-00</td>
-                <td class="p-4">
-                    <div class="text-slate-300" th:text="${client.email}">email@teste.com</div>
-                    <div class="text-slate-500 text-xs" th:text="${client.phone}">(11) 99999-9999</div>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+            <tr th:each="client : ${clients}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                <td class="p-5 font-bold text-slate-900 dark:text-white text-base" th:text="${client.name}">Nome do Cliente</td>
+                <td class="p-5 text-slate-600 dark:text-slate-300 font-mono" th:text="${client.document}">000.000.000-00</td>
+                <td class="p-5">
+                    <div class="text-slate-700 dark:text-slate-300 font-medium" th:text="${client.email}">email@teste.com</div>
+                    <div class="text-slate-500 text-sm mt-1" th:text="${client.phone}">(11) 99999-9999</div>
                 </td>
-                <td class="p-4 text-slate-300" th:text="${client.city}">Itaquaquecetuba</td>
-                <td class="p-4">
-                    <span th:if="${client.type == 'individual'}" class="px-2 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400">Física</span>
-                    <span th:if="${client.type == 'company'}" class="px-2 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400">Jurídica</span>
+                <td class="p-5 text-slate-600 dark:text-slate-300 font-medium" th:text="${client.city}">Itaquaquecetuba</td>
+                <td class="p-5">
+                    <span th:if="${client.type == 'individual'}" class="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-transparent">Física</span>
+                    <span th:if="${client.type == 'company'}" class="px-3 py-1 rounded-lg text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-purple-500/10 dark:text-purple-400 border border-indigo-200 dark:border-transparent">Jurídica</span>
                 </td>
-                <td class="p-4 text-center space-x-2">
-                    <a th:href="@{/clients/edit/{id}(id=${client.id})}" class="text-cyan-400 hover:text-cyan-300 inline-block">
-                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                <td class="p-5 text-center space-x-3">
+                    <a th:href="@{/clients/edit/{id}(id=${client.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 inline-block transition-colors p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10" title="Editar">
+                        <i data-lucide="edit-3" class="w-5 h-5"></i>
                     </a>
-                    <form th:action="@{/clients/delete/{id}(id=${client.id})}" method="POST">
+                    <form th:action="@{/clients/delete/{id}(id=${client.id})}" method="POST" class="inline-block">
                         <input type="hidden" name="_method" value="DELETE" />
-                        <a onclick="return confirm('Deseja excluir este registo?')" class="text-rose-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></a>
+                        <button type="submit" onclick="return confirm('Deseja realmente excluir este registo?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 transition-colors p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10" title="Excluir">
+                            <i data-lucide="trash-2" class="w-5 h-5 inline"></i>
+                        </button>
                     </form>
                 </td>
             </tr>
             <tr th:if="${#lists.isEmpty(clients)}">
-                <td colspan="6" class="p-8 text-center text-slate-500">
+                <td colspan="6" class="p-10 text-center text-slate-500 font-medium text-base">
                     Nenhum cliente cadastrado ainda.
                 </td>
             </tr>
@@ -60,61 +62,62 @@
         </table>
     </div>
 
-    <div id="clientModal" th:class="${isEditing} ? 'fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50' : 'fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center z-50'">
-        <div class="bg-slate-800 border border-slate-700 w-full max-w-xl rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <header class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
-                <h3 class="text-xl font-bold text-white" th:text="${isEditing} ? 'Editar Cliente' : 'Cadastrar Novo Cliente'">Formulário</h3>
-                <a href="/clients" class="text-slate-400 hover:text-slate-200">
-                    <i data-lucide="x" class="w-6 h-6"></i>
+    <!-- Modal Form -->
+    <div id="clientModal" th:class="${isEditing} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50'">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditing} ? 'Editar Cliente' : 'Cadastrar Novo Cliente'">Formulário</h3>
+                <a href="/clients" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors bg-white dark:bg-transparent p-1.5 rounded-lg border border-slate-200 dark:border-transparent">
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </a>
             </header>
 
-            <form th:action="@{/clients/save}" th:object="${newClient}" method="POST" class="p-6 space-y-4">
+            <form th:action="@{/clients/save}" th:object="${newClient}" method="POST" class="p-6 space-y-5">
                 <input type="hidden" th:field="*{id}" />
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="col-span-2">
-                        <label class="block text-sm font-medium text-slate-400 mb-1">Nome Completo / Razão Social</label>
-                        <input type="text" th:field="*{name}" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">Nome Completo / Razão Social</label>
+                        <input type="text" th:field="*{name}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/20 transition-all text-base" />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-1">Tipo de Pessoa</label>
-                        <select th:field="*{type}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">Tipo de Pessoa</label>
+                        <select th:field="*{type}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/20 transition-all text-base">
                             <option value="individual">Pessoa Física (CPF)</option>
                             <option value="company">Pessoa Jurídica (CNPJ)</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-1">CPF / CNPJ</label>
-                        <input type="text" th:field="*{document}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">CPF / CNPJ</label>
+                        <input type="text" th:field="*{document}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/20 transition-all text-base" />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-1">E-mail</label>
-                        <input type="email" th:field="*{email}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">E-mail</label>
+                        <input type="email" th:field="*{email}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/20 transition-all text-base" />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-1">Telefone</label>
-                        <input type="text" th:field="*{phone}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">Telefone</label>
+                        <input type="text" th:field="*{phone}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/20 transition-all text-base" />
                     </div>
 
-                    <div class="col-span-2">
-                        <label class="block text-sm font-medium text-slate-400 mb-1">Endereço Completo</label>
-                        <input type="text" th:field="*{address}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">Endereço Completo</label>
+                        <input type="text" th:field="*{address}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/20 transition-all text-base" />
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-1">Cidade</label>
-                        <input type="text" th:field="*{city}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">Cidade</label>
+                        <input type="text" th:field="*{city}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/20 transition-all text-base" />
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-4 border-t border-slate-700 mt-6">
-                    <a href="/clients" class="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition-colors">Cancelar</a>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-cyan-500 text-slate-900 font-semibold hover:bg-cyan-600 transition-colors">Salvar Cliente</button>
+                <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-8">
+                    <a href="/clients" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold">Cancelar</a>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20">Salvar Cliente</button>
                 </div>
             </form>
         </div>

@@ -1,103 +1,117 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(title='Controlo de Perdas - Alfa Tahi')}"></head>
-<body class="bg-[#0B1120] flex font-sans">
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Controlo de Perdas - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
-<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
-    <header class="flex justify-between items-center mb-8">
+<main class="ml-72 p-8 w-full min-h-screen transition-colors duration-300">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
-            <h2 class="text-3xl font-black text-white tracking-tight">Controlo de Perdas</h2>
-            <p class="text-slate-400 mt-1">Registo e auditoria de desperdícios operacionais e retrabalho.</p>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Controlo de Perdas</h2>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Registo e auditoria de desperdícios operacionais e retrabalho.</p>
         </div>
-        <button onclick="toggleModal('lossModal', true)" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20">
+        <button onclick="toggleModal('lossModal', true)" class="bg-amber-500 hover:bg-amber-600 text-white dark:text-slate-900 font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-amber-500/20 text-sm">
             <i data-lucide="alert-triangle" class="w-5 h-5"></i> Registar Perda
         </button>
     </header>
 
+    <!-- Indicadores Principais (Com as variáveis corretas) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div class="bg-amber-500/10 p-6 rounded-2xl border border-amber-500/30 backdrop-blur-sm">
-            <span class="text-amber-400 text-xs font-bold uppercase tracking-wider">Impacto Financeiro Global</span>
-            <p class="text-3xl font-black text-amber-500 mt-2" th:text="'R$ ' + ${totalLoss}">R$ 0,00</p>
+        <div class="bg-white dark:bg-amber-500/10 p-6 rounded-2xl border border-slate-200 dark:border-amber-500/30 shadow-sm relative overflow-hidden group">
+            <span class="text-slate-500 dark:text-amber-400 text-xs font-bold uppercase tracking-wider">Impacto Financeiro Global</span>
+            <p class="text-3xl font-black text-amber-600 dark:text-amber-500 mt-2" th:text="'R$ ' + ${totalLoss}">R$ 0,00</p>
+            <i data-lucide="activity" class="w-16 h-16 text-amber-500/10 absolute -right-2 -bottom-2 group-hover:scale-110 transition-transform"></i>
         </div>
-        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Impacto sobre a Receita</span>
-            <p class="text-2xl font-black text-rose-400 mt-2" th:text="${pctRevenue} + '%'">0.00%</p>
-            <p class="text-[10px] text-slate-500 mt-1">O quanto do seu faturamento virou lixo.</p>
+        <div class="bg-white dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Impacto sobre a Receita</span>
+            <p class="text-3xl font-black text-rose-600 dark:text-rose-400 mt-2" th:text="${pctRevenue} + '%'">0.00%</p>
+            <p class="text-xs font-medium text-slate-500 mt-2">O quanto do seu faturamento virou lixo.</p>
         </div>
-        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Impacto sobre os Custos</span>
-            <p class="text-2xl font-black text-rose-400 mt-2" th:text="${pctCosts} + '%'">0.00%</p>
-            <p class="text-[10px] text-slate-500 mt-1">Parcela de custos gerada por ineficiência.</p>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="bg-[#131C2F] p-4 rounded-xl border border-slate-700/50">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Vidro Quebrado</span>
-            <p class="text-lg font-bold text-white mt-1" th:text="'R$ ' + ${valQuebra}">R$ 0,00</p>
-        </div>
-        <div class="bg-[#131C2F] p-4 rounded-xl border border-slate-700/50">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Erro de Corte</span>
-            <p class="text-lg font-bold text-white mt-1" th:text="'R$ ' + ${valCorte}">R$ 0,00</p>
-        </div>
-        <div class="bg-[#131C2F] p-4 rounded-xl border border-slate-700/50">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Retrabalho</span>
-            <p class="text-lg font-bold text-white mt-1" th:text="'R$ ' + ${valRetrabalho}">R$ 0,00</p>
-        </div>
-        <div class="bg-[#131C2F] p-4 rounded-xl border border-slate-700/50">
-            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Transporte</span>
-            <p class="text-lg font-bold text-white mt-1" th:text="'R$ ' + ${valTransporte}">R$ 0,00</p>
+        <div class="bg-white dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Impacto sobre os Custos</span>
+            <p class="text-3xl font-black text-rose-600 dark:text-rose-400 mt-2" th:text="${pctCosts} + '%'">0.00%</p>
+            <p class="text-xs font-medium text-slate-500 mt-2">Parcela de custos gerada por ineficiência.</p>
         </div>
     </div>
 
-    <div class="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+    <!-- Indicadores Secundários (Com as variáveis corretas) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white dark:bg-[#131C2F] p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Vidro Quebrado</span>
+            <p class="text-xl font-bold text-slate-900 dark:text-white mt-1.5" th:text="'R$ ' + ${valQuebra}">R$ 0,00</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Erro de Corte</span>
+            <p class="text-xl font-bold text-slate-900 dark:text-white mt-1.5" th:text="'R$ ' + ${valCorte}">R$ 0,00</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Retrabalho</span>
+            <p class="text-xl font-bold text-slate-900 dark:text-white mt-1.5" th:text="'R$ ' + ${valRetrabalho}">R$ 0,00</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Transporte</span>
+            <p class="text-xl font-bold text-slate-900 dark:text-white mt-1.5" th:text="'R$ ' + ${valTransporte}">R$ 0,00</p>
+        </div>
+    </div>
+
+    <!-- Tabela Principal (Com as variáveis corretas do array l : ${losses}) -->
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
         <table class="w-full text-left border-collapse">
-        <thead>
-        <tr class="border-b border-slate-700/50 bg-slate-800/80 text-slate-400 font-bold text-xs uppercase tracking-wider">
-            <th class="p-5">Data</th>
-            <th class="p-5">Tipo / Motivo</th>
-            <th class="p-5">Material e Descrição</th>
-            <th class="p-5">OS Vinculada</th>
-            <th class="p-5 text-right">Valor Perdido</th>
-            <th class="p-5 text-center">Ações</th>
-        </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-700/50 text-sm">
-        <tr th:each="l : ${losses}" class="hover:bg-slate-700/30 transition-colors">
-            <td class="p-5 text-slate-300 font-medium" th:text="${#temporals.format(l.occurrenceDate, 'dd/MM/yyyy')}">Data</td>
-            <td class="p-5">
-                <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-amber-500/20 text-amber-400" th:text="${l.type}">Tipo</span>
-            </td>
-            <td class="p-5">
-                <div class="font-bold text-white" th:text="${l.material}">Vidro</div>
-                <div class="text-xs text-slate-400" th:text="${l.description}">Detalhe</div>
-            </td>
-            <td class="p-5 text-cyan-400 font-mono text-xs" th:text="${l.workOrder != null ? l.workOrder.number + ' - ' + l.workOrder.title : 'Não vinculada'}">-</td>
-            <td class="p-5 text-right font-mono font-bold text-rose-400" th:text="'- R$ ' + ${l.financialImpact}">0,00</td>
-            <td class="p-5 text-center">
-                <form th:action="@{/losses/delete/{id}(id=${l.id})}" method="POST">
-                    <input type="hidden" name="_method" value="DELETE" />
-                    <a onclick="return confirm('Deseja excluir este registo?')" class="text-rose-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></a>
-                </form>
-            </td>
-        </tr>
-        <tr th:if="${#lists.isEmpty(losses)}">
-            <td colspan="6" class="p-8 text-center text-slate-500">Ainda não registou perdas. Bom trabalho!</td>
-        </tr>
-        </tbody>
-    </table>
+            <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
+                <th class="p-5 w-32">Data</th>
+                <th class="p-5">Tipo / Motivo</th>
+                <th class="p-5">Material e Descrição</th>
+                <th class="p-5">OS Vinculada</th>
+                <th class="p-5 text-right">Valor Perdido</th>
+                <th class="p-5 text-center">Ações</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+            <tr th:each="l : ${losses}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                <td class="p-5 font-bold text-slate-700 dark:text-slate-300 text-base" th:text="${#temporals.format(l.occurrenceDate, 'dd/MM/yyyy')}">Data</td>
+                <td class="p-5">
+                    <span class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-200 dark:border-transparent" th:text="${l.type}">Tipo</span>
+                </td>
+                <td class="p-5">
+                    <div class="font-bold text-slate-900 dark:text-white text-base" th:text="${l.material}">Vidro</div>
+                    <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1" th:text="${l.description}">Detalhe</div>
+                </td>
+                <td class="p-5 font-mono font-bold text-brand-600 dark:text-cyan-400" th:text="${l.workOrder != null ? l.workOrder.number + ' - ' + l.workOrder.title : 'Não vinculada'}">-</td>
+                <td class="p-5 text-right font-mono font-black text-rose-600 dark:text-rose-400 text-base" th:text="'- R$ ' + ${l.financialImpact}">0,00</td>
+                <td class="p-5 text-center">
+                    <form th:action="@{/losses/delete/{id}(id=${l.id})}" method="POST" class="inline-block">
+                        <input type="hidden" name="_method" value="DELETE" />
+                        <button type="submit" onclick="return confirm('Deseja realmente excluir este registo?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 transition-colors p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10" title="Excluir">
+                            <i data-lucide="trash-2" class="w-5 h-5 inline"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(losses)}">
+                <td colspan="6" class="p-10 text-center text-slate-500 font-medium text-base bg-slate-50 dark:bg-slate-800/10">Ainda não registou perdas. Bom trabalho!</td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 
-    <div id="lossModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50">
-        <div class="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8">
-            <h3 class="text-2xl font-black text-white mb-6">Registar Perda Operacional</h3>
-            <form th:action="@{/losses/save}" th:object="${newLoss}" method="POST" class="space-y-5 text-sm">
-                <div class="grid grid-cols-2 gap-5">
+    <!-- Modal Registo (Com variáveis corretas de formulário) -->
+    <div id="lossModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative my-auto animate-in fade-in zoom-in-95 duration-200">
+            <button type="button" onclick="toggleModal('lossModal', false)" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-700 pb-4">
+                <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-500"></i> Registar Perda Operacional
+            </h3>
+
+            <form th:action="@{/losses/save}" th:object="${newLoss}" method="POST" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-slate-400 font-bold mb-2">Categoria da Perda</label>
-                        <select th:field="*{type}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2 uppercase tracking-wider">Categoria da Perda</label>
+                        <select th:field="*{type}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-colors text-base">
                             <option value="Quebra de Vidro">Quebra de Vidro</option>
                             <option value="Erro de Corte">Erro de Corte (Alumínio/Vidro)</option>
                             <option value="Retrabalho">Retrabalho (Erro de Medida)</option>
@@ -105,32 +119,32 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-400 font-bold mb-2">Data da Ocorrência</label>
-                        <input type="date" th:field="*{occurrenceDate}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none" />
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2 uppercase tracking-wider">Data da Ocorrência</label>
+                        <input type="date" th:field="*{occurrenceDate}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-colors text-base" />
                     </div>
                     <div>
-                        <label class="block text-slate-400 font-bold mb-2">Material (Ex: Chapa 8mm Incolor)</label>
-                        <input type="text" th:field="*{material}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition-all" />
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2 uppercase tracking-wider">Material (Ex: Chapa 8mm Incolor)</label>
+                        <input type="text" th:field="*{material}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-colors text-base" />
                     </div>
                     <div>
-                        <label class="block text-slate-400 font-bold mb-2">Ordem de Serviço (Opcional)</label>
-                        <select th:field="*{workOrder}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2 uppercase tracking-wider">Ordem de Serviço (Opcional)</label>
+                        <select th:field="*{workOrder}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-colors text-base">
                             <option value="">-- Não vinculada --</option>
                             <option th:each="wo : ${workOrders}" th:value="${wo.id}" th:text="${wo.number + ' - ' + wo.title}"></option>
                         </select>
                     </div>
-                    <div class="col-span-2">
-                        <label class="block text-slate-400 font-bold mb-2">Descrição do Ocorrido (Como aconteceu?)</label>
-                        <input type="text" th:field="*{description}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition-all" />
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2 uppercase tracking-wider">Descrição do Ocorrido (Como aconteceu?)</label>
+                        <input type="text" th:field="*{description}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-colors text-base" />
                     </div>
-                    <div>
-                        <label class="block text-slate-400 font-bold mb-2">Valor Estimado do Prejuízo (R$)</label>
-                        <input type="number" step="0.01" th:field="*{financialImpact}" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-rose-400 font-bold focus:border-amber-500 outline-none" />
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2 uppercase tracking-wider">Valor Estimado do Prejuízo (R$)</label>
+                        <input type="number" step="0.01" th:field="*{financialImpact}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-rose-600 dark:text-rose-400 font-black outline-none focus:border-amber-500 transition-colors text-lg" />
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-800">
-                    <button type="button" onclick="toggleModal('lossModal', false)" class="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-6 py-3 rounded-xl bg-amber-500 text-slate-900 font-black hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20">Registar</button>
+                <div class="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" onclick="toggleModal('lossModal', false)" class="px-6 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">Cancelar</button>
+                    <button type="submit" class="px-6 py-3.5 rounded-xl bg-amber-500 text-white dark:text-slate-900 font-black hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20 text-base">Registar Perda</button>
                 </div>
             </form>
         </div>

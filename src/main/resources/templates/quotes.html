@@ -1,115 +1,130 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(title='Orçamentos e Recibos - Alfa Tahi')}"></head>
-<body class="bg-[#0B1120] flex font-sans">
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Orçamentos e Recibos - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
-<main class="ml-64 p-8 w-full min-h-screen text-slate-200">
+<main class="ml-72 p-8 w-full min-h-screen transition-colors duration-300">
     <header class="flex justify-between items-center mb-8">
         <div>
-            <h2 class="text-3xl font-black text-white tracking-tight">Criação de Orçamentos</h2>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Gestão de Orçamentos</h2>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Geração, acompanhamento e fechamento de vendas.</p>
         </div>
-
     </header>
 
-    <div class="flex gap-2 mb-6 bg-slate-800/50 p-1.5 rounded-xl border border-slate-700/50 w-fit backdrop-blur-sm">
-        <a href="/quotes" class="px-4 py-2 rounded-lg text-sm font-bold transition-all text-white" th:classappend="${selectedFilterStatus == null} ? 'bg-slate-700 shadow-sm' : 'text-slate-400 hover:text-white'">Todos</a>
-        <a href="/quotes?status=pending" class="px-4 py-2 rounded-lg text-sm font-bold transition-all" th:classappend="${selectedFilterStatus == 'pending'} ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'">Pendentes</a>
-        <a href="/quotes?status=approved" class="px-4 py-2 rounded-lg text-sm font-bold transition-all" th:classappend="${selectedFilterStatus == 'approved'} ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'">Aprovados</a>
-        <a href="/quotes?status=cancelled" class="px-4 py-2 rounded-lg text-sm font-bold transition-all" th:classappend="${selectedFilterStatus == 'cancelled'} ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'">Cancelados</a>
-        <button onclick="openNewQuoteModal()" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-cyan-500/20 text-sm">
+    <!-- Filtros Superiores em Pílulas -->
+    <div class="flex flex-wrap gap-3 mb-6 bg-white dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700/50 w-fit shadow-sm">
+        <a href="/quotes" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all border"
+           th:classappend="${selectedFilterStatus == null} ? 'bg-brand-600 text-white border-brand-600 dark:bg-slate-700 dark:border-slate-700' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+            Todos
+        </a>
+        <a href="/quotes?status=pending" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all border"
+           th:classappend="${selectedFilterStatus == 'pending'} ? 'bg-amber-500 text-white border-amber-500 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+            Pendentes
+        </a>
+        <a href="/quotes?status=approved" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all border"
+           th:classappend="${selectedFilterStatus == 'approved'} ? 'bg-emerald-600 text-white border-emerald-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+            Aprovados
+        </a>
+        <a href="/quotes?status=cancelled" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all border"
+           th:classappend="${selectedFilterStatus == 'cancelled'} ? 'bg-rose-600 text-white border-rose-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+            Cancelados
+        </a>
+        <button onclick="openNewQuoteModal()" class="ml-2 bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm transition-all border border-transparent">
             <i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Orçamento
         </button>
     </div>
 
-    <form method="GET" action="/quotes" class="bg-slate-900 border border-slate-800 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <!-- Busca -->
+    <form method="GET" action="/quotes" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-5 mb-8 shadow-sm">
         <div>
-            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Filtrar por Mês</label>
-            <select name="month" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none">
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Filtrar por Mês</label>
+            <select name="month" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors">
                 <option value="all" th:selected="${selectedMonth == 'all'}">Ver Todos os Meses</option>
-                <option th:each="m : ${availableMonths}"
-                        th:value="${m.value}"
-                        th:selected="${selectedMonth == m.value}"
-                        th:text="${m.label}"></option>
+                <option th:each="m : ${availableMonths}" th:value="${m.value}" th:selected="${selectedMonth == m.value}" th:text="${m.label}"></option>
             </select>
         </div>
         <div>
-            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">N° do Orçamento</label>
-            <input type="text" name="number" th:value="${selectedNumber}" placeholder="Ex: ORC-05" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none" />
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">N° do Orçamento</label>
+            <input type="text" name="number" th:value="${selectedNumber}" placeholder="Ex: ORC-05" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors" />
         </div>
         <div>
-            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Nome do Cliente</label>
-            <input type="text" name="name" th:value="${selectedName}" placeholder="Buscar cliente..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none" />
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome do Cliente</label>
+            <input type="text" name="name" th:value="${selectedName}" placeholder="Buscar cliente..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors" />
         </div>
         <div class="flex items-end gap-2">
-            <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-black py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/10 flex items-center justify-center gap-2">
-                <i data-lucide="search" class="w-4 h-4"></i> Filtrar Painel
+            <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
+                <i data-lucide="search" class="w-5 h-5"></i> Filtrar Painel
             </button>
         </div>
     </form>
 
-    <div class="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+    <!-- Tabela Principal -->
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
         <table class="w-full text-left border-collapse">
             <thead>
-            <tr class="border-b border-slate-700/50 bg-slate-800/80 text-slate-400 font-bold text-xs uppercase tracking-wider">
+            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
                 <th class="p-5">Orçamento</th>
                 <th class="p-5">Cliente</th>
                 <th class="p-5 text-center">Status</th>
-                <th class="p-5 text-center">Vínculo Comercial (Ordem de Serviço)</th>
+                <th class="p-5 text-center">Vínculo (O.S.)</th>
                 <th class="p-5 text-center">Ações</th>
             </tr>
             </thead>
-            <tbody class="divide-y divide-slate-700/50 text-sm">
-            <tr th:each="q : ${quotes}" class="hover:bg-slate-700/30 transition-colors">
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+            <tr th:each="q : ${quotes}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                 <td class="p-5">
-                    <div class="font-mono font-bold text-cyan-400" th:text="${q.number}">ORC-123</div>
-                    <div class="text-[10px] text-slate-400" th:text="${#temporals.format(q.dateCreated, 'dd/MM/yyyy')}">Data</div>
+                    <div class="font-mono font-bold text-brand-600 dark:text-cyan-400 text-base" th:text="${q.number}">ORC-123</div>
+                    <div class="text-xs font-medium text-slate-500 mt-1" th:text="${#temporals.format(q.dateCreated, 'dd/MM/yyyy')}">Data</div>
                 </td>
-                <td class="p-5 font-bold text-white" th:text="${q.client != null ? q.client.name : 'Consumidor Final'}">Cliente</td>
+                <td class="p-5 font-bold text-slate-900 dark:text-white text-base" th:text="${q.client != null ? q.client.name : 'Consumidor Final'}">Cliente</td>
                 <td class="p-5 text-center">
-                    <span th:if="${q.status == 'pending'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase">Pendente</span>
-                    <span th:if="${q.status == 'approved'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">Aprovado</span>
-                    <span th:if="${q.status == 'cancelled'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 uppercase">Cancelado</span>
+                    <span th:if="${q.status == 'pending'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 uppercase border border-amber-200 dark:border-transparent">Pendente</span>
+                    <span th:if="${q.status == 'approved'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 uppercase border border-emerald-200 dark:border-transparent">Aprovado</span>
+                    <span th:if="${q.status == 'cancelled'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 uppercase border border-rose-200 dark:border-transparent">Cancelado</span>
                 </td>
                 <td class="p-5 text-center">
-                    <span th:if="${q.workOrder != null}" class="px-2 py-1 bg-slate-900 border border-slate-700 text-cyan-400 font-mono text-xs rounded-lg" th:text="${q.workOrder.number}">OS</span>
-                    <span th:if="${q.workOrder == null}" class="text-slate-600 text-xs">—</span>
+                    <span th:if="${q.workOrder != null}" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-brand-600 dark:text-cyan-400 font-mono text-sm font-bold rounded-lg" th:text="${q.workOrder.number}">OS</span>
+                    <span th:if="${q.workOrder == null}" class="text-slate-400 font-bold text-sm">—</span>
                 </td>
-                <td class="p-5 text-center space-x-2">
-                    <button th:if="${q.status == 'pending' || q.status == 'negotiation'}" th:data-id="${q.id}" onclick="approveQuote(this.getAttribute('data-id'))" class="text-emerald-400 hover:text-emerald-300" title="Aprovar Venda e Gerar OS"><i data-lucide="check-circle" class="w-5 h-5 inline"></i></button>
-                    <button th:if="${q.status == 'pending' || q.status == 'negotiation'}" th:data-id="${q.id}" onclick="cancelQuote(this.getAttribute('data-id'))" class="text-rose-400 hover:text-rose-300" title="Cancelar Orçamento"><i data-lucide="minus-circle" class="w-5 h-5 inline"></i></button>
-                    <button th:data-id="${q.id}" onclick="viewReceipt(this.getAttribute('data-id'))" class="text-indigo-400 hover:text-indigo-300" title="Ver Recibo / Imprimir"><i data-lucide="printer" class="w-5 h-5 inline"></i></button>
+                <td class="p-5 text-center space-x-3">
+                    <button th:if="${q.status == 'pending' || q.status == 'negotiation'}" th:data-id="${q.id}" onclick="approveQuote(this.getAttribute('data-id'))" class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors" title="Aprovar Venda e Gerar OS"><i data-lucide="check-circle" class="w-6 h-6 inline"></i></button>
+                    <button th:if="${q.status == 'pending' || q.status == 'negotiation'}" th:data-id="${q.id}" onclick="cancelQuote(this.getAttribute('data-id'))" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Cancelar Orçamento"><i data-lucide="minus-circle" class="w-6 h-6 inline"></i></button>
+                    <button th:data-id="${q.id}" onclick="viewReceipt(this.getAttribute('data-id'))" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors" title="Ver Recibo / Imprimir"><i data-lucide="printer" class="w-6 h-6 inline"></i></button>
                 </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(quotes)}">
+                <td colspan="5" class="p-10 text-center text-slate-500 font-medium text-base">Nenhum orçamento encontrado com estes filtros.</td>
             </tr>
             </tbody>
         </table>
     </div>
 
-    <div id="quoteModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-6">
-        <div class="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl p-8 relative my-auto">
-            <button onclick="closeModal('quoteModal')" class="absolute top-6 right-6 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
-            <h3 class="text-2xl font-black text-white mb-6">Elaborar Orçamento</h3>
+    <div id="quoteModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-6">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-5xl rounded-2xl shadow-2xl p-8 relative my-auto">
+            <button onclick="closeModal('quoteModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">Elaborar Orçamento</h3>
 
             <form id="quoteForm" onsubmit="saveQuote(event)" class="space-y-6 text-sm">
                 <input type="hidden" id="quoteId" />
 
-                <div class="grid grid-cols-3 gap-4 bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 bg-slate-50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50">
                     <div>
                         <div class="flex justify-between items-center mb-2">
-                            <label class="block text-slate-400 font-bold">Cliente</label>
-                            <button type="button" onclick="toggleModal('clientInlineModal', true)" class="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 transition-all">
-                                <i data-lucide="user-plus" class="w-3 h-3"></i> + Criar Cliente
+                            <label class="block text-slate-700 dark:text-slate-400 font-bold text-sm">Cliente</label>
+                            <button type="button" onclick="toggleModal('clientInlineModal', true)" class="text-xs bg-brand-100 hover:bg-brand-200 text-brand-700 dark:bg-cyan-500/20 dark:hover:bg-cyan-500/30 dark:text-cyan-400 font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all border border-brand-200 dark:border-cyan-500/30 shadow-sm">
+                                <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Novo Cliente
                             </button>
                         </div>
-                        <select id="quoteClient" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-cyan-500">
-                            <option value="">Selecione</option>
+                        <select id="quoteClient" required class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base">
+                            <option value="">Selecione o Cliente</option>
                             <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-400 font-bold mb-2">Forma de Pagamento</label>
-                        <select id="quotePayment" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none">
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 text-sm">Forma de Pagamento</label>
+                        <select id="quotePayment" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base">
                             <option value="PIX">PIX</option>
                             <option value="Dinheiro">Dinheiro</option>
                             <option value="Cartao_Credito">Cartão de Crédito</option>
@@ -117,87 +132,123 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-400 font-bold mb-2">Parcelas</label>
-                        <input type="number" id="quoteInstallments" min="1" value="1" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none" />
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 text-sm">Parcelas (Vezes)</label>
+                        <input type="number" id="quoteInstallments" min="1" value="1" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base" />
                     </div>
                 </div>
 
-                <div class="bg-slate-800/20 p-4 rounded-xl border border-slate-700/40">
-                    <h4 class="text-white font-bold mb-3 text-xs uppercase tracking-wider text-cyan-400">Inserir Item / Serviço</h4>
-                    <div class="grid grid-cols-6 gap-3 mb-3">
+                <div class="bg-brand-50/50 dark:bg-slate-800/20 p-5 rounded-2xl border border-brand-100 dark:border-slate-700/40">
+                    <h4 class="text-brand-800 dark:text-cyan-400 font-black mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="package-plus" class="w-5 h-5"></i> Inserir Item / Serviço
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
                         <div class="col-span-2">
-                            <select id="itemCat" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none">
+                            <select id="itemCat" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base">
                                 <option value="Box">Box de Banheiro</option>
+                                <option value="Box Acrílico">Box de Banheiro - Acrílico</option>
+                                <option value="Box Flex">Box de Banheiro - Flex</option>
+                                <option value="Box Open">Box de Banheiro - Open</option>
+                                <option value="Box Elegance">Box de Banheiro - Elegance</option>
                                 <option value="Sacada">Fechamento de Sacada</option>
-                                <option value="Janela">Janela Alumínio/Vidro</option>
-                                <option value="Espelho">Espelho Lapidado/Bisoté</option>
+                                <option value="Janela">Janela</option>
+                                <option value="Espelho">Espelho</option>
+                                <option value="Espelho Lapidado">Espelho Lapidado</option>
+                                <option value="Espelho Bisote">Espelho Bisote</option>
+                                <option value="Espelho LED">Espelho com LED</option>
                                 <option value="Porta">Porta de Vidro</option>
+                                <option value="Kit Versatik VT3">Kit Versatik VT3</option>
+                                <option value="Guarda Corpo">Guarda Corpo</option>
+                                <option value="Abrigo de Pia">Abrigo de Pia</option>
+                                <option value="Cobertura">Cobertura</option>
+                                <option value="Cobertura Policarbonato">Cobertura Policarbonato</option>
+                                <option value="Cobertura Habitat">Cobertura Habitat</option>
+                                <option value="Cobertura Retratil">Cobertura Retratil</option>
+                                <option value="Vidro Comum Incolor">Vidro Comum</option>
+                                <option value="Manutenção">Manutenção</option>
+                                <option value="Película de segurança">Película de segurança</option>
+                                <option value="Adesivo">Adesivo</option>
+                                <option value="Avulso">Serviço/Item Avulso</option>
                             </select>
                         </div>
                         <div class="col-span-4">
-                            <input type="text" id="itemProd" placeholder="Especificação do Vidro (Ex: Temperado 8mm Incolor)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none" />
+                            <input type="text" id="itemProd" placeholder="Especificação do Item (Ex: Temperado 8mm Incolor)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base" />
                         </div>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="number" step="0.01" id="itemWidth" placeholder="Largura (m)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none text-center" />
-                        <input type="number" step="0.01" id="itemHeight" placeholder="Altura (m)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none text-center" />
-                        <input type="number" id="itemQtd" placeholder="Qtd" value="1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none text-center" />
-                        <input type="number" step="0.01" id="itemPrice" placeholder="Preço Linear/m² (R$)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none text-right" />
-                        <button type="button" onclick="addItemToQuote()" class="bg-cyan-500 text-slate-900 px-4 rounded-lg font-bold hover:bg-cyan-600 transition-colors">Incluir</button>
+
+                    <div class="grid grid-cols-2 md:grid-cols-12 gap-3">
+                        <div class="col-span-1 md:col-span-2">
+                            <input type="number" step="0.01" id="itemWidth" placeholder="Largura (m)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-sm" />
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <input type="number" step="0.01" id="itemHeight" placeholder="Altura (m)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-sm" />
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <input type="number" id="itemQtd" placeholder="Qtd" value="1" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-sm font-bold" />
+                        </div>
+                        <div class="col-span-1 md:col-span-3">
+                            <input type="number" step="0.01" id="itemPrice" placeholder="Preço do m²(R$)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white outline-none text-right focus:border-brand-500 dark:focus:border-cyan-500 text-sm font-bold text-brand-700 dark:text-cyan-400" />
+                        </div>
+                        <div class="col-span-2 md:col-span-3">
+                            <button type="button" onclick="addItemToQuote()" class="w-full h-full bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 px-4 py-2.5 rounded-xl font-bold hover:bg-brand-700 dark:hover:bg-cyan-600 transition-colors shadow-sm text-sm flex items-center justify-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Incluir
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-slate-950/40 rounded-xl border border-slate-800 overflow-hidden">
-                    <table class="w-full text-xs text-left">
-                        <thead class="bg-slate-800 text-slate-400">
+                <div class="bg-white dark:bg-slate-950/40 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
                         <tr>
-                            <th class="p-3">Item / Descrição</th>
-                            <th class="p-3 text-center">Medidas</th>
-                            <th class="p-3 text-center">Qtd</th>
-                            <th class="p-3 text-center text-cyan-400 font-bold">M² Un.</th>
-                            <th class="p-3 text-center text-cyan-400 font-bold">M² Total</th>
-                            <th class="p-3 text-right">Preço Un.</th>
-                            <th class="p-3 text-right">Subtotal</th>
-                            <th class="p-3 text-center"></th>
+                            <th class="p-4">Item / Descrição</th>
+                            <th class="p-4 text-center">Medidas</th>
+                            <th class="p-4 text-center">Qtd</th>
+                            <th class="p-4 text-center">M² Un.</th>
+                            <th class="p-4 text-center">M² Total</th>
+                            <th class="p-4 text-right">Preço Un.</th>
+                            <th class="p-4 text-right">Subtotal</th>
+                            <th class="p-4 text-center"></th>
                         </tr>
                         </thead>
-                        <tbody id="quoteItemsTable"></tbody>
+                        <tbody id="quoteItemsTable" class="text-sm font-medium divide-y divide-slate-100 dark:divide-slate-800/50"></tbody>
                     </table>
                 </div>
 
-                <div>
-                    <label class="block text-slate-400 font-bold mb-2">Observações / Termos do Orçamento</label>
-                    <textarea id="quoteObs" rows="5"
-                              class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-white outline-none focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed scrollbar-thin scrollbar-thumb-slate-800"
-                              placeholder="Insira as observações de entrega e parcelamento..."></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-slate-400 font-bold mb-2">Garantia</label>
-                    <textarea id="quoteWarranty" rows="5"
-                              class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-white outline-none focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed scrollbar-thin scrollbar-thumb-slate-800"
-                              placeholder="Insira as regras e prazos da garantia...">
-                    </textarea>
-                </div>
-
-                <div class="flex justify-between items-center border-t border-slate-800 pt-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <span class="text-xs text-slate-400 uppercase font-bold block">Valor Total Geral</span>
-                        <span class="text-2xl font-mono font-black text-emerald-400" id="liveQuoteTotal">R$ 0,00</span>
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 text-sm">Observações Comerciais</label>
+                        <textarea id="quoteObs" rows="4"
+                                  class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed text-sm"
+                                  placeholder="Insira as observações de entrega e parcelamento..."></textarea>
                     </div>
-                    <div class="flex gap-2">
-                        <button type="button" onclick="closeModal('quoteModal')" class="px-5 py-2.5 rounded-xl bg-slate-800 font-bold">Cancelar</button>
-                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-cyan-500 text-slate-900 font-black hover:bg-cyan-600 shadow-lg shadow-cyan-500/10">Salvar Rascunho</button>
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 text-sm">Termos de Garantia</label>
+                        <textarea id="quoteWarranty" rows="4"
+                                  class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed text-sm"
+                                  placeholder="Insira as regras e prazos da garantia...">
+                    </textarea>
                     </div>
                 </div>
 
+                <div class="flex flex-col md:flex-row justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-6 mt-6 gap-6">
+                    <div class="bg-slate-50 dark:bg-slate-900 px-6 py-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-6 w-full md:w-auto">
+                        <span class="text-sm text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider block">Valor Total Geral</span>
+                        <span class="text-3xl font-mono font-black text-emerald-600 dark:text-emerald-400" id="liveQuoteTotal">R$ 0,00</span>
+                    </div>
+                    <div class="flex gap-3 w-full md:w-auto">
+                        <button type="button" onclick="closeModal('quoteModal')" class="flex-1 md:flex-none px-6 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors font-bold text-base">Cancelar</button>
+                        <button type="submit" class="flex-1 md:flex-none px-6 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 transition-all text-base">Salvar Rascunho</button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
 
-    <div id="receiptModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-10">
-        <div class="bg-white text-slate-900 w-full max-w-3xl rounded-xl shadow-2xl p-12 relative font-sans print:p-0 print:shadow-none print:w-full" id="printableReceiptArea">
-            <button onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 print:hidden"><i data-lucide="x" class="w-6 h-6"></i></button>
+    <!-- Modal Recibo (Adaptado para tela e Print) -->
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-10">
+        <!-- O Recibo sempre será branco para garantir que pareça um documento A4 em tela também -->
+        <div class="bg-white text-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl p-12 relative font-sans border border-slate-200 print:p-0 print:shadow-none print:w-full print:border-none" id="printableReceiptArea">
+            <button onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full print:hidden transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
 
             <style>
                 @media print {
@@ -224,18 +275,15 @@
                         background: #ffffff !important;
                         color: #000000 !important;
                     }
-                    @page {
-                        size: A4;
-                        margin: 10mm 12mm 10mm 12mm;
-                    }
+                    @page { size: A4; margin: 10mm 12mm 10mm 12mm; }
                     .print\:hidden { display: none !important; }
                 }
             </style>
 
-            <div class="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-6">
+            <div class="flex justify-between items-start border-b-[3px] border-slate-900 pb-6 mb-8">
                 <div class="flex flex-col">
-                    <div th:if="${profile.logoUrl != null && !profile.logoUrl.isEmpty()}" class="mb-3">
-                        <img th:src="${profile.logoUrl}" class="max-h-20 max-w-[240px] object-contain text-left mix-blend-multiply print:mix-blend-normal" alt="Logo" />
+                    <div th:if="${profile.logoUrl != null && !profile.logoUrl.isEmpty()}" class="mb-4">
+                        <img th:src="${profile.logoUrl}" class="max-h-24 max-w-[280px] object-contain text-left mix-blend-multiply" alt="Logo" />
                     </div>
                     <h2 class="text-3xl font-black tracking-tight text-slate-900 uppercase" th:text="${profile.companyName}"></h2>
                     <div class="text-sm text-slate-600 mt-4 space-y-1 font-medium">
@@ -246,10 +294,10 @@
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="bg-slate-100 p-5 rounded-xl border border-slate-200 inline-block min-w-[220px]">
-                        <h3 class="text-xs font-bold font-mono text-slate-500 uppercase tracking-wider">ORÇAMENTO</h3>
-                        <p class="text-2xl font-black text-slate-900 font-mono" id="recNum">N° --</p>
-                        <div class="text-xs text-slate-500 mt-2 border-t pt-2 border-slate-200">
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 inline-block min-w-[240px]">
+                        <h3 class="text-sm font-bold font-mono text-slate-500 uppercase tracking-widest mb-1">ORÇAMENTO</h3>
+                        <p class="text-3xl font-black text-slate-900 font-mono" id="recNum">N° --</p>
+                        <div class="text-sm text-slate-500 mt-3 border-t pt-3 border-slate-200">
                             <span class="font-bold block text-slate-700">Data de emissão:</span>
                             <span id="recDate">--/--/----</span>
                         </div>
@@ -257,21 +305,20 @@
                 </div>
             </div>
 
-            <div class="mb-6">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block font-mono">Orçamento para</span>
-                <h4 class="text-xl font-black text-slate-900" id="recClient">Nome do Cliente</h4>
-                <p class="text-sm text-slate-500 italic mt-0.5">Aqui está o orçamento conforme solicitado:</p>
+            <div class="mb-8">
+                <span class="text-sm font-bold text-slate-500 uppercase tracking-wider block font-mono">Orçamento elaborado para:</span>
+                <h4 class="text-2xl font-black text-slate-900 mt-1" id="recClient">Nome do Cliente</h4>
             </div>
 
-            <div class="border border-slate-300 rounded-xl overflow-hidden mb-6 bg-white shadow-sm">
-                <table class="w-full text-left border-collapse text-sm">
+            <div class="border-[2px] border-slate-200 rounded-2xl overflow-hidden mb-8 bg-white shadow-sm">
+                <table class="w-full text-left border-collapse text-base">
                     <thead>
-                    <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider border-b border-slate-900">
-                        <th class="p-4 pl-4 w-[50%]">Descrição do Projeto</th>
-                        <th class="p-4 text-center">Unid.</th>
-                        <th class="p-4 text-center">Qtd</th>
-                        <th class="p-4 text-right">Preço Unit.</th>
-                        <th class="p-4 text-right pr-4">Total</th>
+                    <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider text-sm">
+                        <th class="p-5 pl-6 w-[50%]">Descrição do Serviço / Produto</th>
+                        <th class="p-5 text-center">Unid.</th>
+                        <th class="p-5 text-center">Qtd</th>
+                        <th class="p-5 text-right">V. Unit.</th>
+                        <th class="p-5 text-right pr-6">Subtotal</th>
                     </tr>
                     </thead>
                     <tbody id="recItems" class="divide-y divide-slate-200 font-medium text-slate-800">
@@ -279,151 +326,132 @@
                 </table>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 border-t pt-6 border-slate-200">
-                <div class="text-sm text-slate-600 space-y-2">
-                    <h5 class="font-bold text-slate-900 uppercase font-mono tracking-wide text-xs">OBSERVAÇÕES ADICIONAIS</h5>
-                    <div id="recObs" class="whitespace-pre-line text-sm text-slate-600 font-sans leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10 border-t-2 pt-8 border-slate-100">
+                <div class="text-base text-slate-700 space-y-3">
+                    <h5 class="font-bold text-slate-900 uppercase font-mono tracking-wide text-sm border-b pb-2">Condições & Observações</h5>
+                    <div id="recObs" class="whitespace-pre-line text-sm text-slate-600 font-sans leading-relaxed bg-slate-50 p-5 rounded-xl border border-slate-200">
                         --
                     </div>
                 </div>
 
-                <div class="flex flex-col justify-end items-end w-full">
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 w-full max-w-[340px] font-mono shadow-sm">
-                        <div class="flex justify-between items-center text-xs text-slate-500 font-bold pb-2.5">
-                            <span>VALOR TOTAL:</span>
-                            <span id="recTotal" class="text-slate-900 text-base font-black tracking-tight">R$ 0,00</span>
+                <div class="flex flex-col justify-start items-end w-full">
+                    <div class="bg-slate-50 border-[2px] border-slate-200 rounded-2xl p-6 w-full max-w-[380px] font-mono shadow-sm">
+                        <div class="flex justify-between items-center text-sm text-slate-500 font-bold pb-3">
+                            <span>TOTAL:</span>
+                            <span id="recTotal" class="text-slate-900 text-2xl font-black tracking-tight">R$ 0,00</span>
                         </div>
-                        <div id="recFinalRow" class="flex justify-between items-center pt-2.5 border-t border-slate-200" style="display: none;">
-                            <span class="text-xs text-slate-500 font-bold">VALOR FINAL:</span>
-                            <span id="recFinalInstallments" class="text-xl font-black text-emerald-600 tracking-tight">10x R$ 0,00</span>
+                        <div id="recFinalRow" class="flex justify-between items-center pt-3 border-t-2 border-slate-200" style="display: none;">
+                            <span class="text-sm text-slate-500 font-bold">Total Parcelado:</span>
+                            <span id="recFinalInstallments" class="text-xl font-black text-brand-600 tracking-tight">10x R$ 0,00</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-8 border-t-2 border-dashed border-slate-200 pt-6">
-                <div class="grid grid-cols-2 gap-4 text-sm text-slate-500">
+            <div class="mt-10 border-t-[2px] border-dashed border-slate-200 pt-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-base text-slate-700">
                     <div>
-                        <h5 class="font-bold text-slate-900 font-mono text-xs uppercase mb-1">GARANTIA</h5>
-                        <p id="recWarrantyText" class="text-slate-800 font-sans font-bold text-base text-cyan-600">--</p>
+                        <h5 class="font-bold text-slate-900 font-mono text-sm uppercase mb-2">TERMOS DE GARANTIA</h5>
+                        <p id="recWarrantyText" class="text-slate-800 font-sans font-bold text-sm bg-brand-50 text-brand-800 p-4 rounded-xl border border-brand-100">--</p>
                     </div>
-                    <div class="text-right flex flex-col justify-between">
-                        <p class="text-[10px] font-mono text-slate-400 mt-4">Documento Comercial Processado Digitalmente — <span th:text="${profile.companyName}">Vidraçaria Ruglass</span></p>
+                    <div class="text-right flex flex-col justify-end">
+                        <p class="text-xs font-mono text-slate-400 mt-4 font-bold">Documento Comercial Processado Digitalmente — <span th:text="${profile.companyName}">Vidraçaria</span></p>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-16 pt-12 border-t border-slate-200 grid grid-cols-2 gap-12 text-center text-sm font-sans">
-                <div class="relative flex flex-col items-center justify-end min-h-[90px]">
-                    <img th:if="${profile.signatureUrl != null && !profile.signatureUrl.isEmpty()}" th:src="${profile.signatureUrl}" class="absolute bottom-6 max-h-20 object-contain pointer-events-none mix-blend-multiply" />
-                    <div class="w-full border-t border-slate-400 pt-2 font-bold text-slate-800" th:text="${profile.companyName}"></div>
-                    <div class="text-xs text-slate-400" th:text="'CNPJ: ' + ${profile.document}"></div>
+            <div class="mt-20 pt-16 border-t border-slate-200 grid grid-cols-2 gap-16 text-center text-base font-sans">
+                <div class="relative flex flex-col items-center justify-end min-h-[100px]">
+                    <img th:if="${profile.signatureUrl != null && !profile.signatureUrl.isEmpty()}" th:src="${profile.signatureUrl}" class="absolute bottom-10 max-h-24 object-contain pointer-events-none mix-blend-multiply" />
+                    <div class="w-full border-t-2 border-slate-900 pt-3 font-black text-slate-900" th:text="${profile.companyName}"></div>
+                    <div class="text-sm text-slate-500 font-bold mt-1" th:text="'CNPJ: ' + ${profile.document}"></div>
                 </div>
-                <div class="flex flex-col items-center justify-end min-h-[90px]">
-                    <div class="w-full border-t border-slate-400 pt-2 font-bold text-slate-800" id="recSignatureClientName">Assinatura do Cliente</div>
-                    <div class="text-xs text-slate-400"></div>
+                <div class="flex flex-col items-center justify-end min-h-[100px]">
+                    <div class="w-full border-t-2 border-slate-900 pt-3 font-black text-slate-900" id="recSignatureClientName">Assinatura do Cliente</div>
+                    <div class="text-sm text-slate-500 font-bold mt-1">De Acordo</div>
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3 print:hidden border-t border-slate-100 pt-4 mt-8">
-                <button onclick="closeModal('receiptModal')" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs hover:bg-slate-200 transition">Fechar</button>
-                <button onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-950 text-white px-5 py-2.5 rounded-xl font-black flex items-center gap-2 text-xs hover:bg-slate-800 transition shadow-lg shadow-black/10"><i data-lucide="printer" class="w-4 h-4"></i> Imprimir Orçamento</button>
+            <div class="flex justify-end gap-4 print:hidden border-t border-slate-200 pt-6 mt-10">
+                <button onclick="closeModal('receiptModal')" class="bg-white border border-slate-300 text-slate-700 px-6 py-3 rounded-xl font-bold text-base hover:bg-slate-50 transition">Fechar Visualização</button>
+                <button onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-black flex items-center gap-3 text-base hover:bg-slate-800 transition shadow-lg shadow-black/20"><i data-lucide="printer" class="w-5 h-5"></i> Imprimir Orçamento A4</button>
             </div>
         </div>
     </div>
 
-    <div id="approvalConfirmModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70]">
-        <div class="bg-[#131C2F] border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-150">
-
-            <div class="bg-emerald-500/10 p-4 rounded-full w-fit mx-auto text-emerald-400 mb-4 shadow-inner">
-                <i data-lucide="check-circle" class="w-8 h-8"></i>
+    <div id="approvalConfirmModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70]">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div class="bg-emerald-100 dark:bg-emerald-500/10 p-5 rounded-full w-fit mx-auto text-emerald-600 dark:text-emerald-400 mb-5 shadow-inner">
+                <i data-lucide="check-circle" class="w-10 h-10"></i>
             </div>
-
-            <h3 class="text-xl font-black text-white mb-2 tracking-tight">Confirmar Fechamento de Venda?</h3>
-            <p class="text-sm text-slate-400 mb-6 leading-relaxed">
-                Esta ação irá congelar esta versão do orçamento. Criará de forma automatizada a **Ordem de Serviço** na linha de produção e gerar o lançamento no **Contas a Receber**.
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">Confirmar Venda?</h3>
+            <p class="text-base text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+                Esta ação congela este orçamento, gera a **Ordem de Serviço** automaticamente e lança as parcelas no **Contas a Receber**.
             </p>
-
-            <div class="flex gap-3">
-                <button type="button" onclick="closeModal('approvalConfirmModal')" class="w-1/2 px-4 py-2.5 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors text-sm">
+            <div class="flex gap-4">
+                <button type="button" onclick="closeModal('approvalConfirmModal')" class="w-1/2 px-5 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-base">
                     Cancelar
                 </button>
-                <button type="button" onclick="executeApproval()" class="w-1/2 px-4 py-2.5 rounded-xl bg-emerald-500 text-slate-900 font-black hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/10 text-sm">
-                    Confirmar e Gerar
+                <button type="button" onclick="executeApproval()" class="w-1/2 px-5 py-3 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-900 font-black hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20 text-base">
+                    Confirmar
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="clientInlineModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60]">
-        <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-150">
-
-            <button type="button" onclick="closeModal('clientInlineModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+    <div id="clientInlineModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60]">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
+            <button type="button" onclick="closeModal('clientInlineModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
-            <h4 class="text-lg font-black text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-2">
-                <i data-lucide="user-plus" class="text-cyan-400 w-5 h-5"></i> Cadastrar Cliente
+            <h4 class="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <i data-lucide="user-plus" class="text-brand-600 dark:text-cyan-400 w-6 h-6"></i> Cadastro Rápido de Cliente
             </h4>
 
-            <div class="space-y-4 text-sm">
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="col-span-2">
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Nome Completo / Razão Social</label>
-                        <input type="text" id="inlineClientName" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
+            <div class="space-y-5 text-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome Completo / Razão Social</label>
+                        <input type="text" id="inlineClientName" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Tipo de Pessoa</label>
-                        <select id="inlineClientType" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all">
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tipo de Pessoa</label>
+                        <select id="inlineClientType" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base">
                             <option value="individual">Pessoa Física (CPF)</option>
                             <option value="company">Pessoa Jurídica (CNPJ)</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">CPF / CNPJ</label>
-                        <input type="text" id="inlineClientDoc" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">CPF / CNPJ</label>
+                        <input type="text" id="inlineClientDoc" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">E-mail</label>
-                        <input type="email" id="inlineClientEmail" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">E-mail</label>
+                        <input type="email" id="inlineClientEmail" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Telefone</label>
-                        <input type="text" id="inlineClientPhone" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
-                    </div>
-
-                    <div class="col-span-2">
-                        <label class="block text-sm font-medium text-slate-400 mb-1">Endereço Completo</label>
-                        <input type="text" id="inlineClientAddress" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
-                    </div>
-
-                    <div class="col-span-2">
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Cidade</label>
-                        <input type="text" id="inlineClientCity" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Telefone</label>
+                        <input type="text" id="inlineClientPhone" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-4 border-t border-slate-800 mt-6">
-                    <button type="button" onclick="closeModal('clientInlineModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
-                    <button type="button" onclick="saveInlineClient()" class="px-4 py-2 rounded-xl bg-cyan-500 text-slate-900 font-black hover:bg-cyan-600 transition-colors shadow-lg shadow-cyan-500/10">Salvar e Selecionar</button>
+                <div class="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-800 mt-6">
+                    <button type="button" onclick="closeModal('clientInlineModal')" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-base">Cancelar</button>
+                    <button type="button" onclick="saveInlineClient()" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 font-black hover:bg-brand-700 dark:hover:bg-cyan-600 transition-colors shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 text-base">Salvar e Inserir</button>
                 </div>
             </div>
-
         </div>
     </div>
-
 </main>
 
 <script>
-
     let currentActiveClientForPdf = "Consumidor Final";
     let currentActiveNumberForPdf = "000";
-
     let currentItems = [];
 
     function toggleModal(id, show) {
@@ -504,17 +532,17 @@
             totalGeneral += sub;
 
             tbody.innerHTML += `
-            <tr class="bg-slate-800/40 border-b border-slate-800 hover:bg-slate-700/20 transition-colors">
-                <td class="p-3"><span class="font-bold text-cyan-400">[${item.category}]</span> ${item.product}</td>
-                <td class="p-3 text-center text-slate-400 font-mono">${item.width > 0 ? item.width + 'x' + item.height + 'm' : 'un'}</td>
-                <td class="p-3 text-center text-slate-300 font-bold">${item.quantity}</td>
-                <td class="p-3 text-center text-slate-400 font-mono">${m2Unitario > 0 ? m2Unitario.toFixed(2) + ' m²' : '—'}</td>
-                <td class="p-3 text-center text-cyan-400 font-mono font-bold">${m2Total > 0 ? m2Total.toFixed(2) + ' m²' : '—'}</td>
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                <td class="p-4 text-slate-900 dark:text-white"><span class="font-bold text-brand-600 dark:text-cyan-400">[${item.category}]</span> ${item.product}</td>
+                <td class="p-4 text-center text-slate-600 dark:text-slate-400 font-mono">${item.width > 0 ? item.width + 'x' + item.height + 'm' : 'un'}</td>
+                <td class="p-4 text-center text-slate-900 dark:text-slate-300 font-bold">${item.quantity}</td>
+                <td class="p-4 text-center text-slate-600 dark:text-slate-400 font-mono">${m2Unitario > 0 ? m2Unitario.toFixed(2) + ' m²' : '—'}</td>
+                <td class="p-4 text-center text-brand-600 dark:text-cyan-400 font-mono font-bold">${m2Total > 0 ? m2Total.toFixed(2) + ' m²' : '—'}</td>
 
-                <td class="p-3 text-right text-slate-400 font-mono">${formatarMoeda(precoPecaUnitaria)}</td>
-                <td class="p-3 text-right text-emerald-400 font-bold font-mono">${formatarMoeda(sub)}</td>
+                <td class="p-4 text-right text-slate-600 dark:text-slate-400 font-mono">${formatarMoeda(precoPecaUnitaria)}</td>
+                <td class="p-4 text-right text-emerald-600 dark:text-emerald-400 font-bold font-mono">${formatarMoeda(sub)}</td>
 
-                <td class="p-3 text-center"><button type="button" onclick="removeQuoteItem(${idx})" class="text-rose-500 hover:text-rose-400 font-bold">X</button></td>
+                <td class="p-4 text-center"><button type="button" onclick="removeQuoteItem(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 font-bold p-2 bg-rose-50 dark:bg-transparent rounded-lg">X</button></td>
             </tr>
         `;
         });
@@ -571,8 +599,6 @@
     async function executeApproval() {
         if (!quoteIdToApprove) return;
 
-        console.log("⚙️ Iniciando barramento de integração automática para o orçamento:", quoteIdToApprove);
-
         try {
             const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
@@ -588,20 +614,17 @@
             });
 
             if (response.ok) {
-                console.log("✅ Integração concluída com sucesso!");
                 window.location.reload();
             } else {
                 alert('Erro no processamento da integração financeira/operacional.');
             }
         } catch (error) {
-            console.error("Erro crítico na rota de aprovação:", error);
+            console.error("Erro na rota de aprovação:", error);
             alert('Erro de comunicação com o servidor.');
         }
     }
 
     function cancelQuote(id) {
-        console.log("🚫 Desativando orçamento diretamente no sistema para o ID:", id);
-
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
 
@@ -624,15 +647,9 @@
     }
 
     function generateDynamicPdfNameAndPrint() {
-
         const originalErpTitle = document.title;
-
         document.title = `Orçamento - ${currentActiveClientForPdf} - ${currentActiveNumberForPdf}`;
-
-        console.log(`🎯 Arquivo temporariamente renomeado para a fila do sistema operacional: "${document.title}"`);
-
         window.print();
-
         document.title = originalErpTitle;
     }
 
@@ -694,15 +711,11 @@
     }
 
     function saveInlineClient() {
-        console.log("⚙️ Processando gravação assíncrona do cliente...");
-
         const nameEl = document.getElementById('inlineClientName');
         const typeEl = document.getElementById('inlineClientType');
         const docEl = document.getElementById('inlineClientDoc');
         const emailEl = document.getElementById('inlineClientEmail');
         const phoneEl = document.getElementById('inlineClientPhone');
-        const addressEl = document.getElementById('inlineClientAddress');
-        const cityEl = document.getElementById('inlineClientCity');
 
         if (!nameEl || !nameEl.value.trim()) {
             alert('Por favor, insira o Nome Completo / Razão Social!');
@@ -715,8 +728,8 @@
             document: docEl ? docEl.value.trim() : '',
             email: emailEl ? emailEl.value.trim() : '',
             phone: phoneEl ? phoneEl.value.trim() : '',
-            address: addressEl ? addressEl.value.trim() : '',
-            city: cityEl ? cityEl.value.trim() : ''
+            address: '',
+            city: ''
         };
 
         const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
@@ -735,7 +748,6 @@
                 throw new Error("Erro de resposta do servidor");
             })
             .then(savedClient => {
-                console.log("✅ Cliente guardado no banco:", savedClient);
                 const clientSelect = document.getElementById('quoteClient');
                 if (clientSelect) {
                     const newOption = document.createElement('option');
@@ -749,17 +761,14 @@
                 if (docEl) docEl.value = '';
                 if (emailEl) emailEl.value = '';
                 if (phoneEl) phoneEl.value = '';
-                if (addressEl) addressEl.value = '';
-                if (cityEl) cityEl.value = '';
 
                 closeModal('clientInlineModal');
             })
             .catch(err => {
                 console.error("❌ Erro:", err);
-                alert('Erro ao guardar o cliente. Verifique o console.');
+                alert('Erro ao guardar o cliente.');
             });
     }
-
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 </body>
