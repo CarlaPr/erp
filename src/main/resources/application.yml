@@ -17,4 +17,5 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    repair-on-validate: true
     baseline-version: "1"

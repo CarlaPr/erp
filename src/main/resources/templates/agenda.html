@@ -235,8 +235,8 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável</label>
-                    <input id="editResponsible" list="vendedoresList" type="text" placeholder="Vendedor responsável"
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável pela Obra</label>
+                    <input id="editResponsible" list="vendedoresList" type="text" placeholder="Hugo"
                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
                     <datalist id="vendedoresList">
                         <option th:each="v : ${vendedores}" th:value="${v}"></option>
@@ -244,7 +244,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Equipe</label>
-                    <input id="editTeam" type="text" placeholder="Ex: Equipe A"
+                    <input id="editTeam" type="text" placeholder="Ex: Yago, Igor"
                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
                 </div>
             </div>
@@ -534,7 +534,7 @@
 
     function openDayModal(dateStr) {
         const items = applyFilters(SCHEDULES).filter(s => s.scheduledDate === dateStr);
-        document.getElementById('dayModalTitle').textContent = 'Serviços de ' + fmtBR(dateStr);
+        document.getElementById('dayModalTitle').textContent = 'Serviços do dia ' + fmtBR(dateStr);
         const list = document.getElementById('dayModalList');
         list.innerHTML = '';
 
@@ -565,7 +565,6 @@
                 <div class="flex flex-wrap gap-2">
                     <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openEditModal('${s.id}')">Editar</button>
                     <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="openEditModal('${s.id}')">Reagendar</button>
-                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/work-orders'">Abrir OS</button>
                     <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/quotes'">Abrir Orçamento</button>
                 </div>
             `;
@@ -629,7 +628,6 @@
                 <td class="p-4"><span class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase ${meta.badge || ''}">${meta.label || s.status}</span></td>
                 <td class="p-4 text-right whitespace-nowrap">
                     <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar / Agendar" onclick="openEditModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                    <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Abrir OS" onclick="window.location.href='/work-orders'"><i data-lucide="file-text" class="w-4 h-4"></i></button>
                     <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Abrir Orçamento" onclick="window.location.href='/quotes'"><i data-lucide="file-signature" class="w-4 h-4"></i></button>
                 </td>
             `;
