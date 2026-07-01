@@ -42,8 +42,6 @@ ALTER TABLE ONLY public.commercial_schedules
 CREATE INDEX idx_commercial_schedules_status ON public.commercial_schedules (status);
 CREATE INDEX idx_commercial_schedules_scheduled_date ON public.commercial_schedules (scheduled_date);
 
--- 3) Histórico / timeline de cada agendamento (criação, agendamento, reagendamento,
---    mudanças de status, cancelamento).
 CREATE TABLE public.commercial_schedule_history (
     id            uuid NOT NULL,
     schedule_id   uuid NOT NULL,
