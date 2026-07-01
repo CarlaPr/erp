@@ -18,11 +18,13 @@ public class QuoteService {
     private final QuoteRepository quoteRepo;
     private final WorkOrderRepository osRepo;
     private final AccountsReceivableRepository finRepo;
+    private final ScheduleService scheduleService;
 
-    public QuoteService(QuoteRepository quoteRepo, WorkOrderRepository osRepo, AccountsReceivableRepository finRepo) {
+    public QuoteService(QuoteRepository quoteRepo, WorkOrderRepository osRepo, AccountsReceivableRepository finRepo, ScheduleService scheduleService) {
         this.quoteRepo = quoteRepo;
         this.osRepo = osRepo;
         this.finRepo = finRepo;
+        this.scheduleService = scheduleService;
     }
 
     private LocalDate calculateBusinessDays(LocalDate startDate, int businessDays) {
@@ -96,6 +98,8 @@ public class QuoteService {
 
         os = osRepo.saveAndFlush(os);
         quoteRepo.saveAndFlush(quote);
+
+        scheduleService.createFromApprovedQuote(quote, os);
 
         BigDecimal totalOrcamento = (quote.getTotalValue() != null) ? quote.getTotalValue() : BigDecimal.ZERO;
 

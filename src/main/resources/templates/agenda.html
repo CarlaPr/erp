@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Agenda Comercial - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<main class="ml-72 p-8 w-full min-h-screen">
+
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Agenda Comercial</h2>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Agende, acompanhe o prazo e reagende os serviços aprovados. A execução continua sendo controlada pela Ordem de Serviço.</p>
+        </div>
+
+        <div class="flex items-center gap-1 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-1 shadow-sm">
+            <button type="button" id="btnViewCalendar" onclick="switchView('calendar')"
+                    class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
+                <i data-lucide="calendar-days" class="w-4 h-4"></i> Calendário
+            </button>
+            <button type="button" id="btnViewList" onclick="switchView('list')"
+                    class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
+                <i data-lucide="list" class="w-4 h-4"></i> Lista
+            </button>
+        </div>
+    </header>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Aprovados</span>
+            <p class="text-2xl font-black text-slate-900 dark:text-white mt-1" th:text="${kpis.aprovados}">0</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Aguard. Agend.</span>
+            <p class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1" th:text="${kpis.aguardandoAgendamento}">0</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Agendados</span>
+            <p class="text-2xl font-black text-brand-600 dark:text-cyan-400 mt-1" th:text="${kpis.agendados}">0</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Atrasados</span>
+            <p class="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1" th:text="${kpis.atrasados}">0</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Prazo Médio (d)</span>
+            <p class="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1" th:text="${kpis.prazoMedioDias}">0</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Semana</span>
+            <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1" th:text="${kpis.semana}">0</p>
+        </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm mb-6">
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex-1 min-w-[220px]">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input id="filterSearch" type="text" placeholder="Buscar cliente, orçamento ou OS..."
+                       class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+            </div>
+
+            <select id="filterStatus" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                <option value="">Status: Todos</option>
+                <option value="AGUARDANDO_AGENDAMENTO">Aguardando Agendamento</option>
+                <option value="AGENDADO">Agendado</option>
+                <option value="CONFIRMADO">Confirmado</option>
+                <option value="EM_EXECUCAO">Em Execução</option>
+                <option value="CONCLUIDO">Concluído</option>
+                <option value="ATRASADO">Atrasado</option>
+                <option value="REAGENDADO">Reagendado</option>
+                <option value="CANCELADO">Cancelado</option>
+            </select>
+
+            <select id="filterResponsible" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                <option value="">Responsável: Todos</option>
+                <option th:each="v : ${vendedores}" th:value="${v}" th:text="${v}"></option>
+            </select>
+
+            <div class="flex items-center gap-2">
+                <input id="filterFrom" type="date" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                <span class="text-slate-400 text-sm">até</span>
+                <input id="filterTo" type="date" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+            </div>
+
+            <button type="button" onclick="clearFilters()" class="px-4 py-2.5 rounded-xl text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                Limpar
+            </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 mt-3">
+            <button type="button" id="chipLate" onclick="toggleChip('onlyLate')" class="chip px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline -mt-0.5"></i> Atrasados
+            </button>
+            <button type="button" id="chipNext7" onclick="toggleChip('next7')" class="chip px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors">
+                <i data-lucide="calendar-clock" class="w-3.5 h-3.5 inline -mt-0.5"></i> Próximos 7 dias
+            </button>
+            <button type="button" id="chipUnscheduled" onclick="toggleChip('unscheduled')" class="chip px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors">
+                <i data-lucide="calendar-x" class="w-3.5 h-3.5 inline -mt-0.5"></i> Sem agendamento
+            </button>
+        </div>
+    </div>
+
+    <!-- VISÃO CALENDÁRIO -->
+    <div id="calendarView">
+
+        <div id="unscheduledPanel" class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-5 mb-6 hidden">
+            <h3 class="text-amber-800 dark:text-amber-400 font-bold text-sm mb-3 flex items-center gap-2">
+                <i data-lucide="calendar-x" class="w-4 h-4"></i> Aguardando Agendamento
+            </h3>
+            <div id="unscheduledList" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <button type="button" onclick="goToday()" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Hoje</button>
+                    <button type="button" onclick="changeMonth(1)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <h3 id="calendarLabel" class="text-lg font-black text-slate-900 dark:text-white capitalize"></h3>
+                <div class="flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> +7d</span>
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> ≤7d</span>
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Atrasado</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase border-b border-slate-200 dark:border-slate-800">
+                <div class="py-2">Dom</div><div class="py-2">Seg</div><div class="py-2">Ter</div>
+                <div class="py-2">Qua</div><div class="py-2">Qui</div><div class="py-2">Sex</div><div class="py-2">Sáb</div>
+            </div>
+
+            <div id="calendarGrid" class="grid grid-cols-7"></div>
+        </div>
+    </div>
+
+    <!-- VISÃO LISTA -->
+    <div id="listView" class="hidden bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                <tr class="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider bg-slate-50 dark:bg-slate-900/40">
+                    <th class="p-4">Cliente</th>
+                    <th class="p-4">Orçamento</th>
+                    <th class="p-4">OS</th>
+                    <th class="p-4">Entregar até</th>
+                    <th class="p-4">Dias Restantes</th>
+                    <th class="p-4">Data agendada</th>
+                    <th class="p-4">Status</th>
+                    <th class="p-4 text-right">Ações</th>
+                </tr>
+                </thead>
+                <tbody id="listBody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+            </table>
+            <p id="listEmpty" class="p-8 text-center text-slate-500 font-medium hidden">Nenhum agendamento encontrado para os filtros selecionados.</p>
+        </div>
+    </div>
+
+    <!-- MODAL DO DIA -->
+    <div id="dayModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative my-10">
+            <button type="button" onclick="closeModal('dayModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 id="dayModalTitle" class="text-xl font-black text-slate-900 dark:text-white mb-5">Serviços do dia</h3>
+            <div id="dayModalList" class="space-y-3 max-h-[65vh] overflow-y-auto pr-1"></div>
+        </div>
+    </div>
+
+    <!-- MODAL AGENDAR / EDITAR / REAGENDAR -->
+    <div id="editModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-[60] overflow-y-auto py-10 px-4">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative my-auto">
+            <button type="button" onclick="closeModal('editModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 id="editModalTitle" class="text-xl font-black text-slate-900 dark:text-white mb-1">Agendar Serviço</h3>
+            <p id="editModalSubtitle" class="text-sm text-slate-500 dark:text-slate-400 mb-6"></p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 text-xs">
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">Cliente</span>
+                    <span id="editInfoClient" class="font-bold text-slate-800 dark:text-white">-</span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">Orçamento / OS</span>
+                    <span id="editInfoDocs" class="font-bold text-slate-800 dark:text-white">-</span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">Entregar até</span>
+                    <span id="editInfoDeadline" class="font-bold text-slate-800 dark:text-white">-</span>
+                </div>
+            </div>
+
+            <input type="hidden" id="editId">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Data de execução</label>
+                    <input id="editDate" type="date" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Horário</label>
+                    <input id="editTime" type="time" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Status</label>
+                    <select id="editStatus" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                        <option value="AGUARDANDO_AGENDAMENTO">Aguardando Agendamento</option>
+                        <option value="AGENDADO">Agendado</option>
+                        <option value="CONFIRMADO">Confirmado</option>
+                        <option value="EM_EXECUCAO">Em Execução</option>
+                        <option value="CONCLUIDO">Concluído</option>
+                        <option value="REAGENDADO">Reagendado</option>
+                        <option value="ATRASADO">Atrasado</option>
+                        <option value="CANCELADO">Cancelado</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Tempo previsto (min)</label>
+                    <input id="editDuration" type="number" min="0" step="15" placeholder="Ex: 120"
+                           class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável</label>
+                    <input id="editResponsible" list="vendedoresList" type="text" placeholder="Vendedor responsável"
+                           class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                    <datalist id="vendedoresList">
+                        <option th:each="v : ${vendedores}" th:value="${v}"></option>
+                    </datalist>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Equipe</label>
+                    <input id="editTeam" type="text" placeholder="Ex: Equipe A"
+                           class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Motivo (reagendamento / cancelamento)</label>
+                <input id="editReason" type="text" placeholder="Ex: Cliente solicitou nova data"
+                       class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+            </div>
+
+            <div class="mb-5">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Observações</label>
+                <textarea id="editObservations" rows="3" placeholder="Detalhes adicionais do agendamento..."
+                          class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white"></textarea>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 flex items-center gap-2">
+                    <i data-lucide="history" class="w-3.5 h-3.5"></i> Histórico
+                </h4>
+                <div id="editHistory" class="space-y-2 max-h-32 overflow-y-auto text-xs bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800"></div>
+            </div>
+
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <button type="button" onclick="openCancelModalFromEdit()" class="px-5 py-3 rounded-xl text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex items-center gap-2">
+                    <i data-lucide="x-circle" class="w-4 h-4"></i> Cancelar Agendamento
+                </button>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeModal('editModal')" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
+                        Voltar
+                    </button>
+                    <button type="button" onclick="submitScheduleForm()" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white font-black shadow-lg shadow-brand-500/20 transition-all text-sm">
+                        Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CANCELAR AGENDAMENTO -->
+    <div id="cancelScheduleModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative">
+            <button type="button" onclick="closeModal('cancelScheduleModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="bg-rose-100 dark:bg-rose-500/10 p-4 rounded-full w-fit mb-5 text-rose-600 dark:text-rose-400">
+                <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">Cancelar Agendamento</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+                A Ordem de Serviço não é apagada. Apenas este agendamento na Agenda Comercial ficará marcado como cancelado. Informe o motivo:
+            </p>
+            <textarea id="cancelScheduleReason" rows="3"
+                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-slate-900 dark:text-white outline-none focus:border-rose-500 transition-all text-sm mb-6"
+                      placeholder="Ex: Cliente desistiu do serviço..."></textarea>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeModal('cancelScheduleModal')" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
+                    Voltar
+                </button>
+                <button type="button" onclick="confirmCancelSchedule()" class="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-sm">
+                    Confirmar Cancelamento
+                </button>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+
+<script th:inline="javascript">
+    const SCHEDULES = /*[[${schedules}]]*/ [];
+
+    const STATUS_META = {
+        AGUARDANDO_AGENDAMENTO: { label: 'Aguardando Agendamento', badge: 'bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300', dot: 'bg-slate-400' },
+        AGENDADO:               { label: 'Agendado',               badge: 'bg-brand-50 text-brand-700 dark:bg-cyan-500/20 dark:text-cyan-400', dot: 'bg-brand-600 dark:bg-cyan-400' },
+        CONFIRMADO:             { label: 'Confirmado',              badge: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400', dot: 'bg-indigo-500' },
+        EM_EXECUCAO:            { label: 'Em Execução',             badge: 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400', dot: 'bg-amber-500' },
+        CONCLUIDO:              { label: 'Concluído',                badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', dot: 'bg-emerald-500' },
+        ATRASADO:               { label: 'Atrasado',                 badge: 'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400', dot: 'bg-rose-500' },
+        REAGENDADO:             { label: 'Reagendado',                badge: 'bg-purple-50 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400', dot: 'bg-purple-500' },
+        CANCELADO:              { label: 'Cancelado',                 badge: 'bg-slate-200 text-slate-500 dark:bg-slate-700/40 dark:text-slate-400 line-through', dot: 'bg-slate-400' }
+    };
+
+    const SEMAPHORE_DOT = { GREEN: 'bg-emerald-500', YELLOW: 'bg-amber-500', RED: 'bg-rose-500', NEUTRAL: 'bg-slate-300 dark:bg-slate-600' };
+
+    const state = {
+        view: 'calendar',
+        month: startOfMonth(new Date()),
+        filters: { search: '', status: '', responsible: '', from: '', to: '', onlyLate: false, next7: false, unscheduled: false }
+    };
+
+    function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+
+    function csrfHeaders(json) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+        const headers = json ? { 'Content-Type': 'application/json' } : { 'Content-Type': 'text/plain' };
+        if (csrfToken) headers[csrfHeader] = csrfToken;
+        return headers;
+    }
+
+    function toggleModal(id, show) {
+        const m = document.getElementById(id);
+        if (!m) return;
+        if (show) { m.classList.remove('hidden'); m.classList.add('flex'); }
+        else { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+    function closeModal(id) { toggleModal(id, false); }
+
+    function fmtBR(dateStr) {
+        if (!dateStr) return '-';
+        const [y, m, d] = dateStr.split('-');
+        return `${d}/${m}/${y}`;
+    }
+    function fmtTimeBR(timeStr) {
+        if (!timeStr) return '';
+        return timeStr.substring(0, 5);
+    }
+    function fmtDateTimeBR(dtStr) {
+        if (!dtStr) return '-';
+        return fmtBR(dtStr.substring(0, 10));
+    }
+
+    // ================= FILTROS =================
+
+    function toggleChip(key) {
+        state.filters[key] = !state.filters[key];
+        document.getElementById(key === 'onlyLate' ? 'chipLate' : key === 'next7' ? 'chipNext7' : 'chipUnscheduled')
+            .classList.toggle('chip-active', state.filters[key]);
+        renderAll();
+    }
+
+    function clearFilters() {
+        state.filters = { search: '', status: '', responsible: '', from: '', to: '', onlyLate: false, next7: false, unscheduled: false };
+        document.getElementById('filterSearch').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterResponsible').value = '';
+        document.getElementById('filterFrom').value = '';
+        document.getElementById('filterTo').value = '';
+        ['chipLate', 'chipNext7', 'chipUnscheduled'].forEach(id => document.getElementById(id).classList.remove('chip-active'));
+        renderAll();
+    }
+
+    ['filterSearch', 'filterStatus', 'filterResponsible', 'filterFrom', 'filterTo'].forEach(id => {
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById(id).addEventListener('input', () => {
+                state.filters.search = document.getElementById('filterSearch').value.toLowerCase();
+                state.filters.status = document.getElementById('filterStatus').value;
+                state.filters.responsible = document.getElementById('filterResponsible').value;
+                state.filters.from = document.getElementById('filterFrom').value;
+                state.filters.to = document.getElementById('filterTo').value;
+                renderAll();
+            });
+        });
+    });
+
+    function applyFilters(list) {
+        const f = state.filters;
+        const today = new Date(); today.setHours(0,0,0,0);
+        const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
+
+        return list.filter(s => {
+            if (f.search) {
+                const hay = `${s.clientName || ''} ${s.quoteNumber || ''} ${s.workOrderNumber || ''}`.toLowerCase();
+                if (!hay.includes(f.search)) return false;
+            }
+            if (f.status && s.status !== f.status) return false;
+            if (f.responsible && s.responsible !== f.responsible) return false;
+            if (f.from && (!s.scheduledDate || s.scheduledDate < f.from)) return false;
+            if (f.to && (!s.scheduledDate || s.scheduledDate > f.to)) return false;
+            if (f.onlyLate && !(s.status === 'ATRASADO' || (s.semaphore === 'RED' && s.status !== 'CONCLUIDO' && s.status !== 'CANCELADO'))) return false;
+            if (f.next7) {
+                if (!s.scheduledDate) return false;
+                const sd = new Date(s.scheduledDate + 'T00:00:00');
+                if (sd < today || sd > in7) return false;
+            }
+            if (f.unscheduled && s.scheduledDate) return false;
+            return true;
+        });
+    }
+
+    // ================= RENDER GERAL =================
+
+    function switchView(view) {
+        state.view = view;
+        document.getElementById('calendarView').classList.toggle('hidden', view !== 'calendar');
+        document.getElementById('listView').classList.toggle('hidden', view !== 'list');
+        const activeCls = ['bg-brand-600', 'text-white', 'dark:bg-cyan-500', 'dark:text-slate-900'];
+        const idleCls = ['text-slate-600', 'dark:text-slate-400'];
+        const bC = document.getElementById('btnViewCalendar');
+        const bL = document.getElementById('btnViewList');
+        bC.classList.remove(...activeCls, ...idleCls);
+        bL.classList.remove(...activeCls, ...idleCls);
+        (view === 'calendar' ? bC : bL).classList.add(...activeCls);
+        (view === 'calendar' ? bL : bC).classList.add(...idleCls);
+        renderAll();
+    }
+
+    function renderAll() {
+        renderCalendar();
+        renderList();
+        renderUnscheduledPanel();
+    }
+
+    // ================= CALENDÁRIO =================
+
+    function changeMonth(delta) {
+        state.month = new Date(state.month.getFullYear(), state.month.getMonth() + delta, 1);
+        renderCalendar();
+    }
+    function goToday() {
+        state.month = startOfMonth(new Date());
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const label = state.month.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        document.getElementById('calendarLabel').textContent = label;
+
+        const filtered = applyFilters(SCHEDULES);
+        const byDate = {};
+        filtered.forEach(s => {
+            if (!s.scheduledDate) return;
+            (byDate[s.scheduledDate] = byDate[s.scheduledDate] || []).push(s);
+        });
+
+        const year = state.month.getFullYear();
+        const month = state.month.getMonth();
+        const firstDow = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const totalCells = Math.ceil((firstDow + daysInMonth) / 7) * 7;
+
+        const todayStr = new Date().toISOString().substring(0, 10);
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+
+        for (let i = 0; i < totalCells; i++) {
+            const dayNum = i - firstDow + 1;
+            const cell = document.createElement('div');
+            cell.className = 'min-h-[110px] border-b border-r border-slate-100 dark:border-slate-800 p-2 align-top';
+
+            if (dayNum < 1 || dayNum > daysInMonth) {
+                cell.classList.add('bg-slate-50/50', 'dark:bg-slate-900/30');
+                grid.appendChild(cell);
+                continue;
+            }
+
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+            const items = byDate[dateStr] || [];
+            const isToday = dateStr === todayStr;
+
+            const numEl = document.createElement('div');
+            numEl.className = 'text-xs font-bold mb-1.5 ' + (isToday
+                ? 'w-6 h-6 flex items-center justify-center rounded-full bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900'
+                : 'text-slate-500 dark:text-slate-400');
+            numEl.textContent = String(dayNum);
+            cell.appendChild(numEl);
+
+            const visible = items.slice(0, 3);
+            visible.forEach(s => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'w-full text-left mb-1 px-1.5 py-1 rounded-md text-[11px] font-semibold truncate flex items-center gap-1 hover:opacity-80 transition-opacity ' + (STATUS_META[s.status]?.badge || '');
+                chip.innerHTML = `<span class="w-1.5 h-1.5 rounded-full shrink-0 ${SEMAPHORE_DOT[s.semaphore] || ''}"></span><span class="truncate">${s.serviceType || 'Serviço'} · ${s.clientName || ''}</span>`;
+                chip.onclick = () => openEditModal(s.id);
+                cell.appendChild(chip);
+            });
+
+            if (items.length > 3) {
+                const more = document.createElement('button');
+                more.type = 'button';
+                more.className = 'w-full text-left px-1.5 text-[11px] font-bold text-brand-600 dark:text-cyan-400 hover:underline';
+                more.textContent = `+${items.length - 3} serviços`;
+                more.onclick = () => openDayModal(dateStr);
+                cell.appendChild(more);
+            }
+
+            if (items.length > 0) {
+                cell.style.cursor = 'pointer';
+                cell.addEventListener('dblclick', () => openDayModal(dateStr));
+            }
+
+            grid.appendChild(cell);
+        }
+    }
+
+    function openDayModal(dateStr) {
+        const items = applyFilters(SCHEDULES).filter(s => s.scheduledDate === dateStr);
+        document.getElementById('dayModalTitle').textContent = 'Serviços de ' + fmtBR(dateStr);
+        const list = document.getElementById('dayModalList');
+        list.innerHTML = '';
+
+        if (items.length === 0) {
+            list.innerHTML = '<p class="text-sm text-slate-500 text-center py-6">Nenhum serviço agendado para este dia.</p>';
+        }
+
+        items.forEach(s => {
+            const meta = STATUS_META[s.status] || {};
+            const row = document.createElement('div');
+            row.className = 'border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50 dark:bg-slate-900';
+            row.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <p class="font-black text-slate-900 dark:text-white">${s.clientName || 'Sem cliente'}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${s.serviceType || 'Serviço'} ${s.scheduledTime ? '· ' + fmtTimeBR(s.scheduledTime) : ''}</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase ${meta.badge || ''}">${meta.label || s.status}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 mb-3">
+                    <span><b>Orçamento:</b> ${s.quoteNumber || '-'}</span>
+                    <span><b>OS:</b> ${s.workOrderNumber || '-'}</span>
+                    <span><b>Aprovação:</b> ${fmtDateTimeBR(s.approvalDate)}</span>
+                    <span><b>Entregar até:</b> ${fmtBR(s.deadlineDate)}</span>
+                    <span><b>Responsável:</b> ${s.responsible || '-'}</span>
+                    <span><b>Obs.:</b> ${s.observations || '-'}</span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openEditModal('${s.id}')">Editar</button>
+                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="openEditModal('${s.id}')">Reagendar</button>
+                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/work-orders'">Abrir OS</button>
+                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/quotes'">Abrir Orçamento</button>
+                </div>
+            `;
+            list.appendChild(row);
+        });
+
+        toggleModal('dayModal', true);
+    }
+
+    // ================= AGUARDANDO AGENDAMENTO =================
+
+    function renderUnscheduledPanel() {
+        const pending = applyFilters(SCHEDULES).filter(s => !s.scheduledDate && s.status !== 'CANCELADO');
+        const panel = document.getElementById('unscheduledPanel');
+        const list = document.getElementById('unscheduledList');
+        list.innerHTML = '';
+
+        if (pending.length === 0) {
+            panel.classList.add('hidden');
+            return;
+        }
+        panel.classList.remove('hidden');
+
+        pending.forEach(s => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-500/30 text-xs font-bold text-amber-800 dark:text-amber-300 hover:shadow-md transition-shadow flex items-center gap-2';
+            chip.innerHTML = `<span class="w-2 h-2 rounded-full ${SEMAPHORE_DOT[s.semaphore]}"></span> ${s.clientName || 'Cliente'} · ${s.quoteNumber || ''} <span class="text-amber-500">(até ${fmtBR(s.deadlineDate)})</span>`;
+            chip.onclick = () => openEditModal(s.id);
+            list.appendChild(chip);
+        });
+    }
+
+    // ================= LISTA =================
+
+    function renderList() {
+        const filtered = applyFilters(SCHEDULES).slice().sort((a, b) => {
+            const da = a.scheduledDate || a.deadlineDate || '9999-99-99';
+            const db = b.scheduledDate || b.deadlineDate || '9999-99-99';
+            return da.localeCompare(db);
+        });
+
+        const body = document.getElementById('listBody');
+        body.innerHTML = '';
+        document.getElementById('listEmpty').classList.toggle('hidden', filtered.length > 0);
+
+        filtered.forEach(s => {
+            const meta = STATUS_META[s.status] || {};
+            const daysLabel = (s.status === 'CONCLUIDO' || s.status === 'CANCELADO') ? '-' : (s.daysRemaining + ' d');
+            const daysColor = s.daysRemaining < 0 ? 'text-rose-600 dark:text-rose-400' : (s.daysRemaining <= 7 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400');
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors text-slate-700 dark:text-slate-300';
+            tr.innerHTML = `
+                <td class="p-4 font-bold text-slate-900 dark:text-white">${s.clientName || '-'}</td>
+                <td class="p-4 font-mono text-brand-600 dark:text-cyan-400 font-bold">${s.quoteNumber || '-'}</td>
+                <td class="p-4 font-mono">${s.workOrderNumber || '-'}</td>
+                <td class="p-4">${fmtBR(s.deadlineDate)}</td>
+                <td class="p-4 font-bold ${daysColor}">${daysLabel}</td>
+                <td class="p-4">${s.scheduledDate ? fmtBR(s.scheduledDate) : '<span class="text-slate-400 italic">Não agendado</span>'}</td>
+                <td class="p-4"><span class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase ${meta.badge || ''}">${meta.label || s.status}</span></td>
+                <td class="p-4 text-right whitespace-nowrap">
+                    <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar / Agendar" onclick="openEditModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                    <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Abrir OS" onclick="window.location.href='/work-orders'"><i data-lucide="file-text" class="w-4 h-4"></i></button>
+                    <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Abrir Orçamento" onclick="window.location.href='/quotes'"><i data-lucide="file-signature" class="w-4 h-4"></i></button>
+                </td>
+            `;
+            body.appendChild(tr);
+        });
+
+        lucide.createIcons();
+    }
+
+    // ================= MODAL AGENDAR/EDITAR/REAGENDAR =================
+
+    let currentEditSchedule = null;
+
+    async function openEditModal(id) {
+        try {
+            const res = await fetch(`/agenda/view-data/${id}`);
+            if (!res.ok) throw new Error('Falha ao carregar agendamento');
+            const s = await res.json();
+            currentEditSchedule = s;
+
+            const isFirst = !s.scheduledDate;
+            document.getElementById('editModalTitle').textContent = isFirst ? 'Agendar Serviço' : 'Editar / Reagendar Serviço';
+            document.getElementById('editModalSubtitle').textContent = (s.serviceType || 'Serviço') + ' — ' + (s.clientName || '');
+
+            document.getElementById('editInfoClient').textContent = s.clientName || '-';
+            document.getElementById('editInfoDocs').textContent = (s.quoteNumber || '-') + ' / ' + (s.workOrderNumber || '-');
+            document.getElementById('editInfoDeadline').textContent = fmtBR(s.deadlineDate);
+
+            document.getElementById('editId').value = s.id;
+            document.getElementById('editDate').value = s.scheduledDate || '';
+            document.getElementById('editTime').value = s.scheduledTime ? s.scheduledTime.substring(0, 5) : '';
+            document.getElementById('editStatus').value = s.status;
+            document.getElementById('editDuration').value = s.estimatedDurationMinutes || '';
+            document.getElementById('editResponsible').value = s.responsible || '';
+            document.getElementById('editTeam').value = s.team || '';
+            document.getElementById('editReason').value = '';
+            document.getElementById('editObservations').value = s.observations || '';
+
+            const hist = document.getElementById('editHistory');
+            hist.innerHTML = '';
+            (s.history || []).forEach(h => {
+                const line = document.createElement('div');
+                line.className = 'border-b border-slate-200 dark:border-slate-800 pb-1 last:border-0';
+                line.innerHTML = `<b>${fmtDateTimeBR(h.eventDate)}</b> — ${h.action}${h.username ? ' (' + h.username + ')' : ''}${h.reason ? ' · ' + h.reason : ''}`;
+                hist.appendChild(line);
+            });
+            if (!s.history || s.history.length === 0) {
+                hist.innerHTML = '<p class="text-slate-400">Sem histórico.</p>';
+            }
+
+            closeModal('dayModal');
+            toggleModal('editModal', true);
+            lucide.createIcons();
+        } catch (err) {
+            console.error(err);
+            alert('Não foi possível carregar os dados do agendamento.');
+        }
+    }
+
+    async function submitScheduleForm() {
+        const payload = {
+            id: document.getElementById('editId').value,
+            scheduledDate: document.getElementById('editDate').value || null,
+            scheduledTime: document.getElementById('editTime').value ? (document.getElementById('editTime').value + ':00') : null,
+            status: document.getElementById('editStatus').value,
+            responsible: document.getElementById('editResponsible').value,
+            team: document.getElementById('editTeam').value,
+            estimatedDurationMinutes: document.getElementById('editDuration').value ? parseInt(document.getElementById('editDuration').value) : null,
+            observations: document.getElementById('editObservations').value,
+            reason: document.getElementById('editReason').value
+        };
+
+        try {
+            const res = await fetch('/agenda/save-ajax', { method: 'POST', headers: csrfHeaders(true), body: JSON.stringify(payload) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                alert('Erro ao salvar agendamento: ' + (data.error || 'erro desconhecido'));
+                return;
+            }
+            if (data.warning) alert(data.warning);
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
+    function openCancelModalFromEdit() {
+        toggleModal('cancelScheduleModal', true);
+    }
+
+    async function confirmCancelSchedule() {
+        const id = document.getElementById('editId').value;
+        const reason = document.getElementById('cancelScheduleReason').value || 'Cancelado via Agenda Comercial';
+        try {
+            const res = await fetch(`/agenda/cancel/${id}`, { method: 'POST', headers: csrfHeaders(false), body: reason });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert('Erro ao cancelar agendamento.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
+    // ================= INIT =================
+
+    document.addEventListener('DOMContentLoaded', () => {
+        switchView('calendar');
+    });
+</script>
+
+<style>
+    .chip { background: transparent; border-color: rgb(203 213 225); color: rgb(71 85 105); }
+    .dark .chip { border-color: rgb(51 65 85); color: rgb(148 163 184); }
+    .chip-active { background: #0284c7 !important; color: #fff !important; border-color: #0284c7 !important; }
+    .dark .chip-active { background: #06b6d4 !important; color: #0B1120 !important; border-color: #06b6d4 !important; }
+</style>
+
+</body>
+</html>

@@ -44,6 +44,11 @@ public class Quote {
     @Column(name = "date_created", updatable = false)
     private LocalDateTime dateCreated = LocalDateTime.now();
 
+    // NOVO: data em que o orçamento foi aprovado. Usado pela Agenda Comercial
+    // para calcular o prazo (Data Aprovação + 15 dias corridos).
+    @Column(name = "date_approved")
+    private LocalDateTime dateApproved;
+
     @OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("quote") // 3. CORREÇÃO: Quebra o loop com os Itens do Orçamento
     private List<QuoteItem> items = new ArrayList<>();
@@ -84,6 +89,9 @@ public class Quote {
 
     public LocalDateTime getDateCreated() { return dateCreated; }
     public void setDateCreated(LocalDateTime dateCreated) { this.dateCreated = dateCreated; }
+
+    public LocalDateTime getDateApproved() { return dateApproved; }
+    public void setDateApproved(LocalDateTime dateApproved) { this.dateApproved = dateApproved; }
 
     public List<QuoteItem> getItems() { return items; }
     public void setItems(List<QuoteItem> items) {

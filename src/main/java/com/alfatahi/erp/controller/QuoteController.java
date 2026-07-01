@@ -29,13 +29,15 @@ public class QuoteController {
     private final QuoteRepository quoteRepo;
     private final ClientRepository clientRepo;
     private final QuoteService quoteService;
+    private final com.alfatahi.erp.service.ScheduleService scheduleService;
 
     private final com.alfatahi.erp.repository.ProfileRepository profileRepo;
 
-    public QuoteController(QuoteRepository quoteRepo, ClientRepository clientRepo, QuoteService quoteService, com.alfatahi.erp.repository.ProfileRepository profileRepo) {
+    public QuoteController(QuoteRepository quoteRepo, ClientRepository clientRepo, QuoteService quoteService, com.alfatahi.erp.service.ScheduleService scheduleService, com.alfatahi.erp.repository.ProfileRepository profileRepo) {
         this.quoteRepo = quoteRepo;
         this.clientRepo = clientRepo;
         this.quoteService = quoteService;
+        this.scheduleService = scheduleService;
         this.profileRepo = profileRepo;
     }
 
@@ -191,6 +193,9 @@ public class QuoteController {
         quote.setObservations(obs + "\n[Motivo Cancelamento: " + reason + "]");
 
         quoteRepo.save(quote);
+
+        scheduleService.onQuoteCancelled(id);
+
         return ResponseEntity.ok().build();
     }
 

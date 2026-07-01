@@ -26,6 +26,7 @@ public class WorkOrder {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(columnDefinition = "TEXT")
     private String notes;
     private BigDecimal totalValue = BigDecimal.ZERO;
     private LocalDate installDate;

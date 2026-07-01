@@ -3,6 +3,7 @@ package com.alfatahi.erp.controller;
 import com.alfatahi.erp.entity.Quote;
 import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.QuoteRepository;
+import com.alfatahi.erp.service.ScheduleService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/commercial")
@@ -17,10 +19,12 @@ public class CommercialController {
 
     private final QuoteRepository quoteRepo;
     private final ClientRepository clientRepo;
+    private final ScheduleService scheduleService;
 
-    public CommercialController(QuoteRepository quoteRepo, ClientRepository clientRepo) {
+    public CommercialController(QuoteRepository quoteRepo, ClientRepository clientRepo, ScheduleService scheduleService) {
         this.quoteRepo = quoteRepo;
         this.clientRepo = clientRepo;
+        this.scheduleService = scheduleService;
     }
 
     @GetMapping
@@ -55,6 +59,11 @@ public class CommercialController {
         model.addAttribute("countApproved", approved);
         model.addAttribute("countCancelled", cancelled);
         model.addAttribute("countExpired", expired);
+
+        // AGENDA COMERCIAL — KPIs (Serviços aprovados / Aguardando agendamento /
+        // Agendados / Atrasados / Prazo médio / Agenda da semana)
+        Map<String, Object> agendaKpis = scheduleService.getKpis();
+        model.addAttribute("agendaKpis", agendaKpis);
 
 
         List<Quote> recentQuotes = allQuotes.stream()

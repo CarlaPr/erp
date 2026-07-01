@@ -29,7 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/admin/users/**").hasRole("GESTAO")
                         .requestMatchers("/dashboard", "/work-orders/**", "/payables/**", "/receivables/**", "/losses/**", "/dre/**", "/conciliation/**", "/suppliers/**", "/settings/**").hasRole("GESTAO")
-                        .requestMatchers("/commercial/**", "/quotes/**", "/clients/**", "/login-success").hasAnyRole("GESTAO", "VENDAS")
+                        .requestMatchers("/commercial/**", "/quotes/**", "/clients/**", "/agenda/**", "/login-success").hasAnyRole("GESTAO", "VENDAS")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
