@@ -40,13 +40,8 @@ public class AccountsReceivable {
     private LocalDate paymentDate;
 
     @Column(nullable = false)
-    private String status = "pending"; // pending | partial | received | cancelled
+    private String status = "pending";
 
-    // REGRA DE NEGÓCIO (A1): "Recebido" (empresa confirmou) e "Conciliado" (banco
-    // confirmou) são coisas diferentes. Este campo é independente do "status" acima
-    // e representa só o lado do banco: NAO_CONCILIADO | CONCILIADO | DIVERGENTE.
-    // Ex.: um título pode estar status=received e reconciliationStatus=NAO_CONCILIADO
-    // até o extrato bancário confirmar (ou não) aquele valor.
     @Column(name = "reconciliation_status")
     private String reconciliationStatus = "NAO_CONCILIADO";
 
@@ -58,23 +53,16 @@ public class AccountsReceivable {
     @Column(name = "card_fee_percentage", precision = 5, scale = 2)
     private BigDecimal cardFeePercentage = BigDecimal.ZERO;
 
-    // REGRA DE NEGÓCIO (A2): valor_taxa acumulado — quanto do total já "recebido"
-    // (receivedAmount) corresponde a taxa de cartão (não é dinheiro que entrou,
-    // é custo da operação). Mantido separado para nunca perder essa informação,
-    // mesmo quando o saldo da conta já foi totalmente liquidado.
+
     @Column(name = "fee_amount", precision = 12, scale = 2)
     private BigDecimal feeAmount = BigDecimal.ZERO;
 
-    // Valor bruto acumulado cobrado do cliente (soma dos valores da OS pagos).
-    // Usado apenas para verificar se a OS foi totalmente quitada (status).
-    // NÃO é o que entrou no caixa — use receivedAmount para isso.
     @Column(name = "gross_received_amount", precision = 12, scale = 2)
     private BigDecimal grossReceivedAmount = BigDecimal.ZERO;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    // ─── Getters & Setters ───────────────────────────────────────────────────
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -111,13 +99,12 @@ public class AccountsReceivable {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
-    // receivedAmount JÁ é o líquido (bruto - taxa). getNetReceivedAmount() é alias para clareza.
     public BigDecimal getNetReceivedAmount() {
         return getReceivedAmount();
     }
 
-    // Saldo da OS: quanto do valor bruto do cliente ainda não foi quitado
     public BigDecimal getBalance() {
-        return totalAmount.subtract(getGrossReceivedAmount());
+        BigDecimal gross = grossReceivedAmount != null ? grossReceivedAmount : BigDecimal.ZERO;
+        return totalAmount.subtract(gross);
     }
 }
