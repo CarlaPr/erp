@@ -48,7 +48,7 @@ CREATE TABLE public.accounts_payable (
 );
 
 
-ALTER TABLE public.accounts_payable OWNER TO postgres;
+ALTER TABLE public.accounts_payable;
 
 --
 -- TOC entry 220 (class 1259 OID 16402)
@@ -76,7 +76,7 @@ CREATE TABLE public.accounts_receivable (
 );
 
 
-ALTER TABLE public.accounts_receivable OWNER TO postgres;
+ALTER TABLE public.accounts_receivable ;
 
 --
 -- TOC entry 221 (class 1259 OID 16414)
@@ -91,7 +91,7 @@ CREATE TABLE public.app_users (
 );
 
 
-ALTER TABLE public.app_users OWNER TO postgres;
+ALTER TABLE public.app_users;
 
 --
 -- TOC entry 222 (class 1259 OID 16425)
@@ -107,7 +107,7 @@ CREATE TABLE public.bank_accounts (
 );
 
 
-ALTER TABLE public.bank_accounts OWNER TO postgres;
+ALTER TABLE public.bank_accounts ;
 
 --
 -- TOC entry 223 (class 1259 OID 16434)
@@ -130,7 +130,7 @@ CREATE TABLE public.bank_transactions (
 );
 
 
-ALTER TABLE public.bank_transactions OWNER TO postgres;
+ALTER TABLE public.bank_transactions ;
 
 --
 -- TOC entry 224 (class 1259 OID 16447)
@@ -153,7 +153,7 @@ CREATE TABLE public.clients (
 );
 
 
-ALTER TABLE public.clients OWNER TO postgres;
+ALTER TABLE public.clients;
 
 --
 -- TOC entry 225 (class 1259 OID 16456)
@@ -169,7 +169,7 @@ CREATE TABLE public.expense_allocations (
 );
 
 
-ALTER TABLE public.expense_allocations OWNER TO postgres;
+ALTER TABLE public.expense_allocations;
 
 --
 -- TOC entry 226 (class 1259 OID 16465)
@@ -187,7 +187,7 @@ CREATE TABLE public.losses (
 );
 
 
-ALTER TABLE public.losses OWNER TO postgres;
+ALTER TABLE public.losses;
 
 --
 -- TOC entry 227 (class 1259 OID 16478)
@@ -202,7 +202,7 @@ CREATE TABLE public.material_categories (
 );
 
 
-ALTER TABLE public.material_categories OWNER TO postgres;
+ALTER TABLE public.material_categories;
 
 --
 -- TOC entry 228 (class 1259 OID 16487)
@@ -224,7 +224,7 @@ CREATE TABLE public.profiles (
 );
 
 
-ALTER TABLE public.profiles OWNER TO postgres;
+ALTER TABLE public.profiles;
 
 --
 -- TOC entry 229 (class 1259 OID 16495)
@@ -244,7 +244,7 @@ CREATE TABLE public.quote_items (
 );
 
 
-ALTER TABLE public.quote_items OWNER TO postgres;
+ALTER TABLE public.quote_items;
 
 --
 -- TOC entry 230 (class 1259 OID 16503)
@@ -265,7 +265,7 @@ CREATE TABLE public.quotes (
 );
 
 
-ALTER TABLE public.quotes OWNER TO postgres;
+ALTER TABLE public.quotes ;
 
 --
 -- TOC entry 231 (class 1259 OID 16513)
@@ -279,7 +279,7 @@ CREATE TABLE public.service_categories (
 );
 
 
-ALTER TABLE public.service_categories OWNER TO postgres;
+ALTER TABLE public.service_categories;
 
 --
 -- TOC entry 232 (class 1259 OID 16522)
@@ -301,7 +301,7 @@ CREATE TABLE public.suppliers (
 );
 
 
-ALTER TABLE public.suppliers OWNER TO postgres;
+ALTER TABLE public.suppliers ;
 
 --
 -- TOC entry 233 (class 1259 OID 16531)
@@ -318,7 +318,7 @@ CREATE TABLE public.work_order_items (
 );
 
 
-ALTER TABLE public.work_order_items OWNER TO postgres;
+ALTER TABLE public.work_order_items ;
 
 --
 -- TOC entry 234 (class 1259 OID 16542)
@@ -344,7 +344,7 @@ CREATE TABLE public.work_orders (
 );
 
 
-ALTER TABLE public.work_orders OWNER TO postgres;
+ALTER TABLE public.work_orders ;
 
 --
 -- TOC entry 4815 (class 2606 OID 16401)
