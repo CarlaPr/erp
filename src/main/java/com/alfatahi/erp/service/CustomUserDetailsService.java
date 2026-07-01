@@ -28,8 +28,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new CustomUserDetails(
                 appUser.getUsername(),
                 appUser.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + appUser.getRole())),
-                appUser.getRole()  // expõe o role para os templates Thymeleaf
+                Collections.singletonList(new SimpleGrantedAuthority(appUser.getRole())),
+                appUser.getRole()
         );
     }
 }

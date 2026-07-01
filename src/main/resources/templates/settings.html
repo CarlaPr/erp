@@ -73,6 +73,72 @@
             </div>
         </form>
     </div>
+
+    <div th:if="${#authorization.expression('hasAuthority(''GESTAO'')')}" class="max-w-2xl mt-12 mb-20">
+        <div class="mb-6 flex items-center gap-3">
+            <div class="p-2 bg-indigo-500/10 rounded-lg text-indigo-500">
+                <i data-lucide="user-plus" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white">Criar Novo Acesso</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Adicione novos membros à equipe do sistema.</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
+            <form th:action="@{/settings/users/save}" method="post" class="p-8 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Username</label>
+                        <input type="text" name="username" required
+                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Senha Inicial</label>
+                        <input type="password" name="password" required
+                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nível de Acesso (Role)</label>
+                        <select name="role" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all cursor-pointer">
+                            <option value="GESTAO">Gestão Administrativa</option>
+                            <option value="VENDAS">Vendas e Comercial</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i> Cadastrar Usuário
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${#authorization.expression('hasAuthority(''GESTAO'')')}" class="max-w-2xl mt-12">
+        <div class="mb-6">
+            <h3 class="text-xl font-black text-slate-900 dark:text-white">Usuários Cadastrados</h3>
+        </div>
+
+        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Username</th>
+                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                <tr th:each="user : ${users}">
+                    <td class="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white" th:text="${user.username}"></td>
+                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400" th:text="${user.role}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </main>
 
 <div th:replace="~{fragments/layout :: lucide-script}"></div>

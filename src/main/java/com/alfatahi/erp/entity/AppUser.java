@@ -8,8 +8,7 @@ import java.util.UUID;
 public class AppUser {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private UUID id = UUID.randomUUID();
 
     @Column(unique = true, nullable = false)
     private String username;
@@ -18,7 +17,7 @@ public class AppUser {
     private String password;
 
     @Column(nullable = false)
-    private String role; // "GESTAO" ou "VENDAS"
+    private String role;
 
     // Getters e Setters
     public UUID getId() { return id; }

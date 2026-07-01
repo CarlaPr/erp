@@ -1,10 +1,17 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.entity.AppUser;
 import com.alfatahi.erp.entity.Profile;
+import com.alfatahi.erp.repository.AppUserRepository;
 import com.alfatahi.erp.repository.ProfileRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/settings")
@@ -12,13 +19,18 @@ public class SettingsController {
 
     private final ProfileRepository profileRepository;
 
-    public SettingsController(ProfileRepository profileRepository) {
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    private final AppUserRepository userRepository;
+
+    public SettingsController(ProfileRepository profileRepository, AppUserRepository userRepository) {
         this.profileRepository = profileRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
     public String getSettings(Model model) {
-        // Auto-setup: garante a existência de um registo de perfil de configuração
         Profile profile = profileRepository.findAll().stream()
                 .findFirst()
                 .orElseGet(() -> {
@@ -28,9 +40,33 @@ public class SettingsController {
                     return profileRepository.save(p);
                 });
 
+        model.addAttribute("users", userRepository.findAll());
+
         model.addAttribute("currentPage", "settings");
         model.addAttribute("profile", profile);
         return "settings";
+
+    }
+
+
+    @PostMapping("/users/save")
+    public String saveUser(@RequestParam String username,
+                           @RequestParam String password,
+                           @RequestParam String role) {
+
+        if (userRepository.findByUsername(username).isPresent()) {
+            return "redirect:/settings?error=userExists";
+        }
+
+        AppUser newUser = new AppUser();
+        newUser.setId(UUID.randomUUID());
+        newUser.setUsername(username);
+        newUser.setPassword(passwordEncoder.encode(password));
+        newUser.setRole(role);
+
+        userRepository.saveAndFlush(newUser);
+
+        return "redirect:/settings?success";
     }
 
     @PostMapping("/save")

@@ -19,11 +19,10 @@ public class AuthController {
     public String loginSuccess(Authentication authentication) {
         Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
 
-        // REQUISITO: Redirecionamento automático com base na role
-        if (roles.contains("ROLE_GESTAO")) {
+        if (roles.contains("GESTAO")) {
             return "redirect:/dashboard";
-        } else if (roles.contains("ROLE_VENDAS")) {
-            return "redirect:/commercial"; // Dashboard comercial da próxima fase
+        } else if (roles.contains("VENDAS")) {
+            return "redirect:/commercial";
         }
         return "redirect:/login";
     }

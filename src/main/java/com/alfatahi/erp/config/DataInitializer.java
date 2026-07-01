@@ -6,6 +6,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class DataInitializer implements CommandLineRunner {
 
@@ -30,6 +32,7 @@ public class DataInitializer implements CommandLineRunner {
         if (userRepository.findByUsername("admin").isEmpty()) {
             AppUser gestor = new AppUser();
             gestor.setUsername("admin");
+            gestor.setId(UUID.randomUUID());
             gestor.setPassword(passwordEncoder.encode(adminPass));
             gestor.setRole("GESTAO");
             userRepository.save(gestor);

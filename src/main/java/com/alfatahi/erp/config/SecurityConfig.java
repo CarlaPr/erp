@@ -27,9 +27,12 @@ public class SecurityConfig {
                         .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/css/**", "/js/**").permitAll()
-                        .requestMatchers("/admin/users/**").hasRole("GESTAO")
-                        .requestMatchers("/dashboard", "/work-orders/**", "/payables/**", "/receivables/**", "/losses/**", "/dre/**", "/conciliation/**", "/suppliers/**", "/settings/**").hasRole("GESTAO")
-                        .requestMatchers("/commercial/**", "/quotes/**", "/clients/**", "/agenda/**", "/login-success").hasAnyRole("GESTAO", "VENDAS")
+                        .requestMatchers("/admin/users/**").hasAuthority("GESTAO")
+                        .requestMatchers("/dashboard", "/work-orders/**", "/payables/**", "/receivables/**",
+                                "/losses/**", "/dre/**", "/conciliation/**", "/suppliers/**",
+                                "/settings/**", "/settings/users/**").hasAuthority("GESTAO")
+                        .requestMatchers("/commercial/**", "/quotes/**", "/clients/**",
+                                "/agenda/**", "/login-success").hasAnyAuthority("GESTAO", "VENDAS")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

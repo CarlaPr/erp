@@ -88,7 +88,7 @@ public class UserManagementController {
 
         String novoRole = body.get("novoRole");
         if (!"GESTAO".equals(novoRole) && !"VENDAS".equals(novoRole))
-            return ResponseEntity.badRequest().body(Map.of("erro", "novoRole deve ser GESTAO ou VENDAS"));
+            return ResponseEntity.badRequest().body(Map.of("erro", "novo Role deve ser GESTAO ou VENDAS"));
 
         return userRepository.findByUsername(username)
             .map(u -> {
