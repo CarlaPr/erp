@@ -13,4 +13,4 @@ jobs:
     steps:
       - name: Ping Render
         run: |
-          curl -L -s https://tahiglass.onrender.com > /dev/null
+          curl -L -s https://tahiglass.onrender.com/ping > /dev/null
