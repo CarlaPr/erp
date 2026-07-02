@@ -26,7 +26,8 @@
     .pulse-dot   { animation: pulse-ring 2s ease-out infinite; }
 
     .card-hover  { transition: transform .18s ease, box-shadow .18s ease; }
-    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.35); }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.15); }
+    .dark .card-hover:hover { box-shadow: 0 8px 32px rgba(0,0,0,.35); }
 
     /* Gradient accent line on KPI card top */
     .kpi-accent::before {
@@ -39,59 +40,51 @@
     }
 </style>
 
-<body class="bg-[#0B1120] flex font-sans text-slate-200">
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
-<main class="ml-64 p-8 w-full min-h-screen">
+<main class="flex-1 ml-72 p-8 min-h-screen max-w-full overflow-x-hidden">
 
-    <!-- ═══════════════════════════════════════════
-         HEADER
-    ═══════════════════════════════════════════ -->
     <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
         <div>
             <div class="flex items-center gap-2 mb-1">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot inline-block"></span>
-                <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest">Tempo Real</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 pulse-dot inline-block"></span>
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Tempo Real</span>
             </div>
-            <h1 class="text-4xl font-black text-white tracking-tight leading-none">Dashboard Executivo</h1>
-            <p class="text-slate-400 mt-1.5 text-sm">
+            <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none">Dashboard Executivo</h1>
+            <p class="text-slate-500 dark:text-slate-400 mt-1.5 text-sm">
                 Visão consolidada do negócio ·
-                <span class="text-slate-300 font-semibold"
+                <span class="text-slate-700 dark:text-slate-300 font-semibold"
                       th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">
                             02/07/2026
                         </span>
             </p>
         </div>
 
-        <!-- Quick actions -->
         <div class="flex items-center gap-3 flex-shrink-0">
             <a href="/work-orders"
-               class="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 text-slate-300 font-bold px-4 py-2.5 rounded-xl text-sm transition-all">
+               class="flex items-center gap-2 bg-white dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm dark:shadow-none">
                 <i data-lucide="clipboard-list" class="w-4 h-4"></i> Ordens de Serviço
             </a>
             <a href="/quotes"
-               class="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-black px-4 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/25">
+               class="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 dark:hover:bg-cyan-400 text-white dark:text-slate-900 font-black px-4 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/25">
                 <i data-lucide="file-plus-2" class="w-4 h-4"></i> Novo Orçamento
             </a>
         </div>
     </header>
 
-    <!-- ═══════════════════════════════════════════
-         KPI STRIP — 5 cards
-    ═══════════════════════════════════════════ -->
     <section class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
 
-        <!-- Faturamento -->
-        <div class="kpi-card kpi-accent relative bg-[#131C2F] border border-slate-700/50 rounded-2xl p-5 card-hover"
+        <div class="kpi-card kpi-accent relative bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 card-hover shadow-sm dark:shadow-none"
              style="--accent: linear-gradient(90deg,#06b6d4,#3b82f6); animation-delay:.05s">
             <div class="flex items-start justify-between mb-4">
-                <span class="text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">Faturamento<br>do Mês</span>
-                <span class="w-9 h-9 rounded-xl bg-cyan-500/15 flex items-center justify-center flex-shrink-0">
-          <i data-lucide="trending-up" class="w-4.5 h-4.5 text-cyan-400"></i>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">Faturamento<br>do Mês</span>
+                <span class="w-9 h-9 rounded-xl bg-cyan-100 dark:bg-cyan-500/15 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="trending-up" class="w-4.5 h-4.5 text-cyan-600 dark:text-cyan-400"></i>
         </span>
             </div>
-            <p class="kpi-value text-2xl font-black text-white"
+            <p class="kpi-value text-2xl font-black text-slate-900 dark:text-white"
                th:text="${faturamentoMes != null ? 'R$ ' + #numbers.formatDecimal(faturamentoMes, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
                 R$ 0,00
             </p>
@@ -101,16 +94,15 @@
             </p>
         </div>
 
-        <!-- A Receber -->
-        <div class="kpi-card kpi-accent relative bg-[#131C2F] border border-slate-700/50 rounded-2xl p-5 card-hover"
+        <div class="kpi-card kpi-accent relative bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 card-hover shadow-sm dark:shadow-none"
              style="--accent: linear-gradient(90deg,#f59e0b,#fbbf24); animation-delay:.1s">
             <div class="flex items-start justify-between mb-4">
-                <span class="text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Receber<br>Pendente</span>
-                <span class="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
-          <i data-lucide="clock" class="w-4.5 h-4.5 text-amber-400"></i>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Receber<br>Pendente</span>
+                <span class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="clock" class="w-4.5 h-4.5 text-amber-600 dark:text-amber-400"></i>
         </span>
             </div>
-            <p class="kpi-value text-2xl font-black text-amber-400"
+            <p class="kpi-value text-2xl font-black text-amber-500 dark:text-amber-400"
                th:text="${aReceberTotal != null ? 'R$ ' + #numbers.formatDecimal(aReceberTotal, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
                 R$ 0,00
             </p>
@@ -120,16 +112,15 @@
             </p>
         </div>
 
-        <!-- A Pagar -->
-        <div class="kpi-card kpi-accent relative bg-[#131C2F] border border-slate-700/50 rounded-2xl p-5 card-hover"
+        <div class="kpi-card kpi-accent relative bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 card-hover shadow-sm dark:shadow-none"
              style="--accent: linear-gradient(90deg,#f43f5e,#fb7185); animation-delay:.15s">
             <div class="flex items-start justify-between mb-4">
-                <span class="text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Pagar<br>Pendente</span>
-                <span class="w-9 h-9 rounded-xl bg-rose-500/15 flex items-center justify-center flex-shrink-0">
-          <i data-lucide="arrow-down-circle" class="w-4.5 h-4.5 text-rose-400"></i>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Pagar<br>Pendente</span>
+                <span class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-500/15 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="arrow-down-circle" class="w-4.5 h-4.5 text-rose-600 dark:text-rose-400"></i>
         </span>
             </div>
-            <p class="kpi-value text-2xl font-black text-rose-400"
+            <p class="kpi-value text-2xl font-black text-rose-500 dark:text-rose-400"
                th:text="${aPagarTotal != null ? 'R$ ' + #numbers.formatDecimal(aPagarTotal, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
                 R$ 0,00
             </p>
@@ -139,17 +130,16 @@
             </p>
         </div>
 
-        <!-- Resultado Líquido -->
-        <div class="kpi-card kpi-accent relative bg-[#131C2F] border border-slate-700/50 rounded-2xl p-5 card-hover"
+        <div class="kpi-card kpi-accent relative bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 card-hover shadow-sm dark:shadow-none"
              style="--accent: linear-gradient(90deg,#10b981,#34d399); animation-delay:.2s">
             <div class="flex items-start justify-between mb-4">
-                <span class="text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">Resultado<br>Líquido</span>
-                <span class="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
-          <i data-lucide="landmark" class="w-4.5 h-4.5 text-emerald-400"></i>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">Resultado<br>Líquido</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="landmark" class="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400"></i>
         </span>
             </div>
             <p class="kpi-value text-2xl font-black"
-               th:classappend="${resultadoLiquido != null and resultadoLiquido.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'text-emerald-400' : 'text-rose-400'}"
+               th:classappend="${resultadoLiquido != null and resultadoLiquido.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}"
                th:text="${resultadoLiquido != null ? 'R$ ' + #numbers.formatDecimal(resultadoLiquido, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
                 R$ 0,00
             </p>
@@ -159,166 +149,151 @@
             </p>
         </div>
 
-        <!-- OS Abertas -->
-        <div class="kpi-card kpi-accent relative bg-[#131C2F] border border-slate-700/50 rounded-2xl p-5 card-hover"
+        <div class="kpi-card kpi-accent relative bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 card-hover shadow-sm dark:shadow-none"
              style="--accent: linear-gradient(90deg,#8b5cf6,#a78bfa); animation-delay:.25s">
             <div class="flex items-start justify-between mb-4">
-                <span class="text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">OS em<br>Produção</span>
-                <span class="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center flex-shrink-0">
-          <i data-lucide="wrench" class="w-4.5 h-4.5 text-violet-400"></i>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">OS em<br>Andamento</span>
+                <span class="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="wrench" class="w-4.5 h-4.5 text-violet-600 dark:text-violet-400"></i>
         </span>
             </div>
-            <p class="kpi-value text-2xl font-black text-violet-400"
-               th:text="${osAbertas != null ? osAbertas : 0}">
+            <p class="kpi-value text-2xl font-black text-violet-500 dark:text-violet-400"
+               th:text="${wo.status == 'delivered' ? osAbertas : 0}">
                 0
             </p>
             <p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1">
                 <i data-lucide="zap" class="w-3 h-3 text-violet-500"></i>
-                Ordens ativas no chão de fábrica
+                Ordens ativas
             </p>
         </div>
 
     </section>
 
-    <!-- ═══════════════════════════════════════════
-         MID ROW — Fluxo de Caixa + Status OS
-    ═══════════════════════════════════════════ -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
-        <!-- Fluxo de Caixa — barra comparativa -->
-        <div class="lg:col-span-2 bg-[#131C2F] border border-slate-700/50 rounded-2xl p-6 card-hover kpi-card"
+        <div class="lg:col-span-2 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 card-hover kpi-card shadow-sm dark:shadow-none"
              style="animation-delay:.3s">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h2 class="text-base font-black text-white">Fluxo de Caixa</h2>
+                    <h2 class="text-base font-black text-slate-900 dark:text-white">Fluxo de Caixa</h2>
                     <p class="text-xs text-slate-500 mt-0.5">Receitas vs Despesas — mês corrente</p>
                 </div>
-                <a href="/dre" class="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
+                <a href="/dre" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
                     Ver DRE <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
 
-            <!-- Barra Receitas -->
             <div class="mb-4">
                 <div class="flex justify-between items-center mb-1.5">
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Receitas
           </span>
-                    <span class="text-sm font-black text-emerald-400"
+                    <span class="text-sm font-black text-emerald-500 dark:text-emerald-400"
                           th:text="${totalReceitas != null ? 'R$ ' + #numbers.formatDecimal(totalReceitas, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
             R$ 0,00
           </span>
                 </div>
-                <div class="h-3 bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div class="bar-fill h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full"
                          th:style="'width:' + (barReceitas != null ? barReceitas : 0) + '%'">
                     </div>
                 </div>
             </div>
 
-            <!-- Barra Despesas -->
             <div class="mb-4">
                 <div class="flex justify-between items-center mb-1.5">
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-rose-400 inline-block"></span> Despesas
           </span>
-                    <span class="text-sm font-black text-rose-400"
+                    <span class="text-sm font-black text-rose-500 dark:text-rose-400"
                           th:text="${totalDespesas != null ? 'R$ ' + #numbers.formatDecimal(totalDespesas, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
             R$ 0,00
           </span>
                 </div>
-                <div class="h-3 bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div class="bar-fill h-full bg-gradient-to-r from-rose-500 to-pink-400 rounded-full"
                          th:style="|--bar-w:${barDespesas != null ? barDespesas : 0}%|">
                     </div>
                 </div>
             </div>
 
-            <!-- Barra Perdas -->
             <div class="mb-6">
                 <div class="flex justify-between items-center mb-1.5">
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Perdas Operacionais
           </span>
-                    <span class="text-sm font-black text-amber-400"
+                    <span class="text-sm font-black text-amber-500 dark:text-amber-400"
                           th:text="${totalPerdas != null ? 'R$ ' + #numbers.formatDecimal(totalPerdas, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
             R$ 0,00
           </span>
                 </div>
-                <div class="h-3 bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div class="bar-fill h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full"
                          th:style="|--bar-w:${barPerdas != null ? barPerdas : 0}%|">
                     </div>
                 </div>
             </div>
 
-            <!-- Saldo final -->
-            <div class="bg-slate-800/60 rounded-xl p-4 flex items-center justify-between border border-slate-700/40">
+            <div class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 flex items-center justify-between border border-slate-200 dark:border-slate-700/40">
                 <div>
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Saldo Projetado</span>
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Saldo Projetado</span>
                     <p class="text-xs text-slate-500 mt-0.5">Receitas líquidas − total despesas</p>
                 </div>
                 <p class="text-2xl font-black"
-                   th:classappend="${saldoProjetado != null and saldoProjetado.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'text-emerald-400' : 'text-rose-400'}"
+                   th:classappend="${saldoProjetado != null and saldoProjetado.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}"
                    th:text="${saldoProjetado != null ? 'R$ ' + #numbers.formatDecimal(saldoProjetado, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
                     R$ 0,00
                 </p>
             </div>
         </div>
 
-        <!-- Status das OS -->
-        <div class="bg-[#131C2F] border border-slate-700/50 rounded-2xl p-6 card-hover kpi-card"
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 card-hover kpi-card shadow-sm dark:shadow-none"
              style="animation-delay:.35s">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h2 class="text-base font-black text-white">Ordens de Serviço</h2>
+                    <h2 class="text-base font-black text-slate-900 dark:text-white">Ordens de Serviço</h2>
                     <p class="text-xs text-slate-500 mt-0.5">Distribuição por status</p>
                 </div>
-                <a href="/work-orders" class="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
+                <a href="/work-orders" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
                     Ver todas <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
 
             <div class="space-y-3">
 
-                <div class="flex items-center justify-between p-3.5 bg-slate-800/60 rounded-xl border border-slate-700/30">
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/30">
                     <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-              <i data-lucide="clock-4" class="w-4 h-4 text-amber-400"></i>
+            <span class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+              <i data-lucide="clock-4" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
             </span>
-                        <span class="text-sm font-bold text-slate-300">Em Produção</span>
+                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Em Obra</span>
                     </div>
-                    <span class="text-lg font-black text-amber-400" th:text="${osEmProducao != null ? osEmProducao : 0}">0</span>
+                    <span class="text-lg font-black text-amber-500 dark:text-amber-400" th:text="${osEmObra != null ? osEmObra : 0}">0</span>
                 </div>
 
-                <div class="flex items-center justify-between p-3.5 bg-slate-800/60 rounded-xl border border-slate-700/30">
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/30">
                     <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center">
-              <i data-lucide="package" class="w-4 h-4 text-violet-400"></i>
+            <span class="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center">
+              <i data-lucide="package" class="w-4 h-4 text-violet-600 dark:text-violet-400"></i>
             </span>
-                        <span class="text-sm font-bold text-slate-300">Pronto p/ Entrega</span>
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/30">
+                    <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center">
+              <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600 dark:text-rose-400"></i>
+            </span>
+                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Atrasadas</span>
                     </div>
-                    <span class="text-lg font-black text-violet-400" th:text="${osProntas != null ? osProntas : 0}">0</span>
+                    <span class="text-lg font-black text-rose-500 dark:text-rose-400" th:text="${osAtrasadas != null ? osAtrasadas : 0}">0</span>
                 </div>
 
-                <div class="flex items-center justify-between p-3.5 bg-slate-800/60 rounded-xl border border-slate-700/30">
+                <div class="flex items-center justify-between p-3.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl border border-emerald-200 dark:border-emerald-500/20">
                     <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center">
-              <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-400"></i>
+            <span class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
             </span>
-                        <span class="text-sm font-bold text-slate-300">Atrasadas</span>
+                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Concluídas (mês)</span>
                     </div>
-                    <span class="text-lg font-black text-rose-400" th:text="${osAtrasadas != null ? osAtrasadas : 0}">0</span>
-                </div>
-
-                <div class="flex items-center justify-between p-3.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-                    <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-              <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
-            </span>
-                        <span class="text-sm font-bold text-slate-300">Concluídas (mês)</span>
-                    </div>
-                    <span class="text-lg font-black text-emerald-400" th:text="${osConcluidas != null ? osConcluidas : 0}">0</span>
+                    <span class="text-lg font-black text-emerald-500 dark:text-emerald-400" th:text="${osConcluido != null ? osConcluido : 0}">0</span>
                 </div>
 
             </div>
@@ -326,54 +301,47 @@
 
     </div>
 
-    <!-- ═══════════════════════════════════════════
-         BOTTOM ROW — Alertas + Orçamentos + Agenda
-    ═══════════════════════════════════════════ -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
-        <!-- Alertas Financeiros -->
-        <div class="bg-[#131C2F] border border-slate-700/50 rounded-2xl p-6 card-hover kpi-card"
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 card-hover kpi-card shadow-sm dark:shadow-none"
              style="animation-delay:.4s">
             <div class="flex items-center justify-between mb-5">
-                <h2 class="text-base font-black text-white">Alertas Financeiros</h2>
-                <span class="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center">
-          <i data-lucide="bell-ring" class="w-3.5 h-3.5 text-rose-400"></i>
+                <h2 class="text-base font-black text-slate-900 dark:text-white">Alertas Financeiros</h2>
+                <span class="w-6 h-6 rounded-full bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center">
+          <i data-lucide="bell-ring" class="w-3.5 h-3.5 text-rose-500 dark:text-rose-400"></i>
         </span>
             </div>
 
-            <!-- A receber em atraso -->
-            <div class="mb-3 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
+            <div class="mb-3 p-4 bg-amber-50 dark:bg-amber-500/10 rounded-xl border border-amber-200 dark:border-amber-500/20">
                 <div class="flex items-center gap-2 mb-1">
-                    <i data-lucide="hourglass" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
-                    <span class="text-xs font-bold text-amber-300 uppercase tracking-wide">Recebíveis em Atraso</span>
+                    <i data-lucide="hourglass" class="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0"></i>
+                    <span class="text-xs font-bold text-amber-600 dark:text-amber-300 uppercase tracking-wide">Recebíveis em Atraso</span>
                 </div>
-                <p class="text-xl font-black text-amber-400 ml-6"
+                <p class="text-xl font-black text-amber-600 dark:text-amber-400 ml-6"
                    th:text="${aReceberAtrasado != null ? 'R$ ' + #numbers.formatDecimal(aReceberAtrasado, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
                     R$ 0,00
                 </p>
-                <p class="text-[11px] text-amber-500/70 ml-6 mt-0.5">Vencidos e não liquidados</p>
+                <p class="text-[11px] text-amber-600/70 dark:text-amber-500/70 ml-6 mt-0.5">Vencidos e não liquidados</p>
             </div>
 
-            <!-- A pagar vencendo hoje / amanhã -->
-            <div class="mb-3 p-4 bg-rose-500/10 rounded-xl border border-rose-500/20">
+            <div class="mb-3 p-4 bg-rose-50 dark:bg-rose-500/10 rounded-xl border border-rose-200 dark:border-rose-500/20">
                 <div class="flex items-center gap-2 mb-1">
-                    <i data-lucide="calendar-x-2" class="w-4 h-4 text-rose-400 flex-shrink-0"></i>
-                    <span class="text-xs font-bold text-rose-300 uppercase tracking-wide">Pagamentos Vencidos</span>
+                    <i data-lucide="calendar-x-2" class="w-4 h-4 text-rose-500 dark:text-rose-400 flex-shrink-0"></i>
+                    <span class="text-xs font-bold text-rose-600 dark:text-rose-300 uppercase tracking-wide">Pagamentos Vencidos</span>
                 </div>
-                <p class="text-xl font-black text-rose-400 ml-6"
+                <p class="text-xl font-black text-rose-600 dark:text-rose-400 ml-6"
                    th:text="${aPagarVencido != null ? 'R$ ' + #numbers.formatDecimal(aPagarVencido, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
                     R$ 0,00
                 </p>
-                <p class="text-[11px] text-rose-500/70 ml-6 mt-0.5">Fornecedores aguardando</p>
+                <p class="text-[11px] text-rose-600/70 dark:text-rose-500/70 ml-6 mt-0.5">Fornecedores aguardando</p>
             </div>
 
-            <!-- Margem de perdas -->
-            <div class="p-4 bg-slate-800/60 rounded-xl border border-slate-700/30">
+            <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/30">
                 <div class="flex items-center gap-2 mb-1">
-                    <i data-lucide="flame" class="w-4 h-4 text-orange-400 flex-shrink-0"></i>
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">Margem de Perdas</span>
+                    <i data-lucide="flame" class="w-4 h-4 text-orange-500 dark:text-orange-400 flex-shrink-0"></i>
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Margem de Perdas</span>
                 </div>
-                <p class="text-xl font-black text-orange-400 ml-6"
+                <p class="text-xl font-black text-orange-500 dark:text-orange-400 ml-6"
                    th:text="${margemPerdas != null ? margemPerdas + '%' : '0,00%'}">
                     0,00%
                 </p>
@@ -381,62 +349,57 @@
             </div>
         </div>
 
-        <!-- Orçamentos Pendentes -->
-        <div class="bg-[#131C2F] border border-slate-700/50 rounded-2xl p-6 card-hover kpi-card"
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 card-hover kpi-card shadow-sm dark:shadow-none"
              style="animation-delay:.45s">
             <div class="flex items-center justify-between mb-5">
                 <div>
-                    <h2 class="text-base font-black text-white">Orçamentos</h2>
+                    <h2 class="text-base font-black text-slate-900 dark:text-white">Orçamentos</h2>
                     <p class="text-xs text-slate-500 mt-0.5">Funil de vendas</p>
                 </div>
-                <a href="/quotes" class="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
+                <a href="/quotes" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
                     Gerir <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
 
             <div class="space-y-2.5">
-                <!-- Pendentes -->
-                <div class="flex items-center gap-3 p-3 bg-slate-800/60 rounded-xl">
+                <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-transparent">
                     <span class="w-2 h-8 rounded-full bg-amber-400 flex-shrink-0"></span>
                     <div class="flex-1">
-                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Aguardando Resposta</p>
-                        <p class="text-sm font-black text-white mt-0.5"
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wide">Aguardando Resposta</p>
+                        <p class="text-sm font-black text-slate-900 dark:text-white mt-0.5"
                            th:text="${orcamentosPendentes != null ? orcamentosPendentes + ' orçamentos' : '0 orçamentos'}">
                             0 orçamentos
                         </p>
                     </div>
                 </div>
 
-                <!-- Aprovados -->
-                <div class="flex items-center gap-3 p-3 bg-slate-800/60 rounded-xl">
+                <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-transparent">
                     <span class="w-2 h-8 rounded-full bg-emerald-400 flex-shrink-0"></span>
                     <div class="flex-1">
-                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Aprovados (mês)</p>
-                        <p class="text-sm font-black text-emerald-400 mt-0.5"
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wide">Aprovados (mês)</p>
+                        <p class="text-sm font-black text-emerald-500 dark:text-emerald-400 mt-0.5"
                            th:text="${orcamentosAprovados != null ? orcamentosAprovados + ' orçamentos' : '0 orçamentos'}">
                             0 orçamentos
                         </p>
                     </div>
                 </div>
 
-                <!-- Valor Pipeline -->
-                <div class="flex items-center gap-3 p-3 bg-slate-800/60 rounded-xl">
+                <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-transparent">
                     <span class="w-2 h-8 rounded-full bg-cyan-400 flex-shrink-0"></span>
                     <div class="flex-1">
-                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Pipeline em Aberto</p>
-                        <p class="text-sm font-black text-cyan-400 mt-0.5"
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wide">Pipeline em Aberto</p>
+                        <p class="text-sm font-black text-cyan-600 dark:text-cyan-400 mt-0.5"
                            th:text="${orcamentosValor != null ? 'R$ ' + #numbers.formatDecimal(orcamentosValor, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
                             R$ 0,00
                         </p>
                     </div>
                 </div>
 
-                <!-- Taxa de conversão -->
-                <div class="flex items-center gap-3 p-3 bg-slate-800/60 rounded-xl">
+                <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-transparent">
                     <span class="w-2 h-8 rounded-full bg-violet-400 flex-shrink-0"></span>
                     <div class="flex-1">
-                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Taxa de Aprovação</p>
-                        <p class="text-sm font-black text-violet-400 mt-0.5"
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wide">Taxa de Aprovação</p>
+                        <p class="text-sm font-black text-violet-600 dark:text-violet-400 mt-0.5"
                            th:text="${taxaConversao != null ? taxaConversao + '%' : '—'}">
                             —
                         </p>
@@ -445,65 +408,62 @@
             </div>
         </div>
 
-        <!-- Agenda do Dia -->
-        <div class="bg-[#131C2F] border border-slate-700/50 rounded-2xl p-6 card-hover kpi-card"
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 card-hover kpi-card shadow-sm dark:shadow-none"
              style="animation-delay:.5s">
             <div class="flex items-center justify-between mb-5">
                 <div>
-                    <h2 class="text-base font-black text-white">Agenda de Hoje</h2>
+                    <h2 class="text-base font-black text-slate-900 dark:text-white">Agenda de Hoje</h2>
                     <p class="text-xs text-slate-500 mt-0.5">Compromissos e visitas</p>
                 </div>
-                <a href="/agenda" class="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
+                <a href="/agenda" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
                     Abrir <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
 
-            <!-- Lista de agendamentos -->
             <div class="space-y-2" th:if="${agendaHoje != null and not #lists.isEmpty(agendaHoje)}">
                 <div th:each="ag : ${agendaHoje}"
-                     class="flex items-start gap-3 p-3 bg-slate-800/60 rounded-xl hover:bg-slate-700/40 transition-colors group">
-                    <div class="w-8 h-8 rounded-lg bg-cyan-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <i data-lucide="map-pin" class="w-4 h-4 text-cyan-400"></i>
+                     class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/40 border border-slate-100 dark:border-transparent transition-colors group">
+                    <div class="w-8 h-8 rounded-lg bg-cyan-100 dark:bg-cyan-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-cyan-600 dark:text-cyan-400"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-white truncate" th:text="${ag.client.name}">Cliente
+                        <p class="text-sm font-bold text-slate-900 dark:text-white truncate" th:text="${ag.client.name}">Cliente
                         </p>
-                        <p class="text-[11px] text-slate-400 truncate" th:text="${ag.title}">Visita técnica</p>
-                        <p class="text-[11px] text-cyan-400 font-mono mt-0.5"
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate"
+                           th:text="${ag.workOrder != null ? ag.workOrder.title : (ag.observations != null ? ag.observations : 'Compromisso Agendado')}">
+                            Visita técnica
+                        </p>
+                        <p class="text-[11px] text-cyan-600 dark:text-cyan-400 font-mono mt-0.5"
                            th:text="${ag.scheduledDate != null ? #temporals.format(ag.scheduledDate, 'HH:mm') : '--:--'}">
                             --:--
                         </p>
                     </div>
                     <span th:if="${ag.status == 'overdue'}"
-                          class="w-2 h-2 rounded-full bg-rose-400 flex-shrink-0 mt-2"></span>
+                          class="w-2 h-2 rounded-full bg-rose-500 dark:bg-rose-400 flex-shrink-0 mt-2"></span>
                 </div>
             </div>
 
-            <!-- Empty state -->
             <div th:if="${agendaHoje == null or #lists.isEmpty(agendaHoje)}"
                  class="flex flex-col items-center justify-center h-36 text-center">
-        <span class="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center mb-3">
-          <i data-lucide="calendar-check-2" class="w-6 h-6 text-slate-600"></i>
+        <span class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+          <i data-lucide="calendar-check-2" class="w-6 h-6 text-slate-400 dark:text-slate-600"></i>
         </span>
-                <p class="text-slate-500 text-sm font-bold">Sem compromissos hoje</p>
-                <p class="text-slate-600 text-xs mt-1">A agenda está livre para este dia.</p>
+                <p class="text-slate-600 dark:text-slate-500 text-sm font-bold">Sem compromissos hoje</p>
+                <p class="text-slate-500 dark:text-slate-600 text-xs mt-1">A agenda está livre para este dia.</p>
             </div>
         </div>
 
     </div>
 
-    <!-- ═══════════════════════════════════════════
-         ÚLTIMAS ORDENS DE SERVIÇO
-    ═══════════════════════════════════════════ -->
-    <section class="bg-[#131C2F] border border-slate-700/50 rounded-2xl overflow-hidden kpi-card"
+    <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl overflow-hidden kpi-card shadow-sm dark:shadow-none"
              style="animation-delay:.55s">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-700/50">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50">
             <div>
-                <h2 class="text-base font-black text-white">Últimas Ordens de Serviço</h2>
+                <h2 class="text-base font-black text-slate-900 dark:text-white">Últimas Ordens de Serviço</h2>
                 <p class="text-xs text-slate-500 mt-0.5">5 mais recentes — clique na OS para detalhes</p>
             </div>
             <a href="/work-orders"
-               class="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors">
+               class="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 flex items-center gap-1 transition-colors">
                 Ver todas <i data-lucide="arrow-right" class="w-3 h-3"></i>
             </a>
         </div>
@@ -511,7 +471,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                <tr class="bg-slate-800/50 text-slate-500 font-bold text-[11px] uppercase tracking-widest">
+                <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-bold text-[11px] uppercase tracking-widest border-b border-slate-200 dark:border-transparent">
                     <th class="px-6 py-3.5">Nº / OS</th>
                     <th class="px-6 py-3.5">Cliente</th>
                     <th class="px-6 py-3.5">Serviço</th>
@@ -520,53 +480,49 @@
                     <th class="px-6 py-3.5 text-center">Status</th>
                 </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-800/80">
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800/80">
 
                 <tr th:each="os : ${ultimasOs}"
-                    class="hover:bg-slate-800/40 transition-colors cursor-pointer group">
+                    class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group">
                     <td class="px-6 py-4">
-                        <a th:href="@{/work-orders}" class="font-mono text-sm font-black text-cyan-400 group-hover:text-cyan-300"
+                        <a th:href="@{/work-orders}" class="font-mono text-sm font-black text-cyan-600 dark:text-cyan-400 group-hover:text-cyan-500 dark:group-hover:text-cyan-300"
                            th:text="${os.number}">OS-001</a>
                     </td>
                     <td class="px-6 py-4">
-                        <p class="font-bold text-sm text-white" th:text="${os.client != null ? os.client.name : 'Sem cliente'}">Cliente</p>
+                        <p class="font-bold text-sm text-slate-900 dark:text-white" th:text="${os.client != null ? os.client.name : 'Sem cliente'}">Cliente</p>
                     </td>
                     <td class="px-6 py-4">
-                        <p class="text-sm text-slate-300 truncate max-w-[180px]" th:text="${os.title}">Serviço</p>
+                        <p class="text-sm text-slate-600 dark:text-slate-300 truncate max-w-[180px]" th:text="${os.title}">Serviço</p>
                     </td>
                     <td class="px-6 py-4 text-center">
               <span class="text-sm font-bold"
-                    th:classappend="${os.deliveryDate != null and os.deliveryDate.isBefore(#temporals.createNow().toLocalDate()) and os.status != 'concluida' ? 'text-rose-400' : 'text-slate-300'}"
-                    th:text="${os.deliveryDate != null ? #temporals.format(os.deliveryDate, 'dd/MM/yy') : '—'}">
+                    th:classappend="${os.installDate != null and os.installDate.isBefore(#temporals.createNow().toLocalDate()) and os.status != 'concluida' ? 'text-rose-500 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'}"
+                    th:text="${os.installDate != null ? #temporals.format(os.installDate, 'dd/MM/yy') : '—'}">
                 —
               </span>
                     </td>
                     <td class="px-6 py-4 text-right">
-              <span class="font-mono font-black text-sm text-white"
+              <span class="font-mono font-black text-sm text-slate-900 dark:text-white"
                     th:text="${os.totalValue != null ? 'R$ ' + #numbers.formatDecimal(os.totalValue, 1, 'POINT', 2, 'COMMA') : '—'}">
                 —
               </span>
                     </td>
                     <td class="px-6 py-4 text-center">
-                        <!-- em produção -->
-                        <span th:if="${os.status == 'em_producao' or os.status == 'aberta'}"
-                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase tracking-wide">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span> Em Produção
+                        <span th:if="${os.status == 'delivered' or os.status == 'aberta'}"
+                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 inline-block"></span> Em Andamento
               </span>
-                        <!-- pronta -->
                         <span th:if="${os.status == 'pronta'}"
-                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-violet-500/20 text-violet-400 uppercase tracking-wide">
-                <span class="w-1.5 h-1.5 rounded-full bg-violet-400 inline-block"></span> Pronta
+                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 uppercase tracking-wide">
+                <span class="w-1.5 h-1.5 rounded-full bg-violet-500 dark:bg-violet-400 inline-block"></span> Pronta
               </span>
-                        <!-- concluída -->
                         <span th:if="${os.status == 'concluida'}"
-                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase tracking-wide">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span> Concluída
+                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 inline-block"></span> Concluída
               </span>
-                        <!-- cancelada -->
                         <span th:if="${os.status == 'cancelada'}"
-                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-slate-700/60 text-slate-400 uppercase tracking-wide">
-                <span class="w-1.5 h-1.5 rounded-full bg-slate-500 inline-block"></span> Cancelada
+                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 inline-block"></span> Cancelada
               </span>
                     </td>
                 </tr>
@@ -574,9 +530,9 @@
                 <tr th:if="${ultimasOs == null or #lists.isEmpty(ultimasOs)}">
                     <td colspan="6" class="px-6 py-12 text-center">
                         <div class="flex flex-col items-center gap-2">
-                            <i data-lucide="package-open" class="w-8 h-8 text-slate-700"></i>
+                            <i data-lucide="package-open" class="w-8 h-8 text-slate-400 dark:text-slate-700"></i>
                             <p class="text-slate-500 font-bold text-sm">Nenhuma ordem de serviço cadastrada.</p>
-                            <a href="/work-orders" class="text-xs text-cyan-400 hover:text-cyan-300 font-bold">Criar primeira OS →</a>
+                            <a href="/work-orders" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold">Criar primeira OS →</a>
                         </div>
                     </td>
                 </tr>
@@ -585,7 +541,6 @@
         </div>
     </section>
 
-    <!-- Bottom padding -->
     <div class="h-8"></div>
 
 </main>
