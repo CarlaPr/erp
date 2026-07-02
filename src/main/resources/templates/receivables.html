@@ -100,6 +100,12 @@
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </a>
             </div>
+
+            <div class="flex gap-2">
+                <button type="button" onclick="openModal('exportModal')" class="flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl px-4 py-3 text-sm transition-all shadow-md shadow-indigo-500/20" title="Exportar para Excel (CSV)">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                </button>
+            </div>
         </div>
     </form>
 
@@ -488,6 +494,32 @@
         </div>
     </div>
 
+    <div id="exportModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
+                <h2 class="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                    <i data-lucide="file-spreadsheet" class="w-6 h-6 text-indigo-500"></i> Exportar
+                </h2>
+                <button type="button" onclick="closeModal('exportModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white bg-white dark:bg-transparent p-1.5 rounded-lg border border-slate-200 dark:border-transparent transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Selecione o Mês</label>
+                    <input type="month" id="exportMonth" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all text-base">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal('exportModal')" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">Cancelar</button>
+                    <button type="button" onclick="generateExcel()" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-lg shadow-indigo-500/20 transition-all text-sm flex items-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i> Gerar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <style>
@@ -588,6 +620,35 @@
         document.getElementById("editWorkOrder").value = workOrder || "";
 
         openModal("editModal");
+    }
+
+    function generateExcel() {
+        const monthInput = document.getElementById('exportMonth').value;
+
+        if (!monthInput) {
+            alert('Por favor, selecione um mês!');
+            return;
+        }
+
+        // O input type="month" retorna o valor no formato "YYYY-MM" (Ex: 2026-07)
+        const [year, month] = monthInput.split('-');
+
+        // Calcula o primeiro e o último dia do mês escolhido
+        const dateFrom = `${year}-${month}-01`;
+        const lastDay = new Date(year, month, 0).getDate();
+        const dateTo = `${year}-${month}-${lastDay}`;
+
+        // Lê a URL atual dinamicamente (para saber se está em /receivables ou /payables)
+        const currentPath = window.location.pathname;
+
+        // Monta o link final passando a data inicial e final do mês
+        const url = `${currentPath}/export?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+
+        // Faz o redirecionamento invisível para baixar o arquivo
+        window.location.href = url;
+
+        // Fecha a modal
+        closeModal('exportModal');
     }
 
 </script>

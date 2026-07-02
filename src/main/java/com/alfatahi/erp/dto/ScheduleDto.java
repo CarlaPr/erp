@@ -8,12 +8,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * DTO plano usado pela tela da Agenda Comercial (calendário, lista e modal).
- * Junta dados de Schedule + Quote + WorkOrder + Client já calculados no servidor
- * (número do orçamento, número da OS, nome do cliente, semáforo, dias restantes etc.)
- * para simplificar o JS da tela.
- */
 public class ScheduleDto {
 
     private UUID id;
@@ -38,10 +32,11 @@ public class ScheduleDto {
     private String status;
     private String statusLabel;
 
-    /** GREEN | YELLOW | RED | NEUTRAL */
     private String semaphore;
 
-    /** Dias restantes até o prazo limite (pode ser negativo se atrasado). */
+    private String clientAddress;
+    private List<String> serviceDetails;
+
     private Long daysRemaining;
 
     private String responsible;
@@ -53,6 +48,22 @@ public class ScheduleDto {
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
+
+    public String getClientAddress() {
+        return clientAddress;
+    }
+
+    public void setClientAddress(String clientAddress) {
+        this.clientAddress = clientAddress;
+    }
+
+    public List<String> getServiceDetails() {
+        return serviceDetails;
+    }
+
+    public void setServiceDetails(List<String> serviceDetails) {
+        this.serviceDetails = serviceDetails;
+    }
 
     public UUID getQuoteId() { return quoteId; }
     public void setQuoteId(UUID quoteId) { this.quoteId = quoteId; }

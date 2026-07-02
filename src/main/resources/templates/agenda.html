@@ -150,7 +150,7 @@
                     <th class="p-4">Cliente</th>
                     <th class="p-4">Orçamento</th>
                     <th class="p-4">OS</th>
-                    <th class="p-4">Entregar até</th>
+                    <th class="p-4">Prazo - Entregar até</th>
                     <th class="p-4">Dias Restantes</th>
                     <th class="p-4">Data agendada</th>
                     <th class="p-4">Status</th>
@@ -169,7 +169,21 @@
             <button type="button" onclick="closeModal('dayModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
-            <h3 id="dayModalTitle" class="text-xl font-black text-slate-900 dark:text-white mb-5">Serviços do dia</h3>
+            <br><br>
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="dayModalTitle"
+                    class="text-xl font-black text-slate-900 dark:text-white">
+                    Serviços do dia
+                </h3>
+
+                <button type="button"
+                        id="btnDayPdf"
+                        class="px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-md flex items-center gap-2">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    Gerar Roteiro (PDF) - Imprimir
+                </button>
+            </div>
+
             <div id="dayModalList" class="space-y-3 max-h-[65vh] overflow-y-auto pr-1"></div>
         </div>
     </div>
@@ -187,15 +201,18 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 text-xs">
                 <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
                     <span class="block text-slate-400 font-bold uppercase mb-1">Cliente</span>
-                    <span id="editInfoClient" class="font-bold text-slate-800 dark:text-white">-</span>
+                    <span id="editInfoClient" class="font-bold text-slate-800 dark:text-white block">-</span>
+                    <span id="editInfoAddress" class="text-slate-500 dark:text-slate-400 mt-1 block leading-tight">-</span>
                 </div>
                 <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
                     <span class="block text-slate-400 font-bold uppercase mb-1">Orçamento / OS</span>
-                    <span id="editInfoDocs" class="font-bold text-slate-800 dark:text-white">-</span>
+                    <span id="editInfoDocs" class="font-bold text-slate-800 dark:text-white block">-</span>
+                    <span class="block text-slate-400 font-bold uppercase mt-2 mb-1">Prazo - Entregar até</span>
+                    <span id="editInfoDeadline" class="font-bold text-slate-800 dark:text-white block">-</span>
                 </div>
                 <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
-                    <span class="block text-slate-400 font-bold uppercase mb-1">Entregar até</span>
-                    <span id="editInfoDeadline" class="font-bold text-slate-800 dark:text-white">-</span>
+                    <span class="block text-slate-400 font-bold uppercase mb-2">Serviços / Itens a Executar</span>
+                    <div id="editInfoServices" class="space-y-1.5 max-h-32 overflow-y-auto pr-1"></div>
                 </div>
             </div>
 
@@ -369,7 +386,6 @@
         return fmtBR(dtStr.substring(0, 10));
     }
 
-    // ================= FILTROS =================
 
     function toggleChip(key) {
         state.filters[key] = !state.filters[key];
@@ -427,8 +443,6 @@
         });
     }
 
-    // ================= RENDER GERAL =================
-
     function switchView(view) {
         state.view = view;
         document.getElementById('calendarView').classList.toggle('hidden', view !== 'calendar');
@@ -450,7 +464,6 @@
         renderUnscheduledPanel();
     }
 
-    // ================= CALENDÁRIO =================
 
     function changeMonth(delta) {
         state.month = new Date(state.month.getFullYear(), state.month.getMonth() + delta, 1);
@@ -535,6 +548,8 @@
     function openDayModal(dateStr) {
         const items = applyFilters(SCHEDULES).filter(s => s.scheduledDate === dateStr);
         document.getElementById('dayModalTitle').textContent = 'Serviços do dia ' + fmtBR(dateStr);
+        document.getElementById('btnDayPdf').onclick = () => generateDayPdf(dateStr);
+
         const list = document.getElementById('dayModalList');
         list.innerHTML = '';
 
@@ -547,24 +562,36 @@
             const row = document.createElement('div');
             row.className = 'border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50 dark:bg-slate-900';
             row.innerHTML = `
-                <div class="flex justify-between items-start mb-2">
+                <div class="flex justify-between items-start mb-3">
                     <div>
                         <p class="font-black text-slate-900 dark:text-white">${s.clientName || 'Sem cliente'}</p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">${s.serviceType || 'Serviço'} ${s.scheduledTime ? '· ' + fmtTimeBR(s.scheduledTime) : ''}</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex gap-1">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 shrink-0"></i> ${s.clientAddress || 'Endereço não informado'}
+                        </p>
                     </div>
                     <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase ${meta.badge || ''}">${meta.label || s.status}</span>
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 mb-3">
+
+                <div class="mb-4 p-2.5 bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-lg shadow-inner">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Serviços / Itens Agendados</p>
+                    <div class="flex flex-col gap-1.5">
+                        ${(s.serviceDetails && Array.isArray(s.serviceDetails))
+                ? s.serviceDetails.map(item => `<div class="bg-brand-50 dark:bg-cyan-900/20 border border-brand-100 dark:border-cyan-800/50 px-2.5 py-1.5 rounded-md text-[11px] font-semibold text-brand-700 dark:text-cyan-400">${item}</div>`).join('')
+                : `<span class="text-xs font-semibold text-brand-700 dark:text-cyan-400">${s.serviceType || 'Não detalhado'}</span>`
+            }
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 mb-4">
                     <span><b>Orçamento:</b> ${s.quoteNumber || '-'}</span>
                     <span><b>OS:</b> ${s.workOrderNumber || '-'}</span>
                     <span><b>Aprovação:</b> ${fmtDateTimeBR(s.approvalDate)}</span>
-                    <span><b>Entregar até:</b> ${fmtBR(s.deadlineDate)}</span>
+                    <span><b>Prazo - Entregar até:</b> ${fmtBR(s.deadlineDate)}</span>
                     <span><b>Responsável:</b> ${s.responsible || '-'}</span>
-                    <span><b>Obs.:</b> ${s.observations || '-'}</span>
+                    <span><b>Hora Prevista:</b> ${s.scheduledTime ? fmtTimeBR(s.scheduledTime) : '-'}</span>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openEditModal('${s.id}')">Editar</button>
-                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="openEditModal('${s.id}')">Reagendar</button>
+                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openEditModal('${s.id}')">Gerenciar (Agendar/Editar)</button>
                     <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/quotes'">Abrir Orçamento</button>
                 </div>
             `;
@@ -574,7 +601,94 @@
         toggleModal('dayModal', true);
     }
 
-    // ================= AGUARDANDO AGENDAMENTO =================
+    function generateDayPdf(dateStr) {
+        const items = applyFilters(SCHEDULES).filter(s => s.scheduledDate === dateStr);
+        if (items.length === 0) {
+            alert('Não há serviços para gerar o PDF neste dia.');
+            return;
+        }
+
+        const dataFormatada = fmtBR(dateStr);
+
+        let html = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <title>Roteiro de Obras - ${dataFormatada}</title>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 20px; line-height: 1.5; }
+                h2 { text-align: center; margin-bottom: 5px; color: #0f172a; text-transform: uppercase; }
+                .subtitle { text-align: center; font-size: 14px; color: #64748b; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
+                .card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 20px; page-break-inside: avoid; }
+                .card-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
+                .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; margin-bottom: 15px; }
+                .label { font-weight: bold; color: #475569; }
+                .items-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; }
+                .items-box-title { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #64748b; margin-bottom: 8px; letter-spacing: 0.5px; }
+                .item-line { font-size: 13px; font-weight: 600; color: #0369a1; margin-bottom: 4px; padding-left: 10px; position: relative; }
+                .item-line::before { content: "•"; position: absolute; left: 0; color: #0284c7; }
+                .obs { margin-top: 12px; font-size: 13px; background: #fffbeb; padding: 8px 12px; border-left: 3px solid #f59e0b; border-radius: 4px; }
+                @media print {
+                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Agenda Comercial - Roteiro Diário</h2>
+            <div class="subtitle">Data de Execução: <strong>${dataFormatada}</strong> &nbsp;|&nbsp; Total de Obras: <strong>${items.length}</strong></div>
+        `;
+
+        items.forEach((s, i) => {
+            let listaItens = '';
+            if (s.serviceDetails && Array.isArray(s.serviceDetails)) {
+                listaItens = s.serviceDetails.map(item => `<div class="item-line">${item}</div>`).join('');
+            } else {
+                listaItens = `<div class="item-line">${s.serviceType || 'Serviço não detalhado'}</div>`;
+            }
+
+            html += `
+            <div class="card">
+                <div class="card-header">
+                    <span>${i + 1}. Cliente: ${s.clientName || 'Não informado'}</span>
+                    <span>OS: ${s.workOrderNumber || '-'}</span>
+                </div>
+                <div class="grid">
+                    <div><span class="label">Endereço:</span> ${s.clientAddress || '-'}</div>
+                    <div><span class="label">Orçamento:</span> ${s.quoteNumber || '-'}</div>
+                    <div><span class="label">Horário Agendado:</span> ${s.scheduledTime ? s.scheduledTime.substring(0, 5) : 'A definir'}</div>
+                    <div><span class="label">Equipe/Resp.:</span> ${s.team || s.responsible || '-'}</div>
+                </div>
+                <div class="items-box">
+                    <div class="items-box-title">Serviços / Itens a Executar na Obra</div>
+                    ${listaItens}
+                </div>
+                ${s.observations ? `<div class="obs"><span class="label">Observações da Obra:</span> ${s.observations}</div>` : ''}
+            </div>
+            `;
+        });
+
+        html += `
+            <script>
+            window.onload = function() {
+                // Desenha os ícones antes de imprimir
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    window.print();
+                    window.onafterprint = function() { window.close(); };
+                }, 500); // Aumentei para 500ms para garantir que o render termine
+            };
+        </body>
+        </html>
+        `;
+
+        const janelaPdf = window.open('', '_blank');
+        janelaPdf.document.write(html);
+        janelaPdf.document.close();
+
+        lucide.createIcons();
+    }
 
     function renderUnscheduledPanel() {
         const pending = applyFilters(SCHEDULES).filter(s => !s.scheduledDate && s.status !== 'CANCELADO');
@@ -598,7 +712,6 @@
         });
     }
 
-    // ================= LISTA =================
 
     function renderList() {
         const filtered = applyFilters(SCHEDULES).slice().sort((a, b) => {
@@ -637,8 +750,6 @@
         lucide.createIcons();
     }
 
-    // ================= MODAL AGENDAR/EDITAR/REAGENDAR =================
-
     let currentEditSchedule = null;
 
     async function openEditModal(id) {
@@ -653,8 +764,18 @@
             document.getElementById('editModalSubtitle').textContent = (s.serviceType || 'Serviço') + ' — ' + (s.clientName || '');
 
             document.getElementById('editInfoClient').textContent = s.clientName || '-';
+            document.getElementById('editInfoAddress').textContent = s.clientAddress || 'Endereço não informado';
             document.getElementById('editInfoDocs').textContent = (s.quoteNumber || '-') + ' / ' + (s.workOrderNumber || '-');
             document.getElementById('editInfoDeadline').textContent = fmtBR(s.deadlineDate);
+
+            const servicesDiv = document.getElementById('editInfoServices');
+            if (s.serviceDetails && Array.isArray(s.serviceDetails) && s.serviceDetails.length > 0) {
+                servicesDiv.innerHTML = s.serviceDetails.map(item =>
+                    `<div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 p-2 rounded-lg text-[11px] font-semibold text-slate-700 dark:text-slate-300 shadow-sm">${item}</div>`
+                ).join('');
+            } else {
+                servicesDiv.innerHTML = '<span class="font-bold text-slate-800 dark:text-white">-</span>';
+            }
 
             document.getElementById('editId').value = s.id;
             document.getElementById('editDate').value = s.scheduledDate || '';
@@ -735,7 +856,6 @@
         }
     }
 
-    // ================= INIT =================
 
     document.addEventListener('DOMContentLoaded', () => {
         switchView('calendar');

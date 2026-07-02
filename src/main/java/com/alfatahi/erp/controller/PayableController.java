@@ -179,9 +179,67 @@ public class PayableController {
         return "redirect:/payables";
     }
 
-    // Mantido por compatibilidade (redireciona para cancel)
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable UUID id) {
         return cancel(id);
+    }
+
+    @Transactional(readOnly = true)
+    @GetMapping("/export")
+    public void exportCsv(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) UUID supplierId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+            @RequestParam(required = false) UUID workOrderId,
+            jakarta.servlet.http.HttpServletResponse response) throws Exception {
+
+        List<AccountsPayable> list = financeService.listAllPayables().stream()
+                .filter(p -> !("cancelled".equals(p.getStatus()) || "inactive".equals(p.getStatus()))
+                        || ("cancelled".equals(status) || "inactive".equals(status)))
+                .collect(Collectors.toList());
+
+        if (search != null && !search.isBlank()) {
+            String q = search.toLowerCase();
+            list = list.stream().filter(p ->
+                    p.getDescription().toLowerCase().contains(q)
+                            || (p.getSupplier() != null && p.getSupplier().getName().toLowerCase().contains(q))
+                            || (p.getDocumentNumber() != null && p.getDocumentNumber().toLowerCase().contains(q))
+            ).collect(Collectors.toList());
+        }
+        if (status != null && !status.isBlank()) list = list.stream().filter(p -> status.equals(p.getStatus())).collect(Collectors.toList());
+        if (category != null && !category.isBlank()) list = list.stream().filter(p -> category.equals(p.getCategory())).collect(Collectors.toList());
+        if (supplierId != null) list = list.stream().filter(p -> p.getSupplier() != null && supplierId.equals(p.getSupplier().getId())).collect(Collectors.toList());
+        if (dateFrom != null) list = list.stream().filter(p -> !p.getDueDate().isBefore(dateFrom)).collect(Collectors.toList());
+        if (dateTo != null) list = list.stream().filter(p -> !p.getDueDate().isAfter(dateTo)).collect(Collectors.toList());
+        if (workOrderId != null) list = list.stream().filter(p -> p.getWorkOrder() != null && workOrderId.equals(p.getWorkOrder().getId())).collect(Collectors.toList());
+
+        response.setContentType("text/csv; charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=\"contas_a_pagar.csv\"");
+        response.getOutputStream().write(0xEF);
+        response.getOutputStream().write(0xBB);
+        response.getOutputStream().write(0xBF);
+
+        java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(response.getOutputStream(), "UTF-8"));
+
+        writer.println("Vencimento;Data Pagamento;Fornecedor;Categoria;O.S.;Descricao;Forma Pgto;Total;Pago;Pendente;Status");
+
+        java.util.Locale ptBR = new java.util.Locale("pt", "BR");
+
+        for (AccountsPayable p : list) {
+            String supplierName = p.getSupplier() != null ? p.getSupplier().getName() : "Avulso";
+            String osNumber = p.getWorkOrder() != null ? p.getWorkOrder().getNumber() : "-";
+            String desc = p.getDescription() != null ? p.getDescription().replace(";", ",") : "";
+
+            String formPgto = p.getPaymentMethod() != null ? p.getPaymentMethod() : "";
+            String payDate = p.getPaymentDate() != null ? p.getPaymentDate().toString() : ""; // Mesma lógica da data
+
+            writer.printf(ptBR, "%s;%s;%s;%s;%s;%s;%s;%.2f;%.2f;%.2f;%s\n",
+                    p.getDueDate(), payDate, supplierName, p.getCategory(), osNumber, desc, formPgto,
+                    p.getTotalAmount(), p.getPaidAmount(), p.getBalance(), p.getStatus());
+        }
+        writer.flush();
     }
 }

@@ -219,4 +219,65 @@ public class ReceivableController {
     public String delete(@PathVariable UUID id) {
         return cancel(id);
     }
+
+    @Transactional(readOnly = true)
+    @GetMapping("/export")
+    public void exportCsv(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) UUID clientId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false) UUID workOrderId,
+            jakarta.servlet.http.HttpServletResponse response) throws Exception {
+
+        List<AccountsReceivable> list = receivableRepository.findAllByOrderByDueDateAsc().stream()
+                .filter(r -> !"cancelled".equals(r.getStatus()) || "cancelled".equals(status))
+                .collect(Collectors.toList());
+
+        if (search != null && !search.isBlank()) {
+            String q = search.toLowerCase();
+            list = list.stream().filter(r ->
+                    r.getDescription().toLowerCase().contains(q)
+                            || (r.getClient() != null && r.getClient().getName().toLowerCase().contains(q))
+                            || (r.getWorkOrder() != null && r.getWorkOrder().getNumber().toLowerCase().contains(q))
+            ).collect(Collectors.toList());
+        }
+        if (status != null && !status.isBlank()) list = list.stream().filter(r -> status.equals(r.getStatus())).collect(Collectors.toList());
+        if (clientId != null) list = list.stream().filter(r -> r.getClient() != null && clientId.equals(r.getClient().getId())).collect(Collectors.toList());
+        if (dateFrom != null) list = list.stream().filter(r -> !r.getDueDate().isBefore(dateFrom)).collect(Collectors.toList());
+        if (dateTo != null) list = list.stream().filter(r -> !r.getDueDate().isAfter(dateTo)).collect(Collectors.toList());
+        if (paymentMethod != null && !paymentMethod.isBlank()) list = list.stream().filter(r -> paymentMethod.equals(r.getPaymentMethod())).collect(Collectors.toList());
+        if (workOrderId != null) list = list.stream().filter(r -> r.getWorkOrder() != null && workOrderId.equals(r.getWorkOrder().getId())).collect(Collectors.toList());
+
+        response.setContentType("text/csv; charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=\"contas_a_receber.csv\"");
+        response.getOutputStream().write(0xEF);
+        response.getOutputStream().write(0xBB);
+        response.getOutputStream().write(0xBF);
+
+        java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(response.getOutputStream(), "UTF-8"));
+
+        writer.println("Vencimento;Data Pagamento;Cliente;O.S.;Descricao;Forma Pgto;Taxa Cartao (%);Desconto (R$);Total;Recebido;Pendente;Status");
+
+        java.util.Locale ptBR = new java.util.Locale("pt", "BR");
+
+        for (AccountsReceivable r : list) {
+            String clientName = r.getClient() != null ? r.getClient().getName() : "Avulso";
+            String osNumber = r.getWorkOrder() != null ? r.getWorkOrder().getNumber() : "-";
+            String desc = r.getDescription() != null ? r.getDescription().replace(";", ",") : "";
+
+            String formPgto = r.getPaymentMethod() != null ? r.getPaymentMethod() : "";
+            BigDecimal taxa = r.getCardFeePercentage() != null ? r.getCardFeePercentage() : BigDecimal.ZERO;
+            BigDecimal desconto = r.getDiscount() != null ? r.getDiscount() : BigDecimal.ZERO;
+
+            String payDate = r.getPaymentDate() != null ? r.getPaymentDate().toString() : "";
+
+            writer.printf(ptBR, "%s;%s;%s;%s;%s;%s;%.2f;%.2f;%.2f;%.2f;%.2f;%s\n",
+                    r.getDueDate(), payDate, clientName, osNumber, desc, formPgto,
+                    taxa, desconto, r.getTotalAmount(), r.getNetReceivedAmount(), r.getBalance(), r.getStatus());
+        }
+        writer.flush();
+    }
 }

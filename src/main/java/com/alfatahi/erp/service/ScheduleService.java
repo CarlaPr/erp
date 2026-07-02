@@ -327,12 +327,25 @@ public class ScheduleService {
         if (s.getClient() != null) {
             dto.setClientId(s.getClient().getId());
             dto.setClientName(s.getClient().getName());
+
+            String addr = s.getClient().getAddress() != null ? s.getClient().getAddress() : "";
+            String city = s.getClient().getCity() != null ? s.getClient().getCity() : "";
+            if (!addr.isBlank() && !city.isBlank()) {
+                dto.setClientAddress(addr + " - " + city);
+            } else if (!addr.isBlank()) {
+                dto.setClientAddress(addr);
+            } else if (!city.isBlank()) {
+                dto.setClientAddress(city);
+            } else {
+                dto.setClientAddress("Endereço não informado");
+            }
         }
 
         dto.setApprovalDate(s.getApprovalDate());
         dto.setDeadlineDate(s.getDeadlineDate());
         dto.setScheduledDate(s.getScheduledDate());
         dto.setScheduledTime(s.getScheduledTime());
+        dto.setServiceDetails(deriveServiceDetails(s));
         dto.setEstimatedDurationMinutes(s.getEstimatedDurationMinutes());
         dto.setStatus(s.getStatus());
         dto.setStatusLabel(statusLabel(s.getStatus()));
@@ -348,6 +361,19 @@ public class ScheduleService {
         dto.setSemaphore(computeSemaphore(s, today));
 
         return dto;
+    }
+
+    private List<String> deriveServiceDetails(Schedule s) {
+        if (s.getQuote() != null && s.getQuote().getItems() != null && !s.getQuote().getItems().isEmpty()) {
+            return s.getQuote().getItems().stream()
+                    .map(item -> {
+                        String cat = item.getCategory() != null ? item.getCategory() : "Item";
+                        String prod = item.getProduct() != null ? item.getProduct() : "";
+                        return cat + (prod.isBlank() ? "" : " (" + prod + ")");
+                    })
+                    .collect(Collectors.toList());
+        }
+        return List.of("Serviço sem itens detalhados");
     }
 
     private String deriveServiceType(Schedule s) {
