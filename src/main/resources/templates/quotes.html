@@ -144,18 +144,18 @@
                     <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
                         <div class="col-span-2">
                             <select id="itemCat" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base">
-                                <option value="Box">Box de Banheiro</option>
-                                <option value="Box Acrílico">Box de Banheiro - Acrílico</option>
-                                <option value="Box Flex">Box de Banheiro - Flex</option>
-                                <option value="Box Open">Box de Banheiro - Open</option>
-                                <option value="Box Elegance">Box de Banheiro - Elegance</option>
-                                <option value="Sacada">Fechamento de Sacada</option>
+                                <option value="Box de Banheiro">Box de Banheiro</option>
+                                <option value="Box de Banheiro - Acrílico">Box de Banheiro - Acrílico</option>
+                                <option value="Box de Banheiro - Flex">Box de Banheiro - Flex</option>
+                                <option value="Box de Banheiro - Open">Box de Banheiro - Open</option>
+                                <option value="Box de Banheiro - Elegance">Box de Banheiro - Elegance</option>
+                                <option value="Fechamento de Sacada">Fechamento de Sacada</option>
                                 <option value="Janela">Janela</option>
                                 <option value="Espelho">Espelho</option>
                                 <option value="Espelho Lapidado">Espelho Lapidado</option>
                                 <option value="Espelho Bisote">Espelho Bisote</option>
                                 <option value="Espelho LED">Espelho com LED</option>
-                                <option value="Porta">Porta de Vidro</option>
+                                <option value="Porta de Vidro">Porta de Vidro</option>
                                 <option value="Kit Versatik VT3">Kit Versatik VT3</option>
                                 <option value="Guarda Corpo">Guarda Corpo</option>
                                 <option value="Abrigo de Pia">Abrigo de Pia</option>
@@ -167,7 +167,7 @@
                                 <option value="Manutenção">Manutenção</option>
                                 <option value="Película de segurança">Película de segurança</option>
                                 <option value="Adesivo">Adesivo</option>
-                                <option value="Avulso">Serviço/Item Avulso</option>
+                                <option value="Serviço/Item Avulso">Serviço/Item Avulso</option>
                             </select>
                         </div>
                         <div class="col-span-4">
@@ -244,37 +244,35 @@
         </div>
     </div>
 
-    <div id="receiptModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-10">
-        <div class="bg-white text-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl p-12 relative font-sans border border-slate-200 print:p-0 print:shadow-none print:w-full print:border-none" id="printableReceiptArea">
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-start justify-center z-50 overflow-y-auto print:block print:overflow-visible print:bg-white">
+        <div class="bg-white text-slate-900 w-full max-w-4xl print:max-w-none print:w-full rounded-2xl shadow-2xl p-12 relative font-sans print:p-0 print:shadow-none" id="printableReceiptArea">
             <button onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full print:hidden transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
 
             <style>
                 @media print {
+                    @page { size: A4 portrait; margin: 15mm; }
+
                     body * { visibility: hidden; }
                     #printableReceiptArea, #printableReceiptArea * { visibility: visible; }
-                    body {
-                        background: #ffffff !important;
-                        color: #000000 !important;
+
+                    #printableReceiptArea {
+                        position: static !important; /* IMPORTANTE: remove o posicionamento fixo/absoluto */
+                        width: 100% !important;
                         display: block !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        width: 100% !important;
+                        overflow: visible !important;
                     }
-                    #printableReceiptArea {
-                        position: absolute !important;
-                        left: 0 !important;
-                        top: 0 !important;
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        box-shadow: none !important;
-                        border: none !important;
-                        background: #ffffff !important;
-                        color: #000000 !important;
-                    }
-                    @page { size: A4; margin: 10mm 12mm 10mm 12mm; }
-                    .print\:hidden { display: none !important; }
+
+                    /* Garante a repetição do cabeçalho da tabela */
+                    table { width: 100% !important; border-collapse: collapse !important; }
+                    thead { display: table-header-group !important; }
+
+                    /* Permite que o conteúdo flua naturalmente */
+                    .print-break-after { page-break-after: always; }
+
+                    /* Impede que blocos críticos sejam cortados ao meio */
+                    .avoid-break { page-break-inside: avoid !important; }
                 }
             </style>
 
@@ -507,7 +505,7 @@
     }
 
     const DEFAULT_WARRANTY = "90 Dias (cobre apenas regulagens, vedação e vícios de instalação).";
-    const DEFAULT_OBSERVATIONS = "Prazo de Entrega: Até 15 dias úteis após a confirmação do pedido.\n* Forma de Execução: Início dos serviços mediante sinal de 50%.\nO saldo restante (50%) deve ser quitado na conclusão da instalação.\n* Observação: Em caso de desistência após o pagamento do sinal, o valor não será reembolsado devido aos custos de reserva de material e produção personalizada.";
+    const DEFAULT_OBSERVATIONS = "Forma de Pagamento: Parcelamento em até 5x sem Juros. Em pagamentos no Débito ou Pix concedemos deconto de 5%, em pagamentos no Dinheiro desconto de 10%.\nPrazo de Entrega: Até 15 dias úteis após a confirmação do pedido.\n* Forma de Execução: Início dos serviços mediante sinal de 50%.\nO saldo restante (50%) deve ser quitado na conclusão da instalação.\n* Observação: Em caso de desistência após o pagamento do sinal, o valor não será reembolsado devido aos custos de reserva de material e produção personalizada.";
 
     function openNewQuoteModal() {
         if(document.getElementById('quoteForm')) document.getElementById('quoteForm').reset();

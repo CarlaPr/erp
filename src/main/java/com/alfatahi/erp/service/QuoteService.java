@@ -43,8 +43,8 @@ public class QuoteService {
     public void approveQuote(UUID quoteId) {
         Quote quote = quoteRepo.findById(quoteId).orElseThrow(() -> new RuntimeException("Orçamento não encontrado"));
 
-        if ("approved".equals(quote.getStatus())) {
-            return;
+        if (!"pending".equals(quote.getStatus()) && !"sent".equals(quote.getStatus())) {
+            throw new IllegalStateException("Orçamento não pode ser aprovado no status atual: " + quote.getStatus());
         }
 
         WorkOrder os = new WorkOrder();

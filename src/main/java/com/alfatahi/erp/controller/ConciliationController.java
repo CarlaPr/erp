@@ -84,7 +84,7 @@ public class ConciliationController {
         return "redirect:/conciliation";
     }
 
-    @GetMapping("/toggle/{id}")
+    @PostMapping("/toggle/{id}")
     @Transactional
     public String toggleStatus(@PathVariable("id") UUID id) {
         BankTransaction tx = bankRepo.findById(id).orElse(null);

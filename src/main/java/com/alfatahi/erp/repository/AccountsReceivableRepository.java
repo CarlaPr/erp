@@ -15,9 +15,8 @@ public interface AccountsReceivableRepository extends JpaRepository<AccountsRece
 
     List<AccountsReceivable> findByStatusNotOrderByDueDateAsc(String status);
 
-    @Query("SELECT SUM(a.totalAmount) FROM AccountsReceivable a " +
-            "WHERE a.status IN ('received', 'partial') " +
-            "AND a.dueDate >= :inicio AND a.dueDate < :fim")
+    @Query("SELECT SUM(COALESCE(a.receivedAmount,0) + COALESCE(a.feeAmount,0)) FROM AccountsReceivable a " +
+            "WHERE a.paymentDate >= :inicio AND a.paymentDate < :fim")
     BigDecimal sumReceivedByMonthAndYear(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
     @Query("SELECT SUM(a.totalAmount) FROM AccountsReceivable a WHERE a.status != 'cancelled'")

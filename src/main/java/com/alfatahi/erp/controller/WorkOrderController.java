@@ -176,4 +176,5 @@ public class WorkOrderController {
         workOrderService.delete(id); // Certifique-se que o Service faz um deleteById
         return ResponseEntity.ok().build();
     }
+
 }
