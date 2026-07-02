@@ -8,13 +8,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
-/**
- * Agenda Comercial.
- * <p>
- * Representa o agendamento de execução de UM orçamento aprovado (1:1 com Quote e com
- * WorkOrder já existentes). Esta entidade NÃO substitui a Ordem de Serviço: ela apenas
- * organiza data/prazo/status de execução em torno da OS que já é a central operacional.
- */
 @Entity
 @Table(name = "commercial_schedules")
 public class Schedule {

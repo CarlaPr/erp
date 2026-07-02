@@ -22,7 +22,6 @@ public class WorkOrder {
     private String title;
     private String status;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String description;
 

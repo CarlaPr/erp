@@ -77,6 +77,13 @@ public class ScheduleService {
         return dto;
     }
 
+    public List<Schedule> findByDate(LocalDate date) {
+        return scheduleRepo.findAll().stream()
+                .filter(s -> s.getScheduledDate() != null
+                        && s.getScheduledDate().equals(date))
+                .collect(Collectors.toList());
+    }
+
 
     @Transactional
     public String save(ScheduleSaveRequest req) {
