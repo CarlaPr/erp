@@ -15,10 +15,12 @@ public class WorkOrderService {
 
     private final WorkOrderRepository workOrderRepository;
     private final WorkOrderItemRepository itemRepository;
+    private final ScheduleService scheduleService;
 
-    public WorkOrderService(WorkOrderRepository workOrderRepository, WorkOrderItemRepository itemRepository) {
+    public WorkOrderService(WorkOrderRepository workOrderRepository, WorkOrderItemRepository itemRepository, ScheduleService scheduleService) {
         this.workOrderRepository = workOrderRepository;
         this.itemRepository = itemRepository;
+        this.scheduleService = scheduleService;
     }
 
 
@@ -29,17 +31,9 @@ public class WorkOrderService {
     @Transactional
     public WorkOrder save(WorkOrder workOrder) {
         if (workOrder.getId() == null) {
-
-            if (workOrder.getNumber() == null
-                    || workOrder.getNumber().isBlank()) {
-
-                Integer ultimoNumero =
-                        workOrderRepository
-                                .findMaxWorkOrderSequence();
-
-                workOrder.setNumber(
-                        "OS-" + (ultimoNumero + 1)
-                );
+            if (workOrder.getNumber() == null || workOrder.getNumber().isBlank()) {
+                Integer ultimoNumero = workOrderRepository.findMaxWorkOrderSequence();
+                workOrder.setNumber("OS-" + (ultimoNumero + 1));
             }
         }
 
@@ -53,11 +47,14 @@ public class WorkOrderService {
             }
         }
 
-        return workOrderRepository.saveAndFlush(workOrder);
+        WorkOrder savedWorkOrder = workOrderRepository.saveAndFlush(workOrder);
+
+        if (savedWorkOrder.getInstallDate() != null) {
+            scheduleService.syncDeadlineFromWorkOrder(savedWorkOrder.getId(), savedWorkOrder.getInstallDate());
+        }
+
+        return savedWorkOrder;
     }
-
-
-
 
     public WorkOrder findById(UUID id) {
         return workOrderRepository.findById(id)

@@ -252,26 +252,48 @@
                 @media print {
                     @page { size: A4 portrait; margin: 15mm; }
 
+                    html, body {
+                        height: auto !important;
+                        overflow: visible !important;
+                        background-color: white !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+
                     body * { visibility: hidden; }
-                    #printableReceiptArea, #printableReceiptArea * { visibility: visible; }
+
+                    #receiptModal {
+                        position: absolute !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                        right: auto !important;
+                        bottom: auto !important;
+                        height: auto !important;
+                        min-height: 100% !important;
+                        overflow: visible !important;
+                        display: block !important;
+                        background: transparent !important;
+                    }
+
+                    #printableReceiptArea, #printableReceiptArea * {
+                        visibility: visible;
+                    }
 
                     #printableReceiptArea {
-                        position: static !important; /* IMPORTANTE: remove o posicionamento fixo/absoluto */
+                        position: relative !important;
                         width: 100% !important;
                         display: block !important;
                         margin: 0 !important;
                         padding: 0 !important;
                         overflow: visible !important;
+                        box-shadow: none !important;
                     }
 
-                    /* Garante a repetição do cabeçalho da tabela */
                     table { width: 100% !important; border-collapse: collapse !important; }
                     thead { display: table-header-group !important; }
+                    tr { page-break-inside: avoid !important; }
 
-                    /* Permite que o conteúdo flua naturalmente */
                     .print-break-after { page-break-after: always; }
-
-                    /* Impede que blocos críticos sejam cortados ao meio */
                     .avoid-break { page-break-inside: avoid !important; }
                 }
             </style>
@@ -382,7 +404,7 @@
             </div>
             <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">Confirmar Venda?</h3>
             <p class="text-base text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-                Esta ação congela este orçamento, gera a **Ordem de Serviço** automaticamente e lança as parcelas no **Contas a Receber**.
+                Esta ação congela este orçamento, gera a <strong>Ordem de Serviço</strong> automaticamente e lança as parcelas no <strong>Contas a Receber</strong>.
             </p>
             <div class="flex gap-4">
                 <button type="button" onclick="closeModal('approvalConfirmModal')" class="w-1/2 px-5 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-base">
@@ -504,7 +526,7 @@
         }).format(valor);
     }
 
-    const DEFAULT_WARRANTY = "90 Dias (cobre apenas regulagens, vedação e vícios de instalação).";
+    const DEFAULT_WARRANTY = "Garantia de 90 (noventa) dias, válida exclusivamente para regulagens, vedação e correção de vícios decorrentes da instalação, conforme as condições de uso previstas. A garantia não cobre danos causados por mau uso, impactos, alterações realizadas por terceiros, desgaste natural ou falta de manutenção.";
     const DEFAULT_OBSERVATIONS = "Forma de Pagamento: Parcelamento em até 5x sem Juros. Em pagamentos no Débito ou Pix concedemos deconto de 5%, em pagamentos no Dinheiro desconto de 10%.\nPrazo de Entrega: Até 15 dias úteis após a confirmação do pedido.\n* Forma de Execução: Início dos serviços mediante sinal de 50%.\nO saldo restante (50%) deve ser quitado na conclusão da instalação.\n* Observação: Em caso de desistência após o pagamento do sinal, o valor não será reembolsado devido aos custos de reserva de material e produção personalizada.";
 
     function openNewQuoteModal() {

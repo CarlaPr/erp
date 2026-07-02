@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 @Service
 public class ScheduleService {
 
-    private static final int PRAZO_DIAS_CORRIDOS = 15;
-
     private static final Pattern AGENDA_NOTE_LINE = Pattern.compile("(?m)^\\[AGENDA].*$\\n?");
 
     private final ScheduleRepository scheduleRepo;
@@ -38,18 +36,8 @@ public class ScheduleService {
         this.workOrderRepo = workOrderRepo;
     }
 
-    // ==========================================================
-    // CRIAÇÃO AUTOMÁTICA (chamado pelo QuoteService.approveQuote)
-    // ==========================================================
-
-    /**
-     * Regra central do módulo: ao aprovar um orçamento, registra a data de aprovação,
-     * cria o registro da Agenda Comercial e calcula a Data Limite = Data Aprovação + 15
-     * dias corridos, já vinculado à OS gerada.
-     */
     @Transactional
     public Schedule createFromApprovedQuote(Quote quote, WorkOrder workOrder) {
-        // Defesa contra duplicidade (não duplicar Agenda para o mesmo orçamento)
         Optional<Schedule> existing = scheduleRepo.findByQuoteId(quote.getId());
         if (existing.isPresent()) {
             return existing.get();
@@ -62,7 +50,7 @@ public class ScheduleService {
         schedule.setWorkOrder(workOrder);
         schedule.setClient(quote.getClient());
         schedule.setApprovalDate(approval);
-        schedule.setDeadlineDate(approval.toLocalDate().plusDays(PRAZO_DIAS_CORRIDOS));
+        schedule.setDeadlineDate(workOrder.getInstallDate());
         schedule.setStatus(Schedule.STATUS_AGUARDANDO_AGENDAMENTO);
 
         schedule = scheduleRepo.saveAndFlush(schedule);
@@ -72,9 +60,6 @@ public class ScheduleService {
         return schedule;
     }
 
-    // ==========================================================
-    // LEITURA
-    // ==========================================================
 
     @Transactional(readOnly = true)
     public List<ScheduleDto> listAllDto() {
@@ -92,17 +77,7 @@ public class ScheduleService {
         return dto;
     }
 
-    // ==========================================================
-    // AGENDAR / EDITAR / REAGENDAR
-    // ==========================================================
 
-    /**
-     * Salva a data/horário/status/responsável/equipe/observações de um agendamento.
-     * Usado tanto para o primeiro agendamento quanto para edições e reagendamentos
-     * (mesma modal na tela). Sempre sincroniza a WorkOrder e grava o histórico.
-     *
-     * @return mensagem de alerta (conflito de agenda) ou {@code null} se não houver.
-     */
     @Transactional
     public String save(ScheduleSaveRequest req) {
         if (req.getId() == null) {
@@ -158,7 +133,6 @@ public class ScheduleService {
             action = "Editado";
         }
 
-        // Verificações (aviso, não bloqueia salvamento): conflito de data/equipe
         String warning = null;
         if (schedule.getTeam() != null && !schedule.getTeam().isBlank() && schedule.getScheduledDate() != null) {
             boolean conflict = scheduleRepo.findAll().stream()
@@ -194,17 +168,12 @@ public class ScheduleService {
         syncWorkOrder(schedule);
     }
 
-    // ==========================================================
-    // INTEGRAÇÃO COM ORÇAMENTO / OS (chamado pelos controllers existentes)
-    // ==========================================================
 
-    /** Se o orçamento for cancelado, a Agenda correspondente é removida. */
     @Transactional
     public void onQuoteCancelled(UUID quoteId) {
         scheduleRepo.findByQuoteId(quoteId).ifPresent(scheduleRepo::delete);
     }
 
-    /** Se a OS for cancelada, a Agenda correspondente é atualizada (não removida). */
     @Transactional
     public void onWorkOrderCancelled(UUID workOrderId) {
         scheduleRepo.findByWorkOrderId(workOrderId).ifPresent(schedule -> {
@@ -214,9 +183,21 @@ public class ScheduleService {
         });
     }
 
-    // ==========================================================
-    // JOB DIÁRIO — ATRASADOS
-    // ==========================================================
+    @Transactional
+    public void syncDeadlineFromWorkOrder(UUID workOrderId, LocalDate newDeadline) {
+        if (newDeadline == null) return;
+        scheduleRepo.findByWorkOrderId(workOrderId).ifPresent(schedule -> {
+            if (!newDeadline.equals(schedule.getDeadlineDate())) {
+                LocalDate oldDate = schedule.getDeadlineDate();
+                schedule.setDeadlineDate(newDeadline);
+                scheduleRepo.save(schedule);
+
+                addHistory(schedule, "Editado", "Data de Instalação ajustada na Ordem de Serviço.",
+                        "Data limite alterada de " + oldDate + " para " + newDeadline + ".");
+            }
+        });
+    }
+
 
     @Transactional
     public int refreshOverdueStatuses() {
@@ -236,9 +217,6 @@ public class ScheduleService {
         return candidates.size();
     }
 
-    // ==========================================================
-    // KPIs (usado por /agenda e pelo Dashboard Vendas)
-    // ==========================================================
 
     @Transactional(readOnly = true)
     public Map<String, Object> getKpis() {
@@ -266,9 +244,6 @@ public class ScheduleService {
         return kpis;
     }
 
-    // ==========================================================
-    // Auxiliares
-    // ==========================================================
 
     private boolean isLate(Schedule s, LocalDate today) {
         if (Schedule.STATUS_CONCLUIDO.equals(s.getStatus()) || Schedule.STATUS_CANCELADO.equals(s.getStatus())) {
@@ -294,14 +269,6 @@ public class ScheduleService {
         return (auth != null && auth.isAuthenticated()) ? auth.getName() : "sistema";
     }
 
-    /**
-     * Mantém a OS (WorkOrder) sincronizada com o agendamento, conforme a regra:
-     * dataExecucao, status, cronograma, responsável e observações.
-     * WorkOrder não possui colunas dedicadas para cronograma/responsável/observações
-     * da agenda, então esses três dados são mantidos num bloco único e idempotente
-     * dentro de WorkOrder.notes (identificado pela tag "[AGENDA]"), preservando o
-     * restante do texto que já existia.
-     */
     private void syncWorkOrder(Schedule schedule) {
         WorkOrder wo = schedule.getWorkOrder();
         if (wo == null) return;
@@ -315,7 +282,7 @@ public class ScheduleService {
                 case Schedule.STATUS_EM_EXECUCAO -> wo.setStatus("in_progress");
                 case Schedule.STATUS_CONCLUIDO -> wo.setStatus("completed");
                 case Schedule.STATUS_CANCELADO -> wo.setStatus("cancelled");
-                default -> { /* mantém status atual da OS para os demais estágios da agenda */ }
+                default -> { }
             }
         }
 
