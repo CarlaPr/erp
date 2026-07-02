@@ -10,9 +10,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.format.annotation.DateTimeFormat;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -27,21 +31,25 @@ public class WorkOrderController {
     private final ClientService clientService;
     private final ServiceCategoryRepository categoryRepository;
     private final ProfileRepository profileRepository;
-    private final QuoteRepository quoteRepository; // Adicione este
+    private final QuoteRepository quoteRepository;
     private final WorkOrderRepository workOrderRepo;
-    private final ClientRepository clientRepository; // Adicione este
+    private final ClientRepository clientRepository;
+    private final AccountsReceivableRepository accountsReceivableRepository;
+    private final ReceiptService receiptService;
 
     public WorkOrderController(WorkOrderService workOrderService, ClientService clientService,
                                ServiceCategoryRepository categoryRepository, ProfileRepository profileRepository,
                                QuoteRepository quoteRepository, WorkOrderRepository workOrderRepo,
-                               ClientRepository clientRepository) { // Adicione no construtor
+                               ClientRepository clientRepository, AccountsReceivableRepository accountsReceivableRepository, ReceiptService receiptService) { // Adicione no construtor
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
         this.profileRepository = profileRepository;
         this.quoteRepository = quoteRepository;
         this.workOrderRepo = workOrderRepo;
-        this.clientRepository = clientRepository; // Inicialize
+        this.clientRepository = clientRepository;
+        this.accountsReceivableRepository = accountsReceivableRepository;
+        this.receiptService = receiptService;
     }
 
     @GetMapping
@@ -173,8 +181,155 @@ public class WorkOrderController {
     @DeleteMapping("/{id}")
     @ResponseBody
     public ResponseEntity<?> delete(@PathVariable UUID id) {
-        workOrderService.delete(id); // Certifique-se que o Service faz um deleteById
+        workOrderService.delete(id);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}")
+    @Transactional(readOnly = true)
+    public String detail(@PathVariable UUID id, Model model) {
+        try {
+            WorkOrder workOrder = workOrderRepo.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Ordem de Serviço não encontrada"));
+
+            Client client = workOrder.getClient();
+            if (client == null) {
+                throw new RuntimeException("Cliente não encontrado para esta OS");
+            }
+
+            List<WorkOrderItem> items = workOrder.getItems();
+            if (items == null) {
+                items = new ArrayList<>();
+            }
+
+            Quote quote = workOrder.getQuote();
+            BigDecimal quoteValue = BigDecimal.ZERO;
+            String quoteStatus = "N/A";
+
+            if (quote != null) {
+                quoteValue = quote.getTotalValue() != null ? quote.getTotalValue() : BigDecimal.ZERO;
+                quoteStatus = quote.getStatus();
+            }
+
+            List<AccountsReceivable> receivables = new ArrayList<>();
+
+            try {
+                receivables = accountsReceivableRepository.findByWorkOrder(workOrder);
+            } catch (Exception e) {
+                System.out.println("Método findByWorkOrder não encontrado, usando query customizada");
+            }
+
+            BigDecimal totalItems = BigDecimal.ZERO;
+            for (WorkOrderItem item : items) {
+                if (item.getUnitPrice() != null && item.getQuantity() != null) {
+                    long quantity = item.getQuantity().longValue();
+
+                    BigDecimal itemTotal = item.getUnitPrice().multiply(
+                            BigDecimal.valueOf(quantity)
+                    );
+                    totalItems = totalItems.add(itemTotal);
+                }
+            }
+
+            BigDecimal totalReceived = BigDecimal.ZERO;
+            BigDecimal totalPending = BigDecimal.ZERO;
+
+            for (AccountsReceivable ar : receivables) {
+                if (ar.getStatus() != null && ar.getStatus().equals("received")) {
+                    BigDecimal receivedAmount = ar.getReceivedAmount() != null ? ar.getReceivedAmount() : BigDecimal.ZERO;
+                    totalReceived = totalReceived.add(receivedAmount);
+                } else if (ar.getStatus() != null && (ar.getStatus().equals("pending") || ar.getStatus().equals("partial"))) {
+                    BigDecimal totalAmount = ar.getTotalAmount() != null ? ar.getTotalAmount() : BigDecimal.ZERO;
+                    totalPending = totalPending.add(totalAmount);
+                }
+            }
+
+            model.addAttribute("currentPage", "work-orders");
+            model.addAttribute("workOrder", workOrder);
+            model.addAttribute("client", client);
+            model.addAttribute("items", items);
+            model.addAttribute("quote", quote);
+            model.addAttribute("quoteValue", quoteValue);
+            model.addAttribute("quoteStatus", quoteStatus);
+            model.addAttribute("receivables", receivables);
+            model.addAttribute("totalItems", totalItems);
+            model.addAttribute("totalReceived", totalReceived);
+            model.addAttribute("totalPending", totalPending);
+
+            String statusColor = getStatusColor(workOrder.getStatus());
+            model.addAttribute("statusColor", statusColor);
+
+            try {
+                boolean hasReceipt = receiptService.hasReceipt(id);
+                model.addAttribute("hasReceipt", hasReceipt);
+
+                if (hasReceipt) {
+                    List<Receipt> receipts = receiptService.getReceiptsByWorkOrder(id);
+                    model.addAttribute("receipts", receipts);
+
+                    long draftReceipts = receipts.stream()
+                            .filter(r -> r.getStatus() != null && r.getStatus().equals("draft"))
+                            .count();
+
+                    long issuedReceipts = receipts.stream()
+                            .filter(r -> r.getStatus() != null && (
+                                    r.getStatus().equals("issued") ||
+                                            r.getStatus().equals("printed") ||
+                                            r.getStatus().equals("sent")))
+                            .count();
+
+                    model.addAttribute("draftReceipts", draftReceipts);
+                    model.addAttribute("issuedReceipts", issuedReceipts);
+
+                    if (!receipts.isEmpty()) {
+                        Receipt latestReceipt = receipts.stream()
+                                .max((r1, r2) -> {
+                                    LocalDateTime d1 = r1.getCreatedAt() != null ? r1.getCreatedAt() : LocalDateTime.now();
+                                    LocalDateTime d2 = r2.getCreatedAt() != null ? r2.getCreatedAt() : LocalDateTime.now();
+                                    return d1.compareTo(d2);
+                                })
+                                .orElse(null);
+
+                        model.addAttribute("latestReceipt", latestReceipt);
+                    }
+                } else {
+                    model.addAttribute("receipts", new ArrayList<>());
+                    model.addAttribute("draftReceipts", 0);
+                    model.addAttribute("issuedReceipts", 0);
+                    model.addAttribute("latestReceipt", null);
+                }
+
+            } catch (Exception e) {
+                System.err.println("Erro ao buscar informações de recibos para OS " + id + ": " + e.getMessage());
+                e.printStackTrace();
+
+                model.addAttribute("receiptError", "Erro ao carregar dados de recibos: " + e.getMessage());
+                model.addAttribute("hasReceipt", false);
+                model.addAttribute("receipts", new ArrayList<>());
+                model.addAttribute("draftReceipts", 0);
+                model.addAttribute("issuedReceipts", 0);
+                model.addAttribute("latestReceipt", null);
+            }
+
+            return "work-order-detail";
+
+        } catch (RuntimeException e) {
+            return "redirect:/work-orders?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+        }
+    }
+
+    private String getStatusColor(String status) {
+        if (status == null) return "slate";
+
+        return switch (status) {
+            case "draft" -> "slate";
+            case "quoted" -> "blue";
+            case "approved" -> "emerald";
+            case "in_progress" -> "amber";
+            case "completed" -> "green";
+            case "cancelled" -> "red";
+            default -> "slate";
+        };
     }
 
 }

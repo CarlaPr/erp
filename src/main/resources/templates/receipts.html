@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Recibos - Alfa Tahi')}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+</head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<main class="ml-72 p-8 w-full min-h-screen">
+
+    <!-- HEADER -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Recibos</h2>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Emissão e rastreamento de recibos de serviços pagos.</p>
+        </div>
+    </header>
+
+    <!-- MENSAGENS DE SUCESSO/ERRO -->
+    <div th:if="${success}" class="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 px-6 py-4 rounded-xl mb-6 flex items-center gap-3">
+        <i data-lucide="check-circle" class="w-5 h-5 flex-shrink-0"></i>
+        <p th:text="${success}"></p>
+        <button onclick="this.parentElement.style.display='none'" class="ml-auto text-emerald-600 dark:text-emerald-400">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+    </div>
+
+    <div th:if="${error}" class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-300 px-6 py-4 rounded-xl mb-6 flex items-center gap-3">
+        <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0"></i>
+        <p th:text="${error}"></p>
+        <button onclick="this.parentElement.style.display='none'" class="ml-auto text-red-600 dark:text-red-400">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+    </div>
+
+    <!-- FILTROS -->
+    <form method="GET" action="/receipts" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 mb-8 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 items-end">
+            <!-- Buscar -->
+            <div class="lg:col-span-2">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Buscar</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </div>
+                    <input type="text" name="search" th:value="${filterSearch}" placeholder="Nº, cliente ou OS..."
+                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-all text-sm"/>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Status</label>
+                <select name="status" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-all text-sm font-semibold">
+                    <option value="">Todos</option>
+                    <option value="draft" th:selected="${filterStatus == 'draft'}">Rascunho</option>
+                    <option value="issued" th:selected="${filterStatus == 'issued'}">Emitido</option>
+                    <option value="printed" th:selected="${filterStatus == 'printed'}">Impresso</option>
+                    <option value="sent" th:selected="${filterStatus == 'sent'}">Enviado</option>
+                </select>
+            </div>
+
+            <!-- Cliente -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Cliente</label>
+                <select name="clientId" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-all text-sm font-semibold">
+                    <option value="">Todos</option>
+                    <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"
+                            th:selected="${filterClientId != null and filterClientId == c.id}"></option>
+                </select>
+            </div>
+
+            <!-- Forma Pgto -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Forma Pgto.</label>
+                <select name="paymentMethod" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-all text-sm font-semibold">
+                    <option value="">Todas</option>
+                    <option value="PIX" th:selected="${filterPaymentMethod == 'PIX'}">PIX</option>
+                    <option value="CARD" th:selected="${filterPaymentMethod == 'CARD'}">Cartão</option>
+                    <option value="BOLETO" th:selected="${filterPaymentMethod == 'BOLETO'}">Boleto</option>
+                    <option value="CASH" th:selected="${filterPaymentMethod == 'CASH'}">Dinheiro</option>
+                    <option value="TRANSFER" th:selected="${filterPaymentMethod == 'TRANSFER'}">Transferência</option>
+                </select>
+            </div>
+
+            <!-- Período -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-2">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Período</label>
+                <div class="flex gap-2">
+                    <input type="date" name="dateFrom" th:value="${filterDateFrom}"
+                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 outline-none focus:border-emerald-500 transition-all text-sm"/>
+                    <input type="date" name="dateTo" th:value="${filterDateTo}"
+                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 outline-none focus:border-emerald-500 transition-all text-sm"/>
+                </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="flex gap-2 col-span-1 md:col-span-2 lg:col-span-1">
+                <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-4 py-3 text-sm transition-all shadow-md shadow-emerald-500/20">
+                    <i data-lucide="search" class="w-4 h-4 inline mr-2"></i>Filtrar
+                </button>
+                <a href="/receipts" class="flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- TABELA DE RECIBOS -->
+    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700/50">
+                    <tr>
+                        <th class="px-6 py-4 text-left font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Nº Recibo</th>
+                        <th class="px-6 py-4 text-left font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Cliente</th>
+                        <th class="px-6 py-4 text-left font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">OS</th>
+                        <th class="px-6 py-4 text-left font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Data</th>
+                        <th class="px-6 py-4 text-left font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700/50">
+                    <tr th:each="receipt : ${receipts}" class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="px-6 py-4 font-bold text-emerald-600 dark:text-emerald-400" th:text="${receipt.number}"></td>
+                        <td class="px-6 py-4" th:text="${receipt.clientName}"></td>
+                        <td class="px-6 py-4 text-slate-500 dark:text-slate-400" th:text="${receipt.workOrderNumber}"></td>
+                        <td class="px-6 py-4 text-slate-500 dark:text-slate-400" th:text="${#temporals.format(receipt.receiptDate, 'dd/MM/yyyy')}"></td>
+                        <td class="px-6 py-4">
+                            <span th:switch="${receipt.status}" class="inline-block px-3 py-1 rounded-full text-xs font-bold">
+                                <span th:case="'draft'" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Rascunho</span>
+                                <span th:case="'issued'" class="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">Emitido</span>
+                                <span th:case="'printed'" class="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">Impresso</span>
+                                <span th:case="'sent'" class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">Enviado</span>
+                                <span th:case="'reissued'" class="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">Reenviado</span>
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <button onclick="openReceiptModal()" 
+                                        class="text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                                        title="Visualizar">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                                <a th:href="'/receipts/' + ${receipt.id} + '/pdf'"
+                                   class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                   title="Gerar PDF">
+                                    <i data-lucide="file-pdf" class="w-4 h-4"></i>
+                                </a>
+                                <button onclick="printReceipt()" 
+                                        class="text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                        title="Imprimir">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Se vazio -->
+                    <tr th:if="${#lists.isEmpty(receipts)}">
+                        <td colspan="7" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                            <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
+                            <p class="font-medium">Nenhum recibo encontrado</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<!-- MODAL: VISUALIZAR RECIBO -->
+<div id="receiptModal" class="hidden fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <!-- Header -->
+        <div class="sticky top-0 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-8 py-6 flex justify-between items-center">
+            <h3 class="text-2xl font-bold">Recibo de Pagamento</h3>
+            <button onclick="closeReceiptModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-8 space-y-6">
+            <!-- Dados Principais -->
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Nº Recibo</p>
+                    <p class="text-xl font-bold text-slate-900 dark:text-white" id="modalNumber"></p>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Data</p>
+                    <p class="text-xl font-bold text-slate-900 dark:text-white" id="modalDate"></p>
+                </div>
+            </div>
+
+            <!-- Cliente -->
+            <div class="border-t border-slate-200 dark:border-slate-700/50 pt-6">
+                <h4 class="font-bold text-slate-900 dark:text-white mb-4">Dados do Cliente</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Nome</p>
+                        <p class="text-slate-900 dark:text-white" id="modalClientName"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Documento</p>
+                        <p class="text-slate-900 dark:text-white" id="modalDocument"></p>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Endereço</p>
+                        <p class="text-slate-900 dark:text-white" id="modalAddress"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Serviço -->
+            <div class="border-t border-slate-200 dark:border-slate-700/50 pt-6">
+                <h4 class="font-bold text-slate-900 dark:text-white mb-4">Dados do Serviço</h4>
+                <div class="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-l-emerald-600 p-4 rounded mb-4">
+                    <p class="text-slate-900 dark:text-white">
+                        Recebemos de <strong id="modalClientName2"></strong> o valor de 
+                        <strong id="modalValue" class="text-emerald-600 dark:text-emerald-400"></strong> 
+                        referente ao serviço executado conforme Ordem de Serviço.
+                    </p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">OS</p>
+                        <p class="text-slate-900 dark:text-white" id="modalWONumber"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Forma de Pgto</p>
+                        <p class="text-slate-900 dark:text-white" id="modalPaymentMethod"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rodapé -->
+            <div class="border-t border-slate-200 dark:border-slate-700/50 pt-6">
+                <div class="grid grid-cols-3 gap-6 text-center">
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-3">___________________</p>
+                        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Responsável</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-3">___________________</p>
+                        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Data</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-3">___________________</p>
+                        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Assinatura</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="border-t border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-900/30 px-8 py-4 flex gap-3 justify-end sticky bottom-0">
+            <button onclick="closeReceiptModal()" class="px-6 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold">
+                Fechar
+            </button>
+            <button onclick="printReceipt()" class="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors font-bold flex items-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                Imprimir
+            </button>
+            <button onclick="generatePDF()" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors font-bold flex items-center gap-2">
+                <i data-lucide="file-pdf" class="w-4 h-4"></i>
+                PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<script th:inline="javascript">
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+
+    function openReceiptModal() {
+        // TODO: Implementar preenchimento com dados do recibo
+        document.getElementById('receiptModal').classList.remove('hidden');
+    }
+
+    function closeReceiptModal() {
+        document.getElementById('receiptModal').classList.add('hidden');
+    }
+
+    function printReceipt() {
+        window.print();
+    }
+
+    function generatePDF() {
+        alert('Função de PDF em desenvolvimento');
+    }
+
+    // Inicializar ícones Lucide
+    lucide.createIcons();
+</script>
+
+<script th:src="@{/js/receipts.js}"></script>
+
+</body>
+</html>

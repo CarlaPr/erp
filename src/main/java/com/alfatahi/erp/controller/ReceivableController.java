@@ -6,12 +6,14 @@ import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.WorkOrderRepository;
 import com.alfatahi.erp.service.ClientService;
 import com.alfatahi.erp.service.FinanceService;
+import com.alfatahi.erp.service.ReceiptService;
 import com.alfatahi.erp.service.WorkOrderService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,19 +31,21 @@ public class ReceivableController {
     private final FinanceService financeService;
     private final ClientRepository clientRepository;
     private final WorkOrderRepository workOrderRepository;
+    private final ReceiptService receiptService;
 
     public ReceivableController(AccountsReceivableRepository receivableRepository,
                                 ClientService clientService,
                                 WorkOrderService workOrderService,
                                 FinanceService financeService,
                                 ClientRepository clientRepository,
-                                WorkOrderRepository workOrderRepository) {
+                                WorkOrderRepository workOrderRepository, ReceiptService receiptService) {
         this.receivableRepository = receivableRepository;
         this.clientService = clientService;
         this.workOrderService = workOrderService;
         this.financeService = financeService;
         this.clientRepository = clientRepository;
         this.workOrderRepository = workOrderRepository;
+        this.receiptService = receiptService;
     }
 
     @Transactional(readOnly = true)
@@ -178,6 +182,7 @@ public class ReceivableController {
     }
 
     @PostMapping("/pay/{id}")
+    @Transactional
     public String processPayment(
             @PathVariable UUID id,
             @RequestParam BigDecimal amount,
@@ -185,25 +190,60 @@ public class ReceivableController {
             @RequestParam(required = false) String paymentMethod,
             @RequestParam(required = false) BigDecimal discount,
             @RequestParam(required = false) BigDecimal cardFee,
-            @RequestParam(required = false) String notes) {
+            @RequestParam(required = false) String notes,
+            RedirectAttributes redirectAttributes) {
 
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            return "redirect:/receivables?error=invalid_amount";
+        try {
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                redirectAttributes.addFlashAttribute("error", "Valor inválido");
+                return "redirect:/receivables";
+            }
+
+            AccountsReceivable ar = receivableRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Conta a receber não encontrada"));
+
+            financeService.processReceivablePayment(id, amount, paymentDate, cardFee, notes);
+
+            ar = receivableRepository.findById(id).get();
+
+            if (paymentMethod != null && !paymentMethod.isBlank()) {
+                ar.setPaymentMethod(paymentMethod);
+            }
+            if (discount != null && discount.compareTo(BigDecimal.ZERO) > 0) {
+                ar.setDiscount(discount);
+            }
+            if (cardFee != null && cardFee.compareTo(BigDecimal.ZERO) > 0) {
+                ar.setCardFeePercentage(cardFee);
+            }
+
+            receivableRepository.save(ar);
+
+            if (ar.getStatus().equals("received")) {
+                try {
+                    receiptService.createReceipt(ar.getId());
+
+                    System.out.println("✨ Recibo criado automaticamente para conta: " + ar.getId());
+
+                } catch (Exception e) {
+                    System.err.println("⚠️  Erro ao criar recibo automático: " + e.getMessage());
+
+                    redirectAttributes.addFlashAttribute("warning",
+                            "Pagamento processado, mas houve erro ao criar recibo: " + e.getMessage());
+                }
+            }
+
+            redirectAttributes.addFlashAttribute("success", "Pagamento processado com sucesso!");
+            return "redirect:/receivables";
+
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Erro ao processar pagamento: " + e.getMessage());
+            return "redirect:/receivables";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Erro inesperado: " + e.getMessage());
+            return "redirect:/receivables";
         }
-
-        // Delega o processamento financeiro e a criação da despesa na OS APENAS para o Service
-        financeService.processReceivablePayment(id, amount, paymentDate, cardFee, notes);
-
-        AccountsReceivable ar = receivableRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
-
-        if (paymentMethod != null && !paymentMethod.isBlank()) ar.setPaymentMethod(paymentMethod);
-        if (discount != null) ar.setDiscount(discount);
-        if (cardFee != null) ar.setCardFeePercentage(cardFee);
-
-        receivableRepository.save(ar);
-
-        return "redirect:/receivables?success=payment_processed";
     }
 
     @PostMapping("/cancel/{id}")
@@ -215,9 +255,38 @@ public class ReceivableController {
         return "redirect:/receivables";
     }
 
+
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable UUID id) {
         return cancel(id);
+    }
+
+    @PostMapping("/{id}/update")
+    public String updateReceivable(
+            @PathVariable UUID id,
+            @RequestParam(required = false) String notes,
+            @RequestParam(required = false) String paymentMethod,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            AccountsReceivable ar = receivableRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
+
+            if (notes != null && !notes.isBlank()) {
+                ar.setNotes(notes);
+            }
+            if (paymentMethod != null && !paymentMethod.isBlank()) {
+                ar.setPaymentMethod(paymentMethod);
+            }
+
+            receivableRepository.save(ar);
+            redirectAttributes.addFlashAttribute("success", "Conta atualizada com sucesso");
+            return "redirect:/receivables/" + id;
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Erro ao atualizar: " + e.getMessage());
+            return "redirect:/receivables";
+        }
     }
 
     @Transactional(readOnly = true)

@@ -54,16 +54,13 @@ public class WorkOrder {
     @JsonProperty("quoteId")
     private UUID quoteId;
 
-    // Adicione estes atributos dentro da classe WorkOrder:
     private BigDecimal width;
     private BigDecimal height;
     private BigDecimal area;
 
-    // 1. Adicione o atributo (importando ServiceCategory se necessário)
     @ManyToOne
     private ServiceCategory category;
 
-    // 2. Adicione os métodos de acesso no final da classe
     public ServiceCategory getCategory() {
         return category;
     }
@@ -78,7 +75,6 @@ public class WorkOrder {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    // Adicione estes Getters e Setters no final da classe:
     public BigDecimal getWidth() { return width; }
     public void setWidth(BigDecimal width) { this.width = width; }
 
@@ -87,7 +83,6 @@ public class WorkOrder {
 
     public BigDecimal getArea() { return area; }
     public void setArea(BigDecimal area) { this.area = area; }
-    // Getters e Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getNumber() { return number; }
@@ -113,7 +108,6 @@ public class WorkOrder {
     public UUID getQuoteId() { return (this.quoteId != null) ? this.quoteId : (this.quote != null ? this.quote.getId() : null); }
     public void setQuoteId(UUID quoteId) { this.quoteId = quoteId; }
 
-    // Métodos Auxiliares
     public BigDecimal getTotalCost() { return items.stream().map(WorkOrderItem::getTotalCost).reduce(BigDecimal.ZERO, BigDecimal::add); }
     public BigDecimal getProfit() { return getTotalValue().subtract(getTotalCost()); }
     public String getMargin() { return getTotalValue().compareTo(BigDecimal.ZERO) > 0 ? getProfit().multiply(new BigDecimal("100")).divide(getTotalValue(), 1, java.math.RoundingMode.HALF_UP).toString() : "0"; }

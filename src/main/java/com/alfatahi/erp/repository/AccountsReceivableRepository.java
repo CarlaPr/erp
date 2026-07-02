@@ -1,5 +1,6 @@
 package com.alfatahi.erp.repository;
 import com.alfatahi.erp.entity.AccountsReceivable;
+import com.alfatahi.erp.entity.WorkOrder;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,8 @@ public interface AccountsReceivableRepository extends JpaRepository<AccountsRece
     List<AccountsReceivable> findAllByOrderByDueDateAsc();
 
     List<AccountsReceivable> findByStatusNotOrderByDueDateAsc(String status);
+
+    List<AccountsReceivable> findByWorkOrder(WorkOrder workOrder);
 
     @Query("SELECT SUM(COALESCE(a.receivedAmount,0) + COALESCE(a.feeAmount,0)) FROM AccountsReceivable a " +
             "WHERE a.paymentDate >= :inicio AND a.paymentDate < :fim")
