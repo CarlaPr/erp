@@ -21,12 +21,12 @@
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Total (Mês)</span>
-            <p class="text-2xl font-black text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(valFaturado, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        <div class="bg-indigo-600 dark:bg-indigo-900 p-6 rounded-2xl shadow-md border-none">
+            <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1">Saldo Real (Atual)</span>
+            <p class="text-2xl font-black text-white" th:text="'R$ ' + ${#numbers.formatDecimal(saldoReal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-emerald-500">
-            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Recebido</span>
+            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Recebido (Filtro)</span>
             <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(valRecebido, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-amber-500">
@@ -51,6 +51,10 @@
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-all text-sm"/>
                 </div>
             </div>
+
+            <label class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-2 font-bold cursor-pointer">
+                <input type="checkbox" name="allMonths" value="true" class="w-4 h-4 rounded border-slate-300 accent-emerald-600"> Ver Todos os Meses
+            </label>
 
             <div>
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Status</label>
@@ -118,6 +122,7 @@
                 <th class="p-5">Cliente / Descrição</th>
                 <th class="p-5">O.S.</th>
                 <th class="p-5 text-right">Total Bruto</th>
+                <th class="p-5 text-right">Desconto</th>
                 <th class="p-5 text-right">Recebido</th>
                 <th class="p-5 text-right">Pendente</th>
                 <th class="p-5 text-center">Status</th>
@@ -127,7 +132,7 @@
             <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
 
             <tr th:if="${#lists.isEmpty(receivables)}">
-                <td colspan="8" class="p-10 text-center text-slate-500 font-medium text-base bg-slate-50 dark:bg-slate-800/10">
+                <td colspan="9" class="p-10 text-center text-slate-500 font-medium text-base bg-slate-50 dark:bg-slate-800/10">
                     <div class="flex flex-col items-center gap-3">
                         <i data-lucide="inbox" class="w-10 h-10 opacity-40"></i>
                         <p>Nenhum registo encontrado.</p>
@@ -140,16 +145,13 @@
                 class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
                 th:classappend="${r.status == 'cancelled'} ? 'opacity-50 grayscale' : ''">
 
-                <!-- Vencimento -->
                 <td class="p-5">
                     <span th:text="${#temporals.format(r.dueDate, 'dd/MM/yyyy')}"
                           class="text-base block"
                           th:classappend="${(r.status == 'pending' or r.status == 'partial') and r.dueDate.isBefore(T(java.time.LocalDate).now())} ? 'text-rose-600 dark:text-rose-400 font-black' : 'text-slate-900 dark:text-white font-bold'">
-                        01/01/2026
                     </span>
                 </td>
 
-                <!-- Cliente / Descrição -->
                 <td class="p-5">
                     <div class="font-bold text-slate-900 dark:text-white text-base" th:text="${r.client != null ? r.client.name : 'Avulso'}">Cliente</div>
                     <div class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5" th:text="${r.description}">Desc</div>
@@ -157,41 +159,30 @@
                          class="text-xs text-slate-400 dark:text-slate-500 font-bold mt-1" th:text="${r.paymentMethod}"></div>
                 </td>
 
-                <!-- O.S. -->
                 <td class="p-5 text-brand-600 dark:text-cyan-400 font-mono font-bold text-base" th:text="${r.workOrder != null ? r.workOrder.number : '-'}">-</td>
 
-                <!-- Total -->
                 <td class="p-5 text-right font-mono font-bold text-slate-700 dark:text-slate-300 text-base"
-                    th:text="'R$ ' + ${#numbers.formatDecimal(r.totalAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
+                    th:text="${r != null and r.totalAmount != null ? 'R$ ' + #numbers.formatDecimal(r.totalAmount, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">0,00</td>
 
-                <!-- Recebido -->
+                <td class="p-5 text-right font-mono font-bold text-rose-500 text-sm"
+                    th:text="${r != null and r.discount != null and r.discount.compareTo(0) > 0 ? '- R$ ' + #numbers.formatDecimal(r.discount, 1, 'POINT', 2, 'COMMA') : '-'}">-</td>
+
                 <td class="p-5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-base"
-                    th:text="'R$ ' + ${#numbers.formatDecimal(r.netReceivedAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
+                    th:text="${r != null and r.netReceivedAmount != null ? 'R$ ' + #numbers.formatDecimal(r.netReceivedAmount, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">0,00</td>
 
-                <!-- Saldo -->
                 <td class="p-5 text-right font-mono font-black text-base"
-                    th:classappend="${r.balance.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-500'"
-                    th:text="'R$ ' + ${#numbers.formatDecimal(r.balance, 1, 'POINT', 2, 'COMMA')}">0,00</td>
+                    th:classappend="${r != null and r.balance != null and r.balance.compareTo(0) > 0} ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-500'"
+                    th:text="${r != null and r.balance != null ? 'R$ ' + #numbers.formatDecimal(r.balance, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">0,00</td>
 
-                <!-- Status -->
                 <td class="p-5 text-center">
                     <span th:if="${r.status == 'received'}"  class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-transparent uppercase block w-fit mx-auto">Recebido</span>
                     <span th:if="${r.status == 'partial'}"   class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-transparent uppercase block w-fit mx-auto">Parcial</span>
                     <span th:if="${r.status == 'pending'}"   class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:border-transparent uppercase block w-fit mx-auto">Pendente</span>
                     <span th:if="${r.status == 'cancelled'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-500/20 dark:text-slate-400 dark:border-transparent uppercase block w-fit mx-auto">Cancelado</span>
-
-                    <div th:if="${r.reconciliationStatus == 'CONCILIADO'}" class="text-[10px] text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest mt-2 flex items-center justify-center gap-1">
-                        <i data-lucide="check-check" class="w-3.5 h-3.5"></i> Conciliado
-                    </div>
-                    <div th:if="${r.reconciliationStatus == 'DIVERGENTE'}" class="text-[10px] text-rose-600 dark:text-rose-400 font-black uppercase tracking-widest mt-2 flex items-center justify-center gap-1">
-                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Divergente
-                    </div>
                 </td>
 
-                <!-- Ações -->
                 <td class="p-5 text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <!-- Receber -->
                         <button th:if="${r.status != 'received' and r.status != 'cancelled'}"
                                 th:data-id="${r.id}"
                                 th:data-balance="${r.balance}"
@@ -200,15 +191,15 @@
                             <i data-lucide="check-circle" class="w-5 h-5"></i>
                         </button>
 
-                        <!-- Editar -->
-                        <button th:if="${r.status != 'cancelled'}"
-                                th:data-id="${r.id}"
-                                th:data-description="${r.description}"
-                                th:data-total="${r.totalAmount}"
-                                th:data-duedate="${r.dueDate}"
-                                th:data-notes="${r.notes}"
-                                th:data-client="${r.client != null ? r.client.id : ''}"
-                                th:data-workorder="${r.workOrder != null ? r.workOrder.id : ''}"
+                        <button th:if="${r != null and r.status != 'cancelled'}"
+                                th:data-id="${r?.id}"
+                                th:data-description="${r?.description}"
+                                th:data-total="${r?.totalAmount}"
+                                th:data-duedate="${r?.dueDate}"
+                                th:data-notes="${r?.notes}"
+                                th:data-client="${r?.client != null ? r.client.id : ''}"
+                                th:data-workorder="${r?.workOrder != null ? r.workOrder.id : ''}"
+                                th:data-received="${r?.receivedAmount}"
                                 onclick="openEditModal(
                                     this.dataset.id,
                                     this.dataset.description,
@@ -217,13 +208,13 @@
                                     '',
                                     this.dataset.notes,
                                     this.dataset.client,
-                                    this.dataset.workorder
+                                    this.dataset.workorder,
+                                    this.dataset.received
                                     )"
                                 class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors" title="Editar">
                             <i data-lucide="edit" class="w-5 h-5"></i>
                         </button>
 
-                        <!-- Cancelar -->
                         <button th:if="${r != null and r.status != 'cancelled'}"
                                 th:data-id="${r.id}"
                                 onclick="confirmCancel(this.dataset.id)"
@@ -259,7 +250,7 @@
                     <!-- Valor Total -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Valor Total (R$) *</label>
-                        <input type="number" step="0.01" min="0" th:field="*{totalAmount}" required placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-emerald-700 dark:text-emerald-400 font-black focus:border-emerald-500 outline-none transition-all text-lg font-mono">
+                        <input type="number" step="0.01" min="0" th:field="*{totalAmount}" id="newReceivableGross" onkeyup="calculateDiscountPreview()" onchange="calculateDiscountPreview()" required placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-emerald-700 dark:text-emerald-400 font-black focus:border-emerald-500 outline-none transition-all text-lg font-mono">
                     </div>
 
                     <!-- Cliente -->
@@ -299,9 +290,22 @@
                     </div>
 
                     <!-- Desconto -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto (R$)</label>
-                        <input type="number" step="0.01" min="0" th:field="*{discount}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
+                    <div class="lg:col-span-2">
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="uiDiscountType" onchange="calculateDiscountPreview()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none transition-all text-base">
+                            <option value="percent">% Porcentagem</option>
+                            <option value="money">R$ Dinheiro</option>
+                        </select>
+                        <input type="number" step="0.01" id="uiDiscountValue" onkeyup="calculateDiscountPreview()" onchange="calculateDiscountPreview()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none transition-all text-base">
+                    </div>
+                    <input type="hidden" th:field="*{discount}" id="realDiscountField">
+                </div>
+
+                    <div class="lg:col-span-3 mb-2 hidden" id="discountPreviewAlert">
+                        <div class="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400 px-4 py-3 rounded-xl flex items-center font-bold text-sm">
+                            <i data-lucide="info" class="w-5 h-5 mr-2"></i> <span id="discountPreviewText"></span>
+                        </div>
                     </div>
 
                     <!-- Observações -->
@@ -335,7 +339,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Valor Recebido (R$) *</label>
-                    <input type="number" step="0.01" name="amount" id="receiveAmountInput" required placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-emerald-700 dark:text-emerald-400 font-black focus:border-emerald-500 outline-none transition-all text-xl font-mono" onkeyup="updateReceivePreview()" onchange="updateReceivePreview()" />
+                    <input type="number" step="0.01" name="amount" id="receiveAmountInput" required placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-emerald-700 dark:text-emerald-400 font-black focus:border-emerald-500 outline-none transition-all text-xl font-mono" onkeyup="calculateReceivePreview()" onchange="calculateReceivePreview()" />
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Saldo restante: <span id="receiveBalance" class="text-amber-600 dark:text-amber-400 font-bold"></span></p>
                 </div>
 
@@ -355,14 +359,32 @@
                         </select>
                     </div>
 
-                    <div class="md:col-span-2 grid grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto (R$)</label>
-                            <input type="number" step="0.01" name="discount" id="receiveDiscount" value="0.00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
+                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto</label>
+                                <select id="uiReceiveDiscountType" onchange="calculateReceivePreview()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2 py-2 text-slate-900 dark:text-white outline-none text-base">
+                                    <option value="percent">% Porcentagem</option>
+                                    <option value="money">R$ Dinheiro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Valor</label>
+                                <input type="number" step="0.01" id="uiReceiveDiscountValue" onkeyup="calculateReceivePreview()" onchange="calculateReceivePreview()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white outline-none text-base">
+                            </div>
+                            <input type="hidden" name="discount" id="realReceiveDiscountField" value="0.00">
                         </div>
+
                         <div>
                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Taxa Cartão (%)</label>
-                            <input type="number" step="0.01" name="cardFee" id="receiveCardFee" value="0.00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-rose-600 dark:text-rose-400 font-bold focus:border-emerald-500 outline-none transition-all text-base" onkeyup="updateReceivePreview()" onchange="updateReceivePreview()">
+                            <input type="number" step="0.01" name="cardFee" id="receiveCardFee" value="0.00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-rose-600 dark:text-rose-400 font-bold focus:border-emerald-500 outline-none transition-all text-base" onkeyup="calculateReceivePreview()" onchange="calculateReceivePreview()">
+                        </div>
+
+                        <div class="md:col-span-2 hidden" id="receivePreviewAlert">
+                            <div class="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-4 py-3 rounded-xl flex items-center font-bold text-sm">
+                                <i data-lucide="info" class="w-5 h-5 mr-2"></i> <span id="receivePreviewText"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -455,6 +477,11 @@
                         <input type="number" step="0.01" name="discount" id="editDiscount" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
                     </div>
 
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">Valor Já Recebido (R$)</label>
+                        <input type="number" step="0.01" name="receivedAmount" id="editReceivedAmount" class="w-full bg-slate-50 dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700/50 rounded-xl px-4 py-3 text-emerald-700 dark:text-emerald-400 font-black focus:border-emerald-500 outline-none transition-all text-base">
+                    </div>
+
                     <!-- Observações -->
                     <div class="lg:col-span-3">
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Observações</label>
@@ -520,6 +547,7 @@
             </div>
         </div>
     </div>
+
 </main>
 
 <style>
@@ -562,7 +590,34 @@
     function openModal(id)  { const m = document.getElementById(id); m.classList.remove('hidden'); m.classList.add('flex'); }
     function closeModal(id) { const m = document.getElementById(id); m.classList.remove('flex'); m.classList.add('hidden'); }
 
-    // Receber
+    function calculateDiscountPreview() {
+        const grossStr = document.getElementById('newReceivableGross').value;
+        const gross = parseFloat(grossStr) || 0;
+        const type = document.getElementById('uiDiscountType').value;
+        const val = parseFloat(document.getElementById('uiDiscountValue').value) || 0;
+
+        let discountInMoney = 0;
+        if (type === 'percent') {
+            discountInMoney = gross * (val / 100);
+        } else {
+            discountInMoney = val;
+        }
+
+        const net = gross - discountInMoney;
+
+        document.getElementById('realDiscountField').value = discountInMoney.toFixed(2);
+
+        const alertDiv = document.getElementById('discountPreviewAlert');
+        const alertText = document.getElementById('discountPreviewText');
+
+        if (discountInMoney > 0 && gross > 0) {
+            alertDiv.classList.remove('hidden');
+            alertText.innerText = `Valor Bruto: R$ ${gross.toFixed(2)} | A Receber com Desconto: R$ ${net.toFixed(2)}`;
+        } else {
+            alertDiv.classList.add('hidden');
+        }
+    }
+
     function openReceiveModal(id, balance) {
         balance = parseFloat(balance) || 0;
         document.getElementById("receiveForm").reset();
@@ -579,7 +634,7 @@
         document.getElementById("receiveDate").value =
             new Date().toISOString().split("T")[0];
 
-        updateReceivePreview();
+        calculateReceivePreview();
 
         document.getElementById("receiveModal")
             .classList.remove("hidden");
@@ -609,7 +664,39 @@
             .classList.remove("hidden");
     }
 
-    function openEditModal(id, description, total, dueDate, installments, notes, client, workOrder){
+    function calculateReceivePreview() {
+        const amountStr = document.getElementById('receiveAmountInput').value;
+        const amount = parseFloat(amountStr) || 0;
+        const discType = document.getElementById('uiReceiveDiscountType').value;
+        const discVal = parseFloat(document.getElementById('uiReceiveDiscountValue').value) || 0;
+        const feePercent = parseFloat(document.getElementById('receiveCardFee').value) || 0;
+        let discountInMoney = 0;
+        if (discType === 'percent') {
+            discountInMoney = amount * (discVal / 100);
+        } else {
+            discountInMoney = discVal;
+        }
+        document.getElementById('realReceiveDiscountField').value = discountInMoney.toFixed(2);
+        const amountAfterDiscount = amount - discountInMoney;
+        const feeAmount = amountAfterDiscount * (feePercent / 100);
+        const netAmount = amountAfterDiscount - feeAmount;
+
+        const alertDiv = document.getElementById('receivePreviewAlert');
+        const alertText = document.getElementById('receivePreviewText');
+
+        if (amount > 0 && (discountInMoney > 0 || feeAmount > 0)) {
+            alertDiv.classList.remove('hidden');
+            let msg = `Bruto: R$ ${amount.toFixed(2)}`;
+            if (discountInMoney > 0) msg += ` | Desc: -R$ ${discountInMoney.toFixed(2)}`;
+            if (feeAmount > 0) msg += ` | Taxa (${feePercent}%): -R$ ${feeAmount.toFixed(2)}`;
+            msg += ` ➔ Líquido: R$ ${netAmount.toFixed(2)}`;
+            alertText.innerText = msg;
+        } else {
+            alertDiv.classList.add('hidden');
+        }
+    }
+
+    function openEditModal(id, description, total, dueDate, installments, notes, client, workOrder, receivedAmount){
         document.getElementById("editForm").action = "/receivables/edit/" + id;
         document.getElementById("editDescription").value = description || "";
         document.getElementById("editTotalAmount").value = total || "";
@@ -618,6 +705,7 @@
         document.getElementById("editNotes").value = notes || "";
         document.getElementById("editClient").value = client || "";
         document.getElementById("editWorkOrder").value = workOrder || "";
+        document.getElementById("editReceivedAmount").value = receivedAmount || 0;
 
         openModal("editModal");
     }
@@ -629,25 +717,17 @@
             alert('Por favor, selecione um mês!');
             return;
         }
-
-        // O input type="month" retorna o valor no formato "YYYY-MM" (Ex: 2026-07)
         const [year, month] = monthInput.split('-');
-
-        // Calcula o primeiro e o último dia do mês escolhido
         const dateFrom = `${year}-${month}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const dateTo = `${year}-${month}-${lastDay}`;
 
-        // Lê a URL atual dinamicamente (para saber se está em /receivables ou /payables)
         const currentPath = window.location.pathname;
 
-        // Monta o link final passando a data inicial e final do mês
         const url = `${currentPath}/export?dateFrom=${dateFrom}&dateTo=${dateTo}`;
 
-        // Faz o redirecionamento invisível para baixar o arquivo
         window.location.href = url;
 
-        // Fecha a modal
         closeModal('exportModal');
     }
 

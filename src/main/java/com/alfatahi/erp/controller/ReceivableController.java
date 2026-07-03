@@ -1,5 +1,6 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.entity.AccountsPayable;
 import com.alfatahi.erp.entity.AccountsReceivable;
 import com.alfatahi.erp.repository.AccountsReceivableRepository;
 import com.alfatahi.erp.repository.ClientRepository;
@@ -54,12 +55,20 @@ public class ReceivableController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(required = false) String paymentMethod,
             @RequestParam(required = false) UUID workOrderId,
+            @RequestParam(required = false, defaultValue = "false") boolean allMonths, // Parâmetro para ver tudo
             Model model) {
+
+        // Se nenhum filtro de data for passado e não for solicitado "todos os meses", foca no mês atual
+        if (dateFrom == null && dateTo == null && !allMonths) {
+            dateFrom = LocalDate.now().withDayOfMonth(1);
+            dateTo = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+        }
 
         List<AccountsReceivable> list = receivableRepository.findAllByOrderByDueDateAsc().stream()
                 .filter(r -> !"cancelled".equals(r.getStatus()) || "cancelled".equals(status))
                 .collect(Collectors.toList());
 
+        // Aplicação dos Filtros
         if (search != null && !search.isBlank()) {
             String q = search.toLowerCase();
             list = list.stream().filter(r ->
@@ -75,10 +84,12 @@ public class ReceivableController {
             list = list.stream().filter(r -> r.getClient() != null && clientId.equals(r.getClient().getId())).collect(Collectors.toList());
         }
         if (dateFrom != null) {
-            list = list.stream().filter(r -> !r.getDueDate().isBefore(dateFrom)).collect(Collectors.toList());
+            final LocalDate df = dateFrom;
+            list = list.stream().filter(r -> !r.getDueDate().isBefore(df)).collect(Collectors.toList());
         }
         if (dateTo != null) {
-            list = list.stream().filter(r -> !r.getDueDate().isAfter(dateTo)).collect(Collectors.toList());
+            final LocalDate dt = dateTo;
+            list = list.stream().filter(r -> !r.getDueDate().isAfter(dt)).collect(Collectors.toList());
         }
         if (paymentMethod != null && !paymentMethod.isBlank()) {
             list = list.stream().filter(r -> paymentMethod.equals(r.getPaymentMethod())).collect(Collectors.toList());
@@ -87,19 +98,25 @@ public class ReceivableController {
             list = list.stream().filter(r -> r.getWorkOrder() != null && workOrderId.equals(r.getWorkOrder().getId())).collect(Collectors.toList());
         }
 
-        List<AccountsReceivable> all = receivableRepository.findAllByOrderByDueDateAsc().stream()
-                .filter(r -> !"cancelled".equals(r.getStatus()))
-                .collect(Collectors.toList());
+        BigDecimal totalEntradasGeral = receivableRepository.findAll().stream()
+                .filter(r -> "received".equals(r.getStatus()) || "partial".equals(r.getStatus()))
+                .map(AccountsReceivable::getNetReceivedAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal faturado = all.stream().map(AccountsReceivable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal recebido = all.stream().map(AccountsReceivable::getNetReceivedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalSaidasGeral = financeService.listAllPayables().stream()
+                .filter(p -> "paid".equals(p.getStatus()) || "partial".equals(p.getStatus()))
+                .map(AccountsPayable::getPaidAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal aReceber = all.stream()
+        BigDecimal saldoReal = totalEntradasGeral.subtract(totalSaidasGeral);
+
+        BigDecimal faturado = list.stream().map(AccountsReceivable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal recebido = list.stream().map(AccountsReceivable::getNetReceivedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal aReceber = list.stream()
                 .filter(r -> "pending".equals(r.getStatus()) || "partial".equals(r.getStatus()))
                 .map(AccountsReceivable::getBalance)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal emAtraso = all.stream()
+        BigDecimal emAtraso = list.stream()
                 .filter(r -> ("pending".equals(r.getStatus()) || "partial".equals(r.getStatus())) && r.getDueDate().isBefore(LocalDate.now()))
                 .map(AccountsReceivable::getBalance)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -109,11 +126,13 @@ public class ReceivableController {
         model.addAttribute("clients", clientService.listAllActive());
         model.addAttribute("workOrders", workOrderService.listAll());
         model.addAttribute("newReceivable", new AccountsReceivable());
+
+        model.addAttribute("saldoReal", saldoReal);
         model.addAttribute("valFaturado", faturado);
         model.addAttribute("valRecebido", recebido);
         model.addAttribute("valAReceber", aReceber);
         model.addAttribute("valAtraso", emAtraso);
-        // Filtros
+
         model.addAttribute("filterSearch", search);
         model.addAttribute("filterStatus", status);
         model.addAttribute("filterClientId", clientId);
@@ -123,6 +142,47 @@ public class ReceivableController {
         model.addAttribute("filterWorkOrderId", workOrderId);
 
         return "receivables";
+    }
+
+    @PostMapping("/edit/{id}")
+    public String edit(@PathVariable UUID id, @ModelAttribute AccountsReceivable form) {
+        AccountsReceivable ar = receivableRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
+
+        ar.setDescription(form.getDescription());
+        ar.setTotalAmount(form.getTotalAmount());
+        ar.setDueDate(form.getDueDate());
+        ar.setInstallments(form.getInstallments());
+        ar.setCardFeePercentage(form.getCardFeePercentage());
+        ar.setDiscount(form.getDiscount());
+        ar.setNotes(form.getNotes());
+
+        if (form.getReceivedAmount() != null) {
+            ar.setReceivedAmount(form.getReceivedAmount());
+            ar.setGrossReceivedAmount(form.getReceivedAmount());
+
+            if (ar.getReceivedAmount().compareTo(BigDecimal.ZERO) == 0) {
+                ar.setStatus("pending");
+            } else if (ar.getReceivedAmount().compareTo(ar.getTotalAmount()) >= 0) {
+                ar.setStatus("received");
+            } else {
+                ar.setStatus("partial");
+            }
+        }
+
+        if (form.getClient() != null && form.getClient().getId() != null) {
+            ar.setClient(clientService.findById(form.getClient().getId()));
+        } else {
+            ar.setClient(null);
+        }
+
+        if (form.getWorkOrder() != null && form.getWorkOrder().getId() != null) {
+            ar.setWorkOrder(workOrderService.findById(form.getWorkOrder().getId()));
+        } else {
+            ar.setWorkOrder(null);
+        }
+        receivableRepository.save(ar);
+        return "redirect:/receivables";
     }
 
     @PostMapping("/save")
@@ -147,33 +207,6 @@ public class ReceivableController {
         receivable.setStatus("pending");
         receivableRepository.save(receivable);
 
-        return "redirect:/receivables";
-    }
-
-    @PostMapping("/edit/{id}")
-    public String edit(@PathVariable UUID id, @ModelAttribute AccountsReceivable form) {
-        AccountsReceivable ar = receivableRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
-        ar.setDescription(form.getDescription());
-        ar.setTotalAmount(form.getTotalAmount());
-        ar.setDueDate(form.getDueDate());
-        ar.setInstallments(form.getInstallments());
-        ar.setCardFeePercentage(form.getCardFeePercentage());
-        ar.setDiscount(form.getDiscount());
-        ar.setNotes(form.getNotes());
-
-        if (form.getClient() != null && form.getClient().getId() != null) {
-            ar.setClient(clientService.findById(form.getClient().getId()));
-        } else {
-            ar.setClient(null);
-        }
-
-        if (form.getWorkOrder() != null && form.getWorkOrder().getId() != null) {
-            ar.setWorkOrder(workOrderService.findById(form.getWorkOrder().getId()));
-        } else {
-            ar.setWorkOrder(null);
-        }
-        receivableRepository.save(ar);
         return "redirect:/receivables";
     }
 
