@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head(title='Ordens de Serviço - Tahi Glass')}"></head>
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
@@ -19,7 +19,7 @@
         </button>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div sec:authorize="hasAuthority('GESTAO')" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
             <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Receita Total</p>
             <p class="text-2xl font-black text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
@@ -142,7 +142,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6"
+                    <div sec:authorize="hasAuthority('GESTAO')" class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6"
                          th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}">
 
                         <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
@@ -164,7 +164,6 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-6 text-xs text-slate-500 dark:text-slate-400 font-bold">
-                        <div class="flex items-center gap-1.5"><i data-lucide="package" class="w-4 h-4"></i> <span th:text="${wo.category != null ? wo.category.name : 'Sem categoria'}">Cat</span></div>
                         <div class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4"></i> <span th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : 'Sem data'}">Data</span></div>
                         <div class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i> <span class="truncate max-w-[200px]" th:text="${wo.client != null ? wo.client.address : 'Sem endereço'}">Endereço</span></div>
                     </div>

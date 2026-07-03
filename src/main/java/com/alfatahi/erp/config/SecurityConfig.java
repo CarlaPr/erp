@@ -28,11 +28,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/admin/users/**").hasAuthority("GESTAO")
-                        .requestMatchers("/dashboard", "/work-orders/**", "/payables/**", "/receivables/**",
+
+                        .requestMatchers("/dashboard", "/payables/**", "/receivables/**",
                                 "/losses/**", "/dre/**", "/conciliation/**", "/suppliers/**",
                                 "/settings/**", "/settings/users/**").hasAuthority("GESTAO")
+
+                        .requestMatchers("/work-orders/**").hasAnyAuthority("GESTAO", "TECNICO")
+
                         .requestMatchers("/commercial/**", "/quotes/**", "/clients/**",
-                                "/agenda/**", "/login-success").hasAnyAuthority("GESTAO", "VENDAS")
+                                "/agenda/**", "/login-success").hasAnyAuthority("GESTAO", "VENDAS", "TECNICO")
+
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

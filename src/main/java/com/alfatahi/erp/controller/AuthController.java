@@ -21,7 +21,7 @@ public class AuthController {
 
         if (roles.contains("GESTAO")) {
             return "redirect:/dashboard";
-        } else if (roles.contains("VENDAS")) {
+        } else if (roles.contains("VENDAS") || roles.contains("TECNICO")) {
             return "redirect:/commercial";
         }
         return "redirect:/login";

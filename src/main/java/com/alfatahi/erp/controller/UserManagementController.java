@@ -35,8 +35,8 @@ public class UserManagementController {
         if (password == null || password.length() < 6)
             return ResponseEntity.badRequest().body(Map.of("erro", "senha deve ter pelo menos 6 caracteres"));
 
-        if (!"GESTAO".equals(role) && !"VENDAS".equals(role))
-            return ResponseEntity.badRequest().body(Map.of("erro", "role deve ser GESTAO ou VENDAS"));
+        if (!"GESTAO".equals(role) && !"VENDAS".equals(role) && !"TECNICO".equals(role))
+            return ResponseEntity.badRequest().body(Map.of("erro", "role deve ser GESTAO,VENDAS ou TECNICO"));
 
         if (userRepository.findByUsername(username).isPresent())
             return ResponseEntity.badRequest().body(Map.of("erro", "Usuário '" + username + "' já existe"));
@@ -87,7 +87,7 @@ public class UserManagementController {
                                         @RequestBody Map<String, String> body) {
 
         String novoRole = body.get("novoRole");
-        if (!"GESTAO".equals(novoRole) && !"VENDAS".equals(novoRole))
+        if (!"GESTAO".equals(novoRole) && !"VENDAS".equals(novoRole) && !"TECNICO".equals(novoRole))
             return ResponseEntity.badRequest().body(Map.of("erro", "novo Role deve ser GESTAO ou VENDAS"));
 
         return userRepository.findByUsername(username)
