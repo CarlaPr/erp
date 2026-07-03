@@ -21,7 +21,7 @@ public class Quote {
 
     @ManyToOne
     @JoinColumn(name = "client_id")
-    @JsonIgnoreProperties({"quotes", "workOrders"}) // 2. CORREÇÃO: Quebra o loop com Cliente
+    @JsonIgnoreProperties({"quotes", "workOrders"})
     private Client client;
 
     @Column(nullable = false, length = 50)
@@ -41,16 +41,14 @@ public class Quote {
 
     private Integer installments = 1;
 
-    @Column(name = "date_created", updatable = false)
+    @Column(name = "date_created")
     private LocalDateTime dateCreated = LocalDateTime.now();
 
-    // NOVO: data em que o orçamento foi aprovado. Usado pela Agenda Comercial
-    // para calcular o prazo (Data Aprovação + 15 dias corridos).
     @Column(name = "date_approved")
     private LocalDateTime dateApproved;
 
     @OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties("quote") // 3. CORREÇÃO: Quebra o loop com os Itens do Orçamento
+    @JsonIgnoreProperties("quote")
     private List<QuoteItem> items = new ArrayList<>();
 
     @OneToOne(mappedBy = "quote")

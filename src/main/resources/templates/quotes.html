@@ -114,7 +114,7 @@
             <form id="quoteForm" onsubmit="saveQuote(event)" class="space-y-8" novalidate>
                 <input type="hidden" id="quoteId" />
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-slate-50 dark:bg-slate-800/30 p-8 rounded-2xl border border-slate-200 dark:border-slate-700/50">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 bg-slate-50 dark:bg-slate-800/30 p-8 rounded-2xl border border-slate-200 dark:border-slate-700/50">
                     <div>
                         <div class="flex justify-between items-center mb-3">
                             <label class="block text-slate-700 dark:text-slate-400 font-bold text-base">Cliente</label>
@@ -127,6 +127,12 @@
                             <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
                         </select>
                     </div>
+
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Data de Emissão</label>
+                        <input type="date" id="quoteDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg" />
+                    </div>
+
                     <div>
                         <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Forma de Pagamento</label>
                         <select id="quotePayment" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg">
@@ -620,6 +626,9 @@
 
         document.getElementById('itemCat').value = '';
 
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('quoteDate').value = today;
+
         currentItems = [];
         renderQuoteItems();
         document.getElementById('liveQuoteTotal').innerText = 'R$ 0,00';
@@ -663,6 +672,9 @@
                     document.getElementById('quoteClient').value = q.client.id;
                 } else {
                     document.getElementById('quoteClient').value = '';
+                }
+                if(q.dateCreated) {
+                    document.getElementById('quoteDate').value = q.dateCreated.split('T')[0];
                 }
 
                 document.getElementById('quotePayment').value = q.paymentMethod || 'PIX';
@@ -751,9 +763,13 @@
             return acc + (item.quantity * m2 * item.unitPrice);
         }, 0);
 
+        let selectedDate = document.getElementById('quoteDate').value;
+        let dateToSave = selectedDate ? `${selectedDate}T00:00:00` : null;
+
         const payload = {
             id: document.getElementById('quoteId').value || null,
             client: { id: clientSelect.value },
+            dateCreated: dateToSave,
             paymentMethod: document.getElementById('quotePayment').value,
             installments: parseInt(document.getElementById('quoteInstallments').value) || 1,
             observations: document.getElementById('quoteObs').value,

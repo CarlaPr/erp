@@ -138,33 +138,36 @@ public class QuoteController {
     public ResponseEntity<?> saveAjax(@RequestBody Quote quote) {
 
         if (quote.getId() != null) {
-            // EDIÇÃO: carregar entidade gerenciada e atualizar campos
             Quote existing = quoteRepo.findById(quote.getId()).orElseThrow();
             existing.setClient(quote.getClient());
+
+            if (quote.getDateCreated() != null) {
+                existing.setDateCreated(quote.getDateCreated());
+            }
             existing.setPaymentMethod(quote.getPaymentMethod());
             existing.setInstallments(quote.getInstallments());
             existing.setObservations(quote.getObservations());
             existing.setWarranty(quote.getWarranty());
             existing.setTotalValue(quote.getTotalValue());
-            existing.setItems(quote.getItems()); // clear() + addAll() pelo setter da entidade
+            existing.setItems(quote.getItems());
             for (QuoteItem item : existing.getItems()) {
-                item.setQuote(existing); // vínculo bidirecional correto
+                item.setQuote(existing);
             }
             quoteRepo.save(existing);
             return ResponseEntity.ok().build();
         }
 
-        // CRIAÇÃO: orçamento novo — gerar número e data
         if (quote.getNumber() == null || quote.getNumber().isEmpty()) {
             int next = quoteRepo.findMaxQuoteSequence() + 1;
             quote.setNumber(String.format("ORC-%04d", next));
         }
+
         if (quote.getDateCreated() == null) {
             quote.setDateCreated(java.time.LocalDateTime.now());
         }
         if (quote.getItems() != null) {
             for (QuoteItem item : quote.getItems()) {
-                item.setQuote(quote); // vínculo bidirecional para itens novos
+                item.setQuote(quote);
             }
         }
         quoteRepo.save(quote);
