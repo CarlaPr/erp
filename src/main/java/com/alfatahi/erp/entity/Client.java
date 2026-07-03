@@ -47,9 +47,6 @@ public class Client {
         updatedAt = LocalDateTime.now();
     }
 
-    // ==========================================
-    //  GETTERS E SETTERS:
-    // ==========================================
 
     public UUID getId() {
         return id;

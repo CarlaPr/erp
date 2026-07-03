@@ -108,30 +108,31 @@
         </table>
     </div>
 
+
     <div id="quoteModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-6">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-5xl rounded-2xl shadow-2xl p-8 relative my-auto">
             <button onclick="closeModal('quoteModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
             <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">Elaborar Orçamento</h3>
 
-            <form id="quoteForm" onsubmit="saveQuote(event)" class="space-y-6 text-sm" novalidate>
+            <form id="quoteForm" onsubmit="saveQuote(event)" class="space-y-8" novalidate>
                 <input type="hidden" id="quoteId" />
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 bg-slate-50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-slate-50 dark:bg-slate-800/30 p-8 rounded-2xl border border-slate-200 dark:border-slate-700/50">
                     <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="block text-slate-700 dark:text-slate-400 font-bold text-sm">Cliente</label>
-                            <button type="button" onclick="toggleModal('clientInlineModal', true)" class="text-xs bg-brand-100 hover:bg-brand-200 text-brand-700 dark:bg-cyan-500/20 dark:hover:bg-cyan-500/30 dark:text-cyan-400 font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all border border-brand-200 dark:border-cyan-500/30 shadow-sm">
-                                <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Novo Cliente
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="block text-slate-700 dark:text-slate-400 font-bold text-base">Cliente</label>
+                            <button type="button" onclick="toggleModal('clientInlineModal', true)" class="text-sm bg-brand-100 hover:bg-brand-200 text-brand-700 dark:bg-cyan-500/20 dark:hover:bg-cyan-500/30 dark:text-cyan-400 font-bold flex items-center gap-2 px-4 py-2 rounded-lg transition-all border border-brand-200 dark:border-cyan-500/30 shadow-sm">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i> Novo Cliente
                             </button>
                         </div>
-                        <select id="quoteClient" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base">
+                        <select id="quoteClient" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg">
                             <option value="">Selecione o Cliente</option>
                             <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 text-sm">Forma de Pagamento</label>
-                        <select id="quotePayment" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base">
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Forma de Pagamento</label>
+                        <select id="quotePayment" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg">
                             <option value="PIX">PIX</option>
                             <option value="Dinheiro">Dinheiro</option>
                             <option value="Cartao_Credito">Cartão de Crédito</option>
@@ -139,18 +140,19 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 text-sm">Parcelas (Vezes)</label>
-                        <input type="number" id="quoteInstallments" min="1" value="1" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base" />
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Parcelas (Vezes)</label>
+                        <input type="number" id="quoteInstallments" min="1" value="1" oninput="if(this.value < 1) this.value = 1;" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg" />
                     </div>
                 </div>
 
-                <div class="bg-brand-50/50 dark:bg-slate-800/20 p-5 rounded-2xl border border-brand-100 dark:border-slate-700/40">
-                    <h4 class="text-brand-800 dark:text-cyan-400 font-black mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
-                        <i data-lucide="package-plus" class="w-5 h-5"></i> Inserir Item / Serviço
+                <div class="bg-brand-50/50 dark:bg-slate-800/20 p-8 rounded-2xl border border-brand-100 dark:border-slate-700/40">
+                    <h4 class="text-brand-800 dark:text-cyan-400 font-black mb-6 text-base uppercase tracking-wider flex items-center gap-3">
+                        <i data-lucide="package-plus" class="w-6 h-6"></i> Inserir Item / Serviço
                     </h4>
-                    <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
+
+                    <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-6">
                         <div class="col-span-2">
-                            <select id="itemCat" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base">
+                            <select id="itemCat" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-lg">
                                 <option value="Box de Banheiro - Padrão">Box de Banheiro - Padrão</option>
                                 <option value="Box de Banheiro - Até o Teto">Box de Banheiro - Até o Teto</option>
                                 <option value="Box de Banheiro - Acrílico">Box de Banheiro - Acrílico</option>
@@ -179,26 +181,30 @@
                             </select>
                         </div>
                         <div class="col-span-4">
-                            <input type="text" id="itemProd" placeholder="Especificação do Item (Ex: Temperado 8mm Incolor)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base" />
+                            <input type="text" id="itemProd" placeholder="Especificação detalhada do Item (Ex: Temperado 8mm Incolor)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-lg" />
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-12 gap-3">
+                    <div class="grid grid-cols-2 md:grid-cols-12 gap-5">
                         <div class="col-span-1 md:col-span-2">
-                            <input type="number" step="0.01" id="itemWidth" placeholder="Largura (m)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-sm" />
+                            <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">Largura (m)</label>
+                            <input type="number" step="0.01" min="0" oninput="if(this.value < 0) this.value = 0;" id="itemWidth" placeholder="0.00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-base" />
                         </div>
                         <div class="col-span-1 md:col-span-2">
-                            <input type="number" step="0.01" id="itemHeight" placeholder="Altura (m)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-sm" />
+                            <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">Altura (m)</label>
+                            <input type="number" step="0.01" min="0" oninput="if(this.value < 0) this.value = 0;" id="itemHeight" placeholder="0.00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-base" />
                         </div>
                         <div class="col-span-1 md:col-span-2">
-                            <input type="number" id="itemQtd" placeholder="Qtd" value="1" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-sm font-bold" />
+                            <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">Quantidade</label>
+                            <input type="number" id="itemQtd" min="1" oninput="if(this.value < 1) this.value = 1;" placeholder="1" value="1" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-base font-bold" />
                         </div>
                         <div class="col-span-1 md:col-span-3">
-                            <input type="number" step="0.01" id="itemPrice" placeholder="Preço do m²(R$)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white outline-none text-right focus:border-brand-500 dark:focus:border-cyan-500 text-sm font-bold text-brand-700 dark:text-cyan-400" />
+                            <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">Preço do M² / Unit. (R$)</label>
+                            <input type="number" step="0.01" min="0" oninput="if(this.value < 0) this.value = 0;" id="itemPrice" placeholder="0,00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white outline-none text-right focus:border-brand-500 dark:focus:border-cyan-500 text-lg font-bold text-brand-700 dark:text-cyan-400" />
                         </div>
-                        <div class="col-span-2 md:col-span-3">
-                            <button type="button" onclick="addItemToQuote()" class="w-full h-full bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 px-4 py-2.5 rounded-xl font-bold hover:bg-brand-700 dark:hover:bg-cyan-600 transition-colors shadow-sm text-sm flex items-center justify-center gap-2">
-                                <i data-lucide="plus" class="w-4 h-4"></i> Incluir
+                        <div class="col-span-2 md:col-span-3 flex items-end">
+                            <button type="button" onclick="addItemToQuote()" class="w-full bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 px-5 py-3.5 rounded-xl font-bold hover:bg-brand-700 dark:hover:bg-cyan-600 transition-colors shadow-sm text-base flex items-center justify-center gap-2">
+                                <i data-lucide="plus" class="w-5 h-5"></i> Adicionar à Lista
                             </button>
                         </div>
                     </div>
@@ -206,205 +212,225 @@
 
                 <div class="bg-white dark:bg-slate-950/40 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
+                        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm uppercase tracking-wider font-bold">
                         <tr>
-                            <th class="p-4">Item / Descrição</th>
-                            <th class="p-4 text-center">Medidas</th>
-                            <th class="p-4 text-center">Qtd</th>
-                            <th class="p-4 text-center">M² Un.</th>
-                            <th class="p-4 text-center">M² Total</th>
-                            <th class="p-4 text-right">Preço Un.</th>
-                            <th class="p-4 text-right">Subtotal</th>
-                            <th class="p-4 text-center"></th>
+                            <th class="p-5">Item / Descrição</th>
+                            <th class="p-5 text-center">Medidas</th>
+                            <th class="p-5 text-center">Qtd</th>
+                            <th class="p-5 text-center">M² Un.</th>
+                            <th class="p-5 text-center">M² Total</th>
+                            <th class="p-5 text-right">Preço Un.</th>
+                            <th class="p-5 text-right">Subtotal</th>
+                            <th class="p-5 text-center">Ação</th>
                         </tr>
                         </thead>
-                        <tbody id="quoteItemsTable" class="text-sm font-medium divide-y divide-slate-100 dark:divide-slate-800/50"></tbody>
+                        <tbody id="quoteItemsTable" class="text-base font-medium divide-y divide-slate-100 dark:divide-slate-800/50"></tbody>
                     </table>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 text-sm">Observações Comerciais</label>
-                        <textarea id="quoteObs" rows="4"
-                                  class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed text-sm"
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Observações Comerciais</label>
+                        <textarea id="quoteObs" rows="5"
+                                  class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed text-base"
                                   placeholder="Insira as observações de entrega e parcelamento..."></textarea>
                     </div>
                     <div>
-                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 text-sm">Termos de Garantia</label>
-                        <textarea id="quoteWarranty" rows="4"
-                                  class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed text-sm"
-                                  placeholder="Insira as regras e prazos da garantia...">
-                    </textarea>
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Termos de Garantia</label>
+                        <textarea id="quoteWarranty" rows="5"
+                                  class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all resize-y font-sans leading-relaxed text-base"
+                                  placeholder="Insira as regras e prazos da garantia..."></textarea>
                     </div>
                 </div>
 
-                <div class="flex flex-col md:flex-row justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-6 mt-6 gap-6">
-                    <div class="bg-slate-50 dark:bg-slate-900 px-6 py-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-6 w-full md:w-auto">
-                        <span class="text-sm text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider block">Valor Total Geral</span>
-                        <span class="text-3xl font-mono font-black text-emerald-600 dark:text-emerald-400" id="liveQuoteTotal">R$ 0,00</span>
+                <div class="flex flex-col md:flex-row justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-8 mt-8 gap-6">
+                    <div class="bg-slate-50 dark:bg-slate-900 px-8 py-5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-6 w-full md:w-auto">
+                        <span class="text-base text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider block">Valor Total Geral</span>
+                        <span class="text-4xl font-mono font-black text-emerald-600 dark:text-emerald-400" id="liveQuoteTotal">R$ 0,00</span>
                     </div>
-                    <div class="flex gap-3 w-full md:w-auto">
-                        <button type="button" onclick="closeModal('quoteModal')" class="flex-1 md:flex-none px-6 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors font-bold text-base">Cancelar</button>
-                        <button type="submit" class="flex-1 md:flex-none px-6 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 transition-all text-base">Salvar Rascunho</button>
+                    <div class="flex gap-4 w-full md:w-auto">
+                        <button type="button" onclick="closeModal('quoteModal')" class="flex-1 md:flex-none px-8 py-4 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors font-bold text-lg">Cancelar</button>
+                        <button type="submit" class="flex-1 md:flex-none px-8 py-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 transition-all text-lg flex items-center justify-center gap-2">
+                            <i data-lucide="save" class="w-5 h-5"></i> Salvar Orçamento
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="receiptModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-start justify-center z-50 overflow-y-auto print:block print:overflow-visible print:bg-white">
-        <div class="bg-white text-slate-900 w-full max-w-4xl print:max-w-none print:w-full rounded-2xl shadow-2xl p-12 relative font-sans print:p-0 print:shadow-none" id="printableReceiptArea">
-            <button onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full print:hidden transition-colors"><i data-lucide="x" class="w-6 h-6"></i>
-            </button>
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-start justify-center z-50 overflow-y-auto print:block print:overflow-visible print:bg-white py-8 print:py-0">
+        <div class="bg-white text-slate-900 w-full max-w-4xl print:max-w-none print:w-full rounded-2xl shadow-2xl relative font-sans print:shadow-none" id="printableReceiptArea">
 
-            <br>
+            <!-- Botões de ação (tela) -->
+            <div class="flex justify-between items-center px-8 py-4 border-b border-slate-100 print:hidden bg-slate-50 rounded-t-2xl">
+                <span class="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Pré-visualização do Orçamento
+                </span>
+                <div class="flex items-center gap-3">
+                    <button onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm hover:bg-slate-800 transition shadow-md">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / Salvar PDF
+                    </button>
+                    <button onclick="closeModal('receiptModal')" class="text-slate-400 hover:text-slate-900 bg-white border border-slate-200 p-2.5 rounded-xl transition-colors" title="Fechar">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
 
             <style>
                 @media print {
-                    @page { size: A4 portrait; margin: 15mm; }
-
-                    html, body {
-                        height: auto !important;
-                        overflow: visible !important;
-                        background-color: white !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                    }
-
+                    @page { size: A4 portrait; margin: 12mm 14mm; }
+                    html, body { height: auto !important; overflow: visible !important; background-color: white !important; margin: 0 !important; padding: 0 !important; }
                     body * { visibility: hidden; }
-
-                    #receiptModal {
-                        position: absolute !important;
-                        left: 0 !important;
-                        top: 0 !important;
-                        right: auto !important;
-                        bottom: auto !important;
-                        height: auto !important;
-                        min-height: 100% !important;
-                        overflow: visible !important;
-                        display: block !important;
-                        background: transparent !important;
-                    }
-
-                    #printableReceiptArea, #printableReceiptArea * {
-                        visibility: visible;
-                    }
-
-                    #printableReceiptArea {
-                        position: relative !important;
-                        width: 100% !important;
-                        display: block !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        overflow: visible !important;
-                        box-shadow: none !important;
-                    }
-
+                    #receiptModal { position: absolute !important; left: 0 !important; top: 0 !important; right: auto !important; bottom: auto !important; height: auto !important; min-height: 100% !important; overflow: visible !important; display: block !important; background: transparent !important; }
+                    #printableReceiptArea, #printableReceiptArea * { visibility: visible; }
+                    #printableReceiptArea { position: relative !important; width: 100% !important; display: block !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; box-shadow: none !important; border-radius: 0 !important; }
                     table { width: 100% !important; border-collapse: collapse !important; }
                     thead { display: table-header-group !important; }
                     tr { page-break-inside: avoid !important; }
-
                     .print-break-after { page-break-after: always; }
                     .avoid-break { page-break-inside: avoid !important; }
+                    .rec-section { padding: 10px 0 !important; }
                 }
             </style>
 
-            <div class="flex justify-between items-start border-b-[3px] border-slate-900 pb-6 mb-8">
-                <div class="flex flex-col">
-                    <div th:if="${profile.logoUrl != null && !profile.logoUrl.isEmpty()}" class="mb-4">
-                        <img th:src="${profile.logoUrl}" class="max-h-24 max-w-[280px] object-contain text-left mix-blend-multiply" alt="Logo" />
+            <!-- Conteúdo imprimível -->
+            <div class="p-10 print:p-0">
+
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- CABEÇALHO: Empresa + Identificação do Orçamento         -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <div class="flex justify-between items-start pb-7 mb-7 border-b-[3px] border-slate-900">
+                    <!-- Dados da Empresa -->
+                    <div class="flex flex-col gap-1">
+                        <div th:if="${profile.logoUrl != null && !profile.logoUrl.isEmpty()}" class="mb-3">
+                            <img th:src="${profile.logoUrl}" class="max-h-20 max-w-[260px] object-contain mix-blend-multiply" alt="Logo" />
+                        </div>
+                        <h2 class="text-2xl font-black tracking-tight text-slate-900 uppercase leading-none" th:text="${profile.companyName}"></h2>
+                        <div class="mt-3 space-y-0.5">
+                            <p class="text-xs text-slate-500 font-semibold" th:text="'CPF / CNPJ: ' + ${profile.document}"></p>
+                            <p class="text-xs text-slate-500 font-semibold" th:text="${profile.address}"></p>
+                            <p class="text-xs text-slate-500 font-semibold" th:text="'Tel.: ' + ${profile.phone} + '  |  ' + ${profile.email}"></p>
+                        </div>
                     </div>
-                    <h2 class="text-3xl font-black tracking-tight text-slate-900 uppercase" th:text="${profile.companyName}"></h2>
-                    <div class="text-sm text-slate-600 mt-4 space-y-1 font-medium">
-                        <p th:text="'CPF/CNPJ: ' + ${profile.document}"></p>
-                        <p th:text="${profile.address}"></p>
-                        <p th:text="'Telefone: ' + ${profile.phone}"></p>
-                        <p th:text="'E-mail: ' + ${profile.email}"></p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 inline-block min-w-[240px]">
-                        <h3 class="text-sm font-bold font-mono text-slate-500 uppercase tracking-widest mb-1">ORÇAMENTO</h3>
-                        <p class="text-3xl font-black text-slate-900 font-mono" id="recNum">N° --</p>
-                        <div class="text-sm text-slate-500 mt-3 border-t pt-3 border-slate-200">
-                            <span class="font-bold block text-slate-700">Data de emissão:</span>
-                            <span id="recDate">--/--/----</span>
+                    <!-- Caixa de Identificação -->
+                    <div class="text-right shrink-0">
+                        <div class="bg-slate-900 text-white px-7 py-5 rounded-2xl inline-block min-w-[220px]">
+                            <p class="text-xs font-bold font-mono uppercase tracking-widest text-slate-400 mb-1">ORÇAMENTO</p>
+                            <p class="text-4xl font-black font-mono leading-none" id="recNum">N° --</p>
+                            <div class="mt-4 pt-3 border-t border-slate-700 text-left">
+                                <span class="text-xs text-slate-400 font-bold block uppercase tracking-wide">Data de emissão</span>
+                                <span id="recDate" class="text-base font-black text-white">--/--/----</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="mb-8">
-                <span class="text-sm font-bold text-slate-500 uppercase tracking-wider block font-mono">Orçamento elaborado para:</span>
-                <h4 class="text-2xl font-black text-slate-900 mt-1" id="recClient">Nome do Cliente</h4>
-            </div>
-
-            <div class="border-[2px] border-slate-200 rounded-2xl overflow-hidden mb-8 bg-white shadow-sm">
-                <table class="w-full text-left border-collapse text-base">
-                    <thead>
-                    <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider text-sm">
-                        <th class="p-5 pl-6 w-[50%]">Descrição do Serviço / Produto</th>
-                        <th class="p-5 text-center">Unid.</th>
-                        <th class="p-5 text-center">Qtd</th>
-                        <th class="p-5 text-right">V. Unit.</th>
-                        <th class="p-5 text-right pr-6">Subtotal</th>
-                    </tr>
-                    </thead>
-                    <tbody id="recItems" class="divide-y divide-slate-200 font-medium text-slate-800">
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10 border-t-2 pt-8 border-slate-100">
-                <div class="text-base text-slate-700 space-y-3">
-                    <h5 class="font-bold text-slate-900 uppercase font-mono tracking-wide text-sm border-b pb-2">Condições & Observações</h5>
-                    <div id="recObs" class="whitespace-pre-line text-sm text-slate-600 font-sans leading-relaxed bg-slate-50 p-5 rounded-xl border border-slate-200">
-                        --
-                    </div>
-                </div>
-
-                <div class="flex flex-col justify-start items-end w-full">
-                    <div class="bg-slate-50 border-[2px] border-slate-200 rounded-2xl p-6 w-full max-w-[380px] font-mono shadow-sm">
-                        <div class="flex justify-between items-center text-sm text-slate-500 font-bold pb-3">
-                            <span>TOTAL:</span>
-                            <span id="recTotal" class="text-slate-900 text-2xl font-black tracking-tight">R$ 0,00</span>
-                        </div>
-                        <div id="recFinalRow" class="flex justify-between items-center pt-3 border-t-2 border-slate-200" style="display: none;">
-                            <span class="text-sm text-slate-500 font-bold">Total Parcelado:</span>
-                            <span id="recFinalInstallments" class="text-xl font-black text-brand-600 tracking-tight">10x R$ 0,00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-10 border-t-[2px] border-dashed border-slate-200 pt-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-base text-slate-700">
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- DESTINATÁRIO                                             -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <div class="mb-7 bg-slate-50 border border-slate-200 rounded-xl px-6 py-4 flex items-center gap-4">
+                    <div class="w-1 h-10 bg-slate-900 rounded-full shrink-0"></div>
                     <div>
-                        <h5 class="font-bold text-slate-900 font-mono text-sm uppercase mb-2">TERMOS DE GARANTIA</h5>
-                        <p id="recWarrantyText" class="text-slate-800 font-sans font-bold text-sm bg-brand-50 text-brand-800 p-4 rounded-xl border border-brand-100">--</p>
-                    </div>
-                    <div class="text-right flex flex-col justify-end">
-                        <p class="text-xs font-mono text-slate-400 mt-4 font-bold">Documento Comercial Processado Digitalmente — <span th:text="${profile.companyName}">Vidraçaria</span></p>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">Orçamento elaborado para</p>
+                        <h4 class="text-xl font-black text-slate-900 mt-0.5 leading-tight" id="recClient">Nome do Cliente</h4>
                     </div>
                 </div>
-            </div>
 
-            <div class="mt-20 pt-16 border-t border-slate-200 grid grid-cols-2 gap-16 text-center text-base font-sans">
-                <div class="relative flex flex-col items-center justify-end min-h-[100px]">
-                    <img th:if="${profile.signatureUrl != null && !profile.signatureUrl.isEmpty()}" th:src="${profile.signatureUrl}" class="absolute bottom-10 max-h-24 object-contain pointer-events-none mix-blend-multiply" />
-                    <div class="w-full border-t-2 border-slate-900 pt-3 font-black text-slate-900" th:text="${profile.companyName}"></div>
-                    <div class="text-sm text-slate-500 font-bold mt-1" th:text="'CNPJ: ' + ${profile.document}"></div>
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- TABELA DE SERVIÇOS / PRODUTOS                           -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <div class="rounded-xl overflow-hidden border border-slate-200 shadow-sm mb-0">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                        <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider text-xs">
+                            <th class="px-5 py-4 pl-6 w-[52%]">Descrição do Serviço / Produto</th>
+                            <th class="px-4 py-4 text-center">Unid.</th>
+                            <th class="px-4 py-4 text-center">Qtd.</th>
+                            <th class="px-4 py-4 text-right">V. Unit.</th>
+                            <th class="px-5 py-4 text-right pr-6">Subtotal</th>
+                        </tr>
+                        </thead>
+                        <tbody id="recItems" class="divide-y divide-slate-100 font-medium text-slate-800">
+                        </tbody>
+                    </table>
                 </div>
-                <div class="flex flex-col items-center justify-end min-h-[100px]">
-                    <div class="w-full border-t-2 border-slate-900 pt-3 font-black text-slate-900" id="recSignatureClientName">Assinatura do Cliente</div>
-                    <div class="text-sm text-slate-500 font-bold mt-1">De Acordo</div>
-                </div>
-            </div>
 
-            <div class="flex justify-end gap-4 print:hidden border-t border-slate-200 pt-6 mt-10">
-                <button onclick="closeModal('receiptModal')" class="bg-white border border-slate-300 text-slate-700 px-6 py-3 rounded-xl font-bold text-base hover:bg-slate-50 transition">Fechar Visualização</button>
-                <button onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-black flex items-center gap-3 text-base hover:bg-slate-800 transition shadow-lg shadow-black/20"><i data-lucide="printer" class="w-5 h-5"></i> Imprimir Orçamento A4</button>
-            </div>
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- BLOCO DE TOTAIS — imediatamente abaixo da tabela        -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <div class="border border-t-0 border-slate-200 rounded-b-xl overflow-hidden mb-8">
+                    <!-- Linha de Total Geral -->
+                    <div class="flex justify-between items-center px-6 pr-6 py-4 bg-slate-900">
+                        <span class="text-sm font-black text-slate-300 uppercase tracking-widest font-mono">VALOR TOTAL DO ORÇAMENTO</span>
+                        <span id="recTotal" class="text-3xl font-black font-mono text-white tracking-tight">R$ 0,00</span>
+                    </div>
+                    <!-- Linha de Parcelamento (condicional) -->
+                    <div id="recFinalRow" class="flex justify-between items-center px-6 pr-6 py-3 bg-slate-800" style="display: none !important;">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">Parcelado em:</span>
+                        <span id="recFinalInstallments" class="text-xl font-black font-mono text-emerald-400 tracking-tight">10x R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- CONDIÇÕES & GARANTIA (lado a lado, abaixo do total)     -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 avoid-break">
+                    <!-- Condições & Observações -->
+                    <div class="border border-slate-200 rounded-xl overflow-hidden">
+                        <div class="bg-slate-100 border-b border-slate-200 px-5 py-3 flex items-center gap-2">
+                            <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-600 print:hidden"></i>
+                            <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Condições & Observações</h5>
+                        </div>
+                        <div id="recObs" class="whitespace-pre-line text-xs text-slate-600 font-sans leading-relaxed p-5 bg-white min-h-[100px]">--</div>
+                    </div>
+                    <!-- Termos de Garantia -->
+                    <div class="border border-slate-200 rounded-xl overflow-hidden">
+                        <div class="bg-slate-100 border-b border-slate-200 px-5 py-3 flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-slate-600 print:hidden"></i>
+                            <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Termos de Garantia</h5>
+                        </div>
+                        <div id="recWarrantyText" class="whitespace-pre-line text-xs text-slate-600 font-sans leading-relaxed p-5 bg-white min-h-[100px]">--</div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- RODAPÉ: Assinaturas                                     -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <div class="avoid-break border-t-2 border-dashed border-slate-300 pt-10 mt-2">
+                    <div class="grid grid-cols-2 gap-16 text-center">
+                        <!-- Assinatura da Empresa -->
+                        <div class="relative flex flex-col items-center justify-end min-h-[100px]">
+                            <img th:if="${profile.signatureUrl != null && !profile.signatureUrl.isEmpty()}"
+                                 th:src="${profile.signatureUrl}"
+                                 class="absolute bottom-12 max-h-20 object-contain pointer-events-none mix-blend-multiply" />
+                            <div class="w-full border-t-2 border-slate-900 pt-3">
+                                <p class="font-black text-slate-900 text-sm" th:text="${profile.companyName}"></p>
+                                <p class="text-xs text-slate-500 font-bold mt-0.5" th:text="'CNPJ: ' + ${profile.document}"></p>
+                            </div>
+                        </div>
+                        <!-- Assinatura do Cliente -->
+                        <div class="flex flex-col items-center justify-end min-h-[100px]">
+                            <div class="w-full border-t-2 border-slate-900 pt-3">
+                                <p class="font-black text-slate-900 text-sm" id="recSignatureClientName">Assinatura do Cliente</p>
+                                <p class="text-xs text-slate-500 font-bold mt-0.5">Ciente e de Acordo</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Rodapé Legal -->
+                    <div class="mt-8 pt-4 border-t border-slate-100 text-center">
+                        <p class="text-[10px] font-mono text-slate-400 font-bold tracking-wide">
+                            Documento Comercial Processado Digitalmente &nbsp;—&nbsp; <span th:text="${profile.companyName}">Vidraçaria</span> &nbsp;
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-4 print:hidden border-t border-slate-200 pt-6 mt-10">
+                    <button onclick="closeModal('receiptModal')" class="bg-white border border-slate-300 text-slate-700 px-6 py-3 rounded-xl font-bold text-base hover:bg-slate-50 transition">Fechar Visualização</button>
+                    <button onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-black flex items-center gap-3 text-base hover:bg-slate-800 transition shadow-lg shadow-black/20"><i data-lucide="printer" class="w-5 h-5"></i> Imprimir / Salvar PDF</button>
+                </div>
+
+            </div><!-- fim p-10 -->
         </div>
     </div>
 
@@ -452,57 +478,43 @@
                             Tipo de Pessoa
                         </label>
                         <select id="inlineClientType" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5">
-                            <option value="individual">
-                                Pessoa Física (CPF)
-                            </option>
-                            <option value="company">
-                                Pessoa Jurídica (CNPJ)
-                            </option>
+                            <option value="individual">Pessoa Física (CPF)</option>
+                            <option value="company">Pessoa Jurídica (CNPJ)</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
                             CPF / CNPJ
                         </label>
-                        <input
-                                type="text"
-                                id="inlineClientDoc"
-                                maxlength="18"
-                                autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <input type="text" id="inlineClientDoc" maxlength="18" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
                         <p id="inlineDocumentError" class="hidden text-red-500 text-xs mt-1"></p>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
                             E-mail
                         </label>
-                        <input
-                                type="email"
-                                id="inlineClientEmail"
-                                maxlength="120"
-                                autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <input type="email" id="inlineClientEmail" maxlength="120" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
                         <p id="inlineEmailError" class="hidden text-red-500 text-xs mt-1"></p>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
                             Telefone
                         </label>
-                        <input
-                                type="text"
-                                id="inlineClientPhone"
-                                maxlength="15"
-                                placeholder="(11) 99999-9999"
-                                autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <input type="text" id="inlineClientPhone" maxlength="15" placeholder="(11) 99999-9999" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
                         <p id="inlinePhoneError" class="hidden text-red-500 text-xs mt-1"></p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                            Endereço Completo (Rua, Número, Bairro, CEP)
+                        </label>
+                        <input type="text" id="inlineClientAddress" maxlength="255" placeholder="Ex: Rua das Flores, 123 - Centro" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-800 mt-6">
-                    <button type="button" onclick="closeModal('clientInlineModal')" class="px-5 py-2.5 rounded-xl border">
+                    <button type="button" onclick="closeModal('clientInlineModal')" class="px-5 py-2.5 rounded-xl border font-bold text-slate-600 dark:text-slate-300">
                         Cancelar
                     </button>
-                    <button type="button" onclick="saveInlineClient()" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white">
+                    <button type="button" onclick="saveInlineClient()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold transition-colors shadow-sm">
                         Salvar e Inserir
                     </button>
                 </div>
@@ -537,8 +549,41 @@
         }).format(valor);
     }
 
-    const DEFAULT_WARRANTY = "Garantia de 90 (noventa) dias, válida exclusivamente para regulagens, vedação e correção de vícios decorrentes da instalação, conforme as condições de uso previstas. A garantia não cobre danos causados por mau uso, impactos, alterações realizadas por terceiros, desgaste natural ou falta de manutenção.";
-    const DEFAULT_OBSERVATIONS = "Forma de Pagamento: Parcelamento em até 5x sem Juros. Em pagamentos no Débito ou Pix concedemos deconto de 5%, em pagamentos no Dinheiro desconto de 10%.\nPrazo de Entrega: Até 15 dias úteis após a confirmação do pedido.\n* Forma de Execução: Início dos serviços mediante sinal de 50%.\nO saldo restante (50%) deve ser quitado na conclusão da instalação.\n* Observação: Em caso de desistência após o pagamento do sinal, o valor não será reembolsado devido aos custos de reserva de material e produção personalizada.";
+    const DEFAULT_WARRANTY = `TERMO DE GARANTIA
+
+        Garantia de 90 (noventa) dias, contados a partir da conclusão da instalação, cobrindo exclusivamente regulagens, vedação e a correção de eventuais vícios decorrentes da instalação realizada pela empresa.
+
+        A garantia não cobre:
+        • Danos causados por mau uso, acidentes ou impactos;
+        • Quebra de vidros ou avarias decorrentes de uso inadequado;
+        • Desgaste natural dos materiais e componentes;
+        • Falta de manutenção preventiva ou limpeza inadequada;
+        • Reparos, alterações ou intervenções realizadas por terceiros;
+        • Danos causados por fenômenos naturais, sobrecarga ou fatores externos.
+
+        A garantia perderá sua validade caso o produto seja alterado, desmontado ou reparado por pessoas não autorizadas pela empresa.
+
+        `;
+    const DEFAULT_OBSERVATIONS = `FORMA DE PAGAMENTO
+        • Parcelamento em até 5x sem juros.
+        • Pagamentos via PIX ou cartão de débito: 5% de desconto.
+        • Pagamentos em dinheiro: 10% de desconto.
+
+        PRAZO DE ENTREGA
+        • Até 15 dias úteis após a confirmação do pedido.
+
+        FORMA DE EXECUÇÃO
+        • Para início da produção/instalação é necessário o pagamento de 50% do valor total do pedido.
+        • Os 50% restantes deverão ser quitados na conclusão da instalação.
+
+        OBSERVAÇÕES IMPORTANTES
+        • Em caso de desistência após o pagamento do sinal, o valor não será reembolsado, devido aos custos de aquisição de materiais e produção sob medida.
+        • Os valores deste orçamento poderão ser alterados sem aviso prévio enquanto o pedido não for confirmado.
+        • Pedidos não retirados em até 30 dias após a conclusão serão descartados, sem direito a reembolso.
+        • A confirmação do pedido por WhatsApp, ligação telefônica ou e-mail possui a mesma validade da assinatura, caracterizando o aceite de todas as condições deste orçamento.
+        • Declaro estar ciente e de acordo com todas as informações contidas neste pedido, inclusive com as medidas informadas para fabricação dos vidros.
+        • NÃO REALIZAMOS TROCAS OU DEVOLUÇÕES de produtos fabricados sob medida, conforme previsto no Código de Defesa do Consumidor.
+        `;
 
     function openNewQuoteModal() {
         if(document.getElementById('quoteForm')) document.getElementById('quoteForm').reset();
@@ -818,10 +863,11 @@
 
                 const recFinalRow = document.getElementById('recFinalRow');
                 if (q.paymentMethod === 'Cartao_Credito') {
-                    if (recFinalRow) recFinalRow.style.display = 'flex';
+                    if (recFinalRow) { recFinalRow.style.removeProperty('display'); recFinalRow.style.display = 'flex'; }
                     let valorParcela = q.totalValue / (q.installments || 10);
-                    document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x ${formatarMoeda(valorParcela)}`;                } else {
-                    if (recFinalRow) recFinalRow.style.display = 'none';
+                    document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x ${formatarMoeda(valorParcela)}`;
+                } else {
+                    if (recFinalRow) { recFinalRow.style.display = 'none'; }
                 }
 
                 const itemsTbody = document.getElementById('recItems');
@@ -861,6 +907,7 @@
         const docEl = document.getElementById('inlineClientDoc');
         const emailEl = document.getElementById('inlineClientEmail');
         const phoneEl = document.getElementById('inlineClientPhone');
+        const addressEl = document.getElementById('inlineClientAddress');
 
         if (!nameEl.value.trim()) {
             alert('Por favor, insira o Nome Completo / Razão Social!');
@@ -882,32 +929,21 @@
             el.classList.remove('hidden');
         }
         let valid = true;
-        const documentValue =
-            docEl.value.trim();
+        const documentValue = docEl.value.trim();
+
         if (documentValue) {
-            const digits =
-                numbers(documentValue);
-            const required =
-                typeEl.value === 'company'
-                    ? 14
-                    : 11;
+            const digits = numbers(documentValue);
+            const required = typeEl.value === 'company' ? 14 : 11;
             if (digits.length !== required) {
-                showError(
-                    'inlineDocumentError',
-                    typeEl.value === 'company'
-                        ? 'CNPJ deve ter 14 números'
-                        : 'CPF deve ter 11 números'
-                );
+                showError('inlineDocumentError', typeEl.value === 'company' ? 'CNPJ deve ter 14 números' : 'CPF deve ter 11 números');
                 valid = false;
             } else {
                 showError('inlineDocumentError', '');
             }
         }
-        const email =
-            emailEl.value.trim();
+        const email = emailEl.value.trim();
         if (email) {
-            const regex =
-                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!regex.test(email)) {
                 showError('inlineEmailError', 'E-mail inválido');
                 valid = false;
@@ -916,17 +952,11 @@
             }
         }
 
-        const phone =
-            phoneEl.value.trim();
+        const phone = phoneEl.value.trim();
         if (phone) {
-            const digits =
-                numbers(phone);
-            if (digits.length < 10 || digits.length > 11
-            ) {
-                showError(
-                    'inlinePhoneError',
-                    'Telefone inválido'
-                );
+            const digits = numbers(phone);
+            if (digits.length < 10 || digits.length > 11) {
+                showError('inlinePhoneError', 'Telefone inválido');
                 valid = false;
             } else {
                 showError('inlinePhoneError', '');
@@ -943,33 +973,21 @@
             document: documentValue,
             email: email,
             phone: phone,
-            address: '',
+            address: addressEl ? addressEl.value.trim() : '',
             city: ''
         };
-        const csrfToken =
-            document
-                .querySelector('meta[name="_csrf"]')
-                ?.content;
 
-        const csrfHeader =
-            document
-                .querySelector('meta[name="_csrf_header"]')
-                ?.content;
-        fetch(
-            '/quotes/add-client-ajax',
-            {
-                method:
-                    'POST',
-                headers: {
-                    'Content-Type':
-                        'application/json',
-                    [csrfHeader]:
-                    csrfToken
-                },
-                body:
-                    JSON.stringify(payload)
-            }
-        )
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        fetch('/quotes/add-client-ajax', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify(payload)
+        })
             .then(res => {
                 if (!res.ok) {
                     throw new Error('Erro do servidor');
@@ -977,22 +995,17 @@
                 return res.json();
             })
             .then(savedClient => {
-                const select =
-                    document.getElementById('quoteClient');
+                const select = document.getElementById('quoteClient');
                 if (select) {
-                    const option =
-                        document.createElement('option');
+                    const option = document.createElement('option');
                     option.value = savedClient.id;
                     option.textContent = savedClient.name;
                     option.selected = true;
                     select.appendChild(option);
                 }
-                [
-                    nameEl,
-                    docEl,
-                    emailEl,
-                    phoneEl
-                ].forEach(el => el.value = '');
+                [nameEl, docEl, emailEl, phoneEl, addressEl].forEach(el => {
+                    if(el) el.value = '';
+                });
                 closeModal('clientInlineModal');
             })
             .catch(err => {
@@ -1000,6 +1013,7 @@
                 alert('Erro ao guardar o cliente.');
             });
     }
+
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 </body>
