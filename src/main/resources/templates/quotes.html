@@ -367,7 +367,6 @@
                         </div>
                     </div>
 
-                    <!-- Direita: Número do Orçamento -->
                     <div class="text-right shrink-0 self-start">
                         <div class="bg-slate-900 text-white px-5 py-4 rounded-2xl inline-block min-w-[200px]">
                             <p class="text-[11px] font-bold font-mono uppercase tracking-widest text-slate-400 mb-1">ORÇAMENTO</p>
@@ -797,7 +796,6 @@
         })
             .then(async (response) => {
                 if (!response.ok) {
-                    // Se o servidor reclamar (400, 403, 500), forçamos a cair no Catch abaixo!
                     let errorText = '';
                     try { errorText = await response.text(); } catch(ex) {}
 
@@ -806,7 +804,6 @@
                     }
                     throw new Error(`O servidor recusou o salvamento. (Status: ${response.status})\nDetalhe: ${errorText}`);
                 }
-                // Apenas se for 100% sucesso, ele recarrega a página
                 window.location.reload();
             })
             .catch(err => {
@@ -814,7 +811,6 @@
                 alert("FALHA AO SALVAR ORÇAMENTO!\n\n" + err.message);
             })
             .finally(() => {
-                // Restaura o botão caso tenha dado erro e o usuário queira tentar arrumar
                 btnSubmit.innerText = originalText;
                 btnSubmit.disabled = false;
             });
@@ -1053,14 +1049,35 @@
             });
     }
 
-    let predefinedServicesList = [
-        "Box de Banheiro - Padrão", "Box de Banheiro - Até o Teto", "Box de Banheiro - Acrílico",
-        "Box de Banheiro - Flex", "Box de Banheiro - Open", "Box de Banheiro - Elegance",
-        "Fechamento de Sacada", "Janela", "Espelho", "Espelho Lapidado", "Espelho Bisote",
-        "Espelho LED", "Porta de Vidro", "Kit Versatik VT3", "Guarda Corpo", "Abrigo de Pia",
-        "Cobertura", "Cobertura Policarbonato", "Cobertura Habitat", "Cobertura Retratil",
-        "Vidro Comum", "Manutenção", "Película de segurança", "Adesivo", "Serviço/Item Avulso"
-    ];
+    const predefinedServicesMap = {
+        "Box de Banheiro - Padrão": "Vidro temperado 8mm.\nKit de alumínio branco ou preto.\nInstalação inclusa.",
+        "Box de Banheiro - Até o Teto": "Vidro temperado 8mm.\nKit de alumínio branco ou preto.\nInstalação inclusa.",
+        "Box de Banheiro - Acrílico": "Box em chapa de acrílico.\nEstrutura em alumínio branco ou preto.\nInstalação inclusa.",
+        "Box de Banheiro - Flex": "Box articulado Flex (camarão).\nVidro temperado 8mm incolor.\nInstalação inclusa.",
+        "Box de Banheiro - Open": "Sistema Open.\nVidro temperado 8mm incolor.\nInstalação inclusa.",
+        "Box de Banheiro - Elegance": "Sistema Elegance.\nRoldanas aparentes cromadas.\nVidro temperado 8mm.\nInstalação inclusa.",
+        "Fechamento de Sacada": "Vidro temperado 8mm ou 10mm.\nSistema retrátil.\nInstalação inclusa.",
+        "Janela": "Vidro temperado 8mm incolor.\nFerragens e trincos.\nInstalação inclusa.",
+        "Espelho": "Espelho Cebrace 4mm.\nInstalação inclusa.",
+        "Espelho Lapidado": "Espelho Cebrace 4mm.\nAcabamento lapidado nas bordas.\nInstalação inclusa.",
+        "Espelho Bisote": "Espelho Cebrace 4mm.\nAcabamento bisotê.\nInstalação inclusa.",
+        "Espelho LED": "Espelho Cebrace 4mm.\nEstrutura traseira.\nIluminação LED embutida.\nInstalação inclusa.",
+        "Porta de Vidro": "Porta de Vidro temperado 8mm.\nFechadura.\nPuxador.\nInstalação inclusa.",
+        "Kit Versatik VT3": "Sistema Versatik VT3.\n3 folhas de vidro temperado 8mm.\nInstalação inclusa.",
+        "Guarda Corpo": "Vidro temperado ou laminado.\nSuportes e fixadores em inox ou alumínio.\nInstalação inclusa.",
+        "Abrigo de Pia": "Fechamento em vidro temperado 8mm incolor.\nInstalação inclusa.",
+        "Cobertura": "Vidros temperados ou laminados.\nEstrutura em alumínio.\nInstalação inclusa.",
+        "Cobertura Policarbonato": "Chapa de policarbonato.\nEstrutura de fixação.\nInstalação inclusa.",
+        "Cobertura Habitat": "Vidro de controle solar Linha Habitat.\nProteção térmica e contra raios UV.\nInstalação inclusa.",
+        "Cobertura Retratil": "Cobertura retrátil em vidro.\nEstrutura em alumínio.\nSistema de recolhimento.\nInstalação inclusa.",
+        "Vidro Comum": "Vidro comum.",
+        "Manutenção": " ",
+        "Película de segurança": "Película de segurança.\nAplicação inclusa.",
+        "Adesivo": "Adesivo decorativo ou jateado.\nAplicação inclusa.",
+        "Serviço/Item Avulso": ""
+    };
+
+    let predefinedServicesList = Object.keys(predefinedServicesMap);
 
     function populatePredefinedServices(filter = "") {
         const select = document.getElementById('predefinedServiceSelect');
@@ -1128,7 +1145,17 @@
             alert("Por favor, selecione um serviço na lista.");
             return;
         }
-        document.getElementById('itemCat').value = select.value;
+
+        const selectedValue = select.value;
+        document.getElementById('itemCat').value = selectedValue;
+
+        const especificacao = predefinedServicesMap[selectedValue];
+        if (especificacao) {
+            document.getElementById('itemProd').value = especificacao;
+        } else {
+            document.getElementById('itemProd').value = '';
+        }
+
         closeModal('serviceModal');
         document.getElementById('itemProd').focus();
     }
@@ -1146,6 +1173,8 @@
 
         document.getElementById('itemCat').value = newName;
         input.value = '';
+        document.getElementById('itemProd').value = '';
+
         closeModal('serviceModal');
         document.getElementById('itemProd').focus();
     }
