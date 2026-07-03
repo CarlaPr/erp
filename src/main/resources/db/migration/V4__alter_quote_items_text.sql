@@ -1,0 +1,2 @@
+ALTER TABLE quote_items ALTER COLUMN product TYPE TEXT;
+ALTER TABLE quote_items ALTER COLUMN description TYPE TEXT;

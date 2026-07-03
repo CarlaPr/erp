@@ -15,7 +15,11 @@ public class QuoteItem {
     private Quote quote;
 
     private String category; // Box, Sacada, Janela, Espelho
+
+    @Column(columnDefinition = "TEXT")
     private String product;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(precision = 10, scale = 2) private BigDecimal width = BigDecimal.ZERO;

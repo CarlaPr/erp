@@ -113,7 +113,7 @@
             <button onclick="closeModal('quoteModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
             <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">Elaborar Orçamento</h3>
 
-            <form id="quoteForm" onsubmit="saveQuote(event)" class="space-y-6 text-sm">
+            <form id="quoteForm" onsubmit="saveQuote(event)" class="space-y-6 text-sm" novalidate>
                 <input type="hidden" id="quoteId" />
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5 bg-slate-50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50">
@@ -124,7 +124,7 @@
                                 <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Novo Cliente
                             </button>
                         </div>
-                        <select id="quoteClient" required class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base">
+                        <select id="quoteClient" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base">
                             <option value="">Selecione o Cliente</option>
                             <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
                         </select>
@@ -660,16 +660,30 @@
 
     function saveQuote(e) {
         if(e) e.preventDefault();
-        if(currentItems.length === 0) return alert('Adicione pelo menos um item ao orçamento!');
 
+        // 1. Validação manual segura
+        const clientSelect = document.getElementById('quoteClient');
+        if(!clientSelect || !clientSelect.value) {
+            alert('Atenção: Selecione o Cliente na lista antes de salvar.');
+            document.getElementById('quoteModal').scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        if(currentItems.length === 0) {
+            alert('Atenção: Adicione pelo menos um item ao orçamento!');
+            return;
+        }
+
+        // 2. Cálculos
         let calculatedTotal = currentItems.reduce((acc, item) => {
             let m2 = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 1;
             return acc + (item.quantity * m2 * item.unitPrice);
         }, 0);
 
+        // 3. Estruturação dos Dados
         const payload = {
             id: document.getElementById('quoteId').value || null,
-            client: { id: document.getElementById('quoteClient').value },
+            client: { id: clientSelect.value },
             paymentMethod: document.getElementById('quotePayment').value,
             installments: parseInt(document.getElementById('quoteInstallments').value) || 1,
             observations: document.getElementById('quoteObs').value,
@@ -681,6 +695,13 @@
         const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
+        // Mudar o botão para "Salvando..." para evitar cliques duplos
+        const btnSubmit = document.querySelector('#quoteForm button[type="submit"]');
+        const originalText = btnSubmit.innerText;
+        btnSubmit.innerText = 'Salvando aguarde...';
+        btnSubmit.disabled = true;
+
+        // 4. Envio com bloqueio de falhas invisíveis
         fetch('/quotes/save-ajax', {
             method: 'POST',
             headers: {
@@ -688,14 +709,31 @@
                 [csrfHeader]: csrfToken
             },
             body: JSON.stringify(payload)
-        }).then(() => {
-            window.location.reload();
-        }).catch(err => {
-            console.error("Erro ao salvar orçamento:", err);
-            alert("Erro ao salvar o orçamento.");
-        });
-    }
+        })
+            .then(async (response) => {
+                if (!response.ok) {
+                    // Se o servidor reclamar (400, 403, 500), forçamos a cair no Catch abaixo!
+                    let errorText = '';
+                    try { errorText = await response.text(); } catch(ex) {}
 
+                    if (response.status === 403) {
+                        throw new Error('Sua sessão expirou por inatividade (demorou muito tempo digitando os itens). Por favor, copie suas informações, atualize a página e refaça o login.');
+                    }
+                    throw new Error(`O servidor recusou o salvamento. (Status: ${response.status})\nDetalhe: ${errorText}`);
+                }
+                // Apenas se for 100% sucesso, ele recarrega a página
+                window.location.reload();
+            })
+            .catch(err => {
+                console.error("Erro interceptado no Javascript:", err);
+                alert("FALHA AO SALVAR ORÇAMENTO!\n\n" + err.message);
+            })
+            .finally(() => {
+                // Restaura o botão caso tenha dado erro e o usuário queira tentar arrumar
+                btnSubmit.innerText = originalText;
+                btnSubmit.disabled = false;
+            });
+    }
     let quoteIdToApprove = null;
 
     function approveQuote(id) {

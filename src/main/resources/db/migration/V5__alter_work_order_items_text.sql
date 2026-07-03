@@ -1,0 +1,1 @@
+ALTER TABLE work_order_items ALTER COLUMN description TYPE TEXT;
