@@ -4,77 +4,62 @@
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
 
-<main class="ml-72 p-8 w-full min-h-screen transition-colors duration-300">
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
     <header class="mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5">
         <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Configurações Gerais</h2>
-        <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Gerencie os dados institucionais da empresa utilizados em relatórios e orçamentos.</p>
+        <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Gerencie os dados institucionais e os usuários do sistema.</p>
     </header>
 
-    <div th:if="${param.success}" class="max-w-2xl mb-6 p-5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl text-emerald-700 dark:text-emerald-400 text-sm font-bold shadow-sm flex items-center gap-3">
-        <i data-lucide="check-circle" class="w-5 h-5"></i> Alterações gravadas com sucesso!
+    <div th:if="${param.success}" class="max-w-4xl mb-6 p-5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl text-emerald-700 dark:text-emerald-400 text-sm font-bold shadow-sm flex items-center gap-3">
+        <i data-lucide="check-circle" class="w-5 h-5"></i> Ação realizada com sucesso!
     </div>
 
-    <div class="max-w-2xl bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
-        <form th:action="@{/settings/save}" th:object="${profile}" method="POST" class="p-8 space-y-6">
-            <input type="hidden" th:field="*{id}" />
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome da Empresa / Razão Social</label>
-                    <input type="text" th:field="*{companyName}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome do Proprietário</label>
-                    <input type="text" th:field="*{ownerName}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">NIF / Documento</label>
-                    <input type="text" th:field="*{document}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">E-mail de Contacto</label>
-                    <input type="email" th:field="*{email}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Telefone</label>
-                    <input type="text" th:field="*{phone}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
-                </div>
-
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Endereço da Sede</label>
-                    <input type="text" th:field="*{address}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Cidade</label>
-                    <input type="text" th:field="*{city}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">URL do Logótipo (Link Externo)</label>
-                    <input type="text" th:field="*{logoUrl}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
-                </div>
-            </div>
-
-            <div class="pt-2">
-                <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">URL da Imagem da Assinatura (Link Externo)</label>
-                <input type="text" th:field="*{signatureUrl}" placeholder="https://link-da-imagem.png" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
-            </div>
-
-            <div class="flex justify-end pt-8 border-t border-slate-200 dark:border-slate-700">
-                <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black px-8 py-3.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 text-base">
-                    <i data-lucide="save" class="w-5 h-5"></i> Gravar Configurações
-                </button>
-            </div>
-        </form>
+    <!-- SEÇÃO 1: PERFIS DE EMPRESAS -->
+    <div class="max-w-4xl mb-6 flex justify-between items-center mt-4">
+        <div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white">Perfis de Emissão (Empresas)</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Gerencie as empresas disponíveis para gerar os orçamentos.</p>
+        </div>
+        <button onclick="toggleModal('profileModal', true)" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm flex items-center gap-2 transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i> Novo Perfil
+        </button>
     </div>
 
-    <div th:if="${#authorization.expression('hasAuthority(''GESTAO'')')}" class="max-w-2xl mt-12 mb-20">
+    <div class="max-w-4xl bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto mb-12">
+        <table class="w-full text-left whitespace-nowrap">
+            <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+            <tr>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Empresa / Razão Social</th>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">CNPJ / Documento</th>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            <tr th:each="p : ${profiles}">
+                <td class="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white" th:text="${p.companyName}"></td>
+                <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400" th:text="${p.document}"></td>
+                <td class="px-6 py-4 text-sm text-right space-x-2">
+                    <button type="button" th:attr="onclick=|editProfile('${p.id}', '${p.companyName}', '${p.ownerName}', '${p.document}', '${p.email}', '${p.phone}', '${p.address}', '${p.city}', '${p.logoUrl}', '${p.signatureUrl}')|" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-2 transition-colors">
+                        <i data-lucide="pencil" class="w-5 h-5 inline"></i>
+                    </button>
+                    <form th:action="@{/settings/profile/delete/{id}(id=${p.id})}" method="POST" class="inline">
+                        <button type="submit" onclick="return confirm('Tem certeza que deseja excluir este perfil? Esta ação não pode ser desfeita.')" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 p-2 transition-colors">
+                            <i data-lucide="trash" class="w-5 h-5 inline"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(profiles)}">
+                <td colspan="3" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">Nenhum perfil de empresa cadastrado.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SEÇÃO 2: USUÁRIOS DO SISTEMA -->
+    <div th:if="${#authorization.expression('hasAuthority(''GESTAO'')')}" class="max-w-4xl mt-12 mb-12">
         <div class="mb-6 flex items-center gap-3">
             <div class="p-2 bg-indigo-500/10 rounded-lg text-indigo-500">
                 <i data-lucide="user-plus" class="w-6 h-6"></i>
@@ -90,20 +75,17 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Username</label>
-                        <input type="text" name="username" required
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all" />
+                        <input type="text" name="username" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all" />
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Senha Inicial</label>
-                        <input type="password" name="password" required
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all" />
+                        <input type="password" name="password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all" />
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nível de Acesso (Role)</label>
                         <select name="role" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all cursor-pointer">
                             <option value="GESTAO">Gestão Administrativa</option>
                             <option value="VENDAS">Vendas e Comercial</option>
-                            <option value="TECNICO">Vendas e OS</option>
                         </select>
                     </div>
                 </div>
@@ -117,12 +99,13 @@
         </div>
     </div>
 
-    <div th:if="${#authorization.expression('hasAuthority(''GESTAO'')')}" class="max-w-2xl mt-12">
+    <!-- SEÇÃO 3: LISTA DE USUÁRIOS -->
+    <div th:if="${#authorization.expression('hasAuthority(''GESTAO'')')}" class="max-w-4xl mt-12 mb-20">
         <div class="mb-6">
             <h3 class="text-xl font-black text-slate-900 dark:text-white">Usuários Cadastrados</h3>
         </div>
 
-        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
+        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
             <table class="w-full text-left">
                 <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
                 <tr>
@@ -142,6 +125,105 @@
 
 </main>
 
+<!-- MODAL DE CRIAÇÃO / EDIÇÃO DE PERFIL DA EMPRESA -->
+<div id="profileModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto p-4">
+    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 sm:p-8 relative my-8">
+        <button type="button" onclick="toggleModal('profileModal', false)" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">Dados da Empresa</h3>
+
+        <form th:action="@{/settings/save}" method="POST" class="space-y-5">
+            <input type="hidden" name="id" id="profId" />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome da Empresa / Razão Social</label>
+                    <input type="text" name="companyName" id="profName" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome do Proprietário</label>
+                    <input type="text" name="ownerName" id="profOwner" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">NIF / CNPJ</label>
+                    <input type="text" name="document" id="profDoc" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">E-mail</label>
+                    <input type="email" name="email" id="profEmail" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Telefone</label>
+                    <input type="text" name="phone" id="profPhone" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Endereço (Rua, Número, Bairro, CEP)</label>
+                    <input type="text" name="address" id="profAddress" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Cidade - Estado</label>
+                    <input type="text" name="city" id="profCity" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Logo (URL da Imagem)</label>
+                    <input type="text" name="logoUrl" id="profLogo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Assinatura (URL da Imagem)</label>
+                    <input type="text" name="signatureUrl" id="profSig" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base" />
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-5 border-t border-slate-200 dark:border-slate-700 mt-6">
+                <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black px-8 py-3.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 text-base">
+                    <i data-lucide="save" class="w-5 h-5"></i> Gravar Empresa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
+
+<script>
+    function toggleModal(id, show) {
+        const el = document.getElementById(id);
+        if(show) {
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        } else {
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+            if(id === 'profileModal') {
+                document.getElementById('profId').value = '';
+                document.getElementById('profName').value = '';
+                document.getElementById('profOwner').value = '';
+                document.getElementById('profDoc').value = '';
+                document.getElementById('profEmail').value = '';
+                document.getElementById('profPhone').value = '';
+                document.getElementById('profAddress').value = '';
+                document.getElementById('profCity').value = '';
+                document.getElementById('profLogo').value = '';
+                document.getElementById('profSig').value = '';
+            }
+        }
+    }
+
+    function editProfile(id, name, owner, doc, email, phone, addr, city, logo, sig) {
+        document.getElementById('profId').value = id || '';
+        document.getElementById('profName').value = name || '';
+        document.getElementById('profOwner').value = owner || '';
+        document.getElementById('profDoc').value = doc || '';
+        document.getElementById('profEmail').value = email || '';
+        document.getElementById('profPhone').value = phone || '';
+        document.getElementById('profAddress').value = addr || '';
+        document.getElementById('profCity').value = city || '';
+        document.getElementById('profLogo').value = logo || '';
+        document.getElementById('profSig').value = sig || '';
+        toggleModal('profileModal', true);
+    }
+</script>
 </body>
 </html>

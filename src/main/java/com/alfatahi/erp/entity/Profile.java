@@ -25,6 +25,8 @@ public class Profile {
     private String city;
     private String document;
 
+
+
     private BigDecimal taxRate = new BigDecimal("0.06");
 
     @Column(name = "logo_url")
@@ -35,8 +37,6 @@ public class Profile {
 
     public String getSignatureUrl() { return signatureUrl; }
     public void setSignatureUrl(String signatureUrl) { this.signatureUrl = signatureUrl; }
-
-    // Getters and Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getCompanyName() { return companyName; }
@@ -55,4 +55,6 @@ public class Profile {
     public void setDocument(String document) { this.document = document; }
     public String getLogoUrl() { return logoUrl; }
     public void setLogoUrl(String logoUrl) { this.logoUrl = logoUrl; }
+    public BigDecimal getTaxRate() { return taxRate; }
+    public void setTaxRate(BigDecimal taxRate) { this.taxRate = taxRate; }
 }

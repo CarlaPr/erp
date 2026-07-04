@@ -4,8 +4,9 @@
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
 
-<main class="ml-72 p-8 w-full min-h-screen transition-colors duration-300">
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
     <header class="flex justify-between items-center mb-8">
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Gestão de Orçamentos</h2>
@@ -58,7 +59,7 @@
         </div>
     </form>
 
-    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
             <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
@@ -115,7 +116,15 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 bg-slate-50 dark:bg-slate-800/30 p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-700/50">
 
-                    <div class="md:col-span-2 lg:col-span-4">
+                    <div class="md:col-span-1 lg:col-span-6">
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Empresa Emissora</label>
+                        <select id="quoteProfile" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg" required>
+                            <option value="">Selecione a Empresa</option>
+                            <option th:each="p : ${profiles}" th:value="${p.id}" th:text="${p.companyName}"></option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-1 lg:col-span-6">
                         <div class="flex justify-between items-center mb-3">
                             <label class="block text-slate-700 dark:text-slate-400 font-bold text-base">Cliente</label>
                             <button type="button" onclick="toggleModal('clientInlineModal', true)" class="text-xs bg-brand-100 hover:bg-brand-200 text-brand-700 dark:bg-cyan-500/20 dark:hover:bg-cyan-500/30 dark:text-cyan-400 font-bold flex items-center gap-2 px-3 py-2 rounded-lg transition-all border border-brand-200 dark:border-cyan-500/30 shadow-sm">
@@ -128,7 +137,7 @@
                         </select>
                     </div>
 
-                    <div class="md:col-span-1 lg:col-span-3">
+                    <div class="md:col-span-1 lg:col-span-4">
                         <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Data de Emissão</label>
                         <input type="date" id="quoteDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg" />
                     </div>
@@ -194,8 +203,8 @@
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-950/40 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-                    <table class="w-full text-left">
+                <div class="bg-white dark:bg-slate-950/40 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
+                    <table class="w-full text-left min-w-[720px]">
                         <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm uppercase tracking-wider font-bold">
                         <tr>
                             <th class="p-5">Item / Descrição</th>
@@ -243,7 +252,7 @@
         </div>
     </div>
 
-    <div id="serviceModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[80]">
+    <div id="serviceModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[80] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
             <button type="button" onclick="closeModal('serviceModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
@@ -325,24 +334,24 @@
                 <div class="flex justify-between items-center pb-5 mb-5 border-b-[3px] border-slate-900">
 
                     <div class="flex items-center gap-6">
-                        <div th:if="${profile.logoUrl != null && !profile.logoUrl.isEmpty()}" class="shrink-0">
-                            <img th:src="${profile.logoUrl}" class="max-h-24 max-w-[170px] object-contain mix-blend-multiply" alt="Logo" />
+                        <div class="shrink-0">
+                            <img id="pdfCompanyLogo" class="max-h-24 max-w-[170px] object-contain mix-blend-multiply" alt="Logo" style="display: none;" />
                         </div>
 
                         <div class="flex flex-col text-[11px] text-slate-700 font-semibold leading-tight space-y-1">
-                            <h2 class="text-sm font-black tracking-tight text-slate-900 uppercase leading-none mb-0.5" th:text="${profile.companyName}">ALFA TAHI VIDRACARIA LTDA</h2>
-                            <p th:text="'CNPJ: ' + ${profile.document}">CNPJ: 46.942.459/0001-05</p>
-                            <p th:text="${profile.address}">Rua Cantagalo, 2430 Vila Gomes Cardim, São Paulo-SP CEP 03319-002</p>
+                            <h2 class="text-sm font-black tracking-tight text-slate-900 uppercase leading-none mb-0.5" id="pdfCompanyName">NOME DA EMPRESA LTDA</h2>
+                            <p id="pdfCompanyDoc">CNPJ/CPF: 00.000.000/0000-00</p>
+                            <p id="pdfCompanyAddress">Endereço da Empresa, 000 - Cidade - Estado</p>
 
                             <div class="flex items-center gap-1.5 mt-1.5">
                                 <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-500"></i>
-                                <span th:text="${profile.email}">tahiglass1@gmail.com</span>
+                                <span id="pdfCompanyEmail">email@empresa.com</span>
                             </div>
 
                             <div class="flex flex-wrap items-center gap-4 mt-0.5">
                                 <div class="flex items-center gap-1.5">
                                     <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-500"></i>
-                                    <span th:text="${profile.phone}">+55(11) 94765-5931</span>
+                                    <span id="pdfCompanyPhone">+55 (00) 00000-0000</span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-500"></i>
@@ -351,17 +360,6 @@
                                 <div class="flex items-center gap-1.5">
                                     <i data-lucide="message-circle" class="w-3.5 h-3.5 text-slate-500"></i>
                                     <span>1194765-5931</span>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-wrap items-center gap-4 mt-0.5">
-                                <div class="flex items-center gap-1.5">
-                                    <i data-lucide="instagram" class="w-3.5 h-3.5 text-slate-500"></i>
-                                    <span>@tahi.glass</span>
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <i data-lucide="globe" class="w-3.5 h-3.5 text-slate-500"></i>
-                                    <span>vidracariatahiglass.com.br</span>
                                 </div>
                             </div>
                         </div>
@@ -435,12 +433,11 @@
                     <br><br>
                     <div class="grid grid-cols-2 gap-16 text-center">
                         <div class="relative flex flex-col items-center justify-end min-h-[80px]">
-                            <img th:if="${profile.signatureUrl != null && !profile.signatureUrl.isEmpty()}"
-                                 th:src="${profile.signatureUrl}"
-                                 class="absolute bottom-12 max-h-16 object-contain pointer-events-none mix-blend-multiply" />
+                            <img id="pdfCompanySignature" class="absolute bottom-12 max-h-16 object-contain pointer-events-none mix-blend-multiply" style="display: none;" />
+
                             <div class="w-full border-t-2 border-slate-900 pt-2">
-                                <p class="font-black text-slate-900 text-sm" th:text="${profile.companyName}"></p>
-                                <p class="text-xs text-slate-500 font-bold mt-0.5" th:text="'CNPJ: ' + ${profile.document}"></p>
+                                <p class="font-black text-slate-900 text-sm" id="pdfCompanySignatureName">Nome da Empresa</p>
+                                <p class="text-xs text-slate-500 font-bold mt-0.5" id="pdfCompanySignatureDoc">CNPJ/CPF: 00.000.000/0000-00</p>
                             </div>
                         </div>
                         <div class="flex flex-col items-center justify-end min-h-[80px]">
@@ -452,7 +449,7 @@
                     </div>
                     <div class="mt-6 pt-3 border-t border-slate-100 text-center">
                         <p class="text-[11px] font-mono text-slate-400 font-bold tracking-wide">
-                            Documento Comercial Processado Digitalmente &nbsp;—&nbsp; <span th:text="${profile.companyName}">Vidraçaria</span> &nbsp;
+                            Documento Comercial Processado Digitalmente &nbsp;—&nbsp; <span id="pdfCompanyFooterName">Nome da Empresa</span> &nbsp;
                         </p>
                     </div>
                 </div>
@@ -466,7 +463,7 @@
         </div>
     </div>
 
-    <div id="approvalConfirmModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70]">
+    <div id="approvalConfirmModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 text-center animate-in fade-in zoom-in-95 duration-200">
             <div class="bg-emerald-100 dark:bg-emerald-500/10 p-5 rounded-full w-fit mx-auto text-emerald-600 dark:text-emerald-400 mb-5 shadow-inner">
                 <i data-lucide="check-circle" class="w-10 h-10"></i>
@@ -487,7 +484,7 @@
     </div>
 
     <div id="clientInlineModal"
-         class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60]">
+         class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
             <button type="button" onclick="closeModal('clientInlineModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full">
                 <i data-lucide="x" class="w-5 h-5"></i>
@@ -624,6 +621,8 @@
         document.getElementById('quoteWarranty').value = DEFAULT_WARRANTY;
         document.getElementById('quoteObs').value = DEFAULT_OBSERVATIONS;
 
+        document.getElementById('quoteProfile').value = '';
+
         document.getElementById('itemCat').value = '';
 
         const today = new Date().toISOString().split('T')[0];
@@ -675,6 +674,12 @@
                 }
                 if(q.dateCreated) {
                     document.getElementById('quoteDate').value = q.dateCreated.split('T')[0];
+                }
+
+                if(q.profile) {
+                    document.getElementById('quoteProfile').value = q.profile.id;
+                } else {
+                    document.getElementById('quoteProfile').value = '';
                 }
 
                 document.getElementById('quotePayment').value = q.paymentMethod || 'PIX';
@@ -766,9 +771,17 @@
         let selectedDate = document.getElementById('quoteDate').value;
         let dateToSave = selectedDate ? `${selectedDate}T00:00:00` : null;
 
+        const profileSelect = document.getElementById('quoteProfile');
+        if(!profileSelect || !profileSelect.value) {
+            alert('Atenção: Selecione a Empresa Emissora (Perfil) antes de salvar.');
+            document.getElementById('quoteModal').scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
         const payload = {
             id: document.getElementById('quoteId').value || null,
             client: { id: clientSelect.value },
+            profile: { id: profileSelect.value },
             dateCreated: dateToSave,
             paymentMethod: document.getElementById('quotePayment').value,
             installments: parseInt(document.getElementById('quoteInstallments').value) || 1,
@@ -904,6 +917,50 @@
                     document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x ${formatarMoeda(valorParcela)}`;
                 } else {
                     if (recFinalRow) { recFinalRow.style.display = 'none'; }
+                }
+                if (q.profile) {
+                    document.getElementById('pdfCompanyName').innerText = q.profile.companyName || '';
+
+                    const docEl = document.getElementById('pdfCompanyDoc');
+                    if(docEl) docEl.innerText = 'CNPJ/CPF: ' + (q.profile.document || '--');
+
+                    const addrEl = document.getElementById('pdfCompanyAddress');
+                    if(addrEl) addrEl.innerText = q.profile.address || '';
+
+                    const emailEl = document.getElementById('pdfCompanyEmail');
+                    if(emailEl) emailEl.innerText = q.profile.email || '';
+
+                    const phoneEl = document.getElementById('pdfCompanyPhone');
+                    if(phoneEl) phoneEl.innerText = q.profile.phone || '';
+
+                    const sigDocEl = document.getElementById('pdfCompanySignatureDoc');
+                    if(sigDocEl) sigDocEl.innerText = 'CNPJ/CPF: ' + (q.profile.document || '--');
+
+                    const footerNameEl = document.getElementById('pdfCompanyFooterName');
+                    if(footerNameEl) footerNameEl.innerText = q.profile.companyName || '';
+
+                    const logoEl = document.getElementById('pdfCompanyLogo');
+                    if (logoEl) {
+                        if (q.profile.logoUrl) {
+                            logoEl.src = q.profile.logoUrl;
+                            logoEl.style.display = 'block';
+                        } else {
+                            logoEl.style.display = 'none';
+                        }
+                    }
+
+                    const sigEl = document.getElementById('pdfCompanySignature');
+                    if (sigEl) {
+                        if (q.profile.signatureUrl) {
+                            sigEl.src = q.profile.signatureUrl;
+                            sigEl.style.display = 'block';
+                        } else {
+                            sigEl.style.display = 'none';
+                        }
+                    }
+
+                    const sigNameEl = document.getElementById('pdfCompanySignatureName');
+                    if(sigNameEl) sigNameEl.innerText = q.profile.companyName || '';
                 }
 
                 const itemsTbody = document.getElementById('recItems');

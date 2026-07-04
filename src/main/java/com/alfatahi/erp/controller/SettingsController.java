@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Controller
@@ -31,23 +32,26 @@ public class SettingsController {
 
     @GetMapping
     public String getSettings(Model model) {
-        Profile profile = profileRepository.findAll().stream()
-                .findFirst()
-                .orElseGet(() -> {
-                    Profile p = new Profile();
-                    p.setCompanyName("Minha Vidraçaria ERP");
-                    p.setEmail("contacto@empresa.com");
-                    return profileRepository.save(p);
-                });
+        List<Profile> profiles = profileRepository.findAll();
+        if (profiles.isEmpty()) {
+            Profile p = new Profile();
+            p.setCompanyName("Minha Vidraçaria ERP");
+            p.setEmail("contacto@empresa.com");
+            profileRepository.save(p);
+            profiles.add(p);
+        }
 
         model.addAttribute("users", userRepository.findAll());
-
         model.addAttribute("currentPage", "settings");
-        model.addAttribute("profile", profile);
+        model.addAttribute("profiles", profiles);
         return "settings";
-
     }
 
+    @PostMapping("/profile/delete/{id}")
+    public String deleteProfile(@PathVariable UUID id) {
+        profileRepository.deleteById(id);
+        return "redirect:/settings?success";
+    }
 
     @PostMapping("/users/save")
     public String saveUser(@RequestParam String username,
@@ -70,7 +74,8 @@ public class SettingsController {
     }
 
     @PostMapping("/save")
-    public String saveSettings(@ModelAttribute("profile") Profile profile) {
+    public String saveSettings(Profile profile) {
+        if(profile.getTaxRate() == null) profile.setTaxRate(new java.math.BigDecimal("0.06"));
         profileRepository.save(profile);
         return "redirect:/settings?success";
     }

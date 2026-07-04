@@ -53,97 +53,113 @@
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-[#0B1120] dark:text-slate-200 antialiased">
 
-<div th:fragment="sidebar" class="w-72 bg-white dark:bg-slate-900 h-screen fixed left-0 top-0 border-r border-slate-200 dark:border-slate-800 shadow-xl flex flex-col z-40">
+<div th:fragment="sidebar">
 
-    <div class="p-6 shrink-0">
-        <div class="flex items-center gap-4 pl-2">
-            <div class="bg-brand-50 dark:bg-gradient-to-br dark:from-cyan-400 dark:to-blue-500 p-2.5 rounded-xl shadow-sm border border-brand-100 dark:border-none">
-                <i data-lucide="layers" class="text-brand-600 dark:text-slate-900 w-7 h-7"></i>
+    <!-- Overlay escuro exibido atrás do menu no mobile -->
+    <div id="sidebarOverlay" onclick="closeSidebar()" class="fixed inset-0 bg-slate-900/60 z-40 opacity-0 pointer-events-none transition-opacity duration-300 lg:hidden"></div>
+
+    <aside id="sidebar" class="w-72 bg-white dark:bg-slate-900 h-screen fixed left-0 top-0 border-r border-slate-200 dark:border-slate-800 shadow-xl flex flex-col z-50 transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0">
+
+        <div class="p-6 shrink-0">
+            <div class="flex items-center justify-between pl-2">
+                <div class="flex items-center gap-4">
+                    <div class="bg-brand-50 dark:bg-gradient-to-br dark:from-cyan-400 dark:to-blue-500 p-2.5 rounded-xl shadow-sm border border-brand-100 dark:border-none">
+                        <i data-lucide="layers" class="text-brand-600 dark:text-slate-900 w-7 h-7"></i>
+                    </div>
+                    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Tahi Glass</h1>
+                </div>
+                <button id="sidebarCloseBtn" onclick="closeSidebar()" type="button" aria-label="Fechar menu" class="lg:hidden p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
-            <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Tahi Glass</h1>
         </div>
-    </div>
 
-    <nav class="flex-1 overflow-y-auto px-5 py-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
+        <nav class="flex-1 overflow-y-auto px-5 py-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
 
-        <div class="px-3 pt-3 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Comercial</div>
-        <a href="/commercial" th:classappend="${currentPage == 'commercial'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-            <i data-lucide="line-chart" class="w-4 h-4"></i> Dashboard Vendas
-        </a>
-        <a href="/quotes" th:classappend="${currentPage == 'quotes'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-            <i data-lucide="file-signature" class="w-4 h-4"></i> Orçamentos
-        </a>
-<!--        <a href="/receipts"-->
-<!--           class="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"-->
-<!--           th:classappend="${currentPage == 'receipts' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold border-l-4 border-l-emerald-600' : ''}">-->
-<!--            <i data-lucide="receipt" class="w-5 h-5"></i>-->
-<!--            <span>Recibos</span>-->
-<!--        </a>-->
-        <a href="/agenda" th:classappend="${currentPage == 'agenda'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-            <i data-lucide="calendar-clock" class="w-4 h-4"></i> Agenda Comercial
-        </a>
-        <a href="/clients" th:classappend="${currentPage == 'clients'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-            <i data-lucide="users" class="w-4 h-4"></i> Clientes
-        </a>
-
-        <div sec:authorize="hasAnyAuthority('GESTAO', 'TECNICO')" class="space-y-1">
-            <div class="px-3 pt-6 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Administrativo</div>
-
-            <a sec:authorize="hasAuthority('GESTAO')" href="/dashboard" th:classappend="${currentPage == 'dashboard'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Executivo
+            <div class="px-3 pt-3 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Comercial</div>
+            <a href="/commercial" th:classappend="${currentPage == 'commercial'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <i data-lucide="line-chart" class="w-4 h-4"></i> Dashboard Vendas
+            </a>
+            <a href="/quotes" th:classappend="${currentPage == 'quotes'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <i data-lucide="file-signature" class="w-4 h-4"></i> Orçamentos
+            </a>
+            <!--        <a href="/receipts"-->
+            <!--           class="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"-->
+            <!--           th:classappend="${currentPage == 'receipts' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold border-l-4 border-l-emerald-600' : ''}">-->
+            <!--            <i data-lucide="receipt" class="w-5 h-5"></i>-->
+            <!--            <span>Recibos</span>-->
+            <!--        </a>-->
+            <a href="/agenda" th:classappend="${currentPage == 'agenda'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <i data-lucide="calendar-clock" class="w-4 h-4"></i> Agenda Comercial
+            </a>
+            <a href="/clients" th:classappend="${currentPage == 'clients'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <i data-lucide="users" class="w-4 h-4"></i> Clientes
             </a>
 
-            <a href="/work-orders" th:classappend="${currentPage == 'work-orders'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-                <i data-lucide="file-text" class="w-4 h-4"></i> Ordens de Serviço
-            </a>
+            <div sec:authorize="hasAuthority('GESTAO')" class="space-y-1">
+                <div class="px-3 pt-6 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Administrativo</div>
+                <a href="/dashboard" th:classappend="${currentPage == 'dashboard'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Executivo
+                </a>
+                <a href="/work-orders" th:classappend="${currentPage == 'work-orders'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Ordens de Serviço
+                </a>
+                <a href="/receivables" th:classappend="${currentPage == 'receivables'} ? 'bg-emerald-50 text-emerald-600 border-l-4 border-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="trending-up" class="w-4 h-4"></i> Contas a Receber
+                </a>
+                <a href="/payables" th:classappend="${currentPage == 'payables'} ? 'bg-rose-50 text-rose-600 border-l-4 border-rose-600 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="trending-down" class="w-4 h-4"></i> Contas a Pagar
+                </a>
+                <a href="/losses" th:classappend="${currentPage == 'losses'} ? 'bg-amber-50 text-amber-600 border-l-4 border-amber-500 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i> Controle de Perdas
+                </a>
+                <a href="/dre" th:classappend="${currentPage == 'dre'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i> DRE Gerencial
+                </a>
+                <a href="/conciliation" th:classappend="${currentPage == 'conciliation'} ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="landmark" class="w-4 h-4"></i> Conciliação
+                </a>
+                <a href="/suppliers" th:classappend="${currentPage == 'suppliers'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="truck" class="w-4 h-4"></i> Fornecedores
+                </a>
+                <a href="/settings" th:classappend="${currentPage == 'settings'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Configurações
+                </a>
+            </div>
+        </nav>
 
-            <a sec:authorize="hasAuthority('GESTAO')" href="/receivables" th:classappend="${currentPage == 'receivables'} ? 'bg-emerald-50 text-emerald-600 border-l-4 border-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-                <i data-lucide="trending-up" class="w-4 h-4"></i> Contas a Receber
-            </a>
-
-            <a sec:authorize="hasAuthority('GESTAO')" href="/payables" th:classappend="${currentPage == 'payables'} ? 'bg-rose-50 text-rose-600 border-l-4 border-rose-600 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-                <i data-lucide="trending-down" class="w-4 h-4"></i> Contas a Pagar
-            </a>
-
-            <a sec:authorize="hasAuthority('GESTAO')" href="/losses" th:classappend="${currentPage == 'losses'} ? 'bg-amber-50 text-amber-600 border-l-4 border-amber-500 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-                <i data-lucide="alert-triangle" class="w-4 h-4"></i> Controle de Perdas
-            </a>
-
-            <a sec:authorize="hasAuthority('GESTAO')" href="/dre" th:classappend="${currentPage == 'dre'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-                <i data-lucide="bar-chart-3" class="w-4 h-4"></i> DRE Gerencial
-            </a>
-
-            <a sec:authorize="hasAuthority('GESTAO')" href="/conciliation" th:classappend="${currentPage == 'conciliation'} ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-                <i data-lucide="landmark" class="w-4 h-4"></i> Conciliação
-            </a>
-
-            <a sec:authorize="hasAuthority('GESTAO')" href="/suppliers" th:classappend="${currentPage == 'suppliers'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-                <i data-lucide="truck" class="w-4 h-4"></i> Fornecedores
-            </a>
-
-            <a sec:authorize="hasAuthority('GESTAO')" href="/settings" th:classappend="${currentPage == 'settings'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
-                <i data-lucide="settings" class="w-4 h-4"></i> Configurações
-            </a>
-        </div>
-    </nav>
-
-    <div class="border-t border-slate-200 dark:border-slate-800 p-5 shrink-0 bg-white dark:bg-slate-900">
-        <button id="themeToggle" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm">
+        <div class="border-t border-slate-200 dark:border-slate-800 p-5 shrink-0 bg-white dark:bg-slate-900">
+            <button id="themeToggle" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm">
             <span class="flex items-center gap-3">
                 <i id="themeIcon" data-lucide="moon" class="w-4 h-4"></i> Tema
             </span>
-            <div class="w-8 h-4 bg-slate-200 dark:bg-brand-600 rounded-full relative">
-                <div class="w-4 h-4 bg-white rounded-full absolute top-0 left-0 dark:translate-x-4 transition-transform shadow-sm"></div>
-            </div>
-        </button>
-
-        <form th:action="@{/logout}" method="POST" class="w-full mt-2">
-            <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all font-bold text-sm">
-                <i data-lucide="log-out" class="w-4 h-4"></i> Sair
+                <div class="w-8 h-4 bg-slate-200 dark:bg-brand-600 rounded-full relative">
+                    <div class="w-4 h-4 bg-white rounded-full absolute top-0 left-0 dark:translate-x-4 transition-transform shadow-sm"></div>
+                </div>
             </button>
-        </form>
-    </div>
+
+            <form th:action="@{/logout}" method="POST" class="w-full mt-2">
+                <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all font-bold text-sm">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Sair
+                </button>
+            </form>
+        </div>
+    </aside>
 </div>
+
+<!-- Barra superior exibida apenas no mobile/tablet (abaixo do breakpoint lg), com botão de menu -->
+<header th:fragment="topbar" class="lg:hidden fixed top-0 left-0 right-0 z-30 h-16 flex items-center justify-between gap-3 px-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+    <button id="sidebarOpenBtn" onclick="openSidebar()" type="button" aria-label="Abrir menu" class="p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+    <div class="flex items-center gap-2">
+        <div class="bg-brand-50 dark:bg-gradient-to-br dark:from-cyan-400 dark:to-blue-500 p-1.5 rounded-lg border border-brand-100 dark:border-none">
+            <i data-lucide="layers" class="text-brand-600 dark:text-slate-900 w-5 h-5"></i>
+        </div>
+        <span class="font-extrabold text-slate-900 dark:text-white text-lg tracking-tight">Tahi Glass</span>
+    </div>
+    <span class="w-10"></span>
+</header>
 
 <div th:fragment="lucide-script">
     <script>
@@ -186,6 +202,45 @@
                 }, 300);
             });
         }
+
+        // ---- Menu lateral responsivo (mobile) ----
+        function openSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (!sidebar || !overlay) return;
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            overlay.classList.add('opacity-100');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (!sidebar || !overlay) return;
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            overlay.classList.remove('opacity-100');
+            document.body.style.overflow = '';
+        }
+
+        window.openSidebar = openSidebar;
+        window.closeSidebar = closeSidebar;
+
+        // Fecha o menu ao clicar em um link (apenas no mobile) e ao redimensionar para desktop
+        document.querySelectorAll('#sidebar a[href]').forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (window.innerWidth < 1024) closeSidebar();
+            });
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        window.addEventListener('resize', function () {
+            if (window.innerWidth >= 1024) closeSidebar();
+        });
     </script>
 </div>
 

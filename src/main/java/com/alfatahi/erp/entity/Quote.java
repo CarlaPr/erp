@@ -52,8 +52,16 @@ public class Quote {
     private List<QuoteItem> items = new ArrayList<>();
 
     @OneToOne(mappedBy = "quote")
-    @JsonIgnoreProperties("quote") // 4. CORREÇÃO: Quebra o loop com a OS vinculada
+    @JsonIgnoreProperties("quote")
     private WorkOrder workOrder;
+
+    @ManyToOne
+    @JoinColumn(name = "profile_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Profile profile;
+
+    public Profile getProfile() { return profile; }
+    public void setProfile(Profile profile) { this.profile = profile; }
 
     public WorkOrder getWorkOrder() { return workOrder; }
     public void setWorkOrder(WorkOrder workOrder) { this.workOrder = workOrder; }

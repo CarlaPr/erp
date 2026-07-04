@@ -81,7 +81,6 @@ public class QuoteController {
             return true;
         }).collect(java.util.stream.Collectors.toList());
 
-        // 5. Geração dinâmica dos últimos 12 meses
         List<java.util.Map<String, String>> disponiveis = new java.util.ArrayList<>();
         java.time.LocalDateTime dataLoop = java.time.LocalDateTime.now(); // Alterado para LocalDateTime
 
@@ -98,17 +97,13 @@ public class QuoteController {
             disponiveis.add(itemMes);
         }
 
-        com.alfatahi.erp.entity.Profile profile = profileRepo.findAll().stream().findFirst().orElseGet(() -> {
-            com.alfatahi.erp.entity.Profile p = new com.alfatahi.erp.entity.Profile();
-            p.setCompanyName("Alfa Tahi");
-            return profileRepo.save(p);
-        });
+        List<com.alfatahi.erp.entity.Profile> profiles = profileRepo.findAll();
 
         model.addAttribute("quote", new Quote());
         model.addAttribute("currentPage", "quotes");
         model.addAttribute("quotes", filteredList);
         model.addAttribute("clients", clientRepo.findAll());
-        model.addAttribute("profile", profile);
+        model.addAttribute("profiles", profiles);;
         model.addAttribute("availableMonths", disponiveis);
         model.addAttribute("selectedMonth", month);
         model.addAttribute("selectedNumber", number);
@@ -130,6 +125,10 @@ public class QuoteController {
             Hibernate.initialize(quote.getWorkOrder().getItems());
         }
 
+        if (quote.getProfile() != null) {
+            Hibernate.initialize(quote.getProfile());
+        }
+
         return ResponseEntity.ok(quote);
     }
 
@@ -140,6 +139,7 @@ public class QuoteController {
         if (quote.getId() != null) {
             Quote existing = quoteRepo.findById(quote.getId()).orElseThrow();
             existing.setClient(quote.getClient());
+            existing.setProfile(quote.getProfile());
 
             if (quote.getDateCreated() != null) {
                 existing.setDateCreated(quote.getDateCreated());
