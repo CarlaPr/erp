@@ -103,7 +103,7 @@ public class QuoteController {
         model.addAttribute("currentPage", "quotes");
         model.addAttribute("quotes", filteredList);
         model.addAttribute("clients", clientRepo.findAll());
-        model.addAttribute("profiles", profiles);;
+        model.addAttribute("profiles", profiles);
         model.addAttribute("availableMonths", disponiveis);
         model.addAttribute("selectedMonth", month);
         model.addAttribute("selectedNumber", number);
@@ -132,9 +132,26 @@ public class QuoteController {
         return ResponseEntity.ok(quote);
     }
 
+    // CORREÇÃO: garante que o campo "description" (obrigatório/not-null na entidade)
+    // seja sempre preenchido, mesmo que o front-end só envie "category" e "product".
+    // Sem isso, o Hibernate rejeita o INSERT/UPDATE com PropertyValueException,
+    // impedindo o salvamento de QUALQUER orçamento novo ou editado.
+    private void ensureItemDescriptions(List<QuoteItem> items) {
+        if (items == null) return;
+        for (QuoteItem item : items) {
+            if (item.getDescription() == null || item.getDescription().isBlank()) {
+                String cat = (item.getCategory() != null && !item.getCategory().isBlank()) ? item.getCategory() : "Item";
+                String prod = item.getProduct() != null ? item.getProduct() : "";
+                item.setDescription(prod.isBlank() ? cat : cat + " - " + prod);
+            }
+        }
+    }
+
     @PostMapping(value = "/save-ajax", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<?> saveAjax(@RequestBody Quote quote) {
+
+        ensureItemDescriptions(quote.getItems());
 
         if (quote.getId() != null) {
             Quote existing = quoteRepo.findById(quote.getId()).orElseThrow();
