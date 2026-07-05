@@ -304,9 +304,9 @@
         <div class="bg-white text-slate-900 w-full max-w-4xl print:max-w-none print:w-full rounded-2xl shadow-2xl relative font-sans print:shadow-none" id="printableReceiptArea">
 
             <div class="flex justify-between items-center px-8 py-4 border-b border-slate-100 print:hidden bg-slate-50 rounded-t-2xl">
-            <span class="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="file-text" class="w-4 h-4"></i> Pré-visualização do Orçamento
-            </span>
+        <span class="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="file-text" class="w-4 h-4"></i> Pré-visualização do Orçamento
+        </span>
                 <div class="flex items-center gap-3">
                     <button id="btnShareWhatsAppTop" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm hover:bg-emerald-700 transition shadow-md">
                         <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
@@ -323,17 +323,50 @@
             <style>
                 @media print {
                     @page { size: A4 portrait; margin: 10mm 10mm; }
-                    html, body { height: auto !important; overflow: visible !important; background-color: white !important; margin: 0 !important; padding: 0 !important; }
-                    body * { visibility: hidden; }
-                    #receiptModal { position: absolute !important; left: 0 !important; top: 0 !important; right: auto !important; bottom: auto !important; height: auto !important; min-height: 100% !important; overflow: visible !important; display: block !important; background: transparent !important; }
-                    #printableReceiptArea, #printableReceiptArea * { visibility: visible; }
-                    #printableReceiptArea { position: relative !important; width: 100% !important; display: block !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; box-shadow: none !important; border-radius: 0 !important; }
-                    table { width: 100% !important; border-collapse: collapse !important; }
+
+                    /* 1. Remove margens do body e reseta a altura */
+                    html, body, main {
+                        height: auto !important;
+                        min-height: auto !important;
+                        background-color: white !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow: visible !important;
+                    }
+
+                    /* 2. Oculta DE FATO tudo que não é o modal (remove o espaço físico) */
+                    body > div:not(main) { display: none !important; } /* Esconde Sidebar e Topbar */
+                    main > :not(#receiptModal) { display: none !important; } /* Esconde Filtros, Tabelas e outros modais */
+
+                    /* 3. Posiciona o modal como elemento normal de bloco na página */
+                    #receiptModal {
+                        position: relative !important;
+                        display: block !important;
+                        height: auto !important;
+                        background: transparent !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+
+                    /* 4. Remove sombras e bordas da área de impressão */
+                    #printableReceiptArea {
+                        position: relative !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        display: block !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        box-shadow: none !important;
+                        border: none !important;
+                    }
+
+                    /* 5. Previne quebra de páginas no meio de linhas e blocos importantes */
+                    table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto !important; }
                     thead { display: table-header-group !important; }
-                    tr { page-break-inside: avoid !important; }
-                    .print-break-after { page-break-after: always; }
-                    .avoid-break { page-break-inside: avoid !important; }
-                    .rec-section { padding: 10px 0 !important; }
+                    tr { page-break-inside: avoid !important; page-break-after: auto !important; }
+                    .avoid-break { page-break-inside: avoid !important; break-inside: avoid !important; }
+
+                    .print\:hidden { display: none !important; }
                 }
             </style>
 
@@ -420,21 +453,20 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5 avoid-break">
-                    <div class="border border-slate-200 rounded-xl overflow-hidden">
-                        <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
-                            <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-600 print:hidden"></i>
-                            <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Condições & Observações</h5>
-                        </div>
-                        <div id="recObs" class="whitespace-pre-line text-xs text-slate-700 font-sans leading-relaxed p-4 bg-white min-h-[80px]">--</div>
+                <div class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm">
+                    <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-slate-600 print:hidden"></i>
+                        <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Termos de Garantia</h5>
                     </div>
-                    <div class="border border-slate-200 rounded-xl overflow-hidden">
-                        <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
-                            <i data-lucide="shield-check" class="w-4 h-4 text-slate-600 print:hidden"></i>
-                            <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Termos de Garantia</h5>
-                        </div>
-                        <div id="recWarrantyText" class="whitespace-pre-line text-xs text-slate-700 font-sans leading-relaxed p-4 bg-white min-h-[80px]">--</div>
+                    <div id="recWarrantyText" class="whitespace-pre-line text-xs text-slate-700 font-sans leading-relaxed p-4 bg-white min-h-[80px]">--</div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm">
+                    <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
+                        <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-600 print:hidden"></i>
+                        <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Condições & Observações</h5>
                     </div>
+                    <div id="recObs" class="whitespace-pre-line text-xs text-slate-700 font-sans leading-relaxed p-4 bg-white min-h-[80px]">--</div>
                 </div>
 
                 <div class="avoid-break border-t-2 border-dashed border-slate-300 pt-5 mt-4">
@@ -494,65 +526,68 @@
 
     <div id="clientInlineModal"
          class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
-        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
-            <button type="button" onclick="closeModal('clientInlineModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full">
-                <i data-lucide="x" class="w-5 h-5"></i>
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200">
+
+            <button type="button" onclick="closeModal('clientInlineModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-1.5 rounded-full transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
             </button>
-            <h4 class="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
-                <i data-lucide="user-plus" class="text-brand-600 dark:text-cyan-400 w-6 h-6"></i>
+
+            <h4 class="text-lg font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <i data-lucide="user-plus" class="text-brand-600 dark:text-cyan-400 w-5 h-5"></i>
                 Cadastro de Cliente
             </h4>
 
-            <div class="space-y-5 text-sm">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-4 text-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
                             Nome Completo / Razão Social *
                         </label>
-                        <input type="text" id="inlineClientName" required maxlength="150" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <input type="text" id="inlineClientName" required maxlength="150" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors"/>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
                             Tipo de Pessoa
                         </label>
-                        <select id="inlineClientType" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5">
+                        <select id="inlineClientType" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors">
                             <option value="individual">Pessoa Física (CPF)</option>
                             <option value="company">Pessoa Jurídica (CNPJ)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
                             CPF / CNPJ
                         </label>
-                        <input type="text" id="inlineClientDoc" maxlength="18" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <input type="text" id="inlineClientDoc" maxlength="18" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors"/>
                         <p id="inlineDocumentError" class="hidden text-red-500 text-xs mt-1"></p>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
                             E-mail
                         </label>
-                        <input type="email" id="inlineClientEmail" maxlength="120" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <input type="email" id="inlineClientEmail" maxlength="120" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors"/>
                         <p id="inlineEmailError" class="hidden text-red-500 text-xs mt-1"></p>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
                             Telefone
                         </label>
-                        <input type="text" id="inlineClientPhone" maxlength="15" placeholder="(11) 99999-9999" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <input type="text" id="inlineClientPhone" maxlength="15" placeholder="(11) 99999-9999" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors"/>
                         <p id="inlinePhoneError" class="hidden text-red-500 text-xs mt-1"></p>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
                             Endereço Completo (Rua, Número, Bairro, CEP)
                         </label>
-                        <input type="text" id="inlineClientAddress" maxlength="255" placeholder="Ex: Rua das Flores, 123 - Centro" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5"/>
+                        <input type="text" id="inlineClientAddress" maxlength="255" placeholder="Ex: Rua das Flores, 123 - Centro" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors"/>
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-800 mt-6">
-                    <button type="button" onclick="closeModal('clientInlineModal')" class="px-5 py-2.5 rounded-xl border font-bold text-slate-600 dark:text-slate-300">
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800 mt-4">
+                    <button type="button" onclick="closeModal('clientInlineModal')" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         Cancelar
                     </button>
-                    <button type="button" onclick="saveInlineClient()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold transition-colors shadow-sm">
+                    <button type="button" onclick="saveInlineClient()" class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold transition-colors shadow-sm">
                         Salvar e Inserir
                     </button>
                 </div>
@@ -562,13 +597,13 @@
 
 </main>
 
-<!-- Bibliotecas usadas apenas para gerar o PDF do orçamento no navegador (botão "Compartilhar no WhatsApp" / "Imprimir") -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
     let currentActiveClientForPdf = "Consumidor Final";
     let currentActiveNumberForPdf = "000";
+    let currentActiveClientPhoneForPdf = "";
     let currentItems = [];
 
     function toggleModal(id, show) {
@@ -593,39 +628,38 @@
 
     const DEFAULT_WARRANTY = `TERMO DE GARANTIA
 
-        Garantia de 90 (noventa) dias, contados a partir da conclusão da instalação, cobrindo exclusivamente regulagens, vedação e a correção de eventuais vícios decorrentes da instalação realizada pela empresa.
+    Garantia de 90 dias, a partir da conclusão da instalação, cobrindo apenas regulagens, vedação e defeitos decorrentes da instalação realizada pela empresa.
 
-        A garantia não cobre:
-        • Danos causados por mau uso, acidentes ou impactos;
-        • Quebra de vidros ou avarias decorrentes de uso inadequado;
-        • Desgaste natural dos materiais e componentes;
-        • Falta de manutenção preventiva ou limpeza inadequada;
-        • Reparos, alterações ou intervenções realizadas por terceiros;
-        • Danos causados por fenômenos naturais, sobrecarga ou fatores externos.
+    Não cobre:
+    • Mau uso, acidentes ou impactos;
+    • Quebra de vidros ou uso inadequado;
+    • Desgaste natural;
+    • Falta de manutenção ou limpeza inadequada;
+    • Reparos realizados por terceiros;
+    • Danos causados por fatores externos ou fenômenos naturais.
 
-        A garantia perderá sua validade caso o produto seja alterado, desmontado ou reparado por pessoas não autorizadas pela empresa.
+    A garantia será cancelada caso o produto seja alterado ou reparado por pessoas não autorizadas.
+    `;
 
-        `;
     const DEFAULT_OBSERVATIONS = `FORMA DE PAGAMENTO
-        • Parcelamento em até 5x sem juros.
-        • Pagamentos via PIX ou cartão de débito: 5% de desconto.
-        • Pagamentos em dinheiro: 10% de desconto.
+    • PIX ou débito: 5% de desconto.
+    • Dinheiro: 10% de desconto.
 
-        PRAZO DE ENTREGA
-        • Até 15 dias úteis após a confirmação do pedido.
+    PRAZO DE ENTREGA
+    • Até 15 dias úteis após a confirmação do pedido.
 
-        FORMA DE EXECUÇÃO
-        • Para início da produção/instalação é necessário o pagamento de 50% do valor total do pedido.
-        • Os 50% restantes deverão ser quitados na conclusão da instalação.
+    EXECUÇÃO
+    • 50% de entrada para iniciar a produção.
+    • Saldo de 50% na conclusão da instalação.
 
-        OBSERVAÇÕES IMPORTANTES
-        • Em caso de desistência após o pagamento do sinal, o valor não será reembolsado, devido aos custos de aquisição de materiais e produção sob medida.
-        • Os valores deste orçamento poderão ser alterados sem aviso prévio enquanto o pedido não for confirmado.
-        • Pedidos não retirados em até 30 dias após a conclusão serão descartados, sem direito a reembolso.
-        • A confirmação do pedido por WhatsApp, ligação telefônica ou e-mail possui a mesma validade da assinatura, caracterizando o aceite de todas as condições deste orçamento.
-        • Declaro estar ciente e de acordo com todas as informações contidas neste pedido, inclusive com as medidas informadas para fabricação dos vidros.
-        • NÃO REALIZAMOS TROCAS OU DEVOLUÇÕES de produtos fabricados sob medida, conforme previsto no Código de Defesa do Consumidor.
-        `;
+    OBSERVAÇÕES
+    • O sinal não é reembolsável em caso de desistência.
+    • Valores sujeitos a alteração até a confirmação do pedido.
+    • Produtos não retirados em até 30 dias poderão ser descartados.
+    • A confirmação por WhatsApp, telefone ou e-mail tem validade contratual.
+    • O cliente declara estar de acordo com as medidas e condições deste orçamento.
+    • Produtos sob medida não possuem troca ou devolução, conforme o Código de Defesa do Consumidor.
+    `;
 
     function openNewQuoteModal() {
         if(document.getElementById('quoteForm')) document.getElementById('quoteForm').reset();
@@ -905,10 +939,6 @@
         document.title = originalErpTitle;
     }
 
-    // ==================== COMPARTILHAMENTO DO ORÇAMENTO VIA WHATSAPP ====================
-
-    // Esconde/mostra os botões e cabeçalhos de ação (que só deveriam aparecer na tela,
-    // nunca no PDF) durante a captura da imagem usada para gerar o anexo.
     function toggleReceiptControlsForCapture(hide) {
         const area = document.getElementById('printableReceiptArea');
         if (!area) return;
@@ -917,7 +947,6 @@
         });
     }
 
-    // Monta o nome do arquivo exatamente no padrão pedido: "ORC-0000 - NOME CLIENTE - EMPRESA.pdf"
     function buildQuoteShareFileName() {
         const numero = currentActiveNumberForPdf || 'ORC-0000';
         const cliente = currentActiveClientForPdf || 'Cliente';
@@ -925,15 +954,13 @@
         const empresa = (empresaEl && empresaEl.innerText.trim()) ? empresaEl.innerText.trim() : 'Empresa';
 
         const nomeArquivo = `${numero} - ${cliente} - ${empresa}`
-            .replace(/[\\/:*?"<>|]/g, '')   // remove caracteres inválidos em nomes de arquivo
+            .replace(/[\\/:*?"<>|]/g, '')
             .replace(/\s+/g, ' ')
             .trim();
 
         return `${nomeArquivo}.pdf`;
     }
 
-    // Gera o PDF a partir da área de pré-visualização do orçamento (mesmo conteúdo do "Imprimir / Salvar PDF")
-    // e retorna um Blob pronto para ser anexado/baixado.
     async function generateReceiptPdfBlob() {
         if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
             throw new Error('As bibliotecas de geração de PDF não carregaram. Verifique sua conexão com a internet e tente novamente.');
@@ -988,15 +1015,6 @@
         setTimeout(() => URL.revokeObjectURL(url), 5000);
     }
 
-    // Ação do botão "Compartilhar no WhatsApp".
-    // 1) Gera o PDF do orçamento em memória (não precisa salvar nada no servidor).
-    // 2) Se o dispositivo suportar compartilhar ARQUIVOS (Web Share API — comum em
-    //    celulares Android/iOS), abre a folha nativa de compartilhamento do sistema
-    //    já com o PDF anexado: o usuário só toca no ícone do WhatsApp e escolhe o contato.
-    // 3) Se o navegador não suportar isso (ex: desktop/computador), o WhatsApp não
-    //    permite anexar arquivos via link por questões de segurança da própria Meta —
-    //    nesse caso baixamos o PDF automaticamente e abrimos o WhatsApp Web para o
-    //    usuário apenas arrastar o arquivo já baixado até a conversa.
     async function shareQuoteOnWhatsApp() {
         const buttons = [document.getElementById('btnShareWhatsAppTop'), document.getElementById('btnShareWhatsAppBottom')].filter(Boolean);
         const originalHtml = buttons.map(b => b.innerHTML);
@@ -1006,13 +1024,27 @@
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
+        let isMobileShareSupported = false;
+        try {
+            isMobileShareSupported = navigator.canShare && navigator.canShare({ files: [new File([''], 'teste.txt', {type: 'text/plain'})] });
+        } catch(e) {}
+
+        let waWindow = null;
+
+        if (!isMobileShareSupported) {
+            waWindow = window.open('about:blank', '_blank');
+            if (waWindow) {
+                waWindow.document.write('<h2 style="font-family:sans-serif; text-align:center; margin-top:50px; color:#333;">Gerando o PDF do Orçamento... O WhatsApp Web abrirá em instantes.</h2>');
+            }
+        }
+
         try {
             const pdfBlob = await generateReceiptPdfBlob();
             const fileName = buildQuoteShareFileName();
             const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-            const textoCompartilhamento = `Orçamento ${currentActiveNumberForPdf} - ${currentActiveClientForPdf}`;
+            const textoCompartilhamento = `Olá! Segue o Orçamento ${currentActiveNumberForPdf} - ${currentActiveClientForPdf}`;
 
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            if (isMobileShareSupported) {
                 await navigator.share({
                     files: [file],
                     title: fileName,
@@ -1021,17 +1053,35 @@
             } else {
                 downloadBlobFile(pdfBlob, fileName);
                 const texto = encodeURIComponent(
-                    `${textoCompartilhamento}\n\n(O PDF foi baixado no seu computador. Anexe o arquivo "${fileName}" nesta conversa antes de enviar.)`
+                    `${textoCompartilhamento}\n\n(O PDF foi baixado no seu computador. Arraste e solte o arquivo "${fileName}" nesta conversa para enviar ao cliente.)`
                 );
-                window.open(`https://wa.me/?text=${texto}`, '_blank');
-                alert('Seu navegador não permite anexar o PDF automaticamente ao abrir o WhatsApp (isso é uma restrição do próprio WhatsApp/Meta, não do sistema).\n\nO orçamento em PDF já foi baixado. Basta arrastar o arquivo baixado para a conversa do WhatsApp que foi aberta em outra aba.');
+
+                let phoneStr = currentActiveClientPhoneForPdf.replace(/\D/g, '');
+                if (phoneStr.length === 10 || phoneStr.length === 11) {
+                    phoneStr = '55' + phoneStr;
+                }
+
+                const waUrl = phoneStr.length >= 12
+                    ? `https://api.whatsapp.com/send?phone=${phoneStr}&text=${texto}`
+                    : `https://api.whatsapp.com/send?text=${texto}`;
+
+                if (waWindow) {
+                    waWindow.location.href = waUrl;
+                } else {
+                    window.open(waUrl, '_blank');
+                }
+
+                setTimeout(() => {
+                    alert('O orçamento em PDF foi baixado!\n\nNa aba do WhatsApp que se abriu, basta arrastar o arquivo baixado para enviar ao cliente.');
+                }, 800);
             }
         } catch (err) {
+            if (waWindow) waWindow.close();
+
             if (err && err.name === 'AbortError') {
-                // Usuário fechou/cancelou a folha de compartilhamento — nenhuma ação necessária.
             } else {
                 console.error('Erro ao compartilhar orçamento no WhatsApp:', err);
-                alert('Não foi possível gerar/compartilhar o PDF do orçamento. Tente novamente.\n\n' + (err.message || ''));
+                alert('Não foi possível gerar/compartilhar o PDF do orçamento. Verifique se o bloqueador de pop-ups está ativo.\n\nDetalhe: ' + (err.message || ''));
             }
         } finally {
             buttons.forEach((b, i) => { b.disabled = false; b.innerHTML = originalHtml[i]; });
@@ -1046,6 +1096,7 @@
 
                 currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
                 currentActiveNumberForPdf = q.number;
+                currentActiveClientPhoneForPdf = q.client ? (q.client.phone || '') : '';
 
                 document.getElementById('recNum').innerText = `N° ${q.number.replace('ORC-', '')}`;
                 document.getElementById('recDate').innerText = new Date(q.dateCreated).toLocaleDateString('pt-BR');
