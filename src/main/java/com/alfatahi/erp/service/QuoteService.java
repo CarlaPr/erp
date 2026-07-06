@@ -65,7 +65,15 @@ public class QuoteService {
         os.setDescription(description);
         os.setStatus("in_progress");
 
-        os.setTotalValue(quote.getTotalValue());
+        // CÁLCULO DO VALOR FINAL COM DESCONTO
+        BigDecimal grossTotal = quote.getTotalValue() != null ? quote.getTotalValue() : BigDecimal.ZERO;
+        BigDecimal finalTotal = grossTotal;
+        if (quote.getDiscountPercent() != null && quote.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal discountMultiplier = BigDecimal.ONE.subtract(quote.getDiscountPercent().divide(new BigDecimal("100")));
+            finalTotal = grossTotal.multiply(discountMultiplier).setScale(2, RoundingMode.HALF_UP);
+        }
+
+        os.setTotalValue(finalTotal); // OS REPASSA O VALOR JÁ COM DESCONTO
 
         LocalDate dataEntrega = calculateBusinessDays(LocalDate.now(), 15);
         os.setInstallDate(dataEntrega);
@@ -103,19 +111,17 @@ public class QuoteService {
 
         scheduleService.createFromApprovedQuote(quote, os);
 
-        BigDecimal totalOrcamento = (quote.getTotalValue() != null) ? quote.getTotalValue() : BigDecimal.ZERO;
-
         String paymentMethod = quote.getPaymentMethod();
         boolean isCardSale = "Cartao_Credito".equals(paymentMethod) || "Cartao_Debito".equals(paymentMethod);
 
         int numParcelas = isCardSale
                 ? 1
                 : (quote.getInstallments() != null && quote.getInstallments() > 0) ? quote.getInstallments() : 1;
-        BigDecimal valorParcela = totalOrcamento.divide(new BigDecimal(numParcelas), 2, RoundingMode.HALF_UP);
 
-
+        // CÁLCULO DAS PARCELAS BASEADO NO VALOR LÍQUIDO FINAL
+        BigDecimal valorParcela = finalTotal.divide(new BigDecimal(numParcelas), 2, RoundingMode.HALF_UP);
         BigDecimal somaParcelasAnteriores = valorParcela.multiply(new BigDecimal(numParcelas - 1));
-        BigDecimal valorUltimaParcela = totalOrcamento.subtract(somaParcelasAnteriores);
+        BigDecimal valorUltimaParcela = finalTotal.subtract(somaParcelasAnteriores);
 
         for (int i = 0; i < numParcelas; i++) {
             boolean isUltima = (i == numParcelas - 1);

@@ -1,0 +1,1 @@
+ALTER TABLE quotes ADD COLUMN discount_percent NUMERIC(5, 2) DEFAULT 0;

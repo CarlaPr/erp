@@ -42,9 +42,21 @@
             </li>
         </ul>
 
-        <div class="mt-4 pt-4 border-t border-slate-300 flex justify-between items-center">
-            <span class="font-black text-slate-700 text-lg">TOTAL</span>
-            <span class="text-2xl font-black text-emerald-600" th:text="${'R$ ' + #numbers.formatDecimal(quote.totalValue, 1, 'COMMA', 2, 'POINT')}"></span>
+        <div class="mt-4 pt-4 border-t border-slate-300">
+            <div th:if="${quote.discountPercent != null && quote.discountPercent > 0}" class="flex justify-between items-center mb-2">
+                <span class="font-bold text-slate-500 text-sm uppercase">Subtotal Bruto</span>
+                <span class="text-sm font-bold text-slate-500 line-through" th:text="${'R$ ' + #numbers.formatDecimal(quote.totalValue, 1, 'COMMA', 2, 'POINT')}"></span>
+            </div>
+
+            <div th:if="${quote.discountPercent != null && quote.discountPercent > 0}" class="flex justify-between items-center mb-3 pb-3 border-b border-slate-100">
+                <span class="font-bold text-rose-500 text-sm uppercase">Desconto (<span th:text="${quote.discountPercent}"></span>%)</span>
+                <span class="text-sm font-bold text-rose-500" th:with="discountValue=${quote.totalValue * quote.discountPercent / 100}" th:text="${'- R$ ' + #numbers.formatDecimal(discountValue, 1, 'COMMA', 2, 'POINT')}"></span>
+            </div>
+
+            <div class="flex justify-between items-center">
+                <span class="font-black text-slate-700 text-lg">VALOR FINAL</span>
+                <span class="text-2xl font-black text-emerald-600" th:with="netTotal=${quote.totalValue - (quote.totalValue * (quote.discountPercent != null ? quote.discountPercent : 0) / 100)}" th:text="${'R$ ' + #numbers.formatDecimal(netTotal, 1, 'COMMA', 2, 'POINT')}"></span>
+            </div>
         </div>
 
         <div th:if="${quote.installments != null && quote.installments > 1}" class="mt-4 flex justify-between items-center text-sm bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200">
@@ -52,7 +64,7 @@
                 <span class="font-bold text-emerald-800 uppercase tracking-wider text-[11px]">Condição de Pagamento</span>
                 <span class="text-xs text-emerald-600 font-bold" th:text="${quote.paymentMethod == 'Cartao_Credito' ? 'Cartão de Crédito' : quote.paymentMethod}"></span>
             </div>
-            <span class="font-black text-emerald-700 text-lg" th:text="${quote.installments + 'x de R$ ' + #numbers.formatDecimal(quote.totalValue / quote.installments, 1, 'COMMA', 2, 'POINT')}"></span>
+            <span class="font-black text-emerald-700 text-lg" th:with="netTotal=${quote.totalValue - (quote.totalValue * (quote.discountPercent != null ? quote.discountPercent : 0) / 100)}" th:text="${quote.installments + 'x de R$ ' + #numbers.formatDecimal(netTotal / quote.installments, 1, 'COMMA', 2, 'POINT')}"></span>
         </div>
     </div>
 

@@ -173,19 +173,24 @@
                         <input type="date" id="quoteDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg" />
                     </div>
 
-                    <div class="md:col-span-1 lg:col-span-3">
-                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Forma de Pagamento</label>
-                        <select id="quotePayment" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg">
+                    <div class="md:col-span-4">
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-1 text-[13px]">Forma de Pagamento</label>
+                        <select id="quotePayment" onchange="togglePaymentOptions()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-sm">
                             <option value="PIX">PIX</option>
                             <option value="Dinheiro">Dinheiro</option>
-                            <option value="Cartao_Credito">Cartão de Crédito</option>
                             <option value="Cartao_Debito">Cartão de Débito</option>
+                            <option value="Cartao_Credito">Cartão de Crédito</option>
                         </select>
                     </div>
 
-                    <div class="md:col-span-1 lg:col-span-2">
-                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Parcelas</label>
-                        <input type="number" id="quoteInstallments" min="1" value="1" oninput="if(this.value < 1) this.value = 1;" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg text-center" />
+                    <div class="md:col-span-4" id="installmentsContainer" style="display: none;">
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-1 text-[13px]">Parcelas</label>
+                        <input type="number" id="quoteInstallments" min="1" value="1" oninput="if(this.value < 1) this.value = 1;" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-sm text-center" />
+                    </div>
+
+                    <div class="md:col-span-4" id="discountContainer">
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-1 text-[13px] text-emerald-600 dark:text-emerald-400">Desconto Opcional (%)</label>
+                        <input type="number" id="quoteDiscount" step="0.01" min="0" max="100" value="0" oninput="renderQuoteItems()" class="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-300 dark:border-emerald-700/50 rounded-lg px-3 py-2 text-emerald-900 dark:text-emerald-300 outline-none focus:border-emerald-500 transition-colors text-sm text-center font-bold" />
                     </div>
                 </div>
 
@@ -267,15 +272,20 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col md:flex-row justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-8 mt-8 gap-6">
-                    <div class="bg-slate-50 dark:bg-slate-900 px-8 py-5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-6 w-full md:w-auto">
-                        <span class="text-base text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider block">Valor Total Geral</span>
-                        <span class="text-4xl font-mono font-black text-emerald-600 dark:text-emerald-400" id="liveQuoteTotal">R$ 0,00</span>
+                <div class="flex flex-col md:flex-row justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-5 mt-5 gap-4">
+                    <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-center w-full md:w-auto text-right min-w-[200px]">
+                        <div id="liveQuoteSubtotalRow" class="text-xs text-slate-500 dark:text-slate-400 font-bold hidden justify-end items-center gap-2 mb-0.5">
+                            <span>Bruto:</span> <span id="liveQuoteSubtotalVal" >R$ 0,00</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-black">VALOR FINAL</span>
+                            <span class="text-2xl font-mono font-black text-emerald-600 dark:text-emerald-400" id="liveQuoteTotal">R$ 0,00</span>
+                        </div>
                     </div>
-                    <div class="flex gap-4 w-full md:w-auto">
-                        <button type="button" onclick="closeModal('quoteModal')" class="flex-1 md:flex-none px-8 py-4 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors font-bold text-lg">Cancelar</button>
-                        <button type="submit" class="flex-1 md:flex-none px-8 py-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 transition-all text-lg flex items-center justify-center gap-2">
-                            <i data-lucide="save" class="w-5 h-5"></i> Salvar Orçamento
+                    <div class="flex gap-3 w-full md:w-auto">
+                        <button type="button" onclick="closeModal('quoteModal')" class="flex-1 md:flex-none px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-sm">Cancelar</button>
+                        <button type="submit" class="flex-1 md:flex-none px-6 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-md text-sm flex items-center justify-center gap-2">
+                            <i data-lucide="save" class="w-4 h-4"></i> Salvar Orçamento
                         </button>
                     </div>
                 </div>
@@ -744,21 +754,41 @@
         document.getElementById('quoteObs').value = DEFAULT_OBSERVATIONS;
         document.getElementById('quoteProfile').value = '';
         document.getElementById('itemCat').value = '';
+        document.getElementById('quotePayment').value = 'PIX';
 
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('quoteDate').value = today;
 
         currentItems = [];
+        togglePaymentOptions();
         renderQuoteItems();
-        document.getElementById('liveQuoteTotal').innerText = 'R$ 0,00';
+
+        if(typeof updateClientDetailsPanel === 'function') updateClientDetailsPanel();
 
         updateClientDetailsPanel();
 
         toggleModal('quoteModal', true);
     }
 
+    function togglePaymentOptions() {
+        const payment = document.getElementById('quotePayment').value;
+        const instContainer = document.getElementById('installmentsContainer');
+        const discContainer = document.getElementById('discountContainer');
+
+        if (payment === 'Cartao_Credito') {
+            instContainer.style.display = 'block';
+            discContainer.style.display = 'none';
+            document.getElementById('quoteDiscount').value = 0;
+        } else {
+            instContainer.style.display = 'none';
+            discContainer.style.display = 'block';
+            document.getElementById('quoteInstallments').value = 1;
+        }
+        renderQuoteItems();
+    }
+
     function addItemToQuote() {
-        const cat = document.getElementById('itemCat').value;
+        const cat = document.getElementById('itemCat').value || 'Item';
         const prod = document.getElementById('itemProd').value;
         const w = parseFloat(document.getElementById('itemWidth').value) || 0;
         const h = parseFloat(document.getElementById('itemHeight').value) || 0;
@@ -837,7 +867,8 @@
                 } else {
                     document.getElementById('quoteClient').value = '';
                 }
-                updateClientDetailsPanel();
+
+                if(typeof updateClientDetailsPanel === 'function') updateClientDetailsPanel();
 
                 if(q.dateCreated) {
                     document.getElementById('quoteDate').value = q.dateCreated.split('T')[0];
@@ -850,7 +881,13 @@
                 }
 
                 document.getElementById('quotePayment').value = q.paymentMethod || 'PIX';
-                document.getElementById('quoteInstallments').value = q.installments || 1;
+
+                const instInput = document.getElementById('quoteInstallments');
+                if(instInput) instInput.value = q.installments || 1;
+
+                const discInput = document.getElementById('quoteDiscount');
+                if(discInput) discInput.value = q.discountPercent || 0; // CARREGA O DESCONTO
+
                 document.getElementById('quoteObs').value = q.observations || '';
                 document.getElementById('quoteWarranty').value = q.warranty || '';
 
@@ -868,6 +905,7 @@
                     });
                 }
 
+                togglePaymentOptions(); // Ajusta os painéis antes de renderizar
                 renderQuoteItems();
 
                 const modalTitle = document.querySelector('#quoteModal h3');
@@ -885,7 +923,7 @@
         const tbody = document.getElementById('quoteItemsTable');
         if(!tbody) return;
         tbody.innerHTML = '';
-        let totalGeneral = 0;
+        let grossTotal = 0;
 
         currentItems.forEach((item, idx) => {
             let m2Unitario = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 0;
@@ -893,26 +931,47 @@
             let multiplicadorM2 = m2Unitario > 0 ? m2Unitario : 1;
             let precoPecaUnitaria = multiplicadorM2 * item.unitPrice;
             let sub = item.quantity * precoPecaUnitaria;
-            totalGeneral += sub;
+            grossTotal += sub;
 
             tbody.innerHTML += `
-            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-    <td class="p-4 text-slate-900 dark:text-white whitespace-pre-line"><span class="font-bold text-brand-600 dark:text-cyan-400 block mb-1">[${item.category}]</span>${item.product}</td>
-                <td class="p-4 text-center text-slate-600 dark:text-slate-400 font-mono">${item.width > 0 ? item.width + 'x' + item.height + 'm' : 'un'}</td>
-                <td class="p-4 text-center text-slate-900 dark:text-slate-300 font-bold">${item.quantity}</td>
-                <td class="p-4 text-center text-slate-600 dark:text-slate-400 font-mono">${m2Unitario > 0 ? m2Unitario.toFixed(2) + ' m²' : '—'}</td>
-                <td class="p-4 text-center text-brand-600 dark:text-cyan-400 font-mono font-bold">${m2Total > 0 ? m2Total.toFixed(2) + ' m²' : '—'}</td>
-
-                <td class="p-4 text-right text-slate-600 dark:text-slate-400 font-mono">${formatarMoeda(precoPecaUnitaria)}</td>
-                <td class="p-4 text-right text-emerald-600 dark:text-emerald-400 font-bold font-mono">${formatarMoeda(sub)}</td>
-
-                <td class="p-4 text-center"><button type="button" onclick="removeQuoteItem(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 font-bold p-2 bg-rose-50 dark:bg-transparent rounded-lg">X</button></td>
-            </tr>
-        `;
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+            <td class="p-4 text-slate-900 dark:text-white whitespace-pre-line"><span class="font-bold text-brand-600 dark:text-cyan-400 block mb-1">[${item.category}]</span>${item.product}</td>
+            <td class="p-4 text-center text-slate-600 dark:text-slate-400 font-mono">${item.width > 0 ? item.width + 'x' + item.height + 'm' : 'un'}</td>
+            <td class="p-4 text-center text-slate-900 dark:text-slate-300 font-bold">${item.quantity}</td>
+            <td class="p-4 text-center text-slate-600 dark:text-slate-400 font-mono">${m2Unitario > 0 ? m2Unitario.toFixed(2) + ' m²' : '—'}</td>
+            <td class="p-4 text-center text-brand-600 dark:text-cyan-400 font-mono font-bold">${m2Total > 0 ? m2Total.toFixed(2) + ' m²' : '—'}</td>
+            <td class="p-4 text-right text-slate-600 dark:text-slate-400 font-mono">${formatarMoeda(precoPecaUnitaria)}</td>
+            <td class="p-4 text-right text-emerald-600 dark:text-emerald-400 font-bold font-mono">${formatarMoeda(sub)}</td>
+            <td class="p-4 text-center"><button type="button" onclick="removeQuoteItem(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 font-bold p-2 bg-rose-50 dark:bg-transparent rounded-lg">X</button></td>
+        </tr>
+    `;
         });
 
+        let discountPct = 0;
+        const discountInput = document.getElementById('quoteDiscount');
+        if (discountInput && discountInput.offsetParent !== null) {
+            discountPct = parseFloat(discountInput.value) || 0;
+        }
+
+        let discountValue = grossTotal * (discountPct / 100);
+        let netTotal = grossTotal - discountValue;
+
+        const subtotalRow = document.getElementById('liveQuoteSubtotalRow');
+        const subtotalVal = document.getElementById('liveQuoteSubtotalVal');
+
+        if (subtotalRow && subtotalVal) {
+            if (discountPct > 0) {
+                subtotalRow.classList.remove('hidden');
+                subtotalRow.classList.add('flex');
+                subtotalVal.innerText = formatarMoeda(grossTotal);
+            } else {
+                subtotalRow.classList.remove('flex');
+                subtotalRow.classList.add('hidden');
+            }
+        }
+
         const totalEl = document.getElementById('liveQuoteTotal');
-        if(totalEl) totalEl.innerText = formatarMoeda(totalGeneral);
+        if(totalEl) totalEl.innerText = formatarMoeda(netTotal);
     }
 
     function saveQuote(e) {
@@ -930,7 +989,7 @@
             return;
         }
 
-        let calculatedTotal = currentItems.reduce((acc, item) => {
+        let calculatedGrossTotal = currentItems.reduce((acc, item) => {
             let m2 = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 1;
             return acc + (item.quantity * m2 * item.unitPrice);
         }, 0);
@@ -945,16 +1004,24 @@
             return;
         }
 
+        // OBTÉM O DESCONTO DIGITADO
+        const discInput = document.getElementById('quoteDiscount');
+        const discountValue = discInput && discInput.offsetParent !== null ? (parseFloat(discInput.value) || 0) : 0;
+
+        const instInput = document.getElementById('quoteInstallments');
+        const installmentsValue = instInput && instInput.offsetParent !== null ? (parseInt(instInput.value) || 1) : 1;
+
         const payload = {
             id: document.getElementById('quoteId').value || null,
             client: { id: clientSelect.value },
             profile: { id: profileSelect.value },
             dateCreated: dateToSave,
             paymentMethod: document.getElementById('quotePayment').value,
-            installments: parseInt(document.getElementById('quoteInstallments').value) || 1,
+            installments: installmentsValue,
+            discountPercent: discountValue, // ENVIA O DESCONTO AO BACKEND
             observations: document.getElementById('quoteObs').value,
             warranty: document.getElementById('quoteWarranty').value,
-            totalValue: calculatedTotal,
+            totalValue: calculatedGrossTotal, // Envia o total bruto
             items: currentItems
         };
 
@@ -962,7 +1029,7 @@
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
         const btnSubmit = document.querySelector('#quoteForm button[type="submit"]');
-        const originalText = btnSubmit.innerText;
+        const originalText = btnSubmit.innerHTML;
         btnSubmit.innerText = 'Salvando aguarde...';
         btnSubmit.disabled = true;
 
@@ -991,7 +1058,7 @@
                 alert("FALHA AO SALVAR ORÇAMENTO!\n\n" + err.message);
             })
             .finally(() => {
-                btnSubmit.innerText = originalText;
+                btnSubmit.innerHTML = originalText;
                 btnSubmit.disabled = false;
             });
     }
@@ -1298,14 +1365,16 @@
             .then(res => res.json())
             .then(q => {
 
-                currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
-                currentActiveNumberForPdf = q.number;
-                currentActiveClientPhoneForPdf = q.client ? (q.client.phone || '') : '';
+                if(typeof currentActiveClientForPdf !== 'undefined') currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
+                if(typeof currentActiveNumberForPdf !== 'undefined') currentActiveNumberForPdf = q.number;
+                if(typeof currentActiveClientPhoneForPdf !== 'undefined') currentActiveClientPhoneForPdf = q.client ? (q.client.phone || '') : '';
 
                 document.getElementById('recNum').innerText = `N° ${q.number.replace('ORC-', '')}`;
                 document.getElementById('recDate').innerText = new Date(q.dateCreated).toLocaleDateString('pt-BR');
                 document.getElementById('recClient').innerText = q.client ? q.client.name : 'Consumidor Final';
-                document.getElementById('recSignatureClientName').innerText = q.client ? q.client.name : 'Assinatura do Cliente';
+
+                const sigClientNameEl = document.getElementById('recSignatureClientName');
+                if(sigClientNameEl) sigClientNameEl.innerText = q.client ? q.client.name : 'Assinatura do Cliente';
 
                 const pdfPanel = document.getElementById('pdfClientDetailsPanel');
                 if (pdfPanel) {
@@ -1364,21 +1433,50 @@
                     }
                 }
 
-                document.getElementById('recObs').innerText = q.observations || 'Sem observações adicionais.';
-                document.getElementById('recWarrantyText').innerText = q.warranty || DEFAULT_WARRANTY;
+                const recObs = document.getElementById('recObs');
+                if(recObs) recObs.innerText = q.observations || 'Sem observações adicionais.';
 
-                document.getElementById('recTotal').innerText = formatarMoeda(q.totalValue);
+                const recWar = document.getElementById('recWarrantyText');
+                if(recWar) recWar.innerText = q.warranty || (typeof DEFAULT_WARRANTY !== 'undefined' ? DEFAULT_WARRANTY : '');
+
+                // CÁLCULO DE DESCONTO PARA O PDF
+                let gross = q.totalValue || 0;
+                let discountPct = q.discountPercent || 0;
+                let discountValue = gross * (discountPct / 100);
+                let net = gross - discountValue;
+
+                const recSubtotalRow = document.getElementById('recSubtotalRow');
+                const recDiscountRow = document.getElementById('recDiscountRow');
+
+                if (discountPct > 0) {
+                    if(recSubtotalRow) recSubtotalRow.style.display = 'flex';
+                    if(recDiscountRow) recDiscountRow.style.display = 'flex';
+                    document.getElementById('recSubtotal').innerText = formatarMoeda(gross);
+                    document.getElementById('recDiscount').innerText = `- ${formatarMoeda(discountValue)} (${discountPct}%)`;
+                } else {
+                    if(recSubtotalRow) recSubtotalRow.style.display = 'none';
+                    if(recDiscountRow) recDiscountRow.style.display = 'none';
+                }
+
+                document.getElementById('recTotal').innerText = formatarMoeda(net);
 
                 const recFinalRow = document.getElementById('recFinalRow');
-                if (q.paymentMethod === 'Cartao_Credito') {
-                    if (recFinalRow) { recFinalRow.style.removeProperty('display'); recFinalRow.style.display = 'flex'; }
-                    let valorParcela = q.totalValue / (q.installments || 10);
-                    document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x ${formatarMoeda(valorParcela)}`;
+                if (q.paymentMethod === 'Cartao_Credito' && q.installments > 1) {
+                    if (recFinalRow) {
+                        recFinalRow.style.removeProperty('display');
+                        recFinalRow.style.setProperty('display', 'flex', 'important');
+                    }
+                    let valorParcela = net / q.installments;
+                    document.getElementById('recFinalInstallments').innerText = `${q.installments}x ${formatarMoeda(valorParcela)}`;
                 } else {
-                    if (recFinalRow) { recFinalRow.style.display = 'none'; }
+                    if (recFinalRow) {
+                        recFinalRow.style.setProperty('display', 'none', 'important');
+                    }
                 }
+
                 if (q.profile) {
-                    document.getElementById('pdfCompanyName').innerText = q.profile.companyName || '';
+                    const pdfCompName = document.getElementById('pdfCompanyName');
+                    if(pdfCompName) pdfCompName.innerText = q.profile.companyName || '';
 
                     const docEl = document.getElementById('pdfCompanyDoc');
                     if(docEl) docEl.innerText = 'CNPJ/CPF: ' + (q.profile.document || '--');
@@ -1423,15 +1521,22 @@
                 }
 
                 const sigClientEl = document.getElementById('recSignatureClientImage');
+                const sigClientStatus = document.getElementById('recSignatureClientStatus');
                 if(q.clientSignature) {
-                    sigClientEl.src = q.clientSignature;
-                    sigClientEl.style.display = 'block';
-                    document.getElementById('recSignatureClientStatus').innerText = 'Assinado Digitalmente';
-                    document.getElementById('recSignatureClientStatus').classList.replace('text-slate-500', 'text-emerald-600');
+                    if(sigClientEl) {
+                        sigClientEl.src = q.clientSignature;
+                        sigClientEl.style.display = 'block';
+                    }
+                    if(sigClientStatus) {
+                        sigClientStatus.innerText = 'Assinado Digitalmente';
+                        sigClientStatus.classList.replace('text-slate-500', 'text-emerald-600');
+                    }
                 } else {
-                    sigClientEl.style.display = 'none';
-                    document.getElementById('recSignatureClientStatus').innerText = 'Ciente e de Acordo';
-                    document.getElementById('recSignatureClientStatus').classList.replace('text-emerald-600', 'text-slate-500');
+                    if(sigClientEl) sigClientEl.style.display = 'none';
+                    if(sigClientStatus) {
+                        sigClientStatus.innerText = 'Ciente e de Acordo';
+                        sigClientStatus.classList.replace('text-emerald-600', 'text-slate-500');
+                    }
                 }
 
                 const itemsTbody = document.getElementById('recItems');
@@ -1443,21 +1548,21 @@
                         let sub = item.quantity * precoPecaUnitaria;
 
                         itemsTbody.innerHTML += `
-                            <tr class="border-b border-slate-100 hover:bg-slate-50/50">
-                                <td class="py-2.5 px-3 pl-4 text-slate-900 alignment-top">
-                                    <span class="font-extrabold text-[15px] text-slate-950 uppercase tracking-wide leading-none block m-0 p-0">
-                                        ${item.category || 'Item Comercial'}
-                                    </span>
-                                    <span class="text-sm text-slate-600 font-normal whitespace-pre-line leading-tight block mt-1 p-0">
-                                        ${item.product}
-                                    </span>
-                                </td>
-                                <td class="py-2.5 px-3 text-center text-slate-500 font-mono text-xs">un</td>
-                                <td class="py-2.5 px-3 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
-                                <td class="py-2.5 px-3 text-right font-mono text-slate-600 text-sm">${formatarMoeda(precoPecaUnitaria)}</td>
-                                <td class="py-2.5 px-3 text-right pr-4 font-mono font-bold text-slate-900 text-sm">${formatarMoeda(sub)}</td>
-                            </tr>
-                        `;
+                        <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                            <td class="py-2.5 px-3 pl-4 text-slate-900 alignment-top">
+                                <span class="font-extrabold text-[15px] text-slate-950 uppercase tracking-wide leading-none block m-0 p-0">
+                                    ${item.category || 'Item Comercial'}
+                                </span>
+                                <span class="text-sm text-slate-600 font-normal whitespace-pre-line leading-tight block mt-1 p-0">
+                                    ${item.product}
+                                </span>
+                            </td>
+                            <td class="py-2.5 px-3 text-center text-slate-500 font-mono text-xs">un</td>
+                            <td class="py-2.5 px-3 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-slate-600 text-sm">${formatarMoeda(precoPecaUnitaria)}</td>
+                            <td class="py-2.5 px-3 text-right pr-4 font-mono font-bold text-slate-900 text-sm">${formatarMoeda(sub)}</td>
+                        </tr>
+                    `;
                     });
                 }
                 toggleModal('receiptModal', true);

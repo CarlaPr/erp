@@ -1,7 +1,7 @@
 package com.alfatahi.erp.entity;
 
 import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties; // 1. NOVO IMPORT
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -29,6 +29,9 @@ public class Quote {
 
     @Column(name = "total_value", precision = 12, scale = 2)
     private BigDecimal totalValue = BigDecimal.ZERO;
+
+    @Column(name = "discount_percent", precision = 5, scale = 2)
+    private BigDecimal discountPercent = BigDecimal.ZERO;
 
     @Column(columnDefinition = "text")
     private String observations;
@@ -65,6 +68,16 @@ public class Quote {
 
     @Column(name = "client_signature", columnDefinition = "text")
     private String clientSignature;
+
+    // Getters e Setters
+    public BigDecimal getDiscountPercent() { return discountPercent; }
+    public void setDiscountPercent(BigDecimal discountPercent) { this.discountPercent = discountPercent; }
+
+    public String getPublicToken() { return publicToken; }
+    public void setPublicToken(String publicToken) { this.publicToken = publicToken; }
+
+    public String getClientSignature() { return clientSignature; }
+    public void setClientSignature(String clientSignature) { this.clientSignature = clientSignature; }
 
     public Profile getProfile() { return profile; }
     public void setProfile(Profile profile) { this.profile = profile; }
@@ -112,10 +125,4 @@ public class Quote {
             this.items.addAll(items);
         }
     }
-
-    public String getPublicToken() { return publicToken; }
-    public void setPublicToken(String publicToken) { this.publicToken = publicToken; }
-
-    public String getClientSignature() { return clientSignature; }
-    public void setClientSignature(String clientSignature) { this.clientSignature = clientSignature; }
 }
