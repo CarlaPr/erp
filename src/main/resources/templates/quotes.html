@@ -939,14 +939,7 @@
         document.title = originalErpTitle;
     }
 
-    function toggleReceiptControlsForCapture(hide) {
-        const area = document.getElementById('printableReceiptArea');
-        if (!area) return;
-        area.querySelectorAll('.print\\:hidden').forEach(el => {
-            el.style.display = hide ? 'none' : '';
-        });
-    }
-
+    // Monta o nome do arquivo exatamente no padrão pedido: "ORC-0000 - NOME CLIENTE - EMPRESA.pdf"
     function buildQuoteShareFileName() {
         const numero = currentActiveNumberForPdf || 'ORC-0000';
         const cliente = currentActiveClientForPdf || 'Cliente';
@@ -961,23 +954,70 @@
         return `${nomeArquivo}.pdf`;
     }
 
+    // Gera o PDF a partir da área de pré-visualização do orçamento.
+    //
+    // IMPORTANTE: o layout do orçamento foi desenhado para uma largura "de desktop"
+    // (o modal usa max-w-4xl, ~896px). Quando clicamos em "Imprimir/Salvar PDF", o
+    // navegador usa o mecanismo NATIVO de impressão, que aplica o CSS de @media print
+    // e força a largura da folha A4 — por isso sempre sai correto, em qualquer aparelho.
+    //
+    // Já o html2canvas (usado para gerar o anexo do WhatsApp) NÃO aplica @media print:
+    // ele tira uma "foto" do HTML exatamente como está sendo exibido na tela. No
+    // celular, a tela é muito mais estreita que os ~896px para os quais o orçamento
+    // foi desenhado, então o conteúdo aparecia espremido/cortado.
+    //
+    // Correção: criamos um clone do orçamento fora da área visível da tela (o usuário
+    // não vê isso acontecer), fixamos esse clone numa largura de "desktop" e
+    // fotografamos o CLONE em vez do elemento visível. Assim o resultado fica sempre
+    // idêntico ao de um computador, não importa o tamanho da tela do celular.
     async function generateReceiptPdfBlob() {
         if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
             throw new Error('As bibliotecas de geração de PDF não carregaram. Verifique sua conexão com a internet e tente novamente.');
         }
 
-        const area = document.getElementById('printableReceiptArea');
+        const original = document.getElementById('printableReceiptArea');
+        const CAPTURE_WIDTH = 896; // mesma largura "de desktop" (max-w-4xl) usada no design do orçamento
 
-        toggleReceiptControlsForCapture(true);
+        const clone = original.cloneNode(true);
+        clone.id = 'printableReceiptAreaClone';
+
+        // Remove ids duplicados dos elementos internos do clone (evita IDs repetidos no DOM
+        // enquanto o clone existe, já que cloneNode(true) copia todos os ids filhos).
+        clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+
+        // Remove do clone tudo que é só de tela (botões, cabeçalhos de ação) — o mesmo
+        // que o @media print já faz para a impressão normal.
+        clone.querySelectorAll('.print\\:hidden').forEach(el => el.remove());
+
+        // Posiciona o clone fora da área visível da tela, mas ainda "renderizado" pelo
+        // navegador (necessário para o html2canvas conseguir capturá-lo corretamente).
+        clone.style.position = 'fixed';
+        clone.style.top = '0';
+        clone.style.left = '0';
+        clone.style.zIndex = '-1';
+        clone.style.pointerEvents = 'none';
+        clone.style.margin = '0';
+        clone.style.boxShadow = 'none';
+        clone.style.transform = `translateX(-${CAPTURE_WIDTH + 200}px)`;
+        clone.style.width = CAPTURE_WIDTH + 'px';
+        clone.style.maxWidth = CAPTURE_WIDTH + 'px';
+
+        document.body.appendChild(clone);
+
         let canvas;
         try {
-            canvas = await html2canvas(area, {
+            // Aguarda o navegador aplicar o layout/carregar imagens (logo/assinatura) no clone.
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+            canvas = await html2canvas(clone, {
                 scale: 2,
                 useCORS: true,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                width: CAPTURE_WIDTH,
+                windowWidth: CAPTURE_WIDTH
             });
         } finally {
-            toggleReceiptControlsForCapture(false);
+            clone.remove();
         }
 
         const { jsPDF } = window.jspdf;

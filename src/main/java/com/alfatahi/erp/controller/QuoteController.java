@@ -53,7 +53,17 @@ public class QuoteController {
 
         List<Quote> todosOrcamentos = quoteRepo.findAll();
 
+        final boolean ordenarPorAprovacao = "approved".equals(status);
+
         todosOrcamentos.sort((q1, q2) -> {
+            if (ordenarPorAprovacao) {
+                LocalDateTime aprov1 = q1.getDateApproved();
+                LocalDateTime aprov2 = q2.getDateApproved();
+                if (aprov1 == null && aprov2 == null) return 0;
+                if (aprov1 == null) return 1;
+                if (aprov2 == null) return -1;
+                return aprov2.compareTo(aprov1);
+            }
             if (q1.getDateCreated() == null || q2.getDateCreated() == null) return 0;
             int dataCompare = q2.getDateCreated().compareTo(q1.getDateCreated());
             if (dataCompare != 0) return dataCompare;
@@ -132,10 +142,6 @@ public class QuoteController {
         return ResponseEntity.ok(quote);
     }
 
-    // CORREÇÃO: garante que o campo "description" (obrigatório/not-null na entidade)
-    // seja sempre preenchido, mesmo que o front-end só envie "category" e "product".
-    // Sem isso, o Hibernate rejeita o INSERT/UPDATE com PropertyValueException,
-    // impedindo o salvamento de QUALQUER orçamento novo ou editado.
     private void ensureItemDescriptions(List<QuoteItem> items) {
         if (items == null) return;
         for (QuoteItem item : items) {

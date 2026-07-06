@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -93,6 +94,7 @@ public class QuoteService {
         }
 
         quote.setStatus("approved");
+        quote.setDateApproved(LocalDateTime.now());
         os.setQuote(quote);
         quote.setWorkOrder(os);
 
