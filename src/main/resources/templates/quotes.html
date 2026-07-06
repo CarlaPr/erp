@@ -322,9 +322,14 @@
 
             <style>
                 @media print {
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                        color-adjust: exact !important;
+                    }
+
                     @page { size: A4 portrait; margin: 10mm 10mm; }
 
-                    /* 1. Remove margens do body e reseta a altura */
                     html, body, main {
                         height: auto !important;
                         min-height: auto !important;
@@ -334,11 +339,9 @@
                         overflow: visible !important;
                     }
 
-                    /* 2. Oculta DE FATO tudo que não é o modal (remove o espaço físico) */
-                    body > div:not(main) { display: none !important; } /* Esconde Sidebar e Topbar */
-                    main > :not(#receiptModal) { display: none !important; } /* Esconde Filtros, Tabelas e outros modais */
+                    body > div:not(main) { display: none !important; }
+                    main > :not(#receiptModal) { display: none !important; }
 
-                    /* 3. Posiciona o modal como elemento normal de bloco na página */
                     #receiptModal {
                         position: relative !important;
                         display: block !important;
@@ -348,7 +351,6 @@
                         margin: 0 !important;
                     }
 
-                    /* 4. Remove sombras e bordas da área de impressão */
                     #printableReceiptArea {
                         position: relative !important;
                         width: 100% !important;
@@ -360,7 +362,6 @@
                         border: none !important;
                     }
 
-                    /* 5. Previne quebra de páginas no meio de linhas e blocos importantes */
                     table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto !important; }
                     thead { display: table-header-group !important; }
                     tr { page-break-inside: avoid !important; page-break-after: auto !important; }
@@ -939,7 +940,6 @@
         document.title = originalErpTitle;
     }
 
-    // Monta o nome do arquivo exatamente no padrão pedido: "ORC-0000 - NOME CLIENTE - EMPRESA.pdf"
     function buildQuoteShareFileName() {
         const numero = currentActiveNumberForPdf || 'ORC-0000';
         const cliente = currentActiveClientForPdf || 'Cliente';
@@ -954,43 +954,21 @@
         return `${nomeArquivo}.pdf`;
     }
 
-    // Gera o PDF a partir da área de pré-visualização do orçamento.
-    //
-    // IMPORTANTE: o layout do orçamento foi desenhado para uma largura "de desktop"
-    // (o modal usa max-w-4xl, ~896px). Quando clicamos em "Imprimir/Salvar PDF", o
-    // navegador usa o mecanismo NATIVO de impressão, que aplica o CSS de @media print
-    // e força a largura da folha A4 — por isso sempre sai correto, em qualquer aparelho.
-    //
-    // Já o html2canvas (usado para gerar o anexo do WhatsApp) NÃO aplica @media print:
-    // ele tira uma "foto" do HTML exatamente como está sendo exibido na tela. No
-    // celular, a tela é muito mais estreita que os ~896px para os quais o orçamento
-    // foi desenhado, então o conteúdo aparecia espremido/cortado.
-    //
-    // Correção: criamos um clone do orçamento fora da área visível da tela (o usuário
-    // não vê isso acontecer), fixamos esse clone numa largura de "desktop" e
-    // fotografamos o CLONE em vez do elemento visível. Assim o resultado fica sempre
-    // idêntico ao de um computador, não importa o tamanho da tela do celular.
     async function generateReceiptPdfBlob() {
         if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
             throw new Error('As bibliotecas de geração de PDF não carregaram. Verifique sua conexão com a internet e tente novamente.');
         }
 
         const original = document.getElementById('printableReceiptArea');
-        const CAPTURE_WIDTH = 896; // mesma largura "de desktop" (max-w-4xl) usada no design do orçamento
+        const CAPTURE_WIDTH = 896;
 
         const clone = original.cloneNode(true);
         clone.id = 'printableReceiptAreaClone';
 
-        // Remove ids duplicados dos elementos internos do clone (evita IDs repetidos no DOM
-        // enquanto o clone existe, já que cloneNode(true) copia todos os ids filhos).
         clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
 
-        // Remove do clone tudo que é só de tela (botões, cabeçalhos de ação) — o mesmo
-        // que o @media print já faz para a impressão normal.
         clone.querySelectorAll('.print\\:hidden').forEach(el => el.remove());
 
-        // Posiciona o clone fora da área visível da tela, mas ainda "renderizado" pelo
-        // navegador (necessário para o html2canvas conseguir capturá-lo corretamente).
         clone.style.position = 'fixed';
         clone.style.top = '0';
         clone.style.left = '0';
@@ -1006,7 +984,6 @@
 
         let canvas;
         try {
-            // Aguarda o navegador aplicar o layout/carregar imagens (logo/assinatura) no clone.
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
             canvas = await html2canvas(clone, {
