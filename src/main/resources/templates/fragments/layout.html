@@ -82,12 +82,6 @@
             <a href="/quotes" th:classappend="${currentPage == 'quotes'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                 <i data-lucide="file-signature" class="w-4 h-4"></i> Orçamentos
             </a>
-            <!--        <a href="/receipts"-->
-            <!--           class="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"-->
-            <!--           th:classappend="${currentPage == 'receipts' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold border-l-4 border-l-emerald-600' : ''}">-->
-            <!--            <i data-lucide="receipt" class="w-5 h-5"></i>-->
-            <!--            <span>Recibos</span>-->
-            <!--        </a>-->
             <a href="/agenda" th:classappend="${currentPage == 'agenda'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                 <i data-lucide="calendar-clock" class="w-4 h-4"></i> Agenda Comercial
             </a>
@@ -111,6 +105,12 @@
                 </a>
                 <a href="/losses" th:classappend="${currentPage == 'losses'} ? 'bg-amber-50 text-amber-600 border-l-4 border-amber-500 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="alert-triangle" class="w-4 h-4"></i> Controle de Perdas
+                </a>
+                <a href="/reports"
+                   th:classappend="${currentPage == 'reports'} ? 'bg-brand-50 text-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white'"
+                   class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold transition-all group">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    Central de Relatórios
                 </a>
                 <a href="/dre" th:classappend="${currentPage == 'dre'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="bar-chart-3" class="w-4 h-4"></i> DRE Gerencial
@@ -146,7 +146,6 @@
     </aside>
 </div>
 
-<!-- Barra superior exibida apenas no mobile/tablet (abaixo do breakpoint lg), com botão de menu -->
 <header th:fragment="topbar" class="lg:hidden fixed top-0 left-0 right-0 z-30 h-16 flex items-center justify-between gap-3 px-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
     <button id="sidebarOpenBtn" onclick="openSidebar()" type="button" aria-label="Abrir menu" class="p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
         <i data-lucide="menu" class="w-6 h-6"></i>
@@ -162,10 +161,8 @@
 
 <div th:fragment="lucide-script">
     <script>
-        // Inicializa ícones
         lucide.createIcons();
 
-        // Lógica do botão de alternância de Tema
         const themeToggleBtn = document.getElementById('themeToggle');
         const themeIcon = document.getElementById('themeIcon');
 
@@ -177,7 +174,7 @@
                 themeIcon.setAttribute('data-lucide', 'moon');
                 themeToggleBtn.querySelector('span').innerHTML = `<i data-lucide="moon" class="w-5 h-5"></i> Modo Escuro`;
             }
-            lucide.createIcons(); // Recarrega o ícone atualizado
+            lucide.createIcons();
         }
 
         if(themeToggleBtn) {
@@ -193,7 +190,6 @@
                 }
                 updateThemeIcon();
 
-                // Dispara evento customizado para gráficos recarregarem cores se necessário
                 window.dispatchEvent(new Event('themeChanged'));
 
                 setTimeout(() => {
@@ -202,7 +198,6 @@
             });
         }
 
-        // ---- Menu lateral responsivo (mobile) ----
         function openSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');

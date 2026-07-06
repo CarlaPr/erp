@@ -60,6 +60,12 @@ public class Quote {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Profile profile;
 
+    @Column(name = "public_token", unique = true, updatable = false)
+    private String publicToken = UUID.randomUUID().toString();
+
+    @Column(name = "client_signature", columnDefinition = "text")
+    private String clientSignature;
+
     public Profile getProfile() { return profile; }
     public void setProfile(Profile profile) { this.profile = profile; }
 
@@ -106,4 +112,10 @@ public class Quote {
             this.items.addAll(items);
         }
     }
+
+    public String getPublicToken() { return publicToken; }
+    public void setPublicToken(String publicToken) { this.publicToken = publicToken; }
+
+    public String getClientSignature() { return clientSignature; }
+    public void setClientSignature(String clientSignature) { this.clientSignature = clientSignature; }
 }

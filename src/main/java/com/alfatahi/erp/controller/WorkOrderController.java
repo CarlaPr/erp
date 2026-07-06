@@ -27,21 +27,23 @@ public class WorkOrderController {
     private final ClientService clientService;
     private final ServiceCategoryRepository categoryRepository;
     private final ProfileRepository profileRepository;
-    private final QuoteRepository quoteRepository; // Adicione este
+    private final QuoteRepository quoteRepository;
     private final WorkOrderRepository workOrderRepo;
-    private final ClientRepository clientRepository; // Adicione este
+    private final ClientRepository clientRepository;
+    private final AccountsReceivableRepository receivableRepo;
 
     public WorkOrderController(WorkOrderService workOrderService, ClientService clientService,
                                ServiceCategoryRepository categoryRepository, ProfileRepository profileRepository,
                                QuoteRepository quoteRepository, WorkOrderRepository workOrderRepo,
-                               ClientRepository clientRepository) { // Adicione no construtor
+                               ClientRepository clientRepository, AccountsReceivableRepository receivableRepo) {
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
         this.profileRepository = profileRepository;
         this.quoteRepository = quoteRepository;
         this.workOrderRepo = workOrderRepo;
-        this.clientRepository = clientRepository; // Inicialize
+        this.clientRepository = clientRepository;
+        this.receivableRepo = receivableRepo;
     }
 
     @GetMapping
@@ -49,7 +51,6 @@ public class WorkOrderController {
     public String index(Model model) {
         List<WorkOrder> orders = workOrderRepo.findAllWithItemsOrderByCreatedAtDesc();
 
-        // Carrega perfil
         com.alfatahi.erp.entity.Profile profile = profileRepository.findAll().stream().findFirst().orElseGet(() -> {
             com.alfatahi.erp.entity.Profile p = new com.alfatahi.erp.entity.Profile();
             p.setCompanyName("Alfa Tahi");
@@ -77,8 +78,8 @@ public class WorkOrderController {
         model.addAttribute("averageMargin", averageMargin);
 
         model.addAttribute("profile", profile);
-        model.addAttribute("clients", clientRepository.findAll()); // Busca direta no Repo
-        model.addAttribute("availableQuotes", quoteRepository.findAll()); // Busca direta no Repo
+        model.addAttribute("clients", clientRepository.findAll());
+        model.addAttribute("availableQuotes", quoteRepository.findAll());
         model.addAttribute("currentPage", "work-orders");
 
         return "work-orders";
@@ -86,7 +87,7 @@ public class WorkOrderController {
 
     @PostMapping(value = "/save-ajax", consumes = "application/json")
     @ResponseBody
-    @Transactional // NECESSÁRIO PARA MANTER A SESSÃO ABERTA
+    @Transactional
     public ResponseEntity<?> saveAjax(@RequestBody WorkOrder workOrder) {
         WorkOrder targetWo;
 
@@ -123,10 +124,21 @@ public class WorkOrderController {
         }
 
         workOrderService.save(targetWo);
+
+        if (targetWo.getInstallDate() != null && targetWo.getId() != null) {
+            List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
+                    .filter(r -> r.getWorkOrder() != null && r.getWorkOrder().getId().equals(targetWo.getId()))
+                    .collect(Collectors.toList());
+
+            for (AccountsReceivable ar : receivables) {
+                ar.setDueDate(targetWo.getInstallDate());
+                receivableRepo.save(ar);
+            }
+        }
+
         return ResponseEntity.ok().build();
     }
 
-    // Adicione este método ao WorkOrderController.java
     @GetMapping("/new")
     @ResponseBody
     public ResponseEntity<WorkOrder> newOs() {
@@ -173,7 +185,7 @@ public class WorkOrderController {
     @DeleteMapping("/{id}")
     @ResponseBody
     public ResponseEntity<?> delete(@PathVariable UUID id) {
-        workOrderService.delete(id); // Certifique-se que o Service faz um deleteById
+        workOrderService.delete(id);
         return ResponseEntity.ok().build();
     }
 

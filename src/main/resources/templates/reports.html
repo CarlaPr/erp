@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Central de Relatórios - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<style>
+    @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+        @page { size: A4 portrait; margin: 10mm; }
+        html, body, main { height: auto !important; min-height: auto !important; background-color: white !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+        body > div:not(main) { display: none !important; }
+        main > header, main > #filterForm { display: none !important; } /* Esconde menus e filtros na impressão */
+        #printableReportArea { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+        table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto !important; }
+        thead { display: table-header-group !important; }
+        tr { page-break-inside: avoid !important; }
+    }
+</style>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Central de Relatórios</h2>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Gere extratos detalhados de orçamentos, O.S. e financeiro.</p>
+        </div>
+        <button id="btnPrint" onclick="window.print()" class="hidden bg-slate-900 hover:bg-slate-800 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all">
+            <i data-lucide="printer" class="w-5 h-5"></i> Imprimir / PDF
+        </button>
+    </header>
+
+    <div id="filterForm" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 shadow-sm">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tipo de Relatório</label>
+            <select id="reportType" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 font-medium outline-none focus:border-brand-500 dark:text-white">
+                <option value="financial">Fluxo Financeiro (Receitas, Custos e Lucro)</option>
+                <option value="quotes">Desempenho de Orçamentos</option>
+                <option value="work_orders">Status de Ordens de Serviço (O.S.)</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Mês / Ano</label>
+            <input type="month" id="reportMonth" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 font-medium outline-none focus:border-brand-500 dark:text-white" />
+        </div>
+        <div class="flex items-end">
+            <button onclick="generateReport()" id="btnGenerate" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-5 h-5"></i> Gerar Dados
+            </button>
+        </div>
+    </div>
+
+    <div id="printableReportArea" class="hidden bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm p-6 sm:p-8">
+
+        <div class="text-center mb-8 border-b border-slate-200 dark:border-slate-700 pb-6">
+            <h1 id="repTitle" class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-wider">Relatório</h1>
+            <p class="text-slate-500 font-bold mt-1">Período Referência: <span id="repMonth" class="text-brand-600 dark:text-cyan-400">--/----</span></p>
+        </div>
+
+        <div id="reportSummaries" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
+
+        <div class="overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-xl">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <tr id="reportTableHead"></tr>
+                </thead>
+                <tbody id="reportTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    // Inicializar o Mês Atual no Input ao carregar a página
+    document.addEventListener("DOMContentLoaded", () => {
+        const date = new Date();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        document.getElementById('reportMonth').value = `${date.getFullYear()}-${month}`;
+    });
+
+    async function generateReport() {
+        const type = document.getElementById('reportType').value;
+        const month = document.getElementById('reportMonth').value;
+
+        if (!month) {
+            alert('Por favor, selecione um Mês e Ano.'); return;
+        }
+
+        const btn = document.getElementById('btnGenerate');
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`;
+
+        try {
+            const response = await fetch(`/reports/api/generate?type=${type}&month=${month}`);
+            const data = await response.json();
+
+            renderReport(type, data, month);
+
+            document.getElementById('printableReportArea').classList.remove('hidden');
+            document.getElementById('btnPrint').classList.remove('hidden');
+        } catch (error) {
+            alert("Erro ao buscar os dados do servidor.");
+            console.error(error);
+        } finally {
+            btn.innerHTML = `<i data-lucide="bar-chart-2" class="w-5 h-5"></i> Gerar Dados`;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    }
+
+    function renderReport(type, data, month) {
+        const fmt = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+
+        document.getElementById('repTitle').innerText =
+            type === 'quotes' ? 'Relatório de Orçamentos' :
+                type === 'work_orders' ? 'Relatório de Ordens de Serviço' :
+                    'Balanço Financeiro (Custos e Lucro)';
+
+        document.getElementById('repMonth').innerText = month.split('-').reverse().join('/');
+
+        const summaryDiv = document.getElementById('reportSummaries');
+        const tableHead = document.getElementById('reportTableHead');
+        const tableBody = document.getElementById('reportTableBody');
+
+        tableBody.innerHTML = '';
+
+        if (type === 'quotes') {
+            summaryDiv.innerHTML = `
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Total Emitido</p>
+                    <p class="text-2xl font-black text-slate-900 dark:text-white">${data.totalCount}</p>
+                </div>
+                <div class="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold tracking-widest mb-1">Vendas Aprovadas</p>
+                    <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400">${data.approvedCount}</p>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Valor Bruto Ofertado</p>
+                    <p class="text-xl font-black text-slate-900 dark:text-white font-mono">${fmt(data.totalValue)}</p>
+                </div>
+                <div class="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold tracking-widest mb-1">Valor Fechado (R$)</p>
+                    <p class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">${fmt(data.approvedValue)}</p>
+                </div>
+            `;
+
+            tableHead.innerHTML = `<th class="p-4">Data</th><th class="p-4">Número</th><th class="p-4">Cliente</th><th class="p-4 text-center">Status</th><th class="p-4 text-right">Valor</th>`;
+
+            data.items.forEach(item => {
+                tableBody.innerHTML += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <td class="p-4">${item.data.split('-').reverse().join('/')}</td>
+                    <td class="p-4 font-mono font-bold text-brand-600 dark:text-cyan-400">${item.numero}</td>
+                    <td class="p-4 font-bold text-slate-800 dark:text-white">${item.cliente}</td>
+                    <td class="p-4 text-center uppercase text-[10px] font-black">${item.status}</td>
+                    <td class="p-4 text-right font-mono text-slate-600 dark:text-slate-300">${fmt(item.valor)}</td>
+                </tr>`;
+            });
+
+        } else if (type === 'work_orders') {
+            summaryDiv.innerHTML = `
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Total de O.S.</p>
+                    <p class="text-2xl font-black text-slate-900 dark:text-white">${data.totalCount}</p>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <p class="text-[10px] text-blue-600 dark:text-blue-400 uppercase font-bold tracking-widest mb-1">Concluídas</p>
+                    <p class="text-2xl font-black text-blue-600 dark:text-blue-400">${data.completedCount}</p>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Custo/Receita (Misto)</p>
+                    <p class="text-xl font-black text-slate-900 dark:text-white font-mono">${fmt(data.totalValue)}</p>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-transparent dark:border-transparent opacity-0"><p class="text-2xl">.</p></div>
+            `;
+            tableHead.innerHTML = `<th class="p-4">Data</th><th class="p-4">O.S.</th><th class="p-4">Cliente</th><th class="p-4 text-center">Status</th><th class="p-4 text-right">Valor</th>`;
+            data.items.forEach(item => {
+                tableBody.innerHTML += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <td class="p-4">${item.data.split('-').reverse().join('/')}</td>
+                    <td class="p-4 font-mono font-bold text-brand-600 dark:text-cyan-400">${item.numero}</td>
+                    <td class="p-4 font-bold text-slate-800 dark:text-white">${item.cliente}</td>
+                    <td class="p-4 text-center uppercase text-[10px] font-black">${item.status}</td>
+                    <td class="p-4 text-right font-mono text-slate-600 dark:text-slate-300">${fmt(item.valor)}</td>
+                </tr>`;
+            });
+
+        } else if (type === 'financial') {
+            const lP = data.lucroProjetado >= 0;
+            const lR = data.lucroRealizado >= 0;
+            summaryDiv.innerHTML = `
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Receitas (Recebido / Total)</p>
+                    <p class="text-xl font-black text-emerald-600 font-mono">${fmt(data.receitasPagas)} <br><span class="text-xs text-slate-400">Total: ${fmt(data.totalReceitas)}</span></p>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Despesas (Pago / Total)</p>
+                    <p class="text-xl font-black text-rose-600 font-mono">${fmt(data.despesasPagas)} <br><span class="text-xs text-slate-400">Total: ${fmt(data.totalDespesas)}</span></p>
+                </div>
+                <div class="${lP ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' : 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800'} p-4 rounded-xl border">
+                    <p class="text-[10px] ${lP ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'} uppercase font-bold tracking-widest mb-1">Lucro Projetado Bruto</p>
+                    <p class="text-2xl mt-2 font-black ${lP ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'} font-mono">${fmt(data.lucroProjetado)}</p>
+                </div>
+                <div class="${lR ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800'} p-4 rounded-xl border">
+                    <p class="text-[10px] ${lR ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'} uppercase font-bold tracking-widest mb-1">Lucro Realizado (Caixa)</p>
+                    <p class="text-2xl mt-2 font-black ${lR ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'} font-mono">${fmt(data.lucroRealizado)}</p>
+                </div>
+            `;
+
+            tableHead.innerHTML = `<th class="p-4">Vencimento</th><th class="p-4">Tipo</th><th class="p-4">Descrição / Origem</th><th class="p-4">Pessoa / Empresa</th><th class="p-4 text-center">Status</th><th class="p-4 text-right">Valor</th>`;
+
+            data.items.forEach(item => {
+                const isR = item.tipo === 'RECEITA';
+                tableBody.innerHTML += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <td class="p-4">${item.vencimento.split('-').reverse().join('/')}</td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-black tracking-wider uppercase ${isR ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${item.tipo}</span></td>
+                    <td class="p-4 font-bold text-slate-800 dark:text-slate-200 truncate max-w-[200px]">${item.descricao}</td>
+                    <td class="p-4 text-slate-600 dark:text-slate-400 text-xs">${item.cliente || item.fornecedor}</td>
+                    <td class="p-4 text-center uppercase text-[10px] font-black">${item.status === 'PAID' ? 'PAGO' : item.status === 'PENDING' ? 'PENDENTE' : item.status}</td>
+                    <td class="p-4 text-right font-mono font-bold ${isR ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${isR ? '+' : '-'}${fmt(item.valor)}</td>
+                </tr>`;
+            });
+        }
+        if (data.items.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-slate-500 font-medium">Nenhum registro encontrado para este período.</td></tr>`;
+        }
+    }
+</script>
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>

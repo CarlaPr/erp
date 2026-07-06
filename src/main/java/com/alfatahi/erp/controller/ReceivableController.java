@@ -2,6 +2,7 @@ package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.entity.AccountsPayable;
 import com.alfatahi.erp.entity.AccountsReceivable;
+import com.alfatahi.erp.entity.WorkOrder;
 import com.alfatahi.erp.repository.AccountsReceivableRepository;
 import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.WorkOrderRepository;
@@ -55,10 +56,9 @@ public class ReceivableController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(required = false) String paymentMethod,
             @RequestParam(required = false) UUID workOrderId,
-            @RequestParam(required = false, defaultValue = "false") boolean allMonths, // Parâmetro para ver tudo
+            @RequestParam(required = false, defaultValue = "false") boolean allMonths,
             Model model) {
 
-        // Se nenhum filtro de data for passado e não for solicitado "todos os meses", foca no mês atual
         if (dateFrom == null && dateTo == null && !allMonths) {
             dateFrom = LocalDate.now().withDayOfMonth(1);
             dateTo = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
@@ -68,7 +68,6 @@ public class ReceivableController {
                 .filter(r -> !"cancelled".equals(r.getStatus()) || "cancelled".equals(status))
                 .collect(Collectors.toList());
 
-        // Aplicação dos Filtros
         if (search != null && !search.isBlank()) {
             String q = search.toLowerCase();
             list = list.stream().filter(r ->
@@ -177,7 +176,11 @@ public class ReceivableController {
         }
 
         if (form.getWorkOrder() != null && form.getWorkOrder().getId() != null) {
-            ar.setWorkOrder(workOrderService.findById(form.getWorkOrder().getId()));
+            WorkOrder wo = workOrderService.findById(form.getWorkOrder().getId());
+            ar.setWorkOrder(wo);
+            if (wo != null && wo.getInstallDate() != null) {
+                ar.setDueDate(wo.getInstallDate());
+            }
         } else {
             ar.setWorkOrder(null);
         }
@@ -194,7 +197,11 @@ public class ReceivableController {
         }
 
         if (receivable.getWorkOrder() != null && receivable.getWorkOrder().getId() != null) {
-            receivable.setWorkOrder(workOrderService.findById(receivable.getWorkOrder().getId()));
+            WorkOrder wo = workOrderService.findById(receivable.getWorkOrder().getId());
+            receivable.setWorkOrder(wo);
+            if (wo != null && wo.getInstallDate() != null) {
+                receivable.setDueDate(wo.getInstallDate());
+            }
         } else {
             receivable.setWorkOrder(null);
         }
@@ -223,8 +230,6 @@ public class ReceivableController {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             return "redirect:/receivables?error=invalid_amount";
         }
-
-        // Delega o processamento financeiro e a criação da despesa na OS APENAS para o Service
         financeService.processReceivablePayment(id, amount, paymentDate, cardFee, notes);
 
         AccountsReceivable ar = receivableRepository.findById(id)

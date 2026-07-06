@@ -151,11 +151,22 @@ public class FinanceService {
             }
         }
 
+        // ATUALIZA O STATUS E INJETA A OBSERVAÇÃO DE PAGAMENTO PARCIAL E DATA FINAL AQUI NO SERVIÇO
         if (newTotalGross.compareTo(BigDecimal.ZERO) > 0
                 && newTotalGross.compareTo(ar.getTotalAmount()) < 0) {
             ar.setStatus("partial");
+
+            // Registra nas observações
+            String dataStr = paymentDate != null ? paymentDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            String novaObs = "Pgto Parcial em " + dataStr + ": R$ " + amountReceived.toString();
+            String obsAtual = ar.getNotes() != null ? ar.getNotes() : "";
+            ar.setNotes(obsAtual.isEmpty() ? novaObs : obsAtual + "\n" + novaObs);
+
         } else if (newTotalGross.compareTo(ar.getTotalAmount()) >= 0) {
             ar.setStatus("received");
+            if (ar.getPaymentDate() == null) {
+                ar.setPaymentDate(paymentDate != null ? paymentDate : LocalDate.now());
+            }
         }
 
         receivableRepository.save(ar);

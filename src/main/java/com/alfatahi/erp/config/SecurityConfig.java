@@ -21,12 +21,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(Customizer.withDefaults())
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/public/**"))
 
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/css/**", "/js/**").permitAll()
+                        // Libera rotas públicas
+                        .requestMatchers("/login", "/css/**", "/js/**", "/public/**").permitAll()
                         .requestMatchers("/admin/users/**").hasAuthority("GESTAO")
 
                         .requestMatchers("/dashboard", "/payables/**", "/receivables/**",

@@ -30,4 +30,6 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
 
     @Query("SELECT q.status, COUNT(q) FROM Quote q GROUP BY q.status")
     List<Object[]> countByStatus();
+
+    java.util.Optional<Quote> findByPublicToken(String publicToken);
 }

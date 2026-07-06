@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Assinar Orçamento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <style>
+        /* Previne o scroll da tela ao desenhar no celular */
+        canvas { touch-action: none; }
+    </style>
+</head>
+<body class="bg-slate-100 p-4 font-sans text-slate-800 flex items-center justify-center min-h-screen">
+
+<div class="max-w-xl w-full mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-slate-200">
+
+    <div class="text-center mb-8 border-b border-slate-200 pb-6">
+        <h1 class="text-3xl font-black text-slate-900 mb-1">Orçamento <span th:text="${quote.number}"></span></h1>
+        <p class="text-lg text-slate-500 font-medium" th:text="${quote.client != null ? quote.client.name : 'Consumidor Final'}"></p>
+    </div>
+
+    <div class="bg-slate-50 rounded-xl p-5 mb-8 border border-slate-200">
+        <h2 class="font-black text-slate-700 mb-3 uppercase tracking-wider text-sm">Resumo dos Serviços</h2>
+        <ul class="text-sm divide-y divide-slate-200">
+            <li th:each="item : ${quote.items}" class="py-3 flex flex-col gap-1">
+                <div class="flex justify-between items-start gap-4">
+                    <span class="font-medium text-slate-700 leading-tight">
+                        <span class="font-bold text-slate-900" th:text="${item.quantity + 'x'}"></span>
+                        <span th:text="${(item.category ?: 'Item') + ' - ' + item.product}"></span>
+                    </span>
+                    <span class="font-bold text-slate-900 whitespace-nowrap"
+                          th:with="
+                            w=${item.width != null ? item.width : 0},
+                            h=${item.height != null ? item.height : 0},
+                            m2=${(w > 0 && h > 0) ? (w * h) : 1},
+                            price=${item.unitPrice != null ? item.unitPrice : 0},
+                            subtotal=${item.quantity * m2 * price}"
+                          th:text="${'R$ ' + #numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}">
+                    </span>
+                </div>
+            </li>
+        </ul>
+
+        <div class="mt-4 pt-4 border-t border-slate-300 flex justify-between items-center">
+            <span class="font-black text-slate-700 text-lg">TOTAL</span>
+            <span class="text-2xl font-black text-emerald-600" th:text="${'R$ ' + #numbers.formatDecimal(quote.totalValue, 1, 'COMMA', 2, 'POINT')}"></span>
+        </div>
+
+        <div th:if="${quote.installments != null && quote.installments > 1}" class="mt-4 flex justify-between items-center text-sm bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200">
+            <div class="flex flex-col">
+                <span class="font-bold text-emerald-800 uppercase tracking-wider text-[11px]">Condição de Pagamento</span>
+                <span class="text-xs text-emerald-600 font-bold" th:text="${quote.paymentMethod == 'Cartao_Credito' ? 'Cartão de Crédito' : quote.paymentMethod}"></span>
+            </div>
+            <span class="font-black text-emerald-700 text-lg" th:text="${quote.installments + 'x de R$ ' + #numbers.formatDecimal(quote.totalValue / quote.installments, 1, 'COMMA', 2, 'POINT')}"></span>
+        </div>
+    </div>
+
+    <div th:if="${quote.clientSignature == null}">
+        <h3 class="font-bold text-slate-900 mb-1 text-lg">Área de Assinatura</h3>
+        <p class="text-sm text-slate-500 mb-4">Assine no quadro abaixo usando seu dedo ou mouse.</p>
+
+        <div class="border-2 border-dashed border-slate-300 rounded-xl overflow-hidden bg-white relative mb-5 shadow-inner">
+            <canvas id="signaturePad" class="w-full h-56 cursor-crosshair"></canvas>
+        </div>
+
+        <div class="flex gap-3">
+            <button id="clearBtn" class="flex-1 py-3.5 px-4 rounded-xl font-bold border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">Refazer</button>
+            <button id="saveBtn" class="flex-[2] py-3.5 px-4 rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-lg flex justify-center items-center gap-2">
+                Confirmar e Assinar
+            </button>
+        </div>
+    </div>
+
+    <div th:if="${quote.clientSignature != null}" class="text-center p-8 bg-emerald-50 rounded-2xl border border-emerald-100">
+        <div class="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-500/30">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h3 class="text-2xl font-black text-emerald-800 mb-2">Assinado com Sucesso!</h3>
+        <p class="text-emerald-600 font-medium">O orçamento foi validado pelo cliente.</p>
+        <img th:src="${quote.clientSignature}" class="mx-auto mt-6 max-h-32 mix-blend-multiply border-t border-emerald-200 pt-6 w-full object-contain" />
+    </div>
+</div>
+
+<script th:if="${quote.clientSignature == null}">
+    const canvas = document.getElementById('signaturePad');
+
+    function resizeCanvas() {
+        const ratio =  Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+    }
+    window.onresize = resizeCanvas;
+    resizeCanvas();
+
+    const signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgba(255, 255, 255, 1)',
+        penColor: 'rgb(15, 23, 42)',
+        minWidth: 1.5,
+        maxWidth: 3.5
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        signaturePad.clear();
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', function() {
+        if (signaturePad.isEmpty()) {
+            alert("Por favor, faça sua assinatura antes de confirmar.");
+            return;
+        }
+
+        this.innerText = 'Processando...';
+        this.disabled = true;
+
+        const dataUrl = signaturePad.toDataURL('image/png');
+        const token = '[[${quote.publicToken}]]';
+
+        fetch(`/public/quotes/${token}/sign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ signature: dataUrl })
+        }).then(res => {
+            if(res.ok) { window.location.reload(); }
+            else { alert('Erro ao salvar assinatura.'); this.innerText = 'Confirmar e Assinar'; this.disabled = false;}
+        });
+    });
+</script>
+</body>
+</html>
