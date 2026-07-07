@@ -28,14 +28,12 @@ public class OfxParserService {
             }
 
             String text = content.toString();
-            // Procura todos os blocos de transação no OFX
             Matcher matcher = Pattern.compile("<STMTTRN>(.*?)</STMTTRN>").matcher(text);
 
             while (matcher.find()) {
                 String trn = matcher.group(1);
                 BankTransaction tx = new BankTransaction();
 
-                // 1. Extrair Data (DTPOSTED)
                 Matcher dtMatcher = Pattern.compile("<DTPOSTED>(\\d{8})").matcher(trn);
                 if (dtMatcher.find()) {
                     String dateStr = dtMatcher.group(1);

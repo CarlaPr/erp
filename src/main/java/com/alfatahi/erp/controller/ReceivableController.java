@@ -143,50 +143,7 @@ public class ReceivableController {
         return "receivables";
     }
 
-    @PostMapping("/edit/{id}")
-    public String edit(@PathVariable UUID id, @ModelAttribute AccountsReceivable form) {
-        AccountsReceivable ar = receivableRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
 
-        ar.setDescription(form.getDescription());
-        ar.setTotalAmount(form.getTotalAmount());
-        ar.setDueDate(form.getDueDate());
-        ar.setInstallments(form.getInstallments());
-        ar.setCardFeePercentage(form.getCardFeePercentage());
-        ar.setDiscount(form.getDiscount());
-        ar.setNotes(form.getNotes());
-
-        if (form.getReceivedAmount() != null) {
-            ar.setReceivedAmount(form.getReceivedAmount());
-            ar.setGrossReceivedAmount(form.getReceivedAmount());
-
-            if (ar.getReceivedAmount().compareTo(BigDecimal.ZERO) == 0) {
-                ar.setStatus("pending");
-            } else if (ar.getReceivedAmount().compareTo(ar.getTotalAmount()) >= 0) {
-                ar.setStatus("received");
-            } else {
-                ar.setStatus("partial");
-            }
-        }
-
-        if (form.getClient() != null && form.getClient().getId() != null) {
-            ar.setClient(clientService.findById(form.getClient().getId()));
-        } else {
-            ar.setClient(null);
-        }
-
-        if (form.getWorkOrder() != null && form.getWorkOrder().getId() != null) {
-            WorkOrder wo = workOrderService.findById(form.getWorkOrder().getId());
-            ar.setWorkOrder(wo);
-            if (wo != null && wo.getInstallDate() != null) {
-                ar.setDueDate(wo.getInstallDate());
-            }
-        } else {
-            ar.setWorkOrder(null);
-        }
-        receivableRepository.save(ar);
-        return "redirect:/receivables";
-    }
 
     @PostMapping("/save")
     public String save(@ModelAttribute("newReceivable") AccountsReceivable receivable) {
@@ -199,8 +156,17 @@ public class ReceivableController {
         if (receivable.getWorkOrder() != null && receivable.getWorkOrder().getId() != null) {
             WorkOrder wo = workOrderService.findById(receivable.getWorkOrder().getId());
             receivable.setWorkOrder(wo);
-            if (wo != null && wo.getInstallDate() != null) {
-                receivable.setDueDate(wo.getInstallDate());
+
+            if (wo != null) {
+                if (receivable.getTotalAmount() == null || receivable.getTotalAmount().compareTo(BigDecimal.ZERO) == 0) {
+                    receivable.setTotalAmount(wo.getTotalValue());
+                } else {
+                    receivable.setTotalAmount(wo.getTotalValue());
+                }
+
+                if (wo.getInstallDate() != null) {
+                    receivable.setDueDate(wo.getInstallDate());
+                }
             }
         } else {
             receivable.setWorkOrder(null);
@@ -214,6 +180,52 @@ public class ReceivableController {
         receivable.setStatus("pending");
         receivableRepository.save(receivable);
 
+        return "redirect:/receivables";
+    }
+
+    @PostMapping("/edit/{id}")
+    public String edit(@PathVariable UUID id, @ModelAttribute AccountsReceivable form) {
+        AccountsReceivable ar = receivableRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
+
+        ar.setDescription(form.getDescription());
+
+        if (form.getWorkOrder() != null && form.getWorkOrder().getId() != null) {
+            WorkOrder wo = workOrderService.findById(form.getWorkOrder().getId());
+            ar.setWorkOrder(wo);
+
+            if (wo != null) {
+                ar.setTotalAmount(wo.getTotalValue());
+                if (wo.getInstallDate() != null) {
+                    ar.setDueDate(wo.getInstallDate());
+                }
+            }
+        } else {
+            ar.setTotalAmount(form.getTotalAmount());
+            ar.setDueDate(form.getDueDate());
+            ar.setWorkOrder(null);
+        }
+
+        ar.setInstallments(form.getInstallments());
+        ar.setCardFeePercentage(form.getCardFeePercentage());
+        ar.setDiscount(form.getDiscount());
+
+        BigDecimal received = form.getReceivedAmount() != null ? form.getReceivedAmount() : BigDecimal.ZERO;
+        if (received.compareTo(BigDecimal.ZERO) <= 0) {
+            ar.setStatus("pending");
+        } else if (received.compareTo(ar.getTotalAmount()) >= 0) {
+            ar.setStatus("received");
+        } else {
+            ar.setStatus("partial");
+        }
+
+        if (form.getClient() != null && form.getClient().getId() != null) {
+            ar.setClient(clientService.findById(form.getClient().getId()));
+        } else {
+            ar.setClient(null);
+        }
+
+        receivableRepository.save(ar);
         return "redirect:/receivables";
     }
 

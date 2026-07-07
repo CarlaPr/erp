@@ -100,7 +100,13 @@ public class WorkOrderController {
             targetWo.setDescription(workOrder.getDescription());
             targetWo.setNotes(workOrder.getNotes());
             targetWo.setInstallDate(workOrder.getInstallDate());
-            targetWo.setTotalValue(workOrder.getTotalValue());
+
+            if (workOrder.getTotalValue() != null && workOrder.getTotalValue().compareTo(BigDecimal.ZERO) > 0) {
+                targetWo.setTotalValue(workOrder.getTotalValue());
+            } else {
+                targetWo.setTotalValue(workOrderService.calculateTotalValueFromItems(workOrder));
+            }
+
             targetWo.setClient(workOrder.getClient());
 
             targetWo.getItems().clear();

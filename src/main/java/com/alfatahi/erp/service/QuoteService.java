@@ -28,6 +28,21 @@ public class QuoteService {
         this.scheduleService = scheduleService;
     }
 
+    /**
+     * Calcula a área (m²) de um item a partir de largura x altura.
+     * Segue a MESMA regra usada no frontend (quotes.html / work-orders.html):
+     * se não houver largura/altura informadas (item vendido por unidade, não por m²),
+     * o multiplicador de área deve ser 1 (neutro), e não 0.
+     */
+    private BigDecimal calcularAreaM2(BigDecimal width, BigDecimal height) {
+        BigDecimal w = width != null ? width : BigDecimal.ZERO;
+        BigDecimal h = height != null ? height : BigDecimal.ZERO;
+        if (w.compareTo(BigDecimal.ZERO) > 0 && h.compareTo(BigDecimal.ZERO) > 0) {
+            return w.multiply(h);
+        }
+        return BigDecimal.ONE;
+    }
+
     private LocalDate calculateBusinessDays(LocalDate startDate, int businessDays) {
         LocalDate result = startDate;
         int addedDays = 0;
@@ -65,15 +80,28 @@ public class QuoteService {
         os.setDescription(description);
         os.setStatus("in_progress");
 
-        // CÁLCULO DO VALOR FINAL COM DESCONTO
-        BigDecimal grossTotal = quote.getTotalValue() != null ? quote.getTotalValue() : BigDecimal.ZERO;
-        BigDecimal finalTotal = grossTotal;
-        if (quote.getDiscountPercent() != null && quote.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal discountMultiplier = BigDecimal.ONE.subtract(quote.getDiscountPercent().divide(new BigDecimal("100")));
-            finalTotal = grossTotal.multiply(discountMultiplier).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal subtotal = BigDecimal.ZERO;
+        if (quote.getItems() != null && !quote.getItems().isEmpty()) {
+            for (QuoteItem item : quote.getItems()) {
+                BigDecimal area = calcularAreaM2(item.getWidth(), item.getHeight());
+                BigDecimal precoUnitarioComArea = item.getUnitPrice().multiply(area);
+                BigDecimal itemTotal = item.getQuantity().multiply(precoUnitarioComArea);
+                subtotal = subtotal.add(itemTotal);
+            }
         }
 
-        os.setTotalValue(finalTotal); // OS REPASSA O VALOR JÁ COM DESCONTO
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (quote.getDiscountPercent() != null && quote.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+            discountAmount = subtotal.multiply(quote.getDiscountPercent())
+                    .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal finalTotal = subtotal.subtract(discountAmount);
+        if (finalTotal.compareTo(BigDecimal.ZERO) < 0) {
+            finalTotal = BigDecimal.ZERO;
+        }
+
+        os.setTotalValue(finalTotal);
 
         LocalDate dataEntrega = calculateBusinessDays(LocalDate.now(), 15);
         os.setInstallDate(dataEntrega);
@@ -90,7 +118,12 @@ public class QuoteService {
                 String prod = qi.getProduct() != null ? qi.getProduct() : "Sem descrição";
                 osItem.setDescription(cat + " - " + prod + dimensions);
                 osItem.setQuantity(qi.getQuantity());
-                osItem.setUnitPrice(qi.getUnitPrice());
+                // FIX: o preço do item do orçamento é POR M², então é preciso
+                // incorporar a área (largura x altura) no preço unitário da OS,
+                // igual ao que já é feito no cálculo do orçamento (frontend).
+                // Sem isso, quantity * unitPrice ignora o m² e gera valor bem menor.
+                BigDecimal area = calcularAreaM2(w, h);
+                osItem.setUnitPrice(qi.getUnitPrice().multiply(area));
                 osItem.setUnitCost(BigDecimal.ZERO);
                 osItem.setWorkOrder(os);
 
@@ -118,7 +151,6 @@ public class QuoteService {
                 ? 1
                 : (quote.getInstallments() != null && quote.getInstallments() > 0) ? quote.getInstallments() : 1;
 
-        // CÁLCULO DAS PARCELAS BASEADO NO VALOR LÍQUIDO FINAL
         BigDecimal valorParcela = finalTotal.divide(new BigDecimal(numParcelas), 2, RoundingMode.HALF_UP);
         BigDecimal somaParcelasAnteriores = valorParcela.multiply(new BigDecimal(numParcelas - 1));
         BigDecimal valorUltimaParcela = finalTotal.subtract(somaParcelasAnteriores);

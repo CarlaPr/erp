@@ -487,10 +487,21 @@
                 </div>
 
                 <div class="border border-t-0 border-slate-200 rounded-b-xl overflow-hidden mb-5">
+                    <div id="recSubtotalRow" class="flex justify-between items-center px-5 pr-5 py-2.5 bg-slate-50" style="display: none !important;">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-widest font-mono">Subtotal:</span>
+                        <span id="recSubtotal" class="text-lg font-mono text-slate-700 tracking-tight">R$ 0,00</span>
+                    </div>
+
+                    <div id="recDiscountRow" class="flex justify-between items-center px-5 pr-5 py-2.5 bg-rose-50" style="display: none !important;">
+                        <span class="text-xs font-bold text-rose-600 uppercase tracking-widest font-mono">Desconto:</span>
+                        <span id="recDiscount" class="text-lg font-mono text-rose-700 tracking-tight">0%</span>
+                    </div>
+
                     <div class="flex justify-between items-center px-5 pr-5 py-3 bg-slate-900">
                         <span class="text-sm font-black text-slate-300 uppercase tracking-widest font-mono">VALOR TOTAL DO ORÇAMENTO</span>
                         <span id="recTotal" class="text-2xl font-black font-mono text-white tracking-tight">R$ 0,00</span>
                     </div>
+
                     <div id="recFinalRow" class="flex justify-between items-center px-5 pr-5 py-2.5 bg-slate-800" style="display: none !important;">
                         <span class="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">Parcelado em:</span>
                         <span id="recFinalInstallments" class="text-xl font-black font-mono text-emerald-400 tracking-tight">10x R$ 0,00</span>
@@ -1004,9 +1015,12 @@
             return;
         }
 
-        // OBTÉM O DESCONTO DIGITADO
+        // 👇 CÁLCULO E APLICAÇÃO DO DESCONTO ANTES DE ENVIAR
         const discInput = document.getElementById('quoteDiscount');
-        const discountValue = discInput && discInput.offsetParent !== null ? (parseFloat(discInput.value) || 0) : 0;
+        const discountPct = discInput && discInput.offsetParent !== null ? (parseFloat(discInput.value) || 0) : 0;
+
+        let discountAmount = calculatedGrossTotal * (discountPct / 100);
+        let finalNetValue = calculatedGrossTotal - discountAmount;
 
         const instInput = document.getElementById('quoteInstallments');
         const installmentsValue = instInput && instInput.offsetParent !== null ? (parseInt(instInput.value) || 1) : 1;
@@ -1018,10 +1032,10 @@
             dateCreated: dateToSave,
             paymentMethod: document.getElementById('quotePayment').value,
             installments: installmentsValue,
-            discountPercent: discountValue, // ENVIA O DESCONTO AO BACKEND
+            discountPercent: discountPct, // ENVIA O DESCONTO
             observations: document.getElementById('quoteObs').value,
             warranty: document.getElementById('quoteWarranty').value,
-            totalValue: calculatedGrossTotal, // Envia o total bruto
+            totalValue: finalNetValue, // 👇 AGORA GUARDA O VALOR LÍQUIDO FINAL NO BANCO
             items: currentItems
         };
 
@@ -1030,31 +1044,19 @@
 
         const btnSubmit = document.querySelector('#quoteForm button[type="submit"]');
         const originalText = btnSubmit.innerHTML;
-        btnSubmit.innerText = 'Salvando aguarde...';
+        btnSubmit.innerText = 'A guardar aguarde...';
         btnSubmit.disabled = true;
 
         fetch('/quotes/save-ajax', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                [csrfHeader]: csrfToken
-            },
+            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
             body: JSON.stringify(payload)
         })
             .then(async (response) => {
-                if (!response.ok) {
-                    let errorText = '';
-                    try { errorText = await response.text(); } catch(ex) {}
-
-                    if (response.status === 403) {
-                        throw new Error('Sua sessão expirou por inatividade (demorou muito tempo digitando os itens). Por favor, copie suas informações, atualize a página e refaça o login.');
-                    }
-                    throw new Error(`O servidor recusou o salvamento. (Status: ${response.status})\nDetalhe: ${errorText}`);
-                }
+                if (!response.ok) throw new Error(`Status: ${response.status}`);
                 window.location.reload();
             })
             .catch(err => {
-                console.error("Erro interceptado no Javascript:", err);
                 alert("FALHA AO SALVAR ORÇAMENTO!\n\n" + err.message);
             })
             .finally(() => {
@@ -1062,6 +1064,7 @@
                 btnSubmit.disabled = false;
             });
     }
+
     let quoteIdToApprove = null;
 
     function copyPublicLink(token) {
@@ -1365,85 +1368,81 @@
             .then(res => res.json())
             .then(q => {
 
-                if(typeof currentActiveClientForPdf !== 'undefined') currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
-                if(typeof currentActiveNumberForPdf !== 'undefined') currentActiveNumberForPdf = q.number;
-                if(typeof currentActiveClientPhoneForPdf !== 'undefined') currentActiveClientPhoneForPdf = q.client ? (q.client.phone || '') : '';
+                // Função utilitária interna para definir texto com segurança
+                const setSafeText = (id, text) => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = text;
+                };
 
-                document.getElementById('recNum').innerText = `N° ${q.number.replace('ORC-', '')}`;
-                document.getElementById('recDate').innerText = new Date(q.dateCreated).toLocaleDateString('pt-BR');
-                document.getElementById('recClient').innerText = q.client ? q.client.name : 'Consumidor Final';
+                // Cabeçalho básico
+                if(q.number) setSafeText('recNum', `N° ${q.number.replace('ORC-', '')}`);
+                setSafeText('recDate', q.dateCreated ? new Date(q.dateCreated).toLocaleDateString('pt-BR') : '');
+                setSafeText('recClient', q.client ? q.client.name : 'Consumidor Final');
+                setSafeText('recSignatureClientName', q.client ? q.client.name : 'Assinatura do Cliente');
 
-                const sigClientNameEl = document.getElementById('recSignatureClientName');
-                if(sigClientNameEl) sigClientNameEl.innerText = q.client ? q.client.name : 'Assinatura do Cliente';
-
+                // Painel de detalhes do cliente (Safe Check)
                 const pdfPanel = document.getElementById('pdfClientDetailsPanel');
                 if (pdfPanel) {
                     if (q.client) {
                         let hasDataForPdf = false;
-                        const doc = q.client.document || '';
-                        const phone = q.client.phone || '';
-                        const email = q.client.email || '';
-                        const address = q.client.address || '';
-                        const city = q.client.city || '';
+                        // Helper para exibir linhas se existirem
+                        const updateRow = (id, value, rowId) => {
+                            const el = document.getElementById(id);
+                            const row = document.getElementById(rowId);
+                            if (value && value.trim()) {
+                                if(el) el.innerText = value;
+                                if(row) row.classList.remove('hidden');
+                                return true;
+                            } else {
+                                if(row) row.classList.add('hidden');
+                                return false;
+                            }
+                        };
 
-                        if (doc.trim()) {
-                            document.getElementById('pdfClientDoc').innerText = doc;
-                            document.getElementById('pdfClientDocRow').classList.remove('hidden');
-                            hasDataForPdf = true;
-                        } else {
-                            document.getElementById('pdfClientDocRow').classList.add('hidden');
-                        }
+                        const hasDoc = updateRow('pdfClientDoc', q.client.document, 'pdfClientDocRow');
+                        const hasPhone = updateRow('pdfClientPhone', q.client.phone, 'pdfClientPhoneRow');
+                        const hasEmail = updateRow('pdfClientEmail', q.client.email, 'pdfClientEmailRow');
 
-                        if (phone.trim()) {
-                            document.getElementById('pdfClientPhone').innerText = phone;
-                            document.getElementById('pdfClientPhoneRow').classList.remove('hidden');
-                            hasDataForPdf = true;
-                        } else {
-                            document.getElementById('pdfClientPhoneRow').classList.add('hidden');
-                        }
+                        let fullAddress = (q.client.address || '') + (q.client.city ? ` - ${q.client.city}` : '');
+                        const hasAddr = updateRow('pdfClientAddress', fullAddress, 'pdfClientAddressRow');
 
-                        if (email.trim()) {
-                            document.getElementById('pdfClientEmail').innerText = email;
-                            document.getElementById('pdfClientEmailRow').classList.remove('hidden');
-                            hasDataForPdf = true;
-                        } else {
-                            document.getElementById('pdfClientEmailRow').classList.add('hidden');
-                        }
-
-                        let fullAddress = address.trim();
-                        if (city.trim()) {
-                            fullAddress += fullAddress ? ` - ${city.trim()}` : city.trim();
-                        }
-
-                        if (fullAddress.trim()) {
-                            document.getElementById('pdfClientAddress').innerText = fullAddress;
-                            document.getElementById('pdfClientAddressRow').classList.remove('hidden');
-                            hasDataForPdf = true;
-                        } else {
-                            document.getElementById('pdfClientAddressRow').classList.add('hidden');
-                        }
-
-                        if (hasDataForPdf) {
-                            pdfPanel.classList.remove('hidden');
-                        } else {
-                            pdfPanel.classList.add('hidden');
-                        }
+                        pdfPanel.classList.toggle('hidden', !(hasDoc || hasPhone || hasEmail || hasAddr));
                     } else {
                         pdfPanel.classList.add('hidden');
                     }
                 }
 
-                const recObs = document.getElementById('recObs');
-                if(recObs) recObs.innerText = q.observations || 'Sem observações adicionais.';
+                setSafeText('recObs', q.observations || 'Sem observações adicionais.');
+                setSafeText('recWarrantyText', q.warranty || (typeof DEFAULT_WARRANTY !== 'undefined' ? DEFAULT_WARRANTY : ''));
 
-                const recWar = document.getElementById('recWarrantyText');
-                if(recWar) recWar.innerText = q.warranty || (typeof DEFAULT_WARRANTY !== 'undefined' ? DEFAULT_WARRANTY : '');
+                // Renderização da Tabela de Itens
+                let calculatedGross = 0;
+                const itemsTbody = document.getElementById('recItems');
+                if(itemsTbody) {
+                    itemsTbody.innerHTML = '';
+                    q.items.forEach(item => {
+                        let m2 = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 1;
+                        let precoPecaUnitaria = m2 * item.unitPrice;
+                        let sub = item.quantity * precoPecaUnitaria;
+                        calculatedGross += sub;
 
-                // CÁLCULO DE DESCONTO PARA O PDF
-                let gross = q.totalValue || 0;
+                        itemsTbody.innerHTML += `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                        <td class="py-2.5 px-3 pl-4 text-slate-900 alignment-top">
+                            <span class="font-extrabold text-[15px] text-slate-950 uppercase tracking-wide leading-none block m-0 p-0">${item.category || 'Item'}</span>
+                            <span class="text-sm text-slate-600 font-normal whitespace-pre-line leading-tight block mt-1 p-0">${item.product}</span>
+                        </td>
+                        <td class="py-2.5 px-3 text-center text-slate-500 font-mono text-xs">un</td>
+                        <td class="py-2.5 px-3 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
+                        <td class="py-2.5 px-3 text-right font-mono text-slate-600 text-sm">${formatarMoeda(precoPecaUnitaria)}</td>
+                        <td class="py-2.5 px-3 text-right pr-4 font-mono font-bold text-slate-900 text-sm">${formatarMoeda(sub)}</td>
+                    </tr>`;
+                    });
+                }
+
+                // Lógica de Descontos e Totais
                 let discountPct = q.discountPercent || 0;
-                let discountValue = gross * (discountPct / 100);
-                let net = gross - discountValue;
+                let net = q.totalValue || (calculatedGross - (calculatedGross * (discountPct / 100)));
 
                 const recSubtotalRow = document.getElementById('recSubtotalRow');
                 const recDiscountRow = document.getElementById('recDiscountRow');
@@ -1451,82 +1450,48 @@
                 if (discountPct > 0) {
                     if(recSubtotalRow) recSubtotalRow.style.display = 'flex';
                     if(recDiscountRow) recDiscountRow.style.display = 'flex';
-                    document.getElementById('recSubtotal').innerText = formatarMoeda(gross);
-                    document.getElementById('recDiscount').innerText = `- ${formatarMoeda(discountValue)} (${discountPct}%)`;
+                    setSafeText('recSubtotal', formatarMoeda(calculatedGross));
+                    setSafeText('recDiscount', `${discountPct}%`); // Apenas porcentagem
                 } else {
                     if(recSubtotalRow) recSubtotalRow.style.display = 'none';
                     if(recDiscountRow) recDiscountRow.style.display = 'none';
                 }
+                setSafeText('recTotal', formatarMoeda(net));
 
-                document.getElementById('recTotal').innerText = formatarMoeda(net);
-
+                // Parcelamento
                 const recFinalRow = document.getElementById('recFinalRow');
-                if (q.paymentMethod === 'Cartao_Credito' && q.installments > 1) {
-                    if (recFinalRow) {
-                        recFinalRow.style.removeProperty('display');
+                if (recFinalRow) {
+                    if (q.paymentMethod === 'Cartao_Credito' && q.installments > 1) {
                         recFinalRow.style.setProperty('display', 'flex', 'important');
-                    }
-                    let valorParcela = net / q.installments;
-                    document.getElementById('recFinalInstallments').innerText = `${q.installments}x ${formatarMoeda(valorParcela)}`;
-                } else {
-                    if (recFinalRow) {
+                        setSafeText('recFinalInstallments', `${q.installments}x ${formatarMoeda(net / q.installments)}`);
+                    } else {
                         recFinalRow.style.setProperty('display', 'none', 'important');
                     }
                 }
 
+                // Dados Perfil Empresa
                 if (q.profile) {
-                    const pdfCompName = document.getElementById('pdfCompanyName');
-                    if(pdfCompName) pdfCompName.innerText = q.profile.companyName || '';
-
-                    const docEl = document.getElementById('pdfCompanyDoc');
-                    if(docEl) docEl.innerText = 'CNPJ/CPF: ' + (q.profile.document || '--');
-
-                    const addrEl = document.getElementById('pdfCompanyAddress');
-                    if(addrEl) addrEl.innerText = q.profile.address || '';
-
-                    const emailEl = document.getElementById('pdfCompanyEmail');
-                    if(emailEl) emailEl.innerText = q.profile.email || '';
-
-                    const phoneEl = document.getElementById('pdfCompanyPhone');
-                    if(phoneEl) phoneEl.innerText = q.profile.phone || '';
-
-                    const sigDocEl = document.getElementById('pdfCompanySignatureDoc');
-                    if(sigDocEl) sigDocEl.innerText = 'CNPJ/CPF: ' + (q.profile.document || '--');
-
-                    const footerNameEl = document.getElementById('pdfCompanyFooterName');
-                    if(footerNameEl) footerNameEl.innerText = q.profile.companyName || '';
+                    setSafeText('pdfCompanyName', q.profile.companyName || '');
+                    setSafeText('pdfCompanyDoc', 'CNPJ/CPF: ' + (q.profile.document || '--'));
+                    setSafeText('pdfCompanyAddress', q.profile.address || '');
+                    setSafeText('pdfCompanyEmail', q.profile.email || '');
+                    setSafeText('pdfCompanyPhone', q.profile.phone || '');
+                    setSafeText('pdfCompanySignatureDoc', 'CNPJ/CPF: ' + (q.profile.document || '--'));
+                    setSafeText('pdfCompanyFooterName', q.profile.companyName || '');
+                    setSafeText('pdfCompanySignatureName', q.profile.companyName || '');
 
                     const logoEl = document.getElementById('pdfCompanyLogo');
-                    if (logoEl) {
-                        if (q.profile.logoUrl) {
-                            logoEl.src = q.profile.logoUrl;
-                            logoEl.style.display = 'block';
-                        } else {
-                            logoEl.style.display = 'none';
-                        }
-                    }
+                    if(logoEl) { logoEl.src = q.profile.logoUrl || ''; logoEl.style.display = q.profile.logoUrl ? 'block' : 'none'; }
 
                     const sigEl = document.getElementById('pdfCompanySignature');
-                    if (sigEl) {
-                        if (q.profile.signatureUrl) {
-                            sigEl.src = q.profile.signatureUrl;
-                            sigEl.style.display = 'block';
-                        } else {
-                            sigEl.style.display = 'none';
-                        }
-                    }
-
-                    const sigNameEl = document.getElementById('pdfCompanySignatureName');
-                    if(sigNameEl) sigNameEl.innerText = q.profile.companyName || '';
+                    if(sigEl) { sigEl.src = q.profile.signatureUrl || ''; sigEl.style.display = q.profile.signatureUrl ? 'block' : 'none'; }
                 }
 
+                // Assinatura
                 const sigClientEl = document.getElementById('recSignatureClientImage');
                 const sigClientStatus = document.getElementById('recSignatureClientStatus');
                 if(q.clientSignature) {
-                    if(sigClientEl) {
-                        sigClientEl.src = q.clientSignature;
-                        sigClientEl.style.display = 'block';
-                    }
+                    if(sigClientEl) { sigClientEl.src = q.clientSignature; sigClientEl.style.display = 'block'; }
                     if(sigClientStatus) {
                         sigClientStatus.innerText = 'Assinado Digitalmente';
                         sigClientStatus.classList.replace('text-slate-500', 'text-emerald-600');
@@ -1539,34 +1504,9 @@
                     }
                 }
 
-                const itemsTbody = document.getElementById('recItems');
-                if(itemsTbody) {
-                    itemsTbody.innerHTML = '';
-                    q.items.forEach(item => {
-                        let m2 = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 1;
-                        let precoPecaUnitaria = m2 * item.unitPrice;
-                        let sub = item.quantity * precoPecaUnitaria;
-
-                        itemsTbody.innerHTML += `
-                        <tr class="border-b border-slate-100 hover:bg-slate-50/50">
-                            <td class="py-2.5 px-3 pl-4 text-slate-900 alignment-top">
-                                <span class="font-extrabold text-[15px] text-slate-950 uppercase tracking-wide leading-none block m-0 p-0">
-                                    ${item.category || 'Item Comercial'}
-                                </span>
-                                <span class="text-sm text-slate-600 font-normal whitespace-pre-line leading-tight block mt-1 p-0">
-                                    ${item.product}
-                                </span>
-                            </td>
-                            <td class="py-2.5 px-3 text-center text-slate-500 font-mono text-xs">un</td>
-                            <td class="py-2.5 px-3 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
-                            <td class="py-2.5 px-3 text-right font-mono text-slate-600 text-sm">${formatarMoeda(precoPecaUnitaria)}</td>
-                            <td class="py-2.5 px-3 text-right pr-4 font-mono font-bold text-slate-900 text-sm">${formatarMoeda(sub)}</td>
-                        </tr>
-                    `;
-                    });
-                }
                 toggleModal('receiptModal', true);
-            });
+            })
+            .catch(err => console.error("Erro ao carregar recibo:", err));
     }
 
     function saveInlineClient() {

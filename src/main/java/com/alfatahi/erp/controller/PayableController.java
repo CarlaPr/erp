@@ -159,8 +159,12 @@ public class PayableController {
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
 
         BigDecimal toPayAmount = (amount != null) ? amount : ap.getBalance();
-        financeService.processPayablePayment(id, toPayAmount, paymentDate, paymentMethod, notes);
 
+        if (toPayAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return "redirect:/payables?error=invalid_amount";
+        }
+
+        financeService.processPayablePayment(id, toPayAmount, paymentDate, paymentMethod, notes);
         return "redirect:/payables";
     }
 

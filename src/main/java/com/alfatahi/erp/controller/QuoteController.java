@@ -173,6 +173,7 @@ public class QuoteController {
             existing.setWarranty(quote.getWarranty());
             existing.setTotalValue(quote.getTotalValue());
             existing.setItems(quote.getItems());
+            existing.setDiscountPercent(quote.getDiscountPercent());
             for (QuoteItem item : existing.getItems()) {
                 item.setQuote(existing);
             }
