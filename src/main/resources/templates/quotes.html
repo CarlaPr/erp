@@ -143,7 +143,8 @@
                                 <i data-lucide="user-plus" class="w-4 h-4"></i> Novo Cliente
                             </button>
                         </div>
-                        <select id="quoteClient" onchange="updateClientDetailsPanel()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg">
+
+                        <select id="quoteClient" class="hidden" onchange="updateClientDetailsPanel()">
                             <option value="">Selecione o Cliente</option>
                             <option th:each="c : ${clients}"
                                     th:value="${c.id}"
@@ -154,6 +155,15 @@
                                     th:data-address="${c.address}"
                                     th:data-city="${c.city}"></option>
                         </select>
+
+                        <div class="relative">
+                            <input type="text" id="quoteClientName" readonly placeholder="Clique para selecionar o cliente..."
+                                   class="w-full pr-12 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none cursor-pointer focus:border-brand-500 dark:focus:border-cyan-500 text-lg transition-colors"
+                                   onclick="openClientSearchModal()" />
+                            <button type="button" onclick="openClientSearchModal()" class="absolute right-3 top-3.5 text-slate-400 hover:text-brand-600 dark:hover:text-cyan-400 bg-transparent p-1">
+                                <i data-lucide="search" class="w-5 h-5"></i>
+                            </button>
+                        </div>
 
                         <div id="clientDetailsPanel" class="mt-3 p-4 bg-slate-100 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-xl hidden text-sm">
                             <p class="text-xs font-bold text-brand-600 dark:text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-1">
@@ -290,6 +300,38 @@
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="clientSearchModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+
+            <button type="button" onclick="closeModal('clientSearchModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-4 border-b border-slate-200 dark:border-slate-700 pb-4 flex items-center gap-2">
+                <i data-lucide="users" class="text-brand-600 dark:text-cyan-400 w-6 h-6"></i> Selecionar Cliente
+            </h3>
+
+            <div class="flex gap-2 mb-4">
+                <div class="relative flex-1">
+                    <input type="text" id="searchClientInput" oninput="filterClientsInModal()" placeholder="Buscar por nome, documento ou cidade..." autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-sm transition-colors" />
+                    <i data-lucide="search" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400"></i>
+                </div>
+                <button type="button" onclick="closeModal('clientSearchModal'); toggleModal('clientInlineModal', true);" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-4 py-3 rounded-xl transition-colors shadow-sm flex items-center gap-2 whitespace-nowrap text-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Novo
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar border border-slate-200 dark:border-slate-700 rounded-xl">
+                <ul id="clientSearchList" class="divide-y divide-slate-100 dark:divide-slate-800">
+                </ul>
+            </div>
+
+            <div id="emptyClientSearch" class="hidden text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                Nenhum cliente encontrado.
+            </div>
         </div>
     </div>
 
@@ -701,6 +743,7 @@
     let currentActiveNumberForPdf = "000";
     let currentActiveClientPhoneForPdf = "";
     let currentItems = [];
+    let allClientsData = []; // Utilizado para o modal de busca
 
     function toggleModal(id, show) {
         const m = document.getElementById(id);
@@ -713,6 +756,94 @@
     function closeModal(id) {
         toggleModal(id, false);
     }
+
+    // --- NOVA LÓGICA DO MODAL DE PESQUISA DE CLIENTES --- //
+
+    function openClientSearchModal() {
+        const select = document.getElementById('quoteClient');
+        allClientsData = [];
+
+        // Pega todos os clients salvos no select nativo
+        for (let i = 1; i < select.options.length; i++) {
+            const opt = select.options[i];
+            allClientsData.push({
+                id: opt.value,
+                name: opt.text,
+                document: opt.getAttribute('data-document') || '',
+                phone: opt.getAttribute('data-phone') || '',
+                city: opt.getAttribute('data-city') || ''
+            });
+        }
+
+        // Ordena por ordem alfabética o Array de pesquisa
+        allClientsData.sort((a, b) => a.name.localeCompare(b.name));
+
+        document.getElementById('searchClientInput').value = '';
+        renderClientsInModal(allClientsData);
+
+        toggleModal('clientSearchModal', true);
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+
+        // Foca automaticamente no input de busca ao abrir
+        setTimeout(() => document.getElementById('searchClientInput').focus(), 100);
+    }
+
+    function renderClientsInModal(clients) {
+        const listEl = document.getElementById('clientSearchList');
+        const emptyEl = document.getElementById('emptyClientSearch');
+        listEl.innerHTML = '';
+
+        if (clients.length === 0) {
+            listEl.classList.add('hidden');
+            emptyEl.classList.remove('hidden');
+            return;
+        }
+
+        listEl.classList.remove('hidden');
+        emptyEl.classList.add('hidden');
+
+        clients.forEach(c => {
+            const li = document.createElement('li');
+            li.className = "p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 group";
+            li.onclick = () => selectClientFromSearch(c.id, c.name);
+
+            let badges = '';
+            if (c.document) badges += `<span class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] px-2 py-1 rounded font-mono">${c.document}</span>`;
+            if (c.city) badges += `<span class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] px-2 py-1 rounded">${c.city}</span>`;
+
+            li.innerHTML = `
+                <div>
+                    <div class="font-bold text-slate-900 dark:text-white text-sm group-hover:text-brand-600 dark:group-hover:text-cyan-400 transition-colors">${c.name}</div>
+                    <div class="flex gap-2 mt-1.5">${badges}</div>
+                </div>
+                <button type="button" class="shrink-0 bg-brand-50 text-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 px-3 py-1.5 rounded-lg text-xs font-bold sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                    Selecionar
+                </button>
+            `;
+            listEl.appendChild(li);
+        });
+    }
+
+    function filterClientsInModal() {
+        const term = document.getElementById('searchClientInput').value.toLowerCase();
+        const filtered = allClientsData.filter(c =>
+            c.name.toLowerCase().includes(term) ||
+            c.document.toLowerCase().includes(term) ||
+            c.city.toLowerCase().includes(term)
+        );
+        renderClientsInModal(filtered);
+    }
+
+    function selectClientFromSearch(id, name) {
+        const select = document.getElementById('quoteClient');
+        select.value = id; // Atualiza o backend/seleção escondida
+
+        document.getElementById('quoteClientName').value = name; // Atualiza o Input Visível
+        updateClientDetailsPanel();
+        closeModal('clientSearchModal');
+    }
+
+    // ------------------------------------------------ //
 
     function formatarMoeda(valor) {
         if (valor === null || valor === undefined) return "R$ 0,00";
@@ -766,6 +897,7 @@
         document.getElementById('quoteProfile').value = '';
         document.getElementById('itemCat').value = '';
         document.getElementById('quotePayment').value = 'PIX';
+        document.getElementById('quoteClientName').value = ''; // Limpa o input visual
 
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('quoteDate').value = today;
@@ -874,9 +1006,16 @@
                 document.getElementById('quoteId').value = q.id;
 
                 if(q.client) {
-                    document.getElementById('quoteClient').value = q.client.id;
+                    const select = document.getElementById('quoteClient');
+                    select.value = q.client.id;
+                    if(select.selectedIndex > 0) {
+                        document.getElementById('quoteClientName').value = select.options[select.selectedIndex].text;
+                    } else {
+                        document.getElementById('quoteClientName').value = 'Cliente não encontrado';
+                    }
                 } else {
                     document.getElementById('quoteClient').value = '';
+                    document.getElementById('quoteClientName').value = '';
                 }
 
                 if(typeof updateClientDetailsPanel === 'function') updateClientDetailsPanel();
@@ -1015,7 +1154,6 @@
             return;
         }
 
-        // 👇 CÁLCULO E APLICAÇÃO DO DESCONTO ANTES DE ENVIAR
         const discInput = document.getElementById('quoteDiscount');
         const discountPct = discInput && discInput.offsetParent !== null ? (parseFloat(discInput.value) || 0) : 0;
 
@@ -1032,10 +1170,10 @@
             dateCreated: dateToSave,
             paymentMethod: document.getElementById('quotePayment').value,
             installments: installmentsValue,
-            discountPercent: discountPct, // ENVIA O DESCONTO
+            discountPercent: discountPct,
             observations: document.getElementById('quoteObs').value,
             warranty: document.getElementById('quoteWarranty').value,
-            totalValue: finalNetValue, // 👇 AGORA GUARDA O VALOR LÍQUIDO FINAL NO BANCO
+            totalValue: finalNetValue,
             items: currentItems
         };
 
@@ -1368,24 +1506,20 @@
             .then(res => res.json())
             .then(q => {
 
-                // Função utilitária interna para definir texto com segurança
                 const setSafeText = (id, text) => {
                     const el = document.getElementById(id);
                     if (el) el.innerText = text;
                 };
 
-                // Cabeçalho básico
                 if(q.number) setSafeText('recNum', `N° ${q.number.replace('ORC-', '')}`);
                 setSafeText('recDate', q.dateCreated ? new Date(q.dateCreated).toLocaleDateString('pt-BR') : '');
                 setSafeText('recClient', q.client ? q.client.name : 'Consumidor Final');
                 setSafeText('recSignatureClientName', q.client ? q.client.name : 'Assinatura do Cliente');
 
-                // Painel de detalhes do cliente (Safe Check)
                 const pdfPanel = document.getElementById('pdfClientDetailsPanel');
                 if (pdfPanel) {
                     if (q.client) {
                         let hasDataForPdf = false;
-                        // Helper para exibir linhas se existirem
                         const updateRow = (id, value, rowId) => {
                             const el = document.getElementById(id);
                             const row = document.getElementById(rowId);
@@ -1415,7 +1549,6 @@
                 setSafeText('recObs', q.observations || 'Sem observações adicionais.');
                 setSafeText('recWarrantyText', q.warranty || (typeof DEFAULT_WARRANTY !== 'undefined' ? DEFAULT_WARRANTY : ''));
 
-                // Renderização da Tabela de Itens
                 let calculatedGross = 0;
                 const itemsTbody = document.getElementById('recItems');
                 if(itemsTbody) {
@@ -1440,7 +1573,6 @@
                     });
                 }
 
-                // Lógica de Descontos e Totais
                 let discountPct = q.discountPercent || 0;
                 let net = q.totalValue || (calculatedGross - (calculatedGross * (discountPct / 100)));
 
@@ -1451,14 +1583,13 @@
                     if(recSubtotalRow) recSubtotalRow.style.display = 'flex';
                     if(recDiscountRow) recDiscountRow.style.display = 'flex';
                     setSafeText('recSubtotal', formatarMoeda(calculatedGross));
-                    setSafeText('recDiscount', `${discountPct}%`); // Apenas porcentagem
+                    setSafeText('recDiscount', `${discountPct}%`);
                 } else {
                     if(recSubtotalRow) recSubtotalRow.style.display = 'none';
                     if(recDiscountRow) recDiscountRow.style.display = 'none';
                 }
                 setSafeText('recTotal', formatarMoeda(net));
 
-                // Parcelamento
                 const recFinalRow = document.getElementById('recFinalRow');
                 if (recFinalRow) {
                     if (q.paymentMethod === 'Cartao_Credito' && q.installments > 1) {
@@ -1469,7 +1600,6 @@
                     }
                 }
 
-                // Dados Perfil Empresa
                 if (q.profile) {
                     setSafeText('pdfCompanyName', q.profile.companyName || '');
                     setSafeText('pdfCompanyDoc', 'CNPJ/CPF: ' + (q.profile.document || '--'));
@@ -1487,7 +1617,6 @@
                     if(sigEl) { sigEl.src = q.profile.signatureUrl || ''; sigEl.style.display = q.profile.signatureUrl ? 'block' : 'none'; }
                 }
 
-                // Assinatura
                 const sigClientEl = document.getElementById('recSignatureClientImage');
                 const sigClientStatus = document.getElementById('recSignatureClientStatus');
                 if(q.clientSignature) {
@@ -1618,6 +1747,9 @@
 
                     option.selected = true;
                     select.appendChild(option);
+
+                    // Atualiza o input visual também
+                    document.getElementById('quoteClientName').value = savedClient.name;
                 }
 
                 const cepModalEl = document.getElementById('inlineClientCep');
