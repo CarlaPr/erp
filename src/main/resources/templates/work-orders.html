@@ -773,17 +773,14 @@
         const lockIcon     = document.getElementById('lockIcon');
 
         if (quoteId) {
-            // Bloqueia a troca de cliente (pois vem do orçamento)
             clientSelect.disabled = true;
             clientSelect.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-100', 'dark:bg-slate-800');
 
-            // Garante que o input de Valor Total continue editável (Removendo o ReadOnly antigo)
             totalInput.readOnly = false;
             totalInput.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-500', 'dark:text-slate-400', 'border-rose-300', 'dark:border-rose-500/50');
 
             if (lockIcon) lockIcon.classList.remove('hidden');
 
-            // SÓ busca os dados do orçamento (`qData`) se for uma O.S. NOVA (osId vazio)
             if (!document.getElementById('osId').value) {
                 try {
                     const res = await fetch(`/quotes/view-data/${quoteId}`);
@@ -791,7 +788,6 @@
                         const qData = await res.json();
                         clientSelect.value = qData.client ? qData.client.id : '';
 
-                        // Aplica a máscara BRL usando a variável qData de forma segura
                         totalInput.value = formatBRL(qData.totalValue);
 
                         soldItems = [];
@@ -804,7 +800,7 @@
                                     description: `${qi.category || 'Item'} - ${qi.product || ''} (LxA: ${qi.width || 0}x${qi.height || 0})`,
                                     quantity: qi.quantity,
                                     totalValue: valorTotal,
-                                    unitPrice: valorTotal / qi.quantity // Facilita o recálculo se você alterar a QTD depois
+                                    unitPrice: valorTotal / qi.quantity
                                 });
                             });
                         }

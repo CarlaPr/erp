@@ -42,7 +42,7 @@
 
     <!-- ── FILTROS ── -->
     <form method="GET" action="/payables" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 mb-8 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 items-end">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end mb-5">
             <div class="lg:col-span-2">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Buscar</label>
                 <div class="relative">
@@ -74,17 +74,10 @@
                     <option value="provision" th:selected="${filterCategory == 'provision'}">Provisão</option>
                 </select>
             </div>
+        </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Fornecedor</label>
-                <select name="supplierId" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 transition-all text-sm font-semibold">
-                    <option value="">Todos</option>
-                    <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"
-                            th:selected="${filterSupplierId != null and filterSupplierId == s.id}"></option>
-                </select>
-            </div>
-
-            <div class="col-span-1 md:col-span-2 lg:col-span-2">
+        <div class="flex flex-col lg:flex-row justify-between items-end gap-5">
+            <div class="w-full lg:w-1/3">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Período (Vencimento)</label>
                 <div class="flex gap-2">
                     <input type="date" name="dateFrom" th:value="${filterDateFrom}"
@@ -94,19 +87,17 @@
                 </div>
             </div>
 
-            <label class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-2 font-bold cursor-pointer">
-                <input type="checkbox" name="allMonths" value="true" class="w-4 h-4 rounded border-slate-300 accent-rose-600"> Ver Todos os Meses
-            </label>
-
-            <div class="flex gap-2">
-                <button type="submit" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl px-4 py-3 text-sm transition-all shadow-md shadow-rose-500/20">Filtrar</button>
-                <a href="/payables" class="flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700">
-                    <i data-lucide="x" class="w-4 h-4"></i>
+            <div class="flex flex-wrap gap-2 w-full lg:w-auto">
+                <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl px-6 py-3 text-sm transition-all shadow-md shadow-rose-500/20 flex items-center gap-2">
+                    <i data-lucide="filter" class="w-4 h-4"></i> Filtrar
+                </button>
+                <a href="/payables" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2" title="Voltar para visualização da semana atual">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Semana Atual
                 </a>
-            </div>
-
-            <div class="flex gap-2">
-                <button type="button" onclick="openModal('exportModal')" class="flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl px-4 py-3 text-sm transition-all shadow-md shadow-indigo-500/20" title="Exportar para Excel (CSV)">
+                <a href="/payables?allMonths=true" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2">
+                    <i data-lucide="calendar-days" class="w-4 h-4"></i> Todos os Meses
+                </a>
+                <button type="button" onclick="openModal('exportModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl px-4 py-3 text-sm transition-all shadow-md shadow-indigo-500/20 ml-auto" title="Exportar para Excel (CSV)">
                     <i data-lucide="download" class="w-4 h-4"></i>
                 </button>
             </div>

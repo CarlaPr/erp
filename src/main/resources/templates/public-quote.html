@@ -66,12 +66,15 @@
             </div>
         </div>
 
-        <div th:if="${quote.installments != null && quote.installments > 1}" class="mt-4 flex justify-between items-center text-sm bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200">
+        <div th:if="${quote.paymentMethod != null && !quote.paymentMethod.isEmpty()}" class="mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm bg-blue-50/70 p-4 rounded-xl border border-blue-200 gap-3 shadow-sm">
             <div class="flex flex-col">
-                <span class="font-bold text-emerald-800 uppercase tracking-wider text-[11px]">Condição de Pagamento</span>
-                <span class="text-xs text-emerald-600 font-bold" th:text="${quote.paymentMethod == 'Cartao_Credito' ? 'Cartão de Crédito' : quote.paymentMethod}"></span>
+                <span class="font-bold text-blue-800 uppercase tracking-wider text-[11px] mb-1">Formas de Pagamento Aceitas</span>
+                <span class="text-sm text-blue-900 font-black" th:text="${quote.paymentMethod}"></span>
             </div>
-            <span class="font-black text-emerald-700 text-lg" th:text="${quote.installments + 'x de R$ ' + #numbers.formatDecimal(quote.totalValue / quote.installments, 1, 'COMMA', 2, 'POINT')}"></span>
+            <div th:if="${quote.installments != null && quote.installments > 1}" class="bg-white px-4 py-2 rounded-lg border border-blue-100 shadow-sm text-center shrink-0">
+                <span class="block text-[10px] uppercase font-bold text-slate-500 mb-0.5">Opção de Parcelamento</span>
+                <span class="font-black text-emerald-600 text-base" th:text="${'Até ' + quote.installments + 'x de R$ ' + #numbers.formatDecimal(quote.totalValue / quote.installments, 1, 'COMMA', 2, 'POINT')}"></span>
+            </div>
         </div>
     </div>
 

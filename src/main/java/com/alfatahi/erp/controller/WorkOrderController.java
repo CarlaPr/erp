@@ -155,7 +155,6 @@ public class WorkOrderController {
 
         workOrderService.save(targetWo);
 
-        // Atualização de Contas a Receber vinculadas
         if (targetWo.getInstallDate() != null && targetWo.getId() != null) {
             List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
                     .filter(r -> r.getWorkOrder() != null && r.getWorkOrder().getId().equals(targetWo.getId()))
@@ -165,23 +164,19 @@ public class WorkOrderController {
                 int installmentsCount = receivables.size();
                 BigDecimal newTotal = targetWo.getTotalValue();
 
-                // Divide o novo valor total pela quantidade de parcelas ativas
                 BigDecimal installmentValue = newTotal.divide(new BigDecimal(installmentsCount), 2, RoundingMode.HALF_UP);
                 BigDecimal sumPrevious = installmentValue.multiply(new BigDecimal(installmentsCount - 1));
-                BigDecimal lastInstallment = newTotal.subtract(sumPrevious); // Corrige centavos na ultima parcela
+                BigDecimal lastInstallment = newTotal.subtract(sumPrevious);
 
                 for (int i = 0; i < installmentsCount; i++) {
                     AccountsReceivable ar = receivables.get(i);
 
-                    // Mantém a lógica de ajustar a data
                     if (i == 0) ar.setDueDate(targetWo.getInstallDate());
                     else ar.setDueDate(targetWo.getInstallDate().plusMonths(i));
 
-                    // Se o valor global mudou, reescrevemos o valor a receber e adicionamos a justificativa
                     if (isTotalChanged) {
                         ar.setTotalAmount(i == installmentsCount - 1 ? lastInstallment : installmentValue);
 
-                        // Grava a mensagem capturada com o motivo
                         String currentNotes = ar.getNotes() != null ? ar.getNotes() : "";
                         ar.setNotes(currentNotes + "\n[Sistema] " + changeReasonMsg);
                     }

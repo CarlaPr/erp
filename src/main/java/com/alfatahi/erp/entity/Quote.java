@@ -39,7 +39,7 @@ public class Quote {
     @Column(columnDefinition = "text")
     private String warranty;
 
-    @Column(name = "payment_method", length = 50)
+    @Column(name = "payment_method", length = 255)
     private String paymentMethod;
 
     private Integer installments = 1;

@@ -184,13 +184,13 @@
                     </div>
 
                     <div class="md:col-span-4">
-                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-1 text-[13px]">Forma de Pagamento</label>
-                        <select id="quotePayment" onchange="togglePaymentOptions()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-sm">
-                            <option value="PIX">PIX</option>
-                            <option value="Dinheiro">Dinheiro</option>
-                            <option value="Cartao_Debito">Cartão de Débito</option>
-                            <option value="Cartao_Credito">Cartão de Crédito</option>
-                        </select>
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-1 text-[13px]">Formas de Pagamento</label>
+                        <div class="relative">
+                            <input type="text" id="quotePayment" readonly placeholder="Selecione as formas..."
+                                   class="w-full pr-10 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none cursor-pointer focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-sm"
+                                   onclick="toggleModal('paymentMethodsModal', true)" />
+                            <i data-lucide="chevron-down" class="absolute right-3 top-2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                        </div>
                     </div>
 
                     <div class="md:col-span-4" id="installmentsContainer" style="display: none;">
@@ -300,6 +300,35 @@
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="paymentMethodsModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[110] p-4">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h3 class="font-black text-slate-900 dark:text-white text-lg mb-4 flex items-center gap-2">
+                <i data-lucide="credit-card" class="w-5 h-5 text-brand-600 dark:text-cyan-400"></i> Formas Aceitas
+            </h3>
+            <div class="flex flex-col gap-3 mb-6 text-sm text-slate-700 dark:text-slate-300 font-medium">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" value="PIX" class="pay-method-cb w-4 h-4 rounded text-brand-600"> PIX
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" value="Dinheiro" class="pay-method-cb w-4 h-4 rounded text-brand-600"> Dinheiro
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" value="Débito" class="pay-method-cb w-4 h-4 rounded text-brand-600"> Cartão de Débito
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" value="Crédito" class="pay-method-cb w-4 h-4 rounded text-brand-600"> Cartão de Crédito
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" value="Link de Pagamento" class="pay-method-cb w-4 h-4 rounded text-brand-600"> Link de Pagamento
+                </label>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModal('paymentMethodsModal')" class="flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300">Cancelar</button>
+                <button type="button" onclick="confirmPaymentMethods()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 px-4 py-2 rounded-lg font-bold">Confirmar</button>
+            </div>
         </div>
     </div>
 
@@ -537,6 +566,14 @@
                         <span class="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">Parcelado em:</span>
                         <span id="recFinalInstallments" class="text-xl font-black font-mono text-emerald-400 tracking-tight">10x R$ 0,00</span>
                     </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm">
+                    <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
+                        <i data-lucide="credit-card" class="w-4 h-4 text-slate-600 print:hidden"></i>
+                        <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Formas de Pagamento Aceitas</h5>
+                    </div>
+                    <div id="recPaymentMethods" class="text-sm font-bold text-slate-800 p-4 bg-white">--</div>
                 </div>
 
                 <div class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm">
@@ -838,14 +875,12 @@
 
     function selectClientFromSearch(id, name) {
         const select = document.getElementById('quoteClient');
-        select.value = id; // Atualiza o backend/seleção escondida
+        select.value = id;
 
-        document.getElementById('quoteClientName').value = name; // Atualiza o Input Visível
+        document.getElementById('quoteClientName').value = name;
         updateClientDetailsPanel();
         closeModal('clientSearchModal');
     }
-
-    // ------------------------------------------------ //
 
     function formatarMoeda(valor) {
         if (valor === null || valor === undefined) return "R$ 0,00";
@@ -855,9 +890,15 @@
         }).format(valor);
     }
 
-    const DEFAULT_WARRANTY = `TERMO DE GARANTIA
+    function confirmPaymentMethods() {
+        const cbs = document.querySelectorAll('.pay-method-cb:checked');
+        const selected = Array.from(cbs).map(cb => cb.value);
+        document.getElementById('quotePayment').value = selected.length > 0 ? selected.join(', ') : 'Não Informado';
+        togglePaymentOptions();
+        closeModal('paymentMethodsModal');
+    }
 
-    Garantia de 90 dias, a partir da conclusão da instalação, cobrindo apenas regulagens, vedação e defeitos decorrentes da instalação realizada pela empresa.
+    const DEFAULT_WARRANTY = `Garantia de 90 dias, a partir da conclusão da instalação, cobrindo apenas regulagens, vedação e defeitos decorrentes da instalação realizada pela empresa.
 
     Não cobre:
     • Mau uso, acidentes ou impactos;
@@ -899,6 +940,7 @@
         document.getElementById('quoteProfile').value = '';
         document.getElementById('itemCat').value = '';
         document.getElementById('quotePayment').value = 'PIX';
+        document.querySelectorAll('.pay-method-cb').forEach(cb => cb.checked = (cb.value === 'PIX'));
         document.getElementById('quoteClientName').value = ''; // Limpa o input visual
 
         const today = new Date().toISOString().split('T')[0];
@@ -916,17 +958,14 @@
     }
 
     function togglePaymentOptions() {
-        const payment = document.getElementById('quotePayment').value;
+        const payment = document.getElementById('quotePayment').value || '';
         const instContainer = document.getElementById('installmentsContainer');
-        const discContainer = document.getElementById('discountContainer');
 
-        if (payment === 'Cartao_Credito') {
+        // Libera a aba de parcelas se o usuário marcou Crédito ou Link de Pagamento
+        if (payment.includes('Crédito') || payment.includes('Link de Pagamento')) {
             instContainer.style.display = 'block';
-            discContainer.style.display = 'none';
-            document.getElementById('quoteDiscount').value = 0;
         } else {
             instContainer.style.display = 'none';
-            discContainer.style.display = 'block';
             document.getElementById('quoteInstallments').value = 1;
         }
         renderQuoteItems();
@@ -1032,7 +1071,11 @@
                     document.getElementById('quoteProfile').value = '';
                 }
 
-                document.getElementById('quotePayment').value = q.paymentMethod || 'PIX';
+                const pm = q.paymentMethod || 'PIX';
+                document.getElementById('quotePayment').value = pm;
+                document.querySelectorAll('.pay-method-cb').forEach(cb => {
+                    cb.checked = pm.includes(cb.value);
+                });
 
                 const instInput = document.getElementById('quoteInstallments');
                 if(instInput) instInput.value = q.installments || 1;
@@ -1646,11 +1689,17 @@
                 }
                 setSafeText('recTotal', formatarMoeda(net));
 
+                setSafeText('recPaymentMethods', q.paymentMethod || 'Não informado');
+
                 const recFinalRow = document.getElementById('recFinalRow');
                 if (recFinalRow) {
-                    if (q.paymentMethod === 'Cartao_Credito' && q.installments > 1) {
-                        recFinalRow.style.setProperty('display', 'flex', 'important');
-                        setSafeText('recFinalInstallments', `${q.installments}x ${formatarMoeda(net / q.installments)}`);
+                    if ((q.paymentMethod || '').includes('Crédito') || (q.paymentMethod || '').includes('Link de Pagamento')) {
+                        if (q.installments > 1) {
+                            recFinalRow.style.setProperty('display', 'flex', 'important');
+                            setSafeText('recFinalInstallments', `Em até ${q.installments}x de ${formatarMoeda(net / q.installments)}`);
+                        } else {
+                            recFinalRow.style.setProperty('display', 'none', 'important');
+                        }
                     } else {
                         recFinalRow.style.setProperty('display', 'none', 'important');
                     }

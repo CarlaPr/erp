@@ -14,7 +14,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -55,8 +57,9 @@ public class PayableController {
             Model model) {
 
         if (dateFrom == null && dateTo == null && !allMonths) {
-            dateFrom = LocalDate.now().withDayOfMonth(1);
-            dateTo = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+            LocalDate today = LocalDate.now();
+            dateFrom = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+            dateTo = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
         }
 
         List<AccountsPayable> list = financeService.listAllPayables().stream()
@@ -221,18 +224,15 @@ public class PayableController {
         response.getOutputStream().write(0xBF);
 
         java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(response.getOutputStream(), "UTF-8"));
-
         writer.println("Vencimento;Data Pagamento;Fornecedor;Categoria;O.S.;Descricao;Forma Pgto;Total;Pago;Pendente;Status");
-
         java.util.Locale ptBR = new java.util.Locale("pt", "BR");
 
         for (AccountsPayable p : list) {
             String supplierName = p.getSupplier() != null ? p.getSupplier().getName() : "Avulso";
             String osNumber = p.getWorkOrder() != null ? p.getWorkOrder().getNumber() : "-";
             String desc = p.getDescription() != null ? p.getDescription().replace(";", ",") : "";
-
             String formPgto = p.getPaymentMethod() != null ? p.getPaymentMethod() : "";
-            String payDate = p.getPaymentDate() != null ? p.getPaymentDate().toString() : ""; // Mesma lógica da data
+            String payDate = p.getPaymentDate() != null ? p.getPaymentDate().toString() : "";
 
             writer.printf(ptBR, "%s;%s;%s;%s;%s;%s;%s;%.2f;%.2f;%.2f;%s\n",
                     p.getDueDate(), payDate, supplierName, p.getCategory(), osNumber, desc, formPgto,

@@ -16,7 +16,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -60,8 +62,9 @@ public class ReceivableController {
             Model model) {
 
         if (dateFrom == null && dateTo == null && !allMonths) {
-            dateFrom = LocalDate.now().withDayOfMonth(1);
-            dateTo = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+            LocalDate today = LocalDate.now();
+            dateFrom = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+            dateTo = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
         }
 
         List<AccountsReceivable> list = receivableRepository.findAllByOrderByDueDateAsc().stream()
@@ -143,8 +146,6 @@ public class ReceivableController {
         return "receivables";
     }
 
-
-
     @PostMapping("/save")
     public String save(@ModelAttribute("newReceivable") AccountsReceivable receivable) {
         if (receivable.getClient() != null && receivable.getClient().getId() != null) {
@@ -160,10 +161,7 @@ public class ReceivableController {
             if (wo != null) {
                 if (receivable.getTotalAmount() == null || receivable.getTotalAmount().compareTo(BigDecimal.ZERO) == 0) {
                     receivable.setTotalAmount(wo.getTotalValue());
-                } else {
-                    receivable.setTotalAmount(wo.getTotalValue());
                 }
-
                 if (wo.getInstallDate() != null) {
                     receivable.setDueDate(wo.getInstallDate());
                 }
@@ -308,20 +306,16 @@ public class ReceivableController {
         response.getOutputStream().write(0xBF);
 
         java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(response.getOutputStream(), "UTF-8"));
-
         writer.println("Vencimento;Data Pagamento;Cliente;O.S.;Descricao;Forma Pgto;Taxa Cartao (%);Desconto (R$);Total;Recebido;Pendente;Status");
-
         java.util.Locale ptBR = new java.util.Locale("pt", "BR");
 
         for (AccountsReceivable r : list) {
             String clientName = r.getClient() != null ? r.getClient().getName() : "Avulso";
             String osNumber = r.getWorkOrder() != null ? r.getWorkOrder().getNumber() : "-";
             String desc = r.getDescription() != null ? r.getDescription().replace(";", ",") : "";
-
             String formPgto = r.getPaymentMethod() != null ? r.getPaymentMethod() : "";
             BigDecimal taxa = r.getCardFeePercentage() != null ? r.getCardFeePercentage() : BigDecimal.ZERO;
             BigDecimal desconto = r.getDiscount() != null ? r.getDiscount() : BigDecimal.ZERO;
-
             String payDate = r.getPaymentDate() != null ? r.getPaymentDate().toString() : "";
 
             writer.printf(ptBR, "%s;%s;%s;%s;%s;%s;%.2f;%.2f;%.2f;%.2f;%.2f;%s\n",

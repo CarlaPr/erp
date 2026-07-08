@@ -28,12 +28,6 @@ public class QuoteService {
         this.scheduleService = scheduleService;
     }
 
-    /**
-     * Calcula a área (m²) de um item a partir de largura x altura.
-     * Segue a MESMA regra usada no frontend (quotes.html / work-orders.html):
-     * se não houver largura/altura informadas (item vendido por unidade, não por m²),
-     * o multiplicador de área deve ser 1 (neutro), e não 0.
-     */
     private BigDecimal calcularAreaM2(BigDecimal width, BigDecimal height) {
         BigDecimal w = width != null ? width : BigDecimal.ZERO;
         BigDecimal h = height != null ? height : BigDecimal.ZERO;
@@ -118,10 +112,7 @@ public class QuoteService {
                 String prod = qi.getProduct() != null ? qi.getProduct() : "Sem descrição";
                 osItem.setDescription(cat + " - " + prod + dimensions);
                 osItem.setQuantity(qi.getQuantity());
-                // FIX: o preço do item do orçamento é POR M², então é preciso
-                // incorporar a área (largura x altura) no preço unitário da OS,
-                // igual ao que já é feito no cálculo do orçamento (frontend).
-                // Sem isso, quantity * unitPrice ignora o m² e gera valor bem menor.
+
                 BigDecimal area = calcularAreaM2(w, h);
                 osItem.setUnitPrice(qi.getUnitPrice().multiply(area));
                 osItem.setUnitCost(BigDecimal.ZERO);
@@ -145,11 +136,8 @@ public class QuoteService {
         scheduleService.createFromApprovedQuote(quote, os);
 
         String paymentMethod = quote.getPaymentMethod();
-        boolean isCardSale = "Cartao_Credito".equals(paymentMethod) || "Cartao_Debito".equals(paymentMethod);
 
-        int numParcelas = isCardSale
-                ? 1
-                : (quote.getInstallments() != null && quote.getInstallments() > 0) ? quote.getInstallments() : 1;
+        int numParcelas = (quote.getInstallments() != null && quote.getInstallments() > 0) ? quote.getInstallments() : 1;
 
         BigDecimal valorParcela = finalTotal.divide(new BigDecimal(numParcelas), 2, RoundingMode.HALF_UP);
         BigDecimal somaParcelasAnteriores = valorParcela.multiply(new BigDecimal(numParcelas - 1));
@@ -165,11 +153,13 @@ public class QuoteService {
                     ? "Ref. " + quote.getNumber()
                     : "Ref. " + quote.getNumber() + " — Parcela " + (i+1) + "/" + numParcelas);
             parcela.setTotalAmount(isUltima ? valorUltimaParcela : valorParcela);
+
             parcela.setDueDate(
                     numParcelas == 1
-                            ? LocalDate.now()
-                            : LocalDate.now().plusMonths(i + 1)
+                            ? dataEntrega
+                            : dataEntrega.plusMonths(i)
             );
+
             parcela.setStatus("pending");
             finRepo.save(parcela);
         }
