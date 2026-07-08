@@ -102,7 +102,7 @@
                     </button>
                     <button th:if="${q.status == 'pending' || q.status == 'negotiation'}" th:data-id="${q.id}" onclick="cancelQuote(this.getAttribute('data-id'))" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Cancelar Orçamento"><i data-lucide="minus-circle" class="w-6 h-6 inline"></i></button>
                     <button th:data-id="${q.id}" onclick="viewReceipt(this.getAttribute('data-id'))" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors" title="Imprimir / Gerar PDF"><i data-lucide="printer" class="w-6 h-6 inline"></i></button>
-                    <button th:if="${q.status == 'pending' || q.status == 'negotiation'}"
+                    <button th:if="${q.status == 'pending' || q.status == 'negotiation' || q.status == 'approved'}"
                             th:data-token="${q.publicToken}"
                             onclick="copyPublicLink(this.getAttribute('data-token'))"
                             class="text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
