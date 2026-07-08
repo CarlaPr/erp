@@ -275,7 +275,7 @@
                             <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider flex items-center gap-2">
                                 Preço Venda (R$) <i data-lucide="lock" id="lockIcon" class="w-4 h-4 hidden text-rose-500"></i>
                             </label>
-                            <input type="number" id="osTotalValue" onkeyup="renderAllUI()" onchange="renderAllUI()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-emerald-600 dark:text-emerald-400 font-black focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
+                            <input type="text" id="osTotalValue" oninput="applyCurrencyMask(this)" onchange="renderAllUI()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-emerald-600 dark:text-emerald-400 font-black focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
                         </div>
                     </div>
 
@@ -523,6 +523,28 @@
     let materialItems    = [];
     let operationalItems = [];
     let osIdToCancel     = null;
+    let originalTotalValue = 0;
+    let originalNotes = "";
+
+    function formatBRL(valor) {
+        if (valor === null || valor === undefined || isNaN(valor)) return "0,00";
+        return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function parseBRL(valorStr) {
+        if (typeof valorStr === 'number') return valorStr;
+        if (!valorStr) return 0;
+        return parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
+    }
+
+    function applyCurrencyMask(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value === '') value = '0';
+        value = (parseInt(value, 10) / 100).toFixed(2) + '';
+        value = value.replace(".", ",");
+        value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        input.value = value;
+    }
 
     function formatarMoeda(valor) {
         if (valor === null || valor === undefined) return "R$ 0,00";
@@ -751,19 +773,27 @@
         const lockIcon     = document.getElementById('lockIcon');
 
         if (quoteId) {
+            // Bloqueia a troca de cliente (pois vem do orçamento)
             clientSelect.disabled = true;
             clientSelect.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-100', 'dark:bg-slate-800');
-            totalInput.readOnly = true;
-            totalInput.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-500', 'dark:text-slate-400', 'border-rose-300', 'dark:border-rose-500/50');
-            lockIcon.classList.remove('hidden');
 
+            // Garante que o input de Valor Total continue editável (Removendo o ReadOnly antigo)
+            totalInput.readOnly = false;
+            totalInput.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-500', 'dark:text-slate-400', 'border-rose-300', 'dark:border-rose-500/50');
+
+            if (lockIcon) lockIcon.classList.remove('hidden');
+
+            // SÓ busca os dados do orçamento (`qData`) se for uma O.S. NOVA (osId vazio)
             if (!document.getElementById('osId').value) {
                 try {
                     const res = await fetch(`/quotes/view-data/${quoteId}`);
                     if (res.ok) {
                         const qData = await res.json();
                         clientSelect.value = qData.client ? qData.client.id : '';
-                        totalInput.value   = qData.totalValue;
+
+                        // Aplica a máscara BRL usando a variável qData de forma segura
+                        totalInput.value = formatBRL(qData.totalValue);
+
                         soldItems = [];
                         if (qData.items) {
                             qData.items.forEach(qi => {
@@ -773,7 +803,8 @@
                                     id: null,
                                     description: `${qi.category || 'Item'} - ${qi.product || ''} (LxA: ${qi.width || 0}x${qi.height || 0})`,
                                     quantity: qi.quantity,
-                                    totalValue: valorTotal
+                                    totalValue: valorTotal,
+                                    unitPrice: valorTotal / qi.quantity // Facilita o recálculo se você alterar a QTD depois
                                 });
                             });
                         }
@@ -782,11 +813,15 @@
                 } catch (e) { console.error('Erro ao carregar orçamento', e); }
             }
         } else {
+            // Configurações para OS Avulsa
             clientSelect.disabled = false;
             clientSelect.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-100', 'dark:bg-slate-800');
+
             totalInput.readOnly = false;
             totalInput.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-500', 'dark:text-slate-400', 'border-rose-300', 'dark:border-rose-500/50');
-            lockIcon.classList.add('hidden');
+
+            if (lockIcon) lockIcon.classList.add('hidden');
+
             if (!document.getElementById('osId').value) {
                 soldItems = [];
                 renderAllUI();
@@ -812,6 +847,11 @@
 
             document.getElementById('osDate').value       = data.installDate ? data.installDate.split('T')[0] : '';
             document.getElementById('osTotalValue').value = data.totalValue || 0;
+
+            document.getElementById('osDate').value       = data.installDate ? data.installDate.split('T')[0] : '';
+            originalTotalValue = data.totalValue || 0;
+            originalNotes      = data.notes || "";
+            document.getElementById('osTotalValue').value = formatBRL(data.totalValue || 0);
 
             if (typeof handleQuoteChange === 'function') {
                 handleQuoteChange();
@@ -887,19 +927,31 @@
         renderAllUI();
     }
 
+    function recalculateGlobalTotal() {
+        let total = 0;
+        soldItems.forEach(i => total += i.totalValue);
+        if(total > 0) {
+            document.getElementById('osTotalValue').value = formatBRL(total);
+        }
+    }
+
     function renderAllUI() {
 
         const soldTbody = document.getElementById('soldItemsBody');
         soldTbody.innerHTML = '';
         if (soldItems.length > 0) {
             document.getElementById('soldItemsContainer').classList.remove('hidden');
-            soldItems.forEach(item => {
+            soldItems.forEach((item, idx) => {
                 soldTbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                        <td class="p-4 text-slate-900 dark:text-slate-300 font-bold text-sm border-l-4 border-emerald-500 pl-4">${item.description}</td>
-                        <td class="p-4 text-center text-slate-600 dark:text-slate-400 font-mono text-sm">${item.quantity} un</td>
-                        <td class="p-4 text-right text-emerald-600 dark:text-emerald-400 font-mono font-bold text-sm">R$ ${item.totalValue.toFixed(2)}</td>
-                    </tr>`;
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                <td class="p-4 text-slate-900 dark:text-slate-300 font-bold text-sm border-l-4 border-emerald-500 pl-4">${item.description}</td>
+                <td class="p-4 text-center">
+                    <input type="number" min="1" value="${item.quantity}" onchange="soldItems[${idx}].quantity = parseFloat(this.value)||1; soldItems[${idx}].totalValue = soldItems[${idx}].quantity * soldItems[${idx}].unitPrice; renderAllUI();" class="w-20 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-center font-mono outline-none">
+                </td>
+                <td class="p-4 text-right">
+                    <input type="text" value="${formatBRL(item.totalValue)}" oninput="applyCurrencyMask(this)" onchange="soldItems[${idx}].totalValue = parseBRL(this.value); soldItems[${idx}].unitPrice = soldItems[${idx}].totalValue / soldItems[${idx}].quantity; recalculateGlobalTotal(); renderAllUI();" class="w-32 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-right text-emerald-600 font-mono font-bold outline-none">
+                </td>
+            </tr>`;
             });
         } else {
             document.getElementById('soldItemsContainer').classList.add('hidden');
@@ -912,43 +964,43 @@
             let rowTotal = m.quantity * m.unitCost;
             totalMatCost += rowTotal;
             matCont.innerHTML += `
-                <div class="grid grid-cols-12 gap-3 items-end border-b border-slate-200 dark:border-slate-700/50 pb-5 mb-2">
-                    <div class="col-span-12 md:col-span-4">
-                        <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Descrição</label>
-                        <input type="text" value="${m.description}" onchange="materialItems[${idx}].description=this.value"
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors">
-                    </div>
-                    <div class="col-span-4 md:col-span-1">
-                        <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Qtd</label>
-                        <input type="number" value="${m.quantity}" onchange="materialItems[${idx}].quantity=parseFloat(this.value)||1; renderAllUI();"
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-center text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors">
-                    </div>
-                    <div class="col-span-4 md:col-span-1">
-                        <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Un.</label>
-                        <input type="text" value="${m.unit}" onchange="materialItems[${idx}].unit=this.value"
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-center text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors">
-                    </div>
-                    <div class="col-span-4 md:col-span-2">
-                        <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Custo Un.</label>
-                        <input type="number" step="0.01" value="${m.unitCost.toFixed(2)}" onchange="materialItems[${idx}].unitCost=parseFloat(this.value)||0; renderAllUI();"
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors font-mono">
-                    </div>
-                    <div class="col-span-6 md:col-span-2">
-                        <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Venda Un.</label>
-                        <input type="number" step="0.01" value="${m.unitPrice.toFixed(2)}" onchange="materialItems[${idx}].unitPrice=parseFloat(this.value)||0"
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors font-mono">
-                    </div>
-                    <div class="col-span-6 md:col-span-2 flex justify-between items-center pb-2 pl-3">
-                        <div class="text-slate-500 dark:text-slate-400 text-sm font-bold w-full">
-                            <span class="text-[10px] uppercase block mb-1">Total</span>R$ ${rowTotal.toFixed(2)}
-                        </div>
-                        <button type="button" onclick="removeMaterial(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 bg-rose-50 dark:bg-transparent p-1.5 rounded-lg transition-colors">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>`;
+        <div class="grid grid-cols-12 gap-3 items-end border-b border-slate-200 dark:border-slate-700/50 pb-5 mb-2">
+            <div class="col-span-12 md:col-span-4">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Descrição</label>
+                <input type="text" value="${m.description}" onchange="materialItems[${idx}].description=this.value"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors">
+            </div>
+            <div class="col-span-4 md:col-span-1">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Qtd</label>
+                <input type="number" value="${m.quantity}" onchange="materialItems[${idx}].quantity=parseFloat(this.value)||1; renderAllUI();"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-center text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors">
+            </div>
+            <div class="col-span-4 md:col-span-1">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Un.</label>
+                <input type="text" value="${m.unit}" onchange="materialItems[${idx}].unit=this.value"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-center text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors">
+            </div>
+            <div class="col-span-4 md:col-span-2">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Custo Un.</label>
+                <input type="text" value="${formatBRL(m.unitCost)}" oninput="applyCurrencyMask(this)" onchange="materialItems[${idx}].unitCost=parseBRL(this.value); renderAllUI();"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors font-mono">
+            </div>
+            <div class="col-span-6 md:col-span-2">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Venda Un.</label>
+                <input type="text" value="${formatBRL(m.unitPrice)}" oninput="applyCurrencyMask(this)" onchange="materialItems[${idx}].unitPrice=parseBRL(this.value)"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors font-mono">
+            </div>
+            <div class="col-span-6 md:col-span-2 flex justify-between items-center pb-2 pl-3">
+                <div class="text-slate-500 dark:text-slate-400 text-sm font-bold w-full">
+                    <span class="text-[10px] uppercase block mb-1">Total</span>R$ ${formatBRL(rowTotal)}
+                </div>
+                <button type="button" onclick="removeMaterial(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 bg-rose-50 dark:bg-transparent p-1.5 rounded-lg transition-colors">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>`;
         });
-        document.getElementById('totalMaterials').innerText = `R$ ${totalMatCost.toFixed(2)}`;
+        document.getElementById('totalMaterials').innerText = `R$ ${formatBRL(totalMatCost)}`;
 
         const opCont = document.getElementById('operationalsContainer');
         opCont.innerHTML = '';
@@ -962,49 +1014,51 @@
             selectHtml += `</select>`;
 
             opCont.innerHTML += `
-                <div class="grid grid-cols-12 gap-3 items-end border-b border-slate-200 dark:border-slate-700/50 pb-5 mb-2">
-                    <div class="col-span-12 md:col-span-3">
-                        <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Descrição</label>
-                        <input type="text" value="${o.description}" onchange="operationalItems[${idx}].description=this.value"
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors">
-                    </div>
-                    <div class="col-span-6 md:col-span-2">
-                        <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Categoria</label>
-                        ${selectHtml}
-                    </div>
-                    <div class="col-span-6 md:col-span-2">
-                        <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Valor</label>
-                        <input type="number" step="0.01" value="${o.value.toFixed(2)}" onchange="operationalItems[${idx}].value=parseFloat(this.value)||0; renderAllUI();"
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors font-mono">
-                    </div>
-                    <div class="col-span-6 md:col-span-2">
-                        <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Data</label>
-                        <input type="date" value="${o.date}" onchange="operationalItems[${idx}].date=this.value"
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-300 text-sm outline-none focus:border-amber-500 transition-colors">
-                    </div>
-                    <div class="col-span-6 md:col-span-3 flex justify-between items-center pb-0 pl-1">
-                        <div class="w-full pr-3">
-                            <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Obs</label>
-                            <input type="text" value="${o.obs}" onchange="operationalItems[${idx}].obs=this.value"
-                                   class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors">
-                        </div>
-                        <button type="button" onclick="removeOperational(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 pb-1.5 bg-rose-50 dark:bg-transparent p-1.5 rounded-lg transition-colors">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>`;
+        <div class="grid grid-cols-12 gap-3 items-end border-b border-slate-200 dark:border-slate-700/50 pb-5 mb-2">
+            <div class="col-span-12 md:col-span-3">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Descrição</label>
+                <input type="text" value="${o.description}" onchange="operationalItems[${idx}].description=this.value"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors">
+            </div>
+            <div class="col-span-6 md:col-span-2">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Categoria</label>
+                ${selectHtml}
+            </div>
+            <div class="col-span-6 md:col-span-2">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Valor</label>
+                <input type="text" value="${formatBRL(o.value)}" oninput="applyCurrencyMask(this)" onchange="operationalItems[${idx}].value=parseBRL(this.value); renderAllUI();"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors font-mono">
+            </div>
+            <div class="col-span-6 md:col-span-2">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Data</label>
+                <input type="date" value="${o.date}" onchange="operationalItems[${idx}].date=this.value"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-300 text-sm outline-none focus:border-amber-500 transition-colors">
+            </div>
+            <div class="col-span-6 md:col-span-3 flex justify-between items-center pb-0 pl-1">
+                <div class="w-full pr-3">
+                    <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Obs</label>
+                    <input type="text" value="${o.obs}" onchange="operationalItems[${idx}].obs=this.value"
+                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors">
+                </div>
+                <button type="button" onclick="removeOperational(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 pb-1.5 bg-rose-50 dark:bg-transparent p-1.5 rounded-lg transition-colors">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>`;
         });
-        document.getElementById('totalOperationals').innerText = `R$ ${totalOpCost.toFixed(2)}`;
+        document.getElementById('totalOperationals').innerText = `R$ ${formatBRL(totalOpCost)}`;
 
         // --- KPIs DO EDITOR ---
-        const receita     = parseFloat(document.getElementById('osTotalValue').value) || 0;
-        const custoGlobal = totalMatCost + totalOpCost;
-        const lucro       = receita - custoGlobal;
-        const margem      = receita > 0 ? (lucro / receita) * 100 : 0;
+        const receitaStr = document.getElementById('osTotalValue').value;
+        const receita = parseBRL(receitaStr);
 
-        document.getElementById('resumoReceita').innerText = `R$ ${receita.toFixed(2)}`;
-        document.getElementById('resumoCusto').innerText   = `R$ ${custoGlobal.toFixed(2)}`;
-        document.getElementById('resumoLucro').innerText   = `R$ ${lucro.toFixed(2)}`;
+        const custoGlobal = totalMatCost + totalOpCost;
+        const lucro = receita - custoGlobal;
+        const margem = receita > 0 ? (lucro / receita) * 100 : 0;
+
+        document.getElementById('resumoReceita').innerText = `R$ ${formatBRL(receita)}`;
+        document.getElementById('resumoCusto').innerText   = `R$ ${formatBRL(custoGlobal)}`;
+        document.getElementById('resumoLucro').innerText   = `R$ ${formatBRL(lucro)}`;
         document.getElementById('resumoMargem').innerText  = `${margem.toFixed(1)}%`;
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -1016,6 +1070,22 @@
         e.preventDefault();
 
         const clientVal    = document.getElementById('osClient').value;
+        const currentTotalValue = parseBRL(document.getElementById('osTotalValue').value);
+        let finalNotes = originalNotes || "";
+
+        // VERIFICADOR DE ALTERAÇÃO E JUSTIFICATIVA
+        if (originalTotalValue > 0 && currentTotalValue !== originalTotalValue) {
+            const motivo = prompt(`O valor global da O.S. foi alterado de R$ ${formatBRL(originalTotalValue)} para R$ ${formatBRL(currentTotalValue)}.\n\nPor favor, justifique o motivo da alteração:` );
+
+            if (motivo === null || motivo.trim() === "") {
+                alert("A O.S. não foi salva. É obrigatório informar o motivo ao alterar os valores de venda.");
+                return;
+            }
+
+            const hoje = new Date().toLocaleDateString('pt-BR');
+            finalNotes += `\n[${hoje}] VALOR ALTERADO de R$ ${formatBRL(originalTotalValue)} para R$ ${formatBRL(currentTotalValue)}. Motivo: ${motivo.trim()}`;
+        }
+
         const allItems = [];
 
         soldItems.forEach(si => {
@@ -1031,7 +1101,7 @@
             allItems.push({
                 description: mi.description,
                 quantity: mi.quantity,
-                unitCost: mi.unitCost,
+                unitCost: mi.unitCost, // se estiver formatando BRL nos materiais precisa usar parseBRL() aqui
                 unitPrice: mi.unitPrice
             });
         });
@@ -1050,7 +1120,8 @@
             title: document.getElementById('osTitle').value,
             status: document.getElementById('osStatus').value,
             installDate: document.getElementById('osDate').value || null,
-            totalValue: parseFloat(document.getElementById('osTotalValue').value) || 0,
+            totalValue: currentTotalValue,
+            notes: finalNotes, // <--- Enviando a justificativa
             quoteId: document.getElementById('osQuote').value || null,
             client: clientVal ? { id: clientVal } : null,
             items: allItems

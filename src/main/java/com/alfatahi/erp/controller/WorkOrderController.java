@@ -90,25 +90,49 @@ public class WorkOrderController {
     @Transactional
     public ResponseEntity<?> saveAjax(@RequestBody WorkOrder workOrder) {
         WorkOrder targetWo;
+        boolean isTotalChanged = false;
+        String changeReasonMsg = "Valor ajustado conforme alteração na O.S.";
 
         if (workOrder.getId() != null) {
             targetWo = workOrderService.findById(workOrder.getId());
             if (targetWo == null) return ResponseEntity.notFound().build();
 
+            BigDecimal oldTotal = targetWo.getTotalValue();
+
             targetWo.setTitle(workOrder.getTitle());
             targetWo.setStatus(workOrder.getStatus());
             targetWo.setDescription(workOrder.getDescription());
+
+            // Atualiza as notas (que agora virão com a justificativa do frontend)
             targetWo.setNotes(workOrder.getNotes());
             targetWo.setInstallDate(workOrder.getInstallDate());
 
-            if (workOrder.getTotalValue() != null && workOrder.getTotalValue().compareTo(BigDecimal.ZERO) > 0) {
-                targetWo.setTotalValue(workOrder.getTotalValue());
+            // Verifica o novo valor
+            BigDecimal newTotal = workOrder.getTotalValue();
+            if (newTotal != null && newTotal.compareTo(BigDecimal.ZERO) > 0) {
+                targetWo.setTotalValue(newTotal);
             } else {
                 targetWo.setTotalValue(workOrderService.calculateTotalValueFromItems(workOrder));
             }
 
-            targetWo.setClient(workOrder.getClient());
+            // Se o valor total for diferente, marcamos a flag para alterar o Contas a Receber
+            if (oldTotal != null && targetWo.getTotalValue().compareTo(oldTotal) != 0) {
+                isTotalChanged = true;
 
+                // Extrai o motivo exato digitado no frontend capturando a linha do log gerada
+                String osNotes = workOrder.getNotes() != null ? workOrder.getNotes() : "";
+                if (osNotes.contains("VALOR ALTERADO")) {
+                    String[] lines = osNotes.split("\n");
+                    for (int i = lines.length - 1; i >= 0; i--) {
+                        if (lines[i].contains("VALOR ALTERADO")) {
+                            changeReasonMsg = lines[i]; // Captura a linha "[DD/MM/YYYY] VALOR ALTERADO... Motivo: XYZ"
+                            break;
+                        }
+                    }
+                }
+            }
+
+            targetWo.setClient(workOrder.getClient());
             targetWo.getItems().clear();
         } else {
             targetWo = workOrder;
@@ -131,14 +155,39 @@ public class WorkOrderController {
 
         workOrderService.save(targetWo);
 
+        // Atualização de Contas a Receber vinculadas
         if (targetWo.getInstallDate() != null && targetWo.getId() != null) {
             List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
                     .filter(r -> r.getWorkOrder() != null && r.getWorkOrder().getId().equals(targetWo.getId()))
                     .collect(Collectors.toList());
 
-            for (AccountsReceivable ar : receivables) {
-                ar.setDueDate(targetWo.getInstallDate());
-                receivableRepo.save(ar);
+            if (!receivables.isEmpty()) {
+                int installmentsCount = receivables.size();
+                BigDecimal newTotal = targetWo.getTotalValue();
+
+                // Divide o novo valor total pela quantidade de parcelas ativas
+                BigDecimal installmentValue = newTotal.divide(new BigDecimal(installmentsCount), 2, RoundingMode.HALF_UP);
+                BigDecimal sumPrevious = installmentValue.multiply(new BigDecimal(installmentsCount - 1));
+                BigDecimal lastInstallment = newTotal.subtract(sumPrevious); // Corrige centavos na ultima parcela
+
+                for (int i = 0; i < installmentsCount; i++) {
+                    AccountsReceivable ar = receivables.get(i);
+
+                    // Mantém a lógica de ajustar a data
+                    if (i == 0) ar.setDueDate(targetWo.getInstallDate());
+                    else ar.setDueDate(targetWo.getInstallDate().plusMonths(i));
+
+                    // Se o valor global mudou, reescrevemos o valor a receber e adicionamos a justificativa
+                    if (isTotalChanged) {
+                        ar.setTotalAmount(i == installmentsCount - 1 ? lastInstallment : installmentValue);
+
+                        // Grava a mensagem capturada com o motivo
+                        String currentNotes = ar.getNotes() != null ? ar.getNotes() : "";
+                        ar.setNotes(currentNotes + "\n[Sistema] " + changeReasonMsg);
+                    }
+
+                    receivableRepo.save(ar);
+                }
             }
         }
 
@@ -173,7 +222,8 @@ public class WorkOrderController {
     @PostMapping("/cancel/{id}")
     @ResponseBody
     @Transactional
-    public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody String reason) {WorkOrder wo = workOrderService.findById(id);
+    public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody String reason) {
+        WorkOrder wo = workOrderService.findById(id);
         if(wo != null) {
             wo.setStatus("cancelled");
             wo.setNotes((wo.getNotes() != null ? wo.getNotes() : "") + "\n>>> CANCELADA: " + reason);

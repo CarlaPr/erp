@@ -405,47 +405,34 @@
                         print-color-adjust: exact !important;
                         color-adjust: exact !important;
                     }
-
                     @page { size: A4 portrait; margin: 10mm 10mm; }
 
-                    html, body, main {
-                        height: auto !important;
-                        min-height: auto !important;
-                        background-color: white !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        overflow: visible !important;
-                    }
-
+                    html, body, main { height: auto !important; background-color: white !important; margin: 0 !important; padding: 0 !important; }
                     body > div:not(main) { display: none !important; }
                     main > :not(#receiptModal) { display: none !important; }
 
-                    #receiptModal {
-                        position: relative !important;
-                        display: block !important;
-                        height: auto !important;
-                        background: transparent !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
+                    #receiptModal { position: relative !important; display: block !important; height: auto !important; background: transparent !important; padding: 0 !important; margin: 0 !important; }
+                    #printableReceiptArea { width: 100% !important; max-width: 100% !important; box-shadow: none !important; border: none !important; }
 
-                    #printableReceiptArea {
-                        position: relative !important;
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        display: block !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        box-shadow: none !important;
-                        border: none !important;
-                    }
-
-                    table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto !important; }
+                    table { width: 100% !important; border-collapse: collapse !important; }
                     thead { display: table-header-group !important; }
                     tr { page-break-inside: avoid !important; page-break-after: auto !important; }
                     .avoid-break { page-break-inside: avoid !important; break-inside: avoid !important; }
-
                     .print\:hidden { display: none !important; }
+
+                    /* RODAPÉ FIXO NA IMPRESSORA */
+                    .fixed-print-footer {
+                        position: fixed !important;
+                        bottom: 0 !important;
+                        left: 0 !important;
+                        width: 100% !important;
+                        display: flex !important;
+                        background-color: white !important;
+                        padding-top: 10px !important;
+                        padding-bottom: 5px !important;
+                        border-top: 2px solid #e2e8f0 !important;
+                        z-index: 9999 !important;
+                    }
                 }
             </style>
 
@@ -487,8 +474,10 @@
 
                     <div class="text-right shrink-0 self-start">
                         <div class="bg-slate-900 text-white px-5 py-4 rounded-2xl inline-block min-w-[200px]">
-                            <p class="text-[11px] font-bold font-mono uppercase tracking-widest text-slate-400 mb-1">ORÇAMENTO</p>
-                            <p class="text-3xl font-black font-mono leading-none" id="recNum">N° --</p>
+                            <div class="text-[11px] font-bold font-mono uppercase tracking-widest text-slate-400 mb-1">ORÇAMENTO</div>
+
+                            <div class="text-3xl font-black font-mono leading-tight py-1" id="recNum">N° --</div>
+
                             <div class="mt-3 pt-2 border-t border-slate-700 text-left">
                                 <span class="text-[11px] text-slate-400 font-bold block uppercase tracking-wide">Data de emissão</span>
                                 <span id="recDate" class="text-sm font-black text-white">--/--/----</span>
@@ -585,10 +574,23 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mt-6 pt-3 border-t border-slate-100 text-center">
+                    <div class="hidden print:block w-full" style="height: 25mm;"></div>
+
+                    <div class="mt-6 pt-3 border-t border-slate-100 text-center print:hidden">
                         <p class="text-[11px] font-mono text-slate-400 font-bold tracking-wide">
-                            Documento Comercial Processado Digitalmente &nbsp;—&nbsp; <span id="pdfCompanyFooterName">Nome da Empresa</span> &nbsp;
+                            Documento Comercial Processado Digitalmente
                         </p>
+                    </div>
+
+                    <div class="fixed-print-footer hidden justify-between items-center text-slate-500 w-full px-2">
+                        <div>
+                            <p class="font-bold text-slate-800 text-[12px] uppercase tracking-wide" id="pfName">Nome da Empresa</p>
+                            <p class="text-[10px]" id="pfDetails">CNPJ/CPF: 00.000.000/0000-00 | Endereço</p>
+                            <p class="text-[10px]" id="pfContact">email@empresa.com | (00) 0000-0000</p>
+                        </div>
+                        <div class="text-right font-bold text-slate-400 text-[10px] font-mono">
+                            Documento Oficial Comercial
+                        </div>
                     </div>
                 </div>
 
@@ -1330,8 +1332,14 @@
 
     function generateDynamicPdfNameAndPrint() {
         const originalErpTitle = document.title;
-        document.title = `Orçamento - ${currentActiveClientForPdf} - ${currentActiveNumberForPdf}`;
+
+        const empresaEl = document.getElementById('pdfCompanyName');
+        const empresa = (empresaEl && empresaEl.innerText.trim()) ? empresaEl.innerText.trim() : 'Empresa';
+
+        document.title = `${currentActiveNumberForPdf} - ${currentActiveClientForPdf} - ${empresa}`;
+
         window.print();
+
         document.title = originalErpTitle;
     }
 
@@ -1351,18 +1359,20 @@
 
     async function generateReceiptPdfBlob() {
         if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-            throw new Error('As bibliotecas de geração de PDF não carregaram. Verifique sua conexão com a internet e tente novamente.');
+            throw new Error('As bibliotecas de geração de PDF não carregaram.');
         }
 
         const original = document.getElementById('printableReceiptArea');
         const CAPTURE_WIDTH = 896;
-
         const clone = original.cloneNode(true);
         clone.id = 'printableReceiptAreaClone';
 
         clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-
         clone.querySelectorAll('.print\\:hidden').forEach(el => el.remove());
+
+        // Removemos o rodapé da impressora do clone, pois desenharemos via JS nativo com paginação
+        const cloneFooter = clone.querySelector('.fixed-print-footer');
+        if (cloneFooter) cloneFooter.remove();
 
         clone.style.position = 'fixed';
         clone.style.top = '0';
@@ -1380,7 +1390,6 @@
         let canvas;
         try {
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
             canvas = await html2canvas(clone, {
                 scale: 2,
                 useCORS: true,
@@ -1400,17 +1409,59 @@
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
+        // LÓGICA CORRIGIDA: A altura útil exclui a área do rodapé para o texto não ser escondido!
+        const footerHeight = 18;
+        const usableHeight = pageHeight - footerHeight;
+
         let heightLeft = imgHeight;
         let position = 0;
 
         pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        heightLeft -= usableHeight;
 
         while (heightLeft > 0) {
-            position -= pageHeight;
+            position -= usableHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
+            heightLeft -= usableHeight;
+        }
+
+        // DESENHAR O RODAPÉ SOBRE TODAS AS PÁGINAS COM FUNDO SÓLIDO
+        const totalPages = pdf.internal.getNumberOfPages();
+        const cName = document.getElementById('pdfCompanyName')?.innerText || '';
+        let cDoc = document.getElementById('pdfCompanyDoc')?.innerText || '';
+        cDoc = cDoc.replace('CNPJ/CPF: ', ''); // Limpa duplicata se existir
+        const cAddr = document.getElementById('pdfCompanyAddress')?.innerText || '';
+        const cEmail = document.getElementById('pdfCompanyEmail')?.innerText || '';
+        const cPhone = document.getElementById('pdfCompanyPhone')?.innerText || '';
+
+        for (let i = 1; i <= totalPages; i++) {
+            pdf.setPage(i);
+
+            // Bloco branco absoluto
+            pdf.setFillColor(255, 255, 255);
+            pdf.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
+
+            // Linha divisória
+            pdf.setDrawColor(200, 200, 200);
+            pdf.setLineWidth(0.3);
+            pdf.line(10, pageHeight - footerHeight + 1, pageWidth - 10, pageHeight - footerHeight + 1);
+
+            // Textos da Empresa
+            pdf.setFontSize(7.5);
+            pdf.setTextColor(110, 110, 110);
+
+            pdf.setFont(undefined, 'bold');
+            pdf.text(cName, 10, pageHeight - footerHeight + 6);
+
+            pdf.setFont(undefined, 'normal');
+            pdf.text(`CNPJ/CPF: ${cDoc}  |  ${cAddr}`, 10, pageHeight - footerHeight + 10);
+            pdf.text(`${cEmail}  |  ${cPhone}`, 10, pageHeight - footerHeight + 14);
+
+            // Numeração de Páginas dinâmica à direita
+            pdf.setFont(undefined, 'bold');
+            const rightText = `Página ${i} de ${totalPages}`;
+            pdf.text(rightText, pageWidth - 10, pageHeight - footerHeight + 10, { align: 'right' });
         }
 
         return pdf.output('blob');
@@ -1505,6 +1556,11 @@
         fetch(`/quotes/view-data/${id}`)
             .then(res => res.json())
             .then(q => {
+
+                currentActiveNumberForPdf = q.number || 'ORC-0000';
+                currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
+                currentActiveClientPhoneForPdf = q.client && q.client.phone ? q.client.phone : '';
+                // ==========================================
 
                 const setSafeText = (id, text) => {
                     const el = document.getElementById(id);
@@ -1609,6 +1665,11 @@
                     setSafeText('pdfCompanySignatureDoc', 'CNPJ/CPF: ' + (q.profile.document || '--'));
                     setSafeText('pdfCompanyFooterName', q.profile.companyName || '');
                     setSafeText('pdfCompanySignatureName', q.profile.companyName || '');
+
+                    setSafeText('pfName', q.profile.companyName || '');
+                    let pfDocClean = q.profile.document ? q.profile.document.replace('CNPJ/CPF: ', '') : '--';
+                    setSafeText('pfDetails', `CNPJ/CPF: ${pfDocClean} | ${q.profile.address || ''}`);
+                    setSafeText('pfContact', `${q.profile.email || ''} | ${q.profile.phone || ''}`);
 
                     const logoEl = document.getElementById('pdfCompanyLogo');
                     if(logoEl) { logoEl.src = q.profile.logoUrl || ''; logoEl.style.display = q.profile.logoUrl ? 'block' : 'none'; }
@@ -1840,10 +1901,38 @@
         "Box de Banheiro - Elegance": "Sistema Elegance.\nRoldanas aparentes cromadas.\nVidro temperado 8mm.\nInstalação inclusa.",
         "Fechamento de Sacada": "Vidro temperado 8mm ou 10mm.\nSistema retrátil.\nInstalação inclusa.",
         "Janela": "Vidro temperado 8mm incolor.\nFerragens e trincos.\nInstalação inclusa.",
-        "Espelho": "Espelho Cebrace 4mm.\nInstalação inclusa.",
-        "Espelho Lapidado": "Espelho Cebrace 4mm.\nAcabamento lapidado nas bordas.\nInstalação inclusa.",
-        "Espelho Bisote": "Espelho Cebrace 4mm.\nAcabamento bisotê.\nInstalação inclusa.",
-        "Espelho LED": "Espelho Cebrace 4mm.\nEstrutura traseira.\nIluminação LED embutida.\nInstalação inclusa.",
+        "Espelho": "Fornecimento e instalação de espelho Cebrace 4 mm, produzido com tecnologia de alta qualidade, proporcionando excelente reflexão de imagem, maior durabilidade e resistência à umidade em ambientes internos.\n" +
+            "\n" +
+            "Especificações do espelho:\n" +
+            "Marca: Cebrace\n" +
+            "Espessura: 4 mm\n" +
+            "Alta definição e nitidez na reflexão\n" +
+            "Bordas lapidadas (quando especificado)\n" +
+            "Indicado para residências, comércios e escritórios",
+        "Espelho Lapidado": "Fornecimento e instalação de espelho Cebrace 4 mm, produzido com tecnologia de alta qualidade, proporcionando excelente reflexão de imagem, maior durabilidade e resistência à umidade em ambientes internos.\n" +
+            "\n" +
+            "Especificações do espelho:\n" +
+            "Marca: Cebrace\n" +
+            "Espessura: 4 mm\n" +
+            "Alta definição e nitidez na reflexão\n" +
+            "Bordas lapidadas (quando especificado)\n" +
+            "Indicado para residências, comércios e escritórios",
+        "Espelho Bisote": "Fornecimento e instalação de espelho Cebrace 4 mm, produzido com tecnologia de alta qualidade, proporcionando excelente reflexão de imagem, maior durabilidade e resistência à umidade em ambientes internos.\n" +
+            "\n" +
+            "Especificações do espelho:\n" +
+            "Marca: Cebrace\n" +
+            "Espessura: 4 mm\n" +
+            "Alta definição e nitidez na reflexão\n" +
+            "Bordas lapidadas (quando especificado)\n" +
+            "Indicado para residências, comércios e escritórios",
+        "Espelho LED": "Fornecimento e instalação de espelho Cebrace 4 mm, produzido com tecnologia de alta qualidade, proporcionando excelente reflexão de imagem, maior durabilidade e resistência à umidade em ambientes internos.\n" +
+            "\n" +
+            "Especificações do espelho:\n" +
+            "Marca: Cebrace\n" +
+            "Espessura: 4 mm\n" +
+            "Alta definição e nitidez na reflexão\n" +
+            "Bordas lapidadas (quando especificado)\n" +
+            "Indicado para residências, comércios e escritórios",
         "Porta de Vidro": "Porta de Vidro temperado 8mm.\nFechadura.\nPuxador.\nInstalação inclusa.",
         "Kit Versatik VT3": "Sistema Versatik VT3.\n3 folhas de vidro temperado 8mm.\nInstalação inclusa.",
         "Guarda Corpo": "Vidro temperado ou laminado.\nSuportes e fixadores em inox ou alumínio.\nInstalação inclusa.",
