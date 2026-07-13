@@ -418,7 +418,7 @@
                     <button id="btnShareWhatsAppTop" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm hover:bg-emerald-700 transition shadow-md">
                         <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
                     </button>
-                    <button onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm hover:bg-slate-800 transition shadow-md">
+                    <button id="btnPrintPdfTop" onclick="generateAndPrintQuotePdf()" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm hover:bg-slate-800 transition shadow-md">
                         <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / Salvar PDF
                     </button>
                     <button onclick="closeModal('receiptModal')" class="text-slate-400 hover:text-slate-900 bg-white border border-slate-200 p-2.5 rounded-xl transition-colors" title="Fechar">
@@ -449,7 +449,6 @@
                     .avoid-break { page-break-inside: avoid !important; break-inside: avoid !important; }
                     .print\:hidden { display: none !important; }
 
-                    /* RODAPÉ FIXO NA IMPRESSORA */
                     .fixed-print-footer {
                         position: fixed !important;
                         bottom: 0 !important;
@@ -634,7 +633,7 @@
                 <div class="flex justify-end gap-4 print:hidden border-t border-slate-200 pt-6 mt-6">
                     <button onclick="closeModal('receiptModal')" class="bg-white border border-slate-300 text-slate-700 px-6 py-3 rounded-xl font-bold text-base hover:bg-slate-50 transition">Fechar Visualização</button>
                     <button id="btnShareWhatsAppBottom" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-black flex items-center gap-3 text-base hover:bg-emerald-700 transition shadow-lg shadow-emerald-600/20"><i data-lucide="message-circle" class="w-5 h-5"></i> Compartilhar no WhatsApp</button>
-                    <button onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-black flex items-center gap-3 text-base hover:bg-slate-800 transition shadow-lg shadow-black/20"><i data-lucide="printer" class="w-5 h-5"></i> Imprimir / Salvar PDF</button>
+                    <button id="btnPrintPdfBottom" onclick="generateAndPrintQuotePdf()" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-black flex items-center gap-3 text-base hover:bg-slate-800 transition shadow-lg shadow-black/20"><i data-lucide="printer" class="w-5 h-5"></i> Imprimir / Salvar PDF</button>
                 </div>
 
             </div>
@@ -774,15 +773,13 @@
 
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <script>
     let currentActiveClientForPdf = "Consumidor Final";
     let currentActiveNumberForPdf = "000";
     let currentActiveClientPhoneForPdf = "";
+    let currentActiveQuoteIdForPdf = null;
     let currentItems = [];
-    let allClientsData = []; // Utilizado para o modal de busca
+    let allClientsData = [];
 
     function toggleModal(id, show) {
         const m = document.getElementById(id);
@@ -796,13 +793,10 @@
         toggleModal(id, false);
     }
 
-    // --- NOVA LÓGICA DO MODAL DE PESQUISA DE CLIENTES --- //
-
     function openClientSearchModal() {
         const select = document.getElementById('quoteClient');
         allClientsData = [];
 
-        // Pega todos os clients salvos no select nativo
         for (let i = 1; i < select.options.length; i++) {
             const opt = select.options[i];
             allClientsData.push({
@@ -814,7 +808,6 @@
             });
         }
 
-        // Ordena por ordem alfabética o Array de pesquisa
         allClientsData.sort((a, b) => a.name.localeCompare(b.name));
 
         document.getElementById('searchClientInput').value = '';
@@ -823,7 +816,6 @@
         toggleModal('clientSearchModal', true);
         if(typeof lucide !== 'undefined') lucide.createIcons();
 
-        // Foca automaticamente no input de busca ao abrir
         setTimeout(() => document.getElementById('searchClientInput').focus(), 100);
     }
 
@@ -961,7 +953,6 @@
         const payment = document.getElementById('quotePayment').value || '';
         const instContainer = document.getElementById('installmentsContainer');
 
-        // Libera a aba de parcelas se o usuário marcou Crédito ou Link de Pagamento
         if (payment.includes('Crédito') || payment.includes('Link de Pagamento')) {
             instContainer.style.display = 'block';
         } else {
@@ -1373,17 +1364,61 @@
         }).catch(err => console.error("Erro crítico:", err));
     }
 
-    function generateDynamicPdfNameAndPrint() {
-        const originalErpTitle = document.title;
+    function setPdfButtonsLoading(buttons, loading, loadingHtml, originalHtmlMap) {
+        buttons.forEach(b => {
+            if (!b) return;
+            if (loading) {
+                originalHtmlMap.set(b, b.innerHTML);
+                b.disabled = true;
+                b.innerHTML = loadingHtml;
+            } else {
+                b.disabled = false;
+                if (originalHtmlMap.has(b)) b.innerHTML = originalHtmlMap.get(b);
+            }
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
 
-        const empresaEl = document.getElementById('pdfCompanyName');
-        const empresa = (empresaEl && empresaEl.innerText.trim()) ? empresaEl.innerText.trim() : 'Empresa';
 
-        document.title = `${currentActiveNumberForPdf} - ${currentActiveClientForPdf} - ${empresa}`;
+    async function generateReceiptPdfBlob() {
+        if (!currentActiveQuoteIdForPdf) {
+            throw new Error('ID do orçamento não encontrado. Feche e reabra o orçamento.');
+        }
+        const response = await fetch(`/quotes/pdf/${currentActiveQuoteIdForPdf}`, {
+            credentials: 'same-origin'
+        });
+        if (!response.ok) {
+            const detail = await response.text().catch(() => '');
+            throw new Error(`Falha ao gerar PDF no servidor (HTTP ${response.status}). ${detail}`.trim());
+        }
+        return await response.blob();
+    }
 
-        window.print();
+    async function generateAndPrintQuotePdf() {
+        if (!currentActiveQuoteIdForPdf) {
+            alert('Erro: ID do orçamento não encontrado. Feche e reabra o orçamento.');
+            return;
+        }
 
-        document.title = originalErpTitle;
+        const buttons = [document.getElementById('btnPrintPdfTop'), document.getElementById('btnPrintPdfBottom')].filter(Boolean);
+        const originalHtmlMap = new Map();
+        setPdfButtonsLoading(buttons, true, '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Abrindo PDF...', originalHtmlMap);
+
+        try {
+            const pdfUrl = `/quotes/pdf/${currentActiveQuoteIdForPdf}`;
+            const newTab = window.open(pdfUrl, '_blank');
+
+            if (!newTab) {
+                // Pop-up bloqueado: faz download via blob como fallback
+                const pdfBlob = await generateReceiptPdfBlob();
+                downloadBlobFile(pdfBlob, buildQuoteShareFileName());
+            }
+        } catch (err) {
+            console.error('Erro ao abrir PDF do orçamento:', err);
+            alert('Não foi possível abrir o PDF.\n\nDetalhe: ' + (err.message || ''));
+        } finally {
+            setPdfButtonsLoading(buttons, false, '', originalHtmlMap);
+        }
     }
 
     function buildQuoteShareFileName() {
@@ -1398,116 +1433,6 @@
             .trim();
 
         return `${nomeArquivo}.pdf`;
-    }
-
-    async function generateReceiptPdfBlob() {
-        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-            throw new Error('As bibliotecas de geração de PDF não carregaram.');
-        }
-
-        const original = document.getElementById('printableReceiptArea');
-        const CAPTURE_WIDTH = 896;
-        const clone = original.cloneNode(true);
-        clone.id = 'printableReceiptAreaClone';
-
-        clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-        clone.querySelectorAll('.print\\:hidden').forEach(el => el.remove());
-
-        // Removemos o rodapé da impressora do clone, pois desenharemos via JS nativo com paginação
-        const cloneFooter = clone.querySelector('.fixed-print-footer');
-        if (cloneFooter) cloneFooter.remove();
-
-        clone.style.position = 'fixed';
-        clone.style.top = '0';
-        clone.style.left = '0';
-        clone.style.zIndex = '-1';
-        clone.style.pointerEvents = 'none';
-        clone.style.margin = '0';
-        clone.style.boxShadow = 'none';
-        clone.style.transform = `translateX(-${CAPTURE_WIDTH + 200}px)`;
-        clone.style.width = CAPTURE_WIDTH + 'px';
-        clone.style.maxWidth = CAPTURE_WIDTH + 'px';
-
-        document.body.appendChild(clone);
-
-        let canvas;
-        try {
-            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-            canvas = await html2canvas(clone, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                width: CAPTURE_WIDTH,
-                windowWidth: CAPTURE_WIDTH
-            });
-        } finally {
-            clone.remove();
-        }
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pageWidth;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-        // LÓGICA CORRIGIDA: A altura útil exclui a área do rodapé para o texto não ser escondido!
-        const footerHeight = 18;
-        const usableHeight = pageHeight - footerHeight;
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= usableHeight;
-
-        while (heightLeft > 0) {
-            position -= usableHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= usableHeight;
-        }
-
-        // DESENHAR O RODAPÉ SOBRE TODAS AS PÁGINAS COM FUNDO SÓLIDO
-        const totalPages = pdf.internal.getNumberOfPages();
-        const cName = document.getElementById('pdfCompanyName')?.innerText || '';
-        let cDoc = document.getElementById('pdfCompanyDoc')?.innerText || '';
-        cDoc = cDoc.replace('CNPJ/CPF: ', ''); // Limpa duplicata se existir
-        const cAddr = document.getElementById('pdfCompanyAddress')?.innerText || '';
-        const cEmail = document.getElementById('pdfCompanyEmail')?.innerText || '';
-        const cPhone = document.getElementById('pdfCompanyPhone')?.innerText || '';
-
-        for (let i = 1; i <= totalPages; i++) {
-            pdf.setPage(i);
-
-            // Bloco branco absoluto
-            pdf.setFillColor(255, 255, 255);
-            pdf.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
-
-            // Linha divisória
-            pdf.setDrawColor(200, 200, 200);
-            pdf.setLineWidth(0.3);
-            pdf.line(10, pageHeight - footerHeight + 1, pageWidth - 10, pageHeight - footerHeight + 1);
-
-            // Textos da Empresa
-            pdf.setFontSize(7.5);
-            pdf.setTextColor(110, 110, 110);
-
-            pdf.setFont(undefined, 'bold');
-            pdf.text(cName, 10, pageHeight - footerHeight + 6);
-
-            pdf.setFont(undefined, 'normal');
-            pdf.text(`CNPJ/CPF: ${cDoc}  |  ${cAddr}`, 10, pageHeight - footerHeight + 10);
-            pdf.text(`${cEmail}  |  ${cPhone}`, 10, pageHeight - footerHeight + 14);
-
-            // Numeração de Páginas dinâmica à direita
-            pdf.setFont(undefined, 'bold');
-            const rightText = `Página ${i} de ${totalPages}`;
-            pdf.text(rightText, pageWidth - 10, pageHeight - footerHeight + 10, { align: 'right' });
-        }
-
-        return pdf.output('blob');
     }
 
     function downloadBlobFile(blob, filename) {
@@ -1599,9 +1524,9 @@
         fetch(`/quotes/view-data/${id}`)
             .then(res => res.json())
             .then(q => {
-
-                currentActiveNumberForPdf = q.number || 'ORC-0000';
-                currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
+                currentActiveQuoteIdForPdf    = id;   // salva ID para geração server-side do PDF
+                currentActiveNumberForPdf     = q.number || 'ORC-0000';
+                currentActiveClientForPdf     = q.client ? q.client.name : 'Consumidor Final';
                 currentActiveClientPhoneForPdf = q.client && q.client.phone ? q.client.phone : '';
                 // ==========================================
 

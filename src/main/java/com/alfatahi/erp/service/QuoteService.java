@@ -137,31 +137,19 @@ public class QuoteService {
 
         String paymentMethod = quote.getPaymentMethod();
 
-        int numParcelas = (quote.getInstallments() != null && quote.getInstallments() > 0) ? quote.getInstallments() : 1;
+        int numParcelasCliente = (quote.getInstallments() != null && quote.getInstallments() > 0) ? quote.getInstallments() : 1;
 
-        BigDecimal valorParcela = finalTotal.divide(new BigDecimal(numParcelas), 2, RoundingMode.HALF_UP);
-        BigDecimal somaParcelasAnteriores = valorParcela.multiply(new BigDecimal(numParcelas - 1));
-        BigDecimal valorUltimaParcela = finalTotal.subtract(somaParcelasAnteriores);
-
-        for (int i = 0; i < numParcelas; i++) {
-            boolean isUltima = (i == numParcelas - 1);
-            AccountsReceivable parcela = new AccountsReceivable();
-            parcela.setClient(quote.getClient());
-            parcela.setWorkOrder(os);
-            parcela.setPaymentMethod(paymentMethod);
-            parcela.setDescription(numParcelas == 1
-                    ? "Ref. " + quote.getNumber()
-                    : "Ref. " + quote.getNumber() + " — Parcela " + (i+1) + "/" + numParcelas);
-            parcela.setTotalAmount(isUltima ? valorUltimaParcela : valorParcela);
-
-            parcela.setDueDate(
-                    numParcelas == 1
-                            ? dataEntrega
-                            : dataEntrega.plusMonths(i)
-            );
-
-            parcela.setStatus("pending");
-            finRepo.save(parcela);
-        }
+        AccountsReceivable receivable = new AccountsReceivable();
+        receivable.setClient(quote.getClient());
+        receivable.setWorkOrder(os);
+        receivable.setPaymentMethod(paymentMethod);
+        receivable.setDescription(numParcelasCliente == 1
+                ? "Ref. " + quote.getNumber()
+                : "Ref. " + quote.getNumber() + " — Pago em " + numParcelasCliente + "x no cartão (recebimento integral via maquininha)");
+        receivable.setTotalAmount(finalTotal);
+        receivable.setInstallments(numParcelasCliente);
+        receivable.setDueDate(dataEntrega);
+        receivable.setStatus("pending");
+        finRepo.save(receivable);
     }
 }

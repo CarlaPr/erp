@@ -7,20 +7,26 @@ import com.alfatahi.erp.entity.WorkOrderItem;
 import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.QuoteRepository;
 import com.alfatahi.erp.service.QuoteService;
-import org.hibernate.Hibernate; // IMPORT NECESSÁRIO
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import org.hibernate.Hibernate;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional; // IMPORT NECESSÁRIO
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.math.RoundingMode;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Controller
 @RequestMapping("/quotes")
@@ -30,15 +36,194 @@ public class QuoteController {
     private final ClientRepository clientRepo;
     private final QuoteService quoteService;
     private final com.alfatahi.erp.service.ScheduleService scheduleService;
-
     private final com.alfatahi.erp.repository.ProfileRepository profileRepo;
+    private final TemplateEngine templateEngine;
 
-    public QuoteController(QuoteRepository quoteRepo, ClientRepository clientRepo, QuoteService quoteService, com.alfatahi.erp.service.ScheduleService scheduleService, com.alfatahi.erp.repository.ProfileRepository profileRepo) {
+    public QuoteController(QuoteRepository quoteRepo, ClientRepository clientRepo, QuoteService quoteService,
+                           com.alfatahi.erp.service.ScheduleService scheduleService,
+                           com.alfatahi.erp.repository.ProfileRepository profileRepo,
+                           TemplateEngine templateEngine) {
         this.quoteRepo = quoteRepo;
         this.clientRepo = clientRepo;
         this.quoteService = quoteService;
         this.scheduleService = scheduleService;
         this.profileRepo = profileRepo;
+        this.templateEngine = templateEngine;
+    }
+
+    // ============================================================
+    //  GERAÇÃO SERVER-SIDE DE PDF  –  /quotes/pdf/{id}
+    //  Funciona identicamente em qualquer browser/dispositivo.
+    // ============================================================
+    @GetMapping("/pdf/{id}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable UUID id) {
+        try {
+            Quote quote = quoteRepo.findById(id).orElseThrow();
+            Hibernate.initialize(quote.getItems());
+            if (quote.getProfile() != null) Hibernate.initialize(quote.getProfile());
+            if (quote.getClient() != null)  Hibernate.initialize(quote.getClient());
+
+            // ── Cálculo dos itens (mesma lógica do JavaScript original) ──
+            List<Map<String, String>> itemRows = new ArrayList<>();
+            BigDecimal gross = BigDecimal.ZERO;
+
+            for (QuoteItem item : quote.getItems()) {
+                BigDecimal w   = nvl(item.getWidth());
+                BigDecimal h   = nvl(item.getHeight());
+                BigDecimal qty = nvl(item.getQuantity(), BigDecimal.ONE);
+                BigDecimal up  = nvl(item.getUnitPrice());
+
+                BigDecimal m2        = (w.compareTo(BigDecimal.ZERO) > 0 && h.compareTo(BigDecimal.ZERO) > 0) ? w.multiply(h) : BigDecimal.ONE;
+                BigDecimal calcUnit  = m2.multiply(up);
+                BigDecimal subtotal  = qty.multiply(calcUnit);
+                gross = gross.add(subtotal);
+
+                Map<String, String> row = new LinkedHashMap<>();
+                row.put("category",  nvlStr(item.getCategory(), "Item"));
+                row.put("product",   nvlStr(item.getProduct(),  ""));
+                row.put("quantity",  qty.stripTrailingZeros().toPlainString());
+                row.put("unitPrice", formatBRL(calcUnit));
+                row.put("subtotal",  formatBRL(subtotal));
+                itemRows.add(row);
+            }
+
+            BigDecimal discountPct = nvl(quote.getDiscountPercent());
+            boolean hasDiscount    = discountPct.compareTo(BigDecimal.ZERO) > 0;
+            BigDecimal net;
+            if (quote.getTotalValue() != null && quote.getTotalValue().compareTo(BigDecimal.ZERO) > 0) {
+                net = quote.getTotalValue();
+            } else {
+                BigDecimal discAmt = gross.multiply(discountPct).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+                net = gross.subtract(discAmt);
+            }
+
+            // ── Parcelamento ──
+            String pm = nvlStr(quote.getPaymentMethod(), "");
+            boolean showInstall = (pm.contains("Crédito") || pm.contains("Link de Pagamento"))
+                    && quote.getInstallments() != null && quote.getInstallments() > 1;
+            String installText = "";
+            if (showInstall) {
+                BigDecimal val = net.divide(new BigDecimal(quote.getInstallments()), 2, RoundingMode.HALF_UP);
+                installText = "Em até " + quote.getInstallments() + "x de " + formatBRL(val);
+            }
+
+            // ── Dados da empresa (perfil) ──
+            String companyName    = quote.getProfile() != null ? nvlStr(quote.getProfile().getCompanyName(), "") : "";
+            String companyDoc     = quote.getProfile() != null ? nvlStr(quote.getProfile().getDocument(), "--") : "--";
+            String companyAddress = quote.getProfile() != null ? nvlStr(quote.getProfile().getAddress(), "") : "";
+            String companyEmail   = quote.getProfile() != null ? nvlStr(quote.getProfile().getEmail(), "") : "";
+            String companyPhone   = quote.getProfile() != null ? nvlStr(quote.getProfile().getPhone(), "") : "";
+
+            // ── Dados do cliente ──
+            String clientName = quote.getClient() != null ? nvlStr(quote.getClient().getName(), "Consumidor Final") : "Consumidor Final";
+            String clientDoc  = quote.getClient() != null ? nvlStr(quote.getClient().getDocument(), "") : "";
+            String clientPhone= quote.getClient() != null ? nvlStr(quote.getClient().getPhone(), "") : "";
+            String clientEmail= quote.getClient() != null ? nvlStr(quote.getClient().getEmail(), "") : "";
+            String clientAddr = "";
+            if (quote.getClient() != null) {
+                String addr = nvlStr(quote.getClient().getAddress(), "");
+                String city = nvlStr(quote.getClient().getCity(), "");
+                clientAddr = addr + (!addr.isEmpty() && !city.isEmpty() ? " - " : "") + city;
+            }
+            boolean hasClientDetails = !clientDoc.isEmpty() || !clientPhone.isEmpty() || !clientEmail.isEmpty() || !clientAddr.isEmpty();
+
+            // ── Imagens como Base64 ──
+            String logoB64    = toBase64Uri(quote.getProfile() != null ? quote.getProfile().getLogoUrl() : null);
+            String sigCoB64   = toBase64Uri(quote.getProfile() != null ? quote.getProfile().getSignatureUrl() : null);
+            String sigCliB64  = toBase64Uri(nvlStr(quote.getClientSignature(), null));
+            boolean clientSigned = quote.getClientSignature() != null && !quote.getClientSignature().isBlank();
+
+            // ── Número e data ──
+            String num = nvlStr(quote.getNumber(), "ORC-0000").replace("ORC-", "");
+            String dt  = quote.getDateCreated() != null
+                    ? quote.getDateCreated().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "--/--/----";
+
+            // ── Monta contexto Thymeleaf ──
+            Context ctx = new Context(Locale.forLanguageTag("pt-BR"));
+            ctx.setVariable("numDisplay",        num);
+            ctx.setVariable("dateFormatted",     dt);
+            ctx.setVariable("companyName",       companyName);
+            ctx.setVariable("companyDoc",        companyDoc);
+            ctx.setVariable("companyAddress",    companyAddress);
+            ctx.setVariable("companyEmail",      companyEmail);
+            ctx.setVariable("companyPhone",      companyPhone);
+            ctx.setVariable("clientName",        clientName);
+            ctx.setVariable("clientDoc",         clientDoc);
+            ctx.setVariable("clientPhone",       clientPhone);
+            ctx.setVariable("clientEmail",       clientEmail);
+            ctx.setVariable("clientAddress",     clientAddr);
+            ctx.setVariable("hasClientDetails",  hasClientDetails);
+            ctx.setVariable("itemRows",          itemRows);
+            ctx.setVariable("hasDiscount",       hasDiscount);
+            ctx.setVariable("gross",             formatBRL(gross));
+            ctx.setVariable("discountPct",       discountPct.stripTrailingZeros().toPlainString());
+            ctx.setVariable("net",               formatBRL(net));
+            ctx.setVariable("showInstallments",  showInstall);
+            ctx.setVariable("installmentsText",  installText);
+            ctx.setVariable("paymentMethod",     nvlStr(quote.getPaymentMethod(), "Não informado"));
+            ctx.setVariable("warranty",          nvlStr(quote.getWarranty(), ""));
+            ctx.setVariable("observations",      nvlStr(quote.getObservations(), ""));
+            ctx.setVariable("clientSigned",      clientSigned);
+            ctx.setVariable("logoBase64",        logoB64);
+            ctx.setVariable("sigCompanyBase64",  sigCoB64);
+            ctx.setVariable("sigClientBase64",   sigCliB64);
+
+            // ── Renderiza o template e gera o PDF ──
+            String html = templateEngine.process("quote-pdf", ctx);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+            builder.useFastMode();
+            builder.withHtmlContent(html, null);
+            builder.toStream(out);
+            builder.run();
+            byte[] pdfBytes = out.toByteArray();
+
+            // ── Nome do arquivo (mesmo padrão do JS) ──
+            String rawName = nvlStr(quote.getNumber(), "ORC-0000")
+                    + " - " + clientName
+                    + " - " + (companyName.isEmpty() ? "Empresa" : companyName);
+            String fileName = rawName.replaceAll("[\\\\/:*?\"<>|]", "").replaceAll("\\s+", " ").trim() + ".pdf";
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName.replace("\"", "'") + "\"")
+                    .body(pdfBytes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────
+    private BigDecimal nvl(BigDecimal v) { return v != null ? v : BigDecimal.ZERO; }
+    private BigDecimal nvl(BigDecimal v, BigDecimal def) { return v != null ? v : def; }
+    private String nvlStr(String v, String def) { return (v != null && !v.isBlank()) ? v : (def != null ? def : ""); }
+
+    private String formatBRL(BigDecimal v) {
+        NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
+        return nf.format(v != null ? v : BigDecimal.ZERO);
+    }
+
+    /** Converte uma URL de imagem em data URI base64, para embutir no HTML do PDF. */
+    private String toBase64Uri(String url) {
+        if (url == null || url.isBlank()) return null;
+        if (url.startsWith("data:"))       return url;  // já é data URI
+        try {
+            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+            conn.setConnectTimeout(6000);
+            conn.setReadTimeout(12000);
+            conn.setRequestProperty("User-Agent", "ERP-PDF-Generator/1.0");
+            byte[] bytes   = conn.getInputStream().readAllBytes();
+            String mime    = conn.getContentType();
+            if (mime == null) mime = url.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+            mime = mime.split(";")[0].trim();
+            return "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(bytes);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @Transactional(readOnly = true)
@@ -85,23 +270,23 @@ public class QuoteController {
 
             if (finalMonth != null && !finalMonth.equals("all")) {
                 if (q.getDateCreated() == null) return false;
-                String quoteYearMonth = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM").format(q.getDateCreated());
+                String quoteYearMonth = DateTimeFormatter.ofPattern("yyyy-MM").format(q.getDateCreated());
                 if (!quoteYearMonth.equals(finalMonth)) return false;
             }
             return true;
         }).collect(java.util.stream.Collectors.toList());
 
-        List<java.util.Map<String, String>> disponiveis = new java.util.ArrayList<>();
-        java.time.LocalDateTime dataLoop = java.time.LocalDateTime.now(); // Alterado para LocalDateTime
+        List<Map<String, String>> disponiveis = new ArrayList<>();
+        LocalDateTime dataLoop = LocalDateTime.now(); // Alterado para LocalDateTime
 
         for (int i = 0; i < 12; i++) {
-            java.time.LocalDateTime target = dataLoop.minusMonths(i);
-            String val = target.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
+            LocalDateTime target = dataLoop.minusMonths(i);
+            String val = target.format(DateTimeFormatter.ofPattern("yyyy-MM"));
 
-            String label = target.format(java.time.format.DateTimeFormatter.ofPattern("MMMM / yyyy", java.util.Locale.forLanguageTag("pt-BR")));
+            String label = target.format(DateTimeFormatter.ofPattern("MMMM / yyyy", Locale.forLanguageTag("pt-BR")));
             label = label.substring(0, 1).toUpperCase() + label.substring(1);
 
-            java.util.Map<String, String> itemMes = new java.util.HashMap<>();
+            Map<String, String> itemMes = new HashMap<>();
             itemMes.put("value", val);
             itemMes.put("label", i == 0 ? label + " (Mês Atual)" : label);
             disponiveis.add(itemMes);
@@ -187,7 +372,7 @@ public class QuoteController {
         }
 
         if (quote.getDateCreated() == null) {
-            quote.setDateCreated(java.time.LocalDateTime.now());
+            quote.setDateCreated(LocalDateTime.now());
         }
         if (quote.getItems() != null) {
             for (QuoteItem item : quote.getItems()) {
