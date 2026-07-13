@@ -1,879 +1,1141 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-<head th:replace="~{fragments/layout :: head(title='Ordens de Serviço')}"></head>
+<head th:replace="~{fragments/layout :: head(title='Ordens de Serviço - Tahi Glass')}"></head>
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
 
-<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen">
-
-    <!-- ── PAGE HEADER ─────────────────────────────────────────── -->
-    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
-            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Ordens de Serviço</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Controle de projetos, custos e margem operacional.</p>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Ordens de Serviço</h2>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Gestão de projetos, custos operacionais e margens.</p>
         </div>
-        <button onclick="openNewOsModal()"
-                class="shrink-0 bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 transition-all shadow-md text-sm">
-            <i data-lucide="plus" class="w-4 h-4"></i> Nova O.S.
+
+        <button type="button"
+                onclick="openNewOsModal()"
+                class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i> Nova OS
         </button>
     </header>
 
-    <!-- ── KPI CARDS ───────────────────────────────────────────── -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Receita Total</p>
-            <p class="text-xl font-black text-slate-900 dark:text-white font-mono"
-               th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Receita Total</p>
+            <p class="text-2xl font-black text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Custos (CMV)</p>
-            <p class="text-xl font-black text-rose-600 dark:text-rose-400 font-mono"
-               th:text="'R$ ' + ${#numbers.formatDecimal(totalCost, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Custos Totais (CMV)</p>
+            <p class="text-2xl font-black text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(totalCost, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Lucro Bruto</p>
-            <p class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono"
-               th:text="'R$ ' + ${#numbers.formatDecimal(globalProfit, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Lucro Bruto Global</p>
+            <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(globalProfit, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
-        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-xl border border-l-4 border-brand-600 dark:border-l-cyan-500 border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Margem Média</p>
-            <p class="text-xl font-black text-brand-700 dark:text-cyan-400"
-               th:text="${#numbers.formatDecimal(averageMargin, 1, 'POINT', 1, 'COMMA')} + '%'">0,0%</p>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-brand-600 dark:border-l-cyan-500">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Margem Média</p>
+            <p class="text-2xl font-black text-brand-700 dark:text-cyan-400" th:text="${#numbers.formatDecimal(averageMargin, 1, 'POINT', 2, 'COMMA')} + '%'">0.00%</p>
         </div>
     </div>
 
-    <!-- ── FILTROS ─────────────────────────────────────────────── -->
-    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 shadow-sm mb-4">
-        <div class="flex flex-wrap gap-3 items-end">
-            <div class="flex-1 min-w-[180px]">
-                <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Buscar</label>
+    <!-- Filtros Dinâmicos -->
+    <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
+            <div class="md:col-span-2">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Buscar O.S.</label>
                 <div class="relative">
-                    <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
-                    <input id="filterSearch" onkeyup="applyOsFilters()" placeholder="Nº, título ou cliente..."
-                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition"/>
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </div>
+                    <input type="text" id="filterSearch" onkeyup="applyOsFilters()" placeholder="Nº da OS, Título ou Cliente..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm" />
                 </div>
             </div>
-            <div class="w-36">
-                <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Mês</label>
-                <select id="filterMonth" onchange="applyOsFilters()"
-                        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition">
-                    <option value="all">Todos</option>
-                    <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
-                    <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
-                    <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
-                    <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Mês (Instalação)</label>
+                <select id="filterMonth" onchange="applyOsFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm">
+                    <option value="all">Todos os Meses</option>
+                    <option value="01">Janeiro</option>
+                    <option value="02">Fevereiro</option>
+                    <option value="03">Março</option>
+                    <option value="04">Abril</option>
+                    <option value="05">Maio</option>
+                    <option value="06">Junho</option>
+                    <option value="07">Julho</option>
+                    <option value="08">Agosto</option>
+                    <option value="09">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
                 </select>
             </div>
-            <div class="w-40">
-                <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Status</label>
-                <select id="filterStatus" onchange="applyOsFilters()"
-                        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition">
-                    <option value="all">Todos</option>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Status</label>
+                <select id="filterStatus" onchange="applyOsFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm">
+                    <option value="all">Todos os Status</option>
                     <option value="in_progress">Em Andamento</option>
                     <option value="completed">Entregue</option>
                     <option value="cancelled">Cancelada</option>
                 </select>
             </div>
-            <button onclick="clearOsFilters()"
-                    class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-bold py-2 px-4 rounded-lg transition text-sm flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shrink-0">
-                <i data-lucide="x" class="w-3.5 h-3.5"></i> Limpar
-            </button>
+            <div class="flex items-end">
+                <button type="button" onclick="clearOsFilters()" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-bold py-3 px-4 rounded-xl transition-colors text-sm flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700">
+                    <i data-lucide="filter-x" class="w-4 h-4"></i> Limpar Filtros
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- ── TABELA DE ORDENS DE SERVIÇO ────────────────────────── -->
-    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead>
-                <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    <th class="px-4 py-3 text-left w-28">Nº OS</th>
-                    <th class="px-4 py-3 text-left">Cliente / Serviço</th>
-                    <th class="px-4 py-3 text-center w-32">Status</th>
-                    <th class="px-4 py-3 text-center w-28">Entrega</th>
-                    <th class="px-4 py-3 text-right w-32">Receita</th>
-                    <th class="px-4 py-3 text-right w-24">Margem</th>
-                    <th class="px-4 py-3 text-center w-24">Orç.</th>
-                    <th class="px-4 py-3 w-20"></th>
-                </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div class="space-y-4">
 
-                <tr th:each="wo : ${orders}"
-                    th:with="receita=${wo.totalValue != null ? wo.totalValue : 0},
-                       custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0},
-                       lucro=${receita - custo},
-                       margem=${receita > 0 ? (lucro * 100 / receita) : 0}"
-                    class="js-os-card hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group"
-                    th:data-status="${wo.status}"
-                    th:data-month="${wo.installDate != null ? #temporals.format(wo.installDate, 'MM') : ''}"
-                    th:data-search="${#strings.toLowerCase(wo.number + ' ' + (wo.title != null ? wo.title : '') + ' ' + (wo.client != null ? wo.client.name : ''))}">
+            <!-- Card Individual OS -->
+            <div th:each="wo : ${orders}"
+                 th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}"
+                 class="js-os-card bg-slate-50 dark:bg-[#1A2533] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 relative overflow-hidden flex flex-col sm:flex-row gap-4 sm:gap-6 hover:border-brand-300 dark:hover:border-slate-600 transition-all hover:shadow-md"
+                 th:data-status="${wo.status}"
+                 th:data-month="${wo.installDate != null ? #temporals.format(wo.installDate, 'MM') : ''}"
+                 th:data-search="${wo.number + ' ' + (wo.title != null ? wo.title : '') + ' ' + (wo.client != null ? wo.client.name : '')}">
 
-                    <!-- Nº -->
-                    <td class="px-4 py-3">
-                        <span class="font-black text-sm font-mono text-slate-900 dark:text-white" th:text="${wo.number}">OS-0000</span>
-                        <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5"
-                             th:text="${wo.createdAt != null ? #temporals.format(wo.createdAt, 'dd/MM/yy') : ''}"></div>
-                    </td>
+                <div class="absolute left-0 top-0 bottom-0 w-1.5"
+                     th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-500' : 'bg-brand-600 dark:bg-cyan-500'"></div>
 
-                    <!-- Cliente / Serviço -->
-                    <td class="px-4 py-3">
-                        <div class="font-bold text-sm text-slate-900 dark:text-white"
-                             th:text="${wo.client != null ? wo.client.name : 'Cliente Avulso'}">Cliente</div>
-                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-xs truncate"
-                             th:text="${wo.title != null ? wo.title : '—'}">Título</div>
-                    </td>
+                <div class="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-slate-800 flex items-center justify-center shrink-0 border border-brand-100 dark:border-slate-700">
+                    <i data-lucide="clipboard-list" class="w-7 h-7 text-brand-600 dark:text-cyan-400"></i>
+                </div>
 
-                    <!-- Status -->
-                    <td class="px-4 py-3 text-center">
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold whitespace-nowrap"
-                    th:classappend="${wo.status == 'completed' or wo.status == 'delivered'}
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
-                        : (${wo.status == 'cancelled' or wo.status == 'canceled'}
-                            ? 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
-                            : 'bg-brand-50 text-brand-700 dark:bg-cyan-500/10 dark:text-cyan-400')"
-                    th:text="${wo.status == 'completed' or wo.status == 'delivered' ? 'Entregue'
-                               : (wo.status == 'cancelled' or wo.status == 'canceled' ? 'Cancelada' : 'Em Andamento')}">
-                Status
-              </span>
-                    </td>
+                <div class="flex-1">
 
-                    <!-- Data Entrega -->
-                    <td class="px-4 py-3 text-center text-xs text-slate-500 dark:text-slate-400 font-mono whitespace-nowrap"
-                        th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : '—'}">—</td>
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-4">
+                            <span class="font-black text-slate-900 dark:text-white text-lg tracking-tight" th:text="${wo.number}">OS-0000</span>
+                            <span class="px-3 py-1 rounded-lg text-xs font-bold tracking-wider uppercase border"
+                                  th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent' : 'bg-brand-50 text-brand-700 border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent'"
+                                  th:text="${wo.status == 'completed' or wo.status == 'delivered' ? 'Entregue' : 'Em Andamento'}">Status</span>
+                        </div>
 
-                    <!-- Receita -->
-                    <td class="px-4 py-3 text-right font-mono font-bold text-sm text-slate-900 dark:text-white whitespace-nowrap"
-                        th:text="'R$ ' + ${#numbers.formatDecimal(receita, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
-
-                    <!-- Margem -->
-                    <td class="px-4 py-3 text-right font-bold text-sm whitespace-nowrap"
-                        th:classappend="${margem >= 20} ? 'text-emerald-600 dark:text-emerald-400'
-                                : (${margem > 0} ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400')"
-                        th:text="${#numbers.formatDecimal(margem, 1, 'POINT', 1, 'COMMA')} + '%'">—</td>
-
-                    <!-- Orçamento vinculado -->
-                    <td class="px-4 py-3 text-center">
-                        <button th:if="${wo.quote != null}" type="button"
-                                th:data-id="${wo.quote.id}"
-                                onclick="openQuotePdf(this.getAttribute('data-id'))"
-                                class="text-[11px] font-bold font-mono text-brand-600 dark:text-cyan-400 hover:underline"
-                                th:text="${wo.quote.number}">ORC</button>
-                        <span th:if="${wo.quote == null}" class="text-slate-300 dark:text-slate-600 text-xs">—</span>
-                    </td>
-
-                    <!-- Ações -->
-                    <td class="px-4 py-3">
-                        <div class="flex items-center justify-end gap-1">
-                            <button type="button"
-                                    th:data-id="${wo.id}"
-                                    onclick="editOs(this.getAttribute('data-id'))"
-                                    class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition"
-                                    title="Editar">
-                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                            <button type="button" th:data-id="${wo.id}" onclick="editOs(this.getAttribute('data-id'))"
+                                    class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar">
+                                <i data-lucide="edit" class="w-5 h-5"></i>
                             </button>
-                            <button type="button"
-                                    th:if="${wo.status != 'cancelled' && wo.status != 'canceled'}"
-                                    th:data-id="${wo.id}"
-                                    onclick="openCancelModal(this.getAttribute('data-id'))"
-                                    class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition"
-                                    title="Cancelar">
-                                <i data-lucide="ban" class="w-4 h-4"></i>
+                            <button type="button" th:if="${wo.status != 'cancelled' && wo.status != 'canceled'}" th:data-id="${wo.id}" onclick="openCancelModal(this.getAttribute('data-id'))"
+                                    class="p-2 hover:bg-rose-100 dark:hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg transition-colors" title="Cancelar">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
                             </button>
                         </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+                    </div>
 
-        <!-- Empty: sem OS -->
-        <div th:if="${#lists.isEmpty(orders)}" class="text-center py-16">
-            <div class="bg-slate-100 dark:bg-slate-800 p-4 w-fit mx-auto rounded-full mb-3">
-                <i data-lucide="inbox" class="w-7 h-7 text-slate-400"></i>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4" th:text="${wo.title != null ? wo.title : 'Ordem de Serviço Sem Título'}">Título</h3>
+
+                    <div class="flex flex-wrap items-center gap-6 text-sm mb-6">
+                        <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-bold">
+                            <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                            <span th:text="${wo.client != null ? wo.client.name : 'Cliente Avulso'}">Nome</span>
+                        </div>
+
+                        <div th:if="${wo.quote != null}">
+                            <button type="button" th:data-id="${wo.quote.id}" onclick="viewReceipt(this.getAttribute('data-id'))"
+                                    class="flex items-center gap-2 text-brand-700 dark:text-cyan-400 font-bold hover:underline">
+                                <i data-lucide="printer" class="w-4 h-4"></i>
+                                <span th:text="${wo.quote.number}">ORC 00</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6"
+                         th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}">
+
+                        <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Receita</p>
+                            <p class="text-sm font-black text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(receita, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                        </div>
+                        <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Custos</p>
+                            <p class="text-sm font-black text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(custo, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                        </div>
+                        <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Lucro</p>
+                            <p class="text-sm font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(lucro, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                        </div>
+                        <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Margem</p>
+                            <p class="text-sm font-black text-brand-700 dark:text-cyan-400" th:text="${#numbers.formatDecimal(margem, 1, 'POINT', 2, 'COMMA')} + '%'">0.0%</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-6 text-xs text-slate-500 dark:text-slate-400 font-bold">
+                        <div class="flex items-center gap-1.5"><i class="w-4 h-4"></i> <span>Entregar até</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4"></i> <span th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : 'Sem data'}">entregar ate</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i> <span class="truncate max-w-[200px]" th:text="${wo.client != null ? wo.client.address : 'Sem endereço'}">Endereço</span></div>
+                    </div>
+                </div>
             </div>
-            <p class="text-slate-500 dark:text-slate-400 font-bold text-sm">Nenhuma Ordem de Serviço cadastrada.</p>
-            <button onclick="openNewOsModal()" class="mt-3 text-brand-600 dark:text-cyan-400 font-bold text-sm hover:underline flex items-center gap-1 mx-auto">
-                <i data-lucide="plus" class="w-4 h-4"></i> Criar primeira O.S.
-            </button>
-        </div>
 
-        <!-- Empty: filtros -->
-        <div id="emptyStateFilter" class="hidden text-center py-12">
-            <i data-lucide="search-x" class="w-7 h-7 text-slate-400 mx-auto mb-2"></i>
-            <p class="text-slate-500 dark:text-slate-400 font-bold text-sm">Nenhuma OS encontrada com esses filtros.</p>
-            <button onclick="clearOsFilters()" class="mt-2 text-brand-600 dark:text-cyan-400 font-bold text-sm hover:underline">Limpar filtros</button>
+            <div th:if="${#lists.isEmpty(orders)}" class="text-center py-16 bg-white dark:bg-[#131C2F] rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                <div class="bg-slate-100 dark:bg-slate-800 p-4 w-fit mx-auto rounded-full mb-4">
+                    <i data-lucide="inbox" class="w-8 h-8 text-slate-400"></i>
+                </div>
+                <p class="text-slate-600 dark:text-slate-400 font-bold text-base">Nenhuma Ordem de Serviço encontrada no momento.</p>
+            </div>
+
+            <div id="emptyStateFilter" class="hidden text-center py-16 bg-white dark:bg-[#131C2F] rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                <div class="bg-slate-100 dark:bg-slate-800 p-4 w-fit mx-auto rounded-full mb-4">
+                    <i data-lucide="search-x" class="w-8 h-8 text-slate-400"></i>
+                </div>
+                <p class="text-slate-600 dark:text-slate-400 font-bold text-base">Nenhuma Ordem de Serviço corresponde aos filtros aplicados.</p>
+                <button onclick="clearOsFilters()" class="mt-4 text-brand-600 dark:text-cyan-400 font-bold hover:underline">Remover Filtros</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cancelOsModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
+
+            <button type="button" onclick="closeModal('cancelOsModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="bg-rose-100 dark:bg-rose-500/10 p-4 rounded-full w-fit mb-5 text-rose-600 dark:text-rose-400">
+                <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+            </div>
+
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">Cancelar Ordem de Serviço</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+                Esta OS não será apagada, mas ficará arquivada no histórico com status <b>cancelado</b>. Por favor, informe o motivo:
+            </p>
+
+            <textarea id="cancelReason" rows="3"
+                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-slate-900 dark:text-white outline-none focus:border-rose-500 transition-all text-base mb-6"
+                      placeholder="Ex: Cliente desistiu da obra..."></textarea>
+
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeModal('cancelOsModal')"
+                        class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">
+                    Voltar
+                </button>
+                <button type="button" onclick="executeCancelOS()"
+                        class="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-base">
+                    Confirmar Cancelamento
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRINCIPAL: EDIÇÃO DA O.S.-->
+    <div id="osModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-40 overflow-y-auto py-10 p-4">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-5xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
+
+            <div class="p-8">
+                <button onclick="closeModal('osModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+
+                <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-8 border-b border-slate-200 dark:border-slate-700 pb-4" id="modalTitle">OS: OS-1002</h3>
+
+                <form id="osForm" onsubmit="saveFullOS(event)" class="space-y-8 text-sm">
+                    <input type="hidden" id="osId" />
+
+                    <!-- 1. CABEÇALHO DA OS -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 dark:bg-slate-800/30 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50">
+                        <div>
+                            <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider">OS (Título)</label>
+                            <input type="text" id="osTitle" required class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
+                        </div>
+                        <div>
+                            <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider">Status</label>
+                            <select id="osStatus" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base">
+                                <option value="in_progress">Em Obra</option>
+                                <option value="completed">Concluído</option>
+                                <option value="cancelled">Cancelada</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider">Entregar Até</label>
+                            <input type="date" id="osDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-700 dark:text-slate-300 focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
+                        </div>
+
+                        <div>
+                            <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider flex items-center gap-2">
+                                <i data-lucide="link" class="w-4 h-4 text-slate-400"></i> Vincular a Orçamento
+                            </label>
+                            <select id="osQuote" onchange="handleQuoteChange()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
+                                <option value="">-- O.S. Avulsa --</option>
+                                <option th:each="q : ${availableQuotes}" th:value="${q.id}" th:text="${q.number + ' - ' + (q.client != null ? q.client.name : 'S/ Cliente')}"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider">Cliente (O.S. Avulsa)</label>
+                            <select id="osClient" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
+                                <option value="">-- Selecione --</option>
+                                <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider flex items-center gap-2">
+                                Preço Venda (R$) <i data-lucide="lock" id="lockIcon" class="w-4 h-4 hidden text-rose-500"></i>
+                            </label>
+                            <input type="text" id="osTotalValue" oninput="applyCurrencyMask(this)" onchange="renderAllUI()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-emerald-600 dark:text-emerald-400 font-black focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
+                        </div>
+                    </div>
+
+                    <!-- 2. ITENS VENDIDOS -->
+                    <div id="soldItemsContainer" class="hidden">
+                        <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <i data-lucide="package-check" class="w-5 h-5 text-emerald-600 dark:text-emerald-500"></i> Itens Vendidos (Origem do Orçamento)
+                        </h4>
+                        <div class="bg-white dark:bg-[#1A2533] rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-x-auto shadow-sm">
+                            <table class="w-full text-left text-sm min-w-[420px]">
+                                <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
+                                <tr>
+                                    <th class="p-4 w-1/2">Produto Vendido</th>
+                                    <th class="p-4 w-24 text-center">Qtd</th>
+                                    <th class="p-4 w-32 text-right">Preço Venda</th>
+                                </tr>
+                                </thead>
+                                <tbody id="soldItemsBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 3. CUSTOS DE PRODUÇÃO E MATERIAIS (CMV) -->
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            Custos de Produção e Materiais (CMV)
+                        </h4>
+
+                        <!-- Materiais / Produtos -->
+                        <div class="bg-white dark:bg-[#1A2533] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6 shadow-sm">
+                            <div class="flex justify-between items-center mb-6">
+                                <h5 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <i data-lucide="package" class="w-5 h-5 text-brand-600 dark:text-cyan-400"></i> Materiais / Produtos
+                                </h5>
+                                <button type="button" onclick="addMaterial()" class="text-brand-600 hover:text-brand-700 dark:text-cyan-400 dark:hover:text-cyan-300 font-bold text-sm flex items-center gap-1.5 hover:underline">
+                                    <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Insumo
+                                </button>
+                            </div>
+
+                            <div id="materialsContainer" class="space-y-4"></div>
+
+                            <div class="border-t border-slate-200 dark:border-slate-700 mt-6 pt-5 flex justify-between items-center text-slate-500 dark:text-slate-400 text-base">
+                                <span class="font-bold">Custo Total em Materiais:</span>
+                                <span id="totalMaterials" class="font-black text-slate-900 dark:text-white text-lg">R$ 0,00</span>
+                            </div>
+                        </div>
+
+                        <!-- Custos Operacionais -->
+                        <div class="bg-white dark:bg-[#1A2533] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6 shadow-sm">
+                            <div class="flex justify-between items-center mb-6">
+                                <h5 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <i data-lucide="wrench" class="w-5 h-5 text-amber-500"></i> Custos Operacionais
+                                </h5>
+                                <button type="button" onclick="addOperational()" class="text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 font-bold text-sm flex items-center gap-1.5 hover:underline">
+                                    <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Despesa
+                                </button>
+                            </div>
+
+                            <div id="operationalsContainer" class="space-y-4"></div>
+
+                            <div class="border-t border-slate-200 dark:border-slate-700 mt-6 pt-5 flex justify-between items-center text-slate-500 dark:text-slate-400 text-base">
+                                <span class="font-bold">Total Custos Operacionais:</span>
+                                <span id="totalOperationals" class="font-black text-slate-900 dark:text-white text-lg">R$ 0,00</span>
+                            </div>
+                        </div>
+
+                        <!-- Resumo Financeiro -->
+                        <div class="bg-brand-50 dark:bg-cyan-900/20 border border-brand-200 dark:border-cyan-800/40 rounded-2xl p-6 shadow-sm">
+                            <h5 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6 border-b border-brand-200 dark:border-cyan-800/40 pb-4">
+                                <i data-lucide="dollar-sign" class="w-6 h-6 text-brand-600 dark:text-cyan-400"></i> Resumo Financeiro
+                            </h5>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                <div>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block mb-1">Receita</span>
+                                    <span class="text-2xl font-black text-slate-900 dark:text-white" id="resumoReceita">R$ 0,00</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block mb-1">Custo Total</span>
+                                    <span class="text-2xl font-black text-rose-600 dark:text-rose-400" id="resumoCusto">R$ 0,00</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block mb-1">Lucro Bruto</span>
+                                    <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400" id="resumoLucro">R$ 0,00</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block mb-1">Margem</span>
+                                    <span class="text-2xl font-black text-brand-700 dark:text-cyan-400" id="resumoMargem">0.0%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+
+            <!-- 4. FOOTER -->
+            <div class="bg-slate-50 dark:bg-[#0F172A] border-t border-slate-200 dark:border-slate-800 p-8 flex justify-end gap-4 rounded-b-2xl">
+                <button type="button" onclick="closeModal('osModal')" class="px-8 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">Sair</button>
+                <button type="button" onclick="saveFullOS(event)" class="px-8 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 transition-all text-base">Gravar O.S.</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-10 p-4">
+        <!-- O Recibo sempre será branco para manter consistência ao imprimir -->
+        <div class="bg-white text-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl p-12 relative font-sans border border-slate-200 print:p-0 print:shadow-none print:w-full print:border-none" id="printableReceiptArea">
+            <button onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full print:hidden transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+
+            <style>
+                @media print {
+                    body * { visibility: hidden; }
+                    #printableReceiptArea, #printableReceiptArea * { visibility: visible; }
+                    body {
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                        display: block !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100% !important;
+                    }
+                    #printableReceiptArea {
+                        position: absolute !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        box-shadow: none !important;
+                        border: none !important;
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                    }
+                    @page { size: A4; margin: 10mm 12mm 10mm 12mm; }
+                    .print\:hidden { display: none !important; }
+                }
+            </style>
+
+            <div class="flex justify-between items-start border-b-[3px] border-slate-900 pb-6 mb-8">
+                <div class="flex flex-col">
+                    <div th:if="${profile.logoUrl != null && !profile.logoUrl.isEmpty()}" class="mb-4">
+                        <img th:src="${profile.logoUrl}" class="max-h-24 max-w-[280px] object-contain text-left mix-blend-multiply" alt="Logo" />
+                    </div>
+                    <h2 class="text-3xl font-black tracking-tight text-slate-900 uppercase" th:text="${profile.companyName}"></h2>
+                    <div class="text-sm text-slate-600 mt-4 space-y-1 font-medium">
+                        <p th:text="'CPF/CNPJ: ' + ${profile.document}"></p>
+                        <p th:text="${profile.address}"></p>
+                        <p th:text="'Telefone: ' + ${profile.phone}"></p>
+                        <p th:text="'E-mail: ' + ${profile.email}"></p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 inline-block min-w-[240px]">
+                        <h3 class="text-sm font-bold font-mono text-slate-500 uppercase tracking-widest mb-1">ORÇAMENTO</h3>
+                        <p class="text-3xl font-black text-slate-900 font-mono" id="recNum">N° --</p>
+                        <div class="text-sm text-slate-500 mt-3 border-t pt-3 border-slate-200">
+                            <span class="font-bold block text-slate-700">Data de emissão:</span>
+                            <span id="recDate">--/--/----</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <span class="text-sm font-bold text-slate-500 uppercase tracking-wider block font-mono">Orçamento elaborado para:</span>
+                <h4 class="text-2xl font-black text-slate-900 mt-1" id="recClient">Nome do Cliente</h4>
+            </div>
+
+            <div class="border-[2px] border-slate-200 rounded-2xl overflow-hidden mb-8 bg-white shadow-sm">
+                <table class="w-full text-left border-collapse text-base">
+                    <thead>
+                    <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider text-sm">
+                        <th class="p-5 pl-6 w-[50%]">Descrição do Serviço / Produto</th>
+                        <th class="p-5 text-center">Unid.</th>
+                        <th class="p-5 text-center">Qtd</th>
+                        <th class="p-5 text-right">V. Unit.</th>
+                        <th class="p-5 text-right pr-6">Subtotal</th>
+                    </tr>
+                    </thead>
+                    <tbody id="recItems" class="divide-y divide-slate-200 font-medium text-slate-800">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10 border-t-2 pt-8 border-slate-100">
+                <div class="text-base text-slate-700 space-y-3">
+                    <h5 class="font-bold text-slate-900 uppercase font-mono tracking-wide text-sm border-b pb-2">Condições & Observações</h5>
+                    <div id="recObs" class="whitespace-pre-line text-sm text-slate-600 font-sans leading-relaxed bg-slate-50 p-5 rounded-xl border border-slate-200">
+                        --
+                    </div>
+                </div>
+
+                <div class="flex flex-col justify-start items-end w-full">
+                    <div class="bg-slate-50 border-[2px] border-slate-200 rounded-2xl p-6 w-full max-w-[380px] font-mono shadow-sm">
+                        <div class="flex justify-between items-center text-sm text-slate-500 font-bold pb-3">
+                            <span>TOTAL:</span>
+                            <span id="recTotal" class="text-slate-900 text-2xl font-black tracking-tight">R$ 0,00</span>
+                        </div>
+                        <div id="recFinalRow" class="flex justify-between items-center pt-3 border-t-2 border-slate-200" style="display: none;">
+                            <span class="text-sm text-slate-500 font-bold">Total Parcelado:</span>
+                            <span id="recFinalInstallments" class="text-xl font-black text-brand-600 tracking-tight">10x R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 border-t-[2px] border-dashed border-slate-200 pt-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-base text-slate-700">
+                    <div>
+                        <h5 class="font-bold text-slate-900 font-mono text-sm uppercase mb-2">TERMOS DE GARANTIA</h5>
+                        <p id="recWarrantyText" class="text-slate-800 font-sans font-bold text-sm bg-brand-50 text-brand-800 p-4 rounded-xl border border-brand-100">--</p>
+                    </div>
+                    <div class="text-right flex flex-col justify-end">
+                        <p class="text-xs font-mono text-slate-400 mt-4 font-bold">Documento Comercial Processado Digitalmente — <span th:text="${profile.companyName}">Vidraçaria</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-20 pt-16 border-t border-slate-200 grid grid-cols-2 gap-16 text-center text-base font-sans">
+                <div class="relative flex flex-col items-center justify-end min-h-[100px]">
+                    <img th:if="${profile.signatureUrl != null && !profile.signatureUrl.isEmpty()}" th:src="${profile.signatureUrl}" class="absolute bottom-10 max-h-24 object-contain pointer-events-none mix-blend-multiply" />
+                    <div class="w-full border-t-2 border-slate-900 pt-3 font-black text-slate-900" th:text="${profile.companyName}"></div>
+                    <div class="text-sm text-slate-500 font-bold mt-1" th:text="'CNPJ: ' + ${profile.document}"></div>
+                </div>
+                <div class="flex flex-col items-center justify-end min-h-[100px]">
+                    <div class="w-full border-t-2 border-slate-900 pt-3 font-black text-slate-900" id="recSignatureClientName">Assinatura do Cliente</div>
+                    <div class="text-sm text-slate-500 font-bold mt-1">De Acordo</div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-4 print:hidden border-t border-slate-200 pt-6 mt-10">
+                <button onclick="closeModal('receiptModal')" class="bg-white border border-slate-300 text-slate-700 px-6 py-3 rounded-xl font-bold text-base hover:bg-slate-50 transition">Fechar Visualização</button>
+                <button onclick="generateDynamicPdfNameAndPrint()" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-black flex items-center gap-3 text-base hover:bg-slate-800 transition shadow-lg shadow-black/20"><i data-lucide="printer" class="w-5 h-5"></i> Imprimir Orçamento A4</button>
+            </div>
         </div>
     </div>
 
 </main>
 
-<!-- ═══════════════════════════════════════════════════════════
-     MODAL: CANCELAR O.S.
-═════════════════════════════════════════════════════════════-->
-<div id="cancelOsModal"
-     class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4">
-    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-7 relative animate-in fade-in zoom-in-95 duration-200">
-        <button onclick="closeModal('cancelOsModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 dark:hover:text-white bg-slate-100 dark:bg-slate-800 p-1.5 rounded-full transition">
-            <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-        <div class="bg-rose-100 dark:bg-rose-500/10 p-3 rounded-full w-fit mb-4 text-rose-600 dark:text-rose-400">
-            <i data-lucide="ban" class="w-6 h-6"></i>
-        </div>
-        <h3 class="text-lg font-black text-slate-900 dark:text-white mb-1">Cancelar Ordem de Serviço</h3>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
-            A O.S. ficará arquivada como <strong>cancelada</strong> no histórico. Informe o motivo:
-        </p>
-        <textarea id="cancelReason" rows="3"
-                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white outline-none focus:border-rose-500 transition mb-4"
-                  placeholder="Ex: Cliente desistiu da obra..."></textarea>
-        <div class="flex justify-end gap-2">
-            <button onclick="closeModal('cancelOsModal')"
-                    class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-                Voltar
-            </button>
-            <button onclick="executeCancelOS()"
-                    class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-sm shadow-lg shadow-rose-500/20 transition">
-                Confirmar Cancelamento
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════
-     MODAL: EDITAR / CRIAR O.S.
-═════════════════════════════════════════════════════════════-->
-<div id="osModal"
-     class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-start justify-center z-40 overflow-y-auto p-4 py-6">
-    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-5xl rounded-2xl shadow-2xl my-auto">
-
-        <!-- ── CABEÇALHO DO MODAL ────────────────────────────── -->
-        <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 rounded-t-2xl">
-            <div class="flex items-center gap-2.5">
-                <div class="bg-brand-100 dark:bg-cyan-500/20 p-1.5 rounded-lg">
-                    <i data-lucide="clipboard-list" class="w-4 h-4 text-brand-600 dark:text-cyan-400"></i>
-                </div>
-                <h3 class="text-base font-black text-slate-900 dark:text-white" id="modalTitle">Nova Ordem de Serviço</h3>
-            </div>
-            <button onclick="closeModal('osModal')"
-                    class="text-slate-400 hover:text-slate-700 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-1.5 rounded-lg transition">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-        </div>
-
-        <div class="p-5 space-y-5">
-            <input type="hidden" id="osId"/>
-
-            <!-- ── 1. IDENTIFICAÇÃO ──────────────────────────────── -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700/50">
-                <div class="lg:col-span-1">
-                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                        Título da O.S. <span class="text-rose-500">*</span>
-                    </label>
-                    <input type="text" id="osTitle" required placeholder="Ex: Box de vidro – Banheiro"
-                           class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition"/>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Status</label>
-                    <select id="osStatus"
-                            class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition">
-                        <option value="in_progress">Em Andamento</option>
-                        <option value="completed">Entregue</option>
-                        <option value="cancelled">Cancelada</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Data de Entrega</label>
-                    <input type="date" id="osDate"
-                           class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-300 outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition"/>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <i data-lucide="link" class="w-3 h-3"></i> Vincular Orçamento
-                    </label>
-                    <select id="osQuote" onchange="handleQuoteChange()"
-                            class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition">
-                        <option value="">— O.S. Avulsa —</option>
-                        <option th:each="q : ${availableQuotes}"
-                                th:value="${q.id}"
-                                th:text="${q.number + ' · ' + (q.client != null ? q.client.name : 'S/cliente')}"></option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Cliente (O.S. Avulsa)</label>
-                    <select id="osClient"
-                            class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition">
-                        <option value="">— Selecione —</option>
-                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        Valor de Venda (R$)
-                        <i data-lucide="lock" id="lockIcon" class="w-3 h-3 text-rose-500 hidden"></i>
-                    </label>
-                    <input type="text" id="osTotalValue"
-                           oninput="applyCurrencyMask(this)" onchange="renderAllUI()"
-                           placeholder="0,00"
-                           class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-emerald-600 dark:text-emerald-400 font-black outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition font-mono"/>
-                </div>
-            </div>
-
-            <!-- ── 2. ITENS DO ORÇAMENTO (visível quando há orçamento vinculado) ── -->
-            <div id="soldItemsContainer" class="hidden">
-                <div class="flex items-center gap-2 mb-2 px-0.5">
-                    <i data-lucide="package-check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500 shrink-0"></i>
-                    <h4 class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Itens do Orçamento</h4>
-                </div>
-                <div class="rounded-xl border border-emerald-200 dark:border-emerald-500/20 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs min-w-[380px]">
-                            <thead>
-                            <tr class="bg-emerald-50 dark:bg-emerald-500/10 border-b border-emerald-200 dark:border-emerald-500/20">
-                                <th class="px-3 py-2 text-left font-bold text-emerald-800 dark:text-emerald-400">Produto / Serviço</th>
-                                <th class="px-3 py-2 text-center font-bold text-emerald-800 dark:text-emerald-400 w-20">Qtd.</th>
-                                <th class="px-3 py-2 text-right font-bold text-emerald-800 dark:text-emerald-400 w-32">Valor</th>
-                            </tr>
-                            </thead>
-                            <tbody id="soldItemsBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-[#131C2F]"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ── 3. MATERIAIS / INSUMOS ────────────────────────── -->
-            <div>
-                <div class="flex items-center justify-between mb-2 px-0.5">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="package" class="w-3.5 h-3.5 text-brand-600 dark:text-cyan-400 shrink-0"></i>
-                        <h4 class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Materiais / Insumos</h4>
-                    </div>
-                    <button type="button" onclick="addMaterial()"
-                            class="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-cyan-400 dark:hover:text-cyan-300 flex items-center gap-1 transition hover:underline">
-                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Adicionar
-                    </button>
-                </div>
-                <div class="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs min-w-[540px]">
-                            <thead>
-                            <tr class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700">
-                                <th class="px-3 py-2 text-left font-bold text-slate-500 dark:text-slate-400">Descrição</th>
-                                <th class="px-2 py-2 text-center font-bold text-slate-500 dark:text-slate-400 w-16">Qtd.</th>
-                                <th class="px-2 py-2 text-center font-bold text-slate-500 dark:text-slate-400 w-12">Un.</th>
-                                <th class="px-2 py-2 text-right font-bold text-slate-500 dark:text-slate-400 w-28">Custo Unit.</th>
-                                <th class="px-2 py-2 text-right font-bold text-slate-500 dark:text-slate-400 w-28">Total</th>
-                                <th class="px-2 py-2 w-8"></th>
-                            </tr>
-                            </thead>
-                            <tbody id="materialsContainer" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-[#131C2F]">
-                            <tr id="materialsEmpty">
-                                <td colspan="6" class="px-3 py-4 text-center text-slate-400 dark:text-slate-600 italic">Nenhum material adicionado ainda.</td>
-                            </tr>
-                            </tbody>
-                            <tfoot class="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40">
-                            <tr>
-                                <td colspan="4" class="px-3 py-2 text-right text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Materiais:</td>
-                                <td class="px-2 py-2 text-right font-black text-slate-900 dark:text-white text-xs font-mono" id="totalMaterials">R$ 0,00</td>
-                                <td></td>
-                            </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ── 4. CUSTOS OPERACIONAIS ─────────────────────────── -->
-            <div>
-                <div class="flex items-center justify-between mb-2 px-0.5">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="wrench" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i>
-                        <h4 class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Custos Operacionais</h4>
-                    </div>
-                    <button type="button" onclick="addOperational()"
-                            class="text-xs font-bold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 flex items-center gap-1 transition hover:underline">
-                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Adicionar
-                    </button>
-                </div>
-                <div class="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs min-w-[620px]">
-                            <thead>
-                            <tr class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700">
-                                <th class="px-3 py-2 text-left font-bold text-slate-500 dark:text-slate-400">Descrição</th>
-                                <th class="px-2 py-2 text-left font-bold text-slate-500 dark:text-slate-400 w-32">Categoria</th>
-                                <th class="px-2 py-2 text-right font-bold text-slate-500 dark:text-slate-400 w-28">Valor</th>
-                                <th class="px-2 py-2 text-center font-bold text-slate-500 dark:text-slate-400 w-28">Data</th>
-                                <th class="px-2 py-2 text-left font-bold text-slate-500 dark:text-slate-400">Observação</th>
-                                <th class="px-2 py-2 w-8"></th>
-                            </tr>
-                            </thead>
-                            <tbody id="operationalsContainer" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-[#131C2F]">
-                            <tr id="operationalsEmpty">
-                                <td colspan="6" class="px-3 py-4 text-center text-slate-400 dark:text-slate-600 italic">Nenhum custo operacional.</td>
-                            </tr>
-                            </tbody>
-                            <tfoot class="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40">
-                            <tr>
-                                <td colspan="2" class="px-3 py-2 text-right text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Operacional:</td>
-                                <td class="px-2 py-2 text-right font-black text-slate-900 dark:text-white text-xs font-mono" id="totalOperationals">R$ 0,00</td>
-                                <td colspan="3"></td>
-                            </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-        </div><!-- /p-5 -->
-
-        <!-- ── FOOTER DO MODAL: KPIs + Botões ───────────────────── -->
-        <div class="border-t border-slate-200 dark:border-slate-700 px-5 py-3.5 rounded-b-2xl bg-slate-50 dark:bg-[#0F172A] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-
-            <!-- KPIs em linha -->
-            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-                <div>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Receita</span>
-                    <span class="font-black text-slate-900 dark:text-white font-mono" id="resumoReceita">R$ 0,00</span>
-                </div>
-                <div class="hidden sm:block w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
-                <div>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Custo Total</span>
-                    <span class="font-black text-rose-600 dark:text-rose-400 font-mono" id="resumoCusto">R$ 0,00</span>
-                </div>
-                <div class="hidden sm:block w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
-                <div>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lucro Bruto</span>
-                    <span class="font-black text-emerald-600 dark:text-emerald-400 font-mono" id="resumoLucro">R$ 0,00</span>
-                </div>
-                <div class="hidden sm:block w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
-                <div>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Margem</span>
-                    <span class="font-black text-brand-700 dark:text-cyan-400" id="resumoMargem">0,0%</span>
-                </div>
-            </div>
-
-            <!-- Botões -->
-            <div class="flex gap-2 shrink-0">
-                <button onclick="closeModal('osModal')"
-                        class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition">
-                    Cancelar
-                </button>
-                <button onclick="saveFullOS(event)"
-                        class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white font-black text-sm shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 transition flex items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> Gravar O.S.
-                </button>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<!-- ─────────────────────────────────────────────────────────
-     JAVASCRIPT
-──────────────────────────────────────────────────────────── -->
 <script>
-    // ── State ───────────────────────────────────────────────
+
     let soldItems        = [];
     let materialItems    = [];
     let operationalItems = [];
     let osIdToCancel     = null;
     let originalTotalValue = 0;
-    let originalNotes      = "";
+    let originalNotes = "";
 
-    const OP_CATEGORIES = ['Mão de Obra','Combustível','Transporte','Instalação','Equipamento','Outros'];
-
-    // ── Formatação ───────────────────────────────────────────
-    function formatBRL(v) {
-        if (v === null || v === undefined || isNaN(v)) return "0,00";
-        return parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    function parseBRL(s) {
-        if (typeof s === 'number') return s;
-        if (!s) return 0;
-        return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
-    }
-    function applyCurrencyMask(inp) {
-        let v = inp.value.replace(/\D/g,'');
-        if (!v) v = '0';
-        v = (parseInt(v,10)/100).toFixed(2).replace('.',',').replace(/(\d)(?=(\d{3})+(?!\d))/g,'$1.');
-        inp.value = v;
-    }
-    function escH(s) {
-        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-    // Campo de input compacto reutilizável
-    function inputCls(extra='') {
-        return `w-full bg-transparent text-xs text-slate-900 dark:text-white outline-none
-                border-0 focus:bg-slate-100 dark:focus:bg-slate-700/50 rounded px-1.5 py-1 transition ${extra}`;
+    function formatBRL(valor) {
+        if (valor === null || valor === undefined || isNaN(valor)) return "0,00";
+        return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    // ── Modal helpers ────────────────────────────────────────
-    function closeModal(id)  { const m=document.getElementById(id); m.classList.add('hidden'); m.classList.remove('flex'); }
-    function openModalEl(id) { const m=document.getElementById(id); m.classList.remove('hidden'); m.classList.add('flex'); }
+    function parseBRL(valorStr) {
+        if (typeof valorStr === 'number') return valorStr;
+        if (!valorStr) return 0;
+        return parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
+    }
 
-    // ── Filtros ──────────────────────────────────────────────
+    function applyCurrencyMask(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value === '') value = '0';
+        value = (parseInt(value, 10) / 100).toFixed(2) + '';
+        value = value.replace(".", ",");
+        value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        input.value = value;
+    }
+
+    function formatarMoeda(valor) {
+        if (valor === null || valor === undefined) return "R$ 0,00";
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(valor);
+    }
+
     function applyOsFilters() {
-        const search = document.getElementById('filterSearch').value.toLowerCase();
-        const status = document.getElementById('filterStatus').value.toLowerCase();
-        const month  = document.getElementById('filterMonth').value;
-        let visible  = 0;
+        const searchTerm = document.getElementById('filterSearch').value.toLowerCase();
+        const statusTerm = document.getElementById('filterStatus').value.toLowerCase();
+        const monthTerm  = document.getElementById('filterMonth').value;
 
-        document.querySelectorAll('.js-os-card').forEach(row => {
-            const sd = (row.dataset.search||'').toLowerCase();
-            const st = (row.dataset.status||'').toLowerCase();
-            const mn =  row.dataset.month||'';
+        const cards = document.querySelectorAll('.js-os-card');
+        let visibleCount = 0;
 
-            let okStatus = status === 'all';
-            if (!okStatus) {
-                if (status === 'completed')  okStatus = st === 'completed' || st === 'delivered';
-                else if (status === 'cancelled') okStatus = st === 'cancelled' || st === 'canceled';
-                else if (status === 'in_progress') okStatus = !['completed','delivered','cancelled','canceled'].includes(st);
-                else okStatus = st === status;
+        cards.forEach(card => {
+            const searchData = (card.getAttribute('data-search') || '').toLowerCase();
+            const statusData = (card.getAttribute('data-status') || '').toLowerCase();
+            const monthData  = card.getAttribute('data-month') || '';
+
+            let matchStatus = false;
+            if (statusTerm === 'all') {
+                matchStatus = true;
+            } else if (statusTerm === 'completed' && (statusData === 'completed' || statusData === 'delivered')) {
+                matchStatus = true;
+            } else if (statusTerm === 'cancelled' && (statusData === 'cancelled' || statusData === 'canceled')) {
+                matchStatus = true;
+            } else if (statusTerm === 'in_progress' && statusData !== 'completed' && statusData !== 'delivered' && statusData !== 'cancelled' && statusData !== 'canceled') {
+                matchStatus = true;
+            } else if (statusTerm === statusData) {
+                matchStatus = true;
             }
-            const ok = okStatus && (month === 'all' || month === mn) && sd.includes(search);
-            row.style.display = ok ? '' : 'none';
-            if (ok) visible++;
+
+            let matchMonth = false;
+            if (monthTerm === 'all') {
+                matchMonth = true;
+            } else if (monthTerm === monthData) {
+                matchMonth = true;
+            }
+
+            const matchSearch = searchData.includes(searchTerm);
+
+            if (matchStatus && matchSearch && matchMonth) {
+                card.classList.remove('hidden');
+                card.classList.add('flex');
+                visibleCount++;
+            } else {
+                card.classList.remove('flex');
+                card.classList.add('hidden');
+            }
         });
 
-        const emp = document.getElementById('emptyStateFilter');
-        if (emp) emp.classList.toggle('hidden', visible > 0 || document.querySelectorAll('.js-os-card').length === 0);
+        const emptyStateFilter = document.getElementById('emptyStateFilter');
+        if (visibleCount === 0 && cards.length > 0) {
+            if (emptyStateFilter) emptyStateFilter.classList.remove('hidden');
+        } else {
+            if (emptyStateFilter) emptyStateFilter.classList.add('hidden');
+        }
+
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     function clearOsFilters() {
         document.getElementById('filterSearch').value = '';
         document.getElementById('filterStatus').value = 'all';
-        document.getElementById('filterMonth').value  = 'all';
+        document.getElementById('filterMonth').value = 'all';
         applyOsFilters();
     }
 
-    // ── Abrir PDF do orçamento vinculado ────────────────────
-    function openQuotePdf(quoteId) {
-        window.open(`/quotes/pdf/${quoteId}`, '_blank');
-    }
-
-    // ── Cancelamento ─────────────────────────────────────────
-    function openCancelModal(id) {
-        osIdToCancel = id;
-        document.getElementById('cancelReason').value = '';
-        openModalEl('cancelOsModal');
-    }
-    function executeCancelOS() {
-        const reason = document.getElementById('cancelReason').value.trim();
-        if (!reason) { alert('Informe o motivo do cancelamento.'); return; }
-        const csrf = document.querySelector('meta[name="_csrf"]')?.content;
-        fetch(`/work-orders/cancel/${osIdToCancel}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain', ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}) },
-            body: reason
-        }).then(r => { if (r.ok) window.location.reload(); });
-    }
-
-    // ── Abrir modal Nova OS ──────────────────────────────────
-    function openNewOsModal() {
-        document.getElementById('osId').value         = '';
-        document.getElementById('osTitle').value      = '';
-        document.getElementById('osStatus').value     = 'in_progress';
-        document.getElementById('osQuote').value      = '';
-        document.getElementById('osClient').value     = '';
-        document.getElementById('osDate').value       = '';
-        document.getElementById('osTotalValue').value = '';
-        originalTotalValue = 0; originalNotes = '';
+    function openModal() {
+        document.getElementById('osForm').reset();
+        document.getElementById('osId').value    = '';
+        document.getElementById('osQuote').value = '';
+        document.getElementById('modalTitle').innerText = 'Nova OS';
         soldItems = []; materialItems = []; operationalItems = [];
-        document.getElementById('modalTitle').innerText = 'Nova Ordem de Serviço';
         handleQuoteChange();
         renderAllUI();
-        openModalEl('osModal');
+        document.getElementById('osModal').classList.remove('hidden');
+        document.getElementById('osModal').classList.add('flex');
     }
 
-    // ── Editar OS existente ──────────────────────────────────
-    async function editOs(id) {
-        try {
-            const res  = await fetch(`/work-orders/edit-data/${id}`);
-            if (!res.ok) throw new Error(res.status);
-            const data = await res.json();
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+        document.getElementById(id).classList.remove('flex');
+    }
 
-            document.getElementById('osId').value         = data.id || '';
-            document.getElementById('osTitle').value      = data.title || '';
-            document.getElementById('osStatus').value     = data.status || 'in_progress';
-            document.getElementById('osQuote').value      = data.quoteId || '';
-            document.getElementById('osClient').value     = data.client ? data.client.id : '';
-            document.getElementById('osDate').value       = data.installDate ? data.installDate.split('T')[0] : '';
-            document.getElementById('osTotalValue').value = formatBRL(data.totalValue || 0);
-            document.getElementById('modalTitle').innerText = `O.S.: ${data.number || ''}`;
-            originalTotalValue = data.totalValue || 0;
-            originalNotes      = data.notes      || '';
-
-            soldItems = []; materialItems = []; operationalItems = [];
-            (data.items || []).forEach(i => {
-                if (i.description && i.description.startsWith('[OP] ')) {
-                    const parts = i.description.split(' ||| ');
-                    const meta  = parts[0].replace('[OP] ','').split(' | ');
-                    operationalItems.push({ id: i.id, category: meta[0]||'Mão de Obra', date: meta[1]||'', obs: meta[2]||'', description: parts[1]||'', value: i.unitCost||0 });
-                } else if (parseFloat(i.unitPrice) > 0 && parseFloat(i.unitCost) === 0) {
-                    soldItems.push({ id: i.id, description: i.description, quantity: i.quantity, totalValue: i.quantity * i.unitPrice, unitPrice: i.unitPrice });
-                } else {
-                    materialItems.push({ id: i.id, description: i.description, quantity: i.quantity, unit: 'un', unitCost: i.unitCost||0, unitPrice: i.unitPrice||0 });
-                }
-            });
-
-            handleQuoteChange();
-            renderAllUI();
-            openModalEl('osModal');
-        } catch (e) {
-            console.error(e);
-            alert('Não foi possível carregar esta O.S. Tente novamente.');
+    function toggleModal(id, show) {
+        const m = document.getElementById(id);
+        if(m) {
+            if(show) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+            } else {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
         }
     }
 
-    // ── Vincular Orçamento ────────────────────────────────────
+    function generateDynamicPdfNameAndPrint() {
+        const fileName = `Orcamento_${currentActiveNumberForPdf || 'Documento'}_${currentActiveClientForPdf || 'Cliente'}.pdf`;
+
+        const originalTitle = document.title;
+        document.title = fileName;
+
+        window.print();
+
+        setTimeout(() => {
+            document.title = originalTitle;
+        }, 1000);
+    }
+
+    function openNewOsModal() {
+        document.getElementById('osId').value         = '';
+        document.getElementById('osTitle').value      = '';
+        document.getElementById('osStatus').value     = 'pending';
+        document.getElementById('osQuote').value      = '';
+        document.getElementById('osClient').value     = '';
+        document.getElementById('osDate').value       = '';
+        document.getElementById('osTotalValue').value = '0.00';
+
+        soldItems = [];
+        materialItems = [];
+        operationalItems = [];
+        renderAllUI();
+
+        document.getElementById('modalTitle').innerText = 'Nova Ordem de Serviço';
+        document.getElementById('osModal').classList.remove('hidden');
+        document.getElementById('osModal').classList.add('flex');
+
+        handleQuoteChange();
+    }
+
+    async function viewReceipt(id) {
+        try {
+            const res = await fetch(`/quotes/view-data/${id}`);
+            if (!res.ok) throw new Error("Erro ao buscar dados");
+            const q = await res.json();
+
+            currentActiveClientForPdf = q.client ? q.client.name : 'Consumidor Final';
+            currentActiveNumberForPdf = q.number;
+
+            document.getElementById('recNum').innerText = `N° ${q.number.replace('ORC-', '')}`;
+            document.getElementById('recDate').innerText = new Date(q.dateCreated).toLocaleDateString('pt-BR');
+            document.getElementById('recClient').innerText = q.client ? q.client.name : 'Consumidor Final';
+            document.getElementById('recSignatureClientName').innerText = q.client ? q.client.name : 'Assinatura do Cliente';
+
+            document.getElementById('recObs').innerText = q.observations || 'Sem observações adicionais.';
+            document.getElementById('recWarrantyText').innerText = q.warranty || "Garantia de 90 (noventa) dias, válida exclusivamente para regulagens, vedação e correção de vícios decorrentes da instalação, conforme as condições de uso previstas. A garantia não cobre danos causados por mau uso, impactos, alterações realizadas por terceiros, desgaste natural ou falta de manutenção.";
+
+            document.getElementById('recTotal').innerText = formatarMoeda(q.totalValue);
+
+            const recFinalRow = document.getElementById('recFinalRow');
+            if (q.paymentMethod === 'Cartao_Credito') {
+                if (recFinalRow) recFinalRow.style.display = 'flex';
+                let valorParcela = q.totalValue / (q.installments || 10);
+                document.getElementById('recFinalInstallments').innerText = `${q.installments || 10}x ${formatarMoeda(valorParcela)}`;                } else {
+                if (recFinalRow) recFinalRow.style.display = 'none';
+            }
+
+            const itemsTbody = document.getElementById('recItems');
+            if(itemsTbody) {
+                itemsTbody.innerHTML = '';
+                q.items.forEach(item => {
+                    let m2 = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 1;
+                    let precoPecaUnitaria = m2 * item.unitPrice;
+                    let sub = item.quantity * precoPecaUnitaria;
+
+                    itemsTbody.innerHTML += `
+                            <tr class="border-b border-slate-200 hover:bg-slate-50 transition-colors">
+                                <td class="p-5 pl-6 text-slate-900 alignment-top">
+                                    <span class="font-black text-base text-slate-900 uppercase tracking-wide block mb-1">
+                                        ${item.category || 'Item Comercial'}
+                                    </span>
+                                    <span class="text-sm text-slate-600 font-medium whitespace-pre-line block">
+                                        ${item.product}
+                                    </span>
+                                </td>
+                                <td class="p-5 text-center text-slate-500 font-mono text-base">un</td>
+                                <td class="p-5 text-center font-black text-slate-900 text-base">${item.quantity}</td>
+                                <td class="p-5 text-right font-mono text-slate-600 text-base">${formatarMoeda(precoPecaUnitaria)}</td>
+                                <td class="p-5 text-right pr-6 font-mono font-black text-slate-900 text-base">${formatarMoeda(sub)}</td>
+                            </tr>
+                        `;
+                });
+            }
+            toggleModal('receiptModal', true);
+
+            document.getElementById('receiptModal').classList.remove('hidden');
+            document.getElementById('receiptModal').classList.add('flex');
+        } catch (err) {
+            console.error(err);
+            alert("Erro ao carregar impressão.");
+        }
+    }
+
+    function openCancelModal(id) {
+        osIdToCancel = id;
+        document.getElementById('cancelReason').value = '';
+        document.getElementById('cancelOsModal').classList.remove('hidden');
+        document.getElementById('cancelOsModal').classList.add('flex');
+    }
+
+    function executeCancelOS() {
+        const reason = document.getElementById('cancelReason').value;
+        if (!reason) return alert('Por favor, informe o motivo.');
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        fetch(`/work-orders/cancel/${osIdToCancel}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain',
+                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
+            },
+            body: reason
+        }).then(res => {
+            if(res.ok) window.location.reload();
+        })
+    }
+
     async function handleQuoteChange() {
-        const quoteId   = document.getElementById('osQuote').value;
-        const clientSel = document.getElementById('osClient');
-        const totalInp  = document.getElementById('osTotalValue');
-        const lockIcon  = document.getElementById('lockIcon');
+        const quoteId      = document.getElementById('osQuote').value;
+        const clientSelect = document.getElementById('osClient');
+        const totalInput   = document.getElementById('osTotalValue');
+        const lockIcon     = document.getElementById('lockIcon');
 
         if (quoteId) {
-            clientSel.disabled = true;
-            clientSel.classList.add('opacity-50','cursor-not-allowed');
+            clientSelect.disabled = true;
+            clientSelect.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-100', 'dark:bg-slate-800');
+
+            totalInput.readOnly = false;
+            totalInput.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-500', 'dark:text-slate-400', 'border-rose-300', 'dark:border-rose-500/50');
+
             if (lockIcon) lockIcon.classList.remove('hidden');
 
             if (!document.getElementById('osId').value) {
                 try {
                     const res = await fetch(`/quotes/view-data/${quoteId}`);
                     if (res.ok) {
-                        const q = await res.json();
-                        clientSel.value = q.client ? q.client.id : '';
-                        totalInp.value  = formatBRL(q.totalValue || 0);
+                        const qData = await res.json();
+                        clientSelect.value = qData.client ? qData.client.id : '';
+
+                        totalInput.value = formatBRL(qData.totalValue);
+
                         soldItems = [];
-                        (q.items || []).forEach(qi => {
-                            let m2 = (qi.width > 0 && qi.height > 0) ? qi.width * qi.height : 1;
-                            let vt = qi.quantity * m2 * qi.unitPrice;
-                            soldItems.push({ id: null, description: `${qi.category||'Item'} – ${qi.product||''} (${qi.width||0}×${qi.height||0})`, quantity: qi.quantity, totalValue: vt, unitPrice: vt / qi.quantity });
-                        });
+                        if (qData.items) {
+                            qData.items.forEach(qi => {
+                                let m2 = (qi.width > 0 && qi.height > 0) ? (qi.width * qi.height) : 1;
+                                let valorTotal = qi.quantity * m2 * qi.unitPrice;
+                                soldItems.push({
+                                    id: null,
+                                    description: `${qi.category || 'Item'} - ${qi.product || ''} (LxA: ${qi.width || 0}x${qi.height || 0})`,
+                                    quantity: qi.quantity,
+                                    totalValue: valorTotal,
+                                    unitPrice: valorTotal / qi.quantity
+                                });
+                            });
+                        }
                         renderAllUI();
                     }
-                } catch(e) { console.error(e); }
+                } catch (e) { console.error('Erro ao carregar orçamento', e); }
             }
         } else {
-            clientSel.disabled = false;
-            clientSel.classList.remove('opacity-50','cursor-not-allowed');
+            // Configurações para OS Avulsa
+            clientSelect.disabled = false;
+            clientSelect.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-100', 'dark:bg-slate-800');
+
+            totalInput.readOnly = false;
+            totalInput.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-500', 'dark:text-slate-400', 'border-rose-300', 'dark:border-rose-500/50');
+
             if (lockIcon) lockIcon.classList.add('hidden');
-            if (!document.getElementById('osId').value) { soldItems = []; renderAllUI(); }
+
+            if (!document.getElementById('osId').value) {
+                soldItems = [];
+                renderAllUI();
+            }
         }
     }
 
-    // ── Adicionar / Remover Itens ─────────────────────────────
-    function addMaterial()    { materialItems.push({ id:null, description:'', quantity:1, unit:'un', unitCost:0, unitPrice:0 }); renderAllUI(); }
-    function removeMaterial(i){ materialItems.splice(i,1); renderAllUI(); }
-    function addOperational() {
-        const d = new Date(); const today = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split('T')[0];
-        operationalItems.push({ id:null, description:'', category:'Mão de Obra', value:0, date:today, obs:'' }); renderAllUI();
-    }
-    function removeOperational(i){ operationalItems.splice(i,1); renderAllUI(); }
-    function recalculateGlobalTotal() {
-        let t = 0; soldItems.forEach(i => t += i.totalValue);
-        if (t > 0) document.getElementById('osTotalValue').value = formatBRL(t);
+    async function editOs(id) {
+        try {
+            const response = await fetch(`/work-orders/edit-data/${id}`);
+
+            if (!response.ok) {
+                throw new Error(`Erro na requisição: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            document.getElementById('osId').value         = data.id || '';
+            document.getElementById('osTitle').value      = data.title || '';
+            document.getElementById('osStatus').value     = data.status || 'Pendente';
+            document.getElementById('osQuote').value      = data.quoteId || '';
+            document.getElementById('osClient').value     = data.client ? data.client.id : '';
+
+            document.getElementById('osDate').value       = data.installDate ? data.installDate.split('T')[0] : '';
+            document.getElementById('osTotalValue').value = data.totalValue || 0;
+
+            document.getElementById('osDate').value       = data.installDate ? data.installDate.split('T')[0] : '';
+            originalTotalValue = data.totalValue || 0;
+            originalNotes      = data.notes || "";
+            document.getElementById('osTotalValue').value = formatBRL(data.totalValue || 0);
+
+            if (typeof handleQuoteChange === 'function') {
+                handleQuoteChange();
+            }
+
+            soldItems = []; materialItems = []; operationalItems = [];
+
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(i => {
+                    if (i.description && i.description.startsWith('[OP] ')) {
+                        const parts = i.description.split(' ||| ');
+                        const meta  = parts[0].replace('[OP] ', '').split(' | ');
+                        operationalItems.push({
+                            id: i.id,
+                            category: meta[0] || 'Mão de Obra',
+                            date:     meta[1] || '',
+                            obs:      meta[2] || '',
+                            description: parts[1] || '',
+                            value: i.unitCost || 0
+                        });
+                    } else if (parseFloat(i.unitPrice) > 0 && parseFloat(i.unitCost) === 0 && (!i.description || !i.description.includes(' ||| '))) {
+                        soldItems.push({
+                            id: i.id,
+                            description: i.description,
+                            quantity:    i.quantity,
+                            totalValue:  i.quantity * i.unitPrice
+                        });
+                    } else {
+                        materialItems.push({
+                            id: i.id,
+                            description: i.description,
+                            quantity:    i.quantity,
+                            unit:        'un',
+                            unitCost:    i.unitCost  || 0,
+                            unitPrice:   i.unitPrice || 0
+                        });
+                    }
+                });
+            }
+
+            renderAllUI();
+            document.getElementById('modalTitle').innerText = `OS: ${data.number}`;
+
+            const modal = document.getElementById('osModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+        } catch (error) {
+            console.error("Erro ao tentar carregar a OS para edição:", error);
+            alert("Não foi possível carregar os dados desta OS. Tente novamente.");
+        }
     }
 
-    // ── Render principal ──────────────────────────────────────
+    function addMaterial() {
+        materialItems.push({ id: null, description: '', quantity: 1, unit: 'un', unitCost: 0, unitPrice: 0 });
+        renderAllUI();
+    }
+
+    function removeMaterial(index) {
+        materialItems.splice(index, 1);
+        renderAllUI();
+    }
+
+    function addOperational() {
+        const d = new Date();
+        const today = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        operationalItems.push({ id: null, description: '', category: 'Mão de Obra', value: 0, date: today, obs: '' });
+        renderAllUI();
+    }
+
+    function removeOperational(index) {
+        operationalItems.splice(index, 1);
+        renderAllUI();
+    }
+
+    function recalculateGlobalTotal() {
+        let total = 0;
+        soldItems.forEach(i => total += i.totalValue);
+        if(total > 0) {
+            document.getElementById('osTotalValue').value = formatBRL(total);
+        }
+    }
+
     function renderAllUI() {
 
-        // — Itens Vendidos (orçamento) —
         const soldTbody = document.getElementById('soldItemsBody');
         soldTbody.innerHTML = '';
         if (soldItems.length > 0) {
             document.getElementById('soldItemsContainer').classList.remove('hidden');
             soldItems.forEach((item, idx) => {
                 soldTbody.innerHTML += `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                    <td class="px-3 py-2 text-slate-700 dark:text-slate-300 font-medium text-xs">${escH(item.description)}</td>
-                    <td class="px-3 py-2 text-center">
-                        <input type="number" min="1" value="${item.quantity}"
-                            onchange="soldItems[${idx}].quantity=parseFloat(this.value)||1; soldItems[${idx}].totalValue=soldItems[${idx}].quantity*soldItems[${idx}].unitPrice; renderAllUI();"
-                            class="${inputCls('w-14 text-center font-mono')}">
-                    </td>
-                    <td class="px-3 py-2 text-right">
-                        <input type="text" value="${formatBRL(item.totalValue)}"
-                            oninput="applyCurrencyMask(this)"
-                            onchange="soldItems[${idx}].totalValue=parseBRL(this.value); soldItems[${idx}].unitPrice=soldItems[${idx}].totalValue/soldItems[${idx}].quantity; recalculateGlobalTotal(); renderAllUI();"
-                            class="${inputCls('w-28 text-right text-emerald-600 dark:text-emerald-400 font-bold font-mono')}">
-                    </td>
-                </tr>`;
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                <td class="p-4 text-slate-900 dark:text-slate-300 font-bold text-sm border-l-4 border-emerald-500 pl-4">${item.description}</td>
+                <td class="p-4 text-center">
+                    <input type="number" min="1" value="${item.quantity}" onchange="soldItems[${idx}].quantity = parseFloat(this.value)||1; soldItems[${idx}].totalValue = soldItems[${idx}].quantity * soldItems[${idx}].unitPrice; renderAllUI();" class="w-20 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-center font-mono outline-none">
+                </td>
+                <td class="p-4 text-right">
+                    <input type="text" value="${formatBRL(item.totalValue)}" oninput="applyCurrencyMask(this)" onchange="soldItems[${idx}].totalValue = parseBRL(this.value); soldItems[${idx}].unitPrice = soldItems[${idx}].totalValue / soldItems[${idx}].quantity; recalculateGlobalTotal(); renderAllUI();" class="w-32 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-right text-emerald-600 font-mono font-bold outline-none">
+                </td>
+            </tr>`;
             });
         } else {
             document.getElementById('soldItemsContainer').classList.add('hidden');
         }
 
-        // — Materiais —
-        const matTbody = document.getElementById('materialsContainer');
-        matTbody.innerHTML = '';
-        let totalMat = 0;
-        if (materialItems.length === 0) {
-            matTbody.innerHTML = `<tr id="materialsEmpty"><td colspan="6" class="px-3 py-4 text-center text-slate-400 dark:text-slate-600 italic text-xs">Nenhum material adicionado ainda.</td></tr>`;
-        } else {
-            materialItems.forEach((m, idx) => {
-                const rowTotal = (m.quantity||0) * (m.unitCost||0);
-                totalMat += rowTotal;
-                matTbody.innerHTML += `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                    <td class="px-3 py-1.5">
-                        <input type="text" value="${escH(m.description)}" placeholder="Nome do material..."
-                            onchange="materialItems[${idx}].description=this.value"
-                            class="${inputCls()}">
-                    </td>
-                    <td class="px-2 py-1.5">
-                        <input type="number" min="0.01" step="0.01" value="${m.quantity}"
-                            onchange="materialItems[${idx}].quantity=parseFloat(this.value)||1; renderAllUI();"
-                            class="${inputCls('text-center font-mono')}">
-                    </td>
-                    <td class="px-2 py-1.5">
-                        <input type="text" value="${escH(m.unit||'un')}" placeholder="un"
-                            onchange="materialItems[${idx}].unit=this.value"
-                            class="${inputCls('text-center')}">
-                    </td>
-                    <td class="px-2 py-1.5">
-                        <input type="text" value="${formatBRL(m.unitCost)}"
-                            oninput="applyCurrencyMask(this)"
-                            onchange="materialItems[${idx}].unitCost=parseBRL(this.value); renderAllUI();"
-                            class="${inputCls('text-right font-mono')}">
-                    </td>
-                    <td class="px-2 py-1.5 text-right font-mono font-bold whitespace-nowrap text-slate-700 dark:text-slate-300">
-                        R$ ${formatBRL(rowTotal)}
-                    </td>
-                    <td class="px-2 py-1.5 text-center">
-                        <button type="button" onclick="removeMaterial(${idx})"
-                            class="p-0.5 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">
-                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                        </button>
-                    </td>
-                </tr>`;
-            });
-        }
-        document.getElementById('totalMaterials').innerText = `R$ ${formatBRL(totalMat)}`;
+        const matCont = document.getElementById('materialsContainer');
+        matCont.innerHTML = '';
+        let totalMatCost = 0;
+        materialItems.forEach((m, idx) => {
+            let rowTotal = m.quantity * m.unitCost;
+            totalMatCost += rowTotal;
+            matCont.innerHTML += `
+        <div class="grid grid-cols-12 gap-3 items-end border-b border-slate-200 dark:border-slate-700/50 pb-5 mb-2">
+            <div class="col-span-12 md:col-span-4">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Descrição</label>
+                <input type="text" value="${m.description}" onchange="materialItems[${idx}].description=this.value"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors">
+            </div>
+            <div class="col-span-4 md:col-span-1">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Qtd</label>
+                <input type="number" value="${m.quantity}" onchange="materialItems[${idx}].quantity=parseFloat(this.value)||1; renderAllUI();"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-center text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors">
+            </div>
+            <div class="col-span-4 md:col-span-1">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Un.</label>
+                <input type="text" value="${m.unit}" onchange="materialItems[${idx}].unit=this.value"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-center text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors">
+            </div>
+            <div class="col-span-4 md:col-span-2">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Custo Un.</label>
+                <input type="text" value="${formatBRL(m.unitCost)}" oninput="applyCurrencyMask(this)" onchange="materialItems[${idx}].unitCost=parseBRL(this.value); renderAllUI();"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors font-mono">
+            </div>
+            <div class="col-span-6 md:col-span-2">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Venda Un.</label>
+                <input type="text" value="${formatBRL(m.unitPrice)}" oninput="applyCurrencyMask(this)" onchange="materialItems[${idx}].unitPrice=parseBRL(this.value)"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors font-mono">
+            </div>
+            <div class="col-span-6 md:col-span-2 flex justify-between items-center pb-2 pl-3">
+                <div class="text-slate-500 dark:text-slate-400 text-sm font-bold w-full">
+                    <span class="text-[10px] uppercase block mb-1">Total</span>R$ ${formatBRL(rowTotal)}
+                </div>
+                <button type="button" onclick="removeMaterial(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 bg-rose-50 dark:bg-transparent p-1.5 rounded-lg transition-colors">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>`;
+        });
+        document.getElementById('totalMaterials').innerText = `R$ ${formatBRL(totalMatCost)}`;
 
-        // — Custos Operacionais —
-        const opTbody = document.getElementById('operationalsContainer');
-        opTbody.innerHTML = '';
-        let totalOp = 0;
-        if (operationalItems.length === 0) {
-            opTbody.innerHTML = `<tr id="operationalsEmpty"><td colspan="6" class="px-3 py-4 text-center text-slate-400 dark:text-slate-600 italic text-xs">Nenhum custo operacional.</td></tr>`;
-        } else {
-            operationalItems.forEach((o, idx) => {
-                totalOp += o.value||0;
-                let selHtml = `<select onchange="operationalItems[${idx}].category=this.value" class="${inputCls()}">`;
-                OP_CATEGORIES.forEach(c => { selHtml += `<option value="${c}" ${o.category===c?'selected':''}>${c}</option>`; });
-                selHtml += '</select>';
-                opTbody.innerHTML += `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                    <td class="px-3 py-1.5">
-                        <input type="text" value="${escH(o.description)}" placeholder="Descrição..."
-                            onchange="operationalItems[${idx}].description=this.value"
-                            class="${inputCls()}">
-                    </td>
-                    <td class="px-2 py-1.5">${selHtml}</td>
-                    <td class="px-2 py-1.5">
-                        <input type="text" value="${formatBRL(o.value)}"
-                            oninput="applyCurrencyMask(this)"
-                            onchange="operationalItems[${idx}].value=parseBRL(this.value); renderAllUI();"
-                            class="${inputCls('text-right font-mono')}">
-                    </td>
-                    <td class="px-2 py-1.5">
-                        <input type="date" value="${o.date||''}"
-                            onchange="operationalItems[${idx}].date=this.value"
-                            class="${inputCls('text-center')}">
-                    </td>
-                    <td class="px-2 py-1.5">
-                        <input type="text" value="${escH(o.obs)}" placeholder="Obs..."
-                            onchange="operationalItems[${idx}].obs=this.value"
-                            class="${inputCls()}">
-                    </td>
-                    <td class="px-2 py-1.5 text-center">
-                        <button type="button" onclick="removeOperational(${idx})"
-                            class="p-0.5 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">
-                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                        </button>
-                    </td>
-                </tr>`;
-            });
-        }
-        document.getElementById('totalOperationals').innerText = `R$ ${formatBRL(totalOp)}`;
+        const opCont = document.getElementById('operationalsContainer');
+        opCont.innerHTML = '';
+        let totalOpCost = 0;
+        const catOptions = ['Mão de Obra', 'Combustível', 'Transporte', 'Instalação', 'Equipamento', 'Outros'];
 
-        // — KPIs do footer —
-        const receita = parseBRL(document.getElementById('osTotalValue').value);
-        const custo   = totalMat + totalOp;
-        const lucro   = receita - custo;
-        const margem  = receita > 0 ? (lucro / receita) * 100 : 0;
+        operationalItems.forEach((o, idx) => {
+            totalOpCost += o.value;
+            let selectHtml = `<select onchange="operationalItems[${idx}].category=this.value" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors">`;
+            catOptions.forEach(opt => { selectHtml += `<option value="${opt}" ${o.category === opt ? 'selected' : ''}>${opt}</option>`; });
+            selectHtml += `</select>`;
+
+            opCont.innerHTML += `
+        <div class="grid grid-cols-12 gap-3 items-end border-b border-slate-200 dark:border-slate-700/50 pb-5 mb-2">
+            <div class="col-span-12 md:col-span-3">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Descrição</label>
+                <input type="text" value="${o.description}" onchange="operationalItems[${idx}].description=this.value"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors">
+            </div>
+            <div class="col-span-6 md:col-span-2">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Categoria</label>
+                ${selectHtml}
+            </div>
+            <div class="col-span-6 md:col-span-2">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Valor</label>
+                <input type="text" value="${formatBRL(o.value)}" oninput="applyCurrencyMask(this)" onchange="operationalItems[${idx}].value=parseBRL(this.value); renderAllUI();"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors font-mono">
+            </div>
+            <div class="col-span-6 md:col-span-2">
+                <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Data</label>
+                <input type="date" value="${o.date}" onchange="operationalItems[${idx}].date=this.value"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-300 text-sm outline-none focus:border-amber-500 transition-colors">
+            </div>
+            <div class="col-span-6 md:col-span-3 flex justify-between items-center pb-0 pl-1">
+                <div class="w-full pr-3">
+                    <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-1">Obs</label>
+                    <input type="text" value="${o.obs}" onchange="operationalItems[${idx}].obs=this.value"
+                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors">
+                </div>
+                <button type="button" onclick="removeOperational(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 pb-1.5 bg-rose-50 dark:bg-transparent p-1.5 rounded-lg transition-colors">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>`;
+        });
+        document.getElementById('totalOperationals').innerText = `R$ ${formatBRL(totalOpCost)}`;
+
+        // --- KPIs DO EDITOR ---
+        const receitaStr = document.getElementById('osTotalValue').value;
+        const receita = parseBRL(receitaStr);
+
+        const custoGlobal = totalMatCost + totalOpCost;
+        const lucro = receita - custoGlobal;
+        const margem = receita > 0 ? (lucro / receita) * 100 : 0;
+
         document.getElementById('resumoReceita').innerText = `R$ ${formatBRL(receita)}`;
-        document.getElementById('resumoCusto').innerText   = `R$ ${formatBRL(custo)}`;
+        document.getElementById('resumoCusto').innerText   = `R$ ${formatBRL(custoGlobal)}`;
         document.getElementById('resumoLucro').innerText   = `R$ ${formatBRL(lucro)}`;
-        document.getElementById('resumoMargem').innerText  = `${margem.toFixed(1).replace('.',',')}%`;
+        document.getElementById('resumoMargem').innerText  = `${margem.toFixed(1)}%`;
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
-    // ── Salvar O.S. ──────────────────────────────────────────
+    function updateLiveKPIs() { renderAllUI(); }
+
     async function saveFullOS(e) {
         e.preventDefault();
-        const currentTotal = parseBRL(document.getElementById('osTotalValue').value);
+
+        const clientVal    = document.getElementById('osClient').value;
+        const currentTotalValue = parseBRL(document.getElementById('osTotalValue').value);
         let finalNotes = originalNotes || "";
 
-        if (originalTotalValue > 0 && currentTotal !== originalTotalValue) {
-            const motivo = prompt(`Valor alterado de R$ ${formatBRL(originalTotalValue)} para R$ ${formatBRL(currentTotal)}.\nInforme o motivo (obrigatório):`);
-            if (!motivo || !motivo.trim()) { alert('A O.S. não foi salva. Justificativa obrigatória ao alterar o valor.'); return; }
+        // VERIFICADOR DE ALTERAÇÃO E JUSTIFICATIVA
+        if (originalTotalValue > 0 && currentTotalValue !== originalTotalValue) {
+            const motivo = prompt(`O valor global da O.S. foi alterado de R$ ${formatBRL(originalTotalValue)} para R$ ${formatBRL(currentTotalValue)}.\n\nPor favor, justifique o motivo da alteração:` );
+
+            if (motivo === null || motivo.trim() === "") {
+                alert("A O.S. não foi salva. É obrigatório informar o motivo ao alterar os valores de venda.");
+                return;
+            }
+
             const hoje = new Date().toLocaleDateString('pt-BR');
-            finalNotes += `\n[${hoje}] VALOR ALTERADO de R$ ${formatBRL(originalTotalValue)} para R$ ${formatBRL(currentTotal)}. Motivo: ${motivo.trim()}`;
+            finalNotes += `\n[${hoje}] VALOR ALTERADO de R$ ${formatBRL(originalTotalValue)} para R$ ${formatBRL(currentTotalValue)}. Motivo: ${motivo.trim()}`;
         }
 
         const allItems = [];
+
         soldItems.forEach(si => {
-            allItems.push({ description: si.description, quantity: si.quantity, unitCost: 0, unitPrice: si.totalValue / (si.quantity||1) });
-        });
-        materialItems.forEach(mi => {
-            allItems.push({ description: mi.description, quantity: mi.quantity, unitCost: mi.unitCost, unitPrice: mi.unitPrice });
-        });
-        operationalItems.forEach(oi => {
-            allItems.push({ description: `[OP] ${oi.category} | ${oi.date} | ${oi.obs} ||| ${oi.description}`, quantity: 1, unitCost: oi.value, unitPrice: 0 });
+            allItems.push({
+                description: si.description,
+                quantity: si.quantity,
+                unitCost: 0,
+                unitPrice: si.totalValue / (si.quantity || 1)
+            });
         });
 
-        const clientVal = document.getElementById('osClient').value;
+        materialItems.forEach(mi => {
+            allItems.push({
+                description: mi.description,
+                quantity: mi.quantity,
+                unitCost: mi.unitCost, // se estiver formatando BRL nos materiais precisa usar parseBRL() aqui
+                unitPrice: mi.unitPrice
+            });
+        });
+
+        operationalItems.forEach(oi => {
+            allItems.push({
+                description: `[OP] ${oi.category} | ${oi.date} | ${oi.obs} ||| ${oi.description}`,
+                quantity: 1,
+                unitCost: oi.value,
+                unitPrice: 0
+            });
+        });
+
         const payload = {
-            id:          document.getElementById('osId').value || null,
-            title:       document.getElementById('osTitle').value,
-            status:      document.getElementById('osStatus').value,
+            id: document.getElementById('osId').value || null,
+            title: document.getElementById('osTitle').value,
+            status: document.getElementById('osStatus').value,
             installDate: document.getElementById('osDate').value || null,
-            totalValue:  currentTotal,
-            notes:       finalNotes,
-            quoteId:     document.getElementById('osQuote').value || null,
-            client:      clientVal ? { id: clientVal } : null,
-            items:       allItems
+            totalValue: currentTotalValue,
+            notes: finalNotes, // <--- Enviando a justificativa
+            quoteId: document.getElementById('osQuote').value || null,
+            client: clientVal ? { id: clientVal } : null,
+            items: allItems
         };
 
-        const csrf       = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-        const saveBtn = e.target;
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...';
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        await fetch('/work-orders/save-ajax', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify(payload)
+        });
 
-        try {
-            await fetch('/work-orders/save-ajax', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrf },
-                body: JSON.stringify(payload)
-            });
-            window.location.reload();
-        } catch(err) {
-            console.error(err);
-            alert('Erro ao salvar. Tente novamente.');
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Gravar O.S.';
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
+        window.location.reload();
     }
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>

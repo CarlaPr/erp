@@ -57,11 +57,15 @@ public class WorkOrderController {
             return profileRepository.save(p);
         });
 
-        BigDecimal totalRevenue = workOrderRepo.sumTotalRevenue();
-        BigDecimal totalCost = workOrderRepo.sumTotalCost();
+        BigDecimal totalRevenue = orders.stream()
+                .filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus()))
+                .map(wo -> wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        totalRevenue = totalRevenue != null ? totalRevenue : BigDecimal.ZERO;
-        totalCost = totalCost != null ? totalCost : BigDecimal.ZERO;
+        BigDecimal totalCost = orders.stream()
+                .filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus()))
+                .map(wo -> wo.getTotalCost() != null ? wo.getTotalCost() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal globalProfit = totalRevenue.subtract(totalCost);
         BigDecimal averageMargin = BigDecimal.ZERO;
@@ -103,11 +107,9 @@ public class WorkOrderController {
             targetWo.setStatus(workOrder.getStatus());
             targetWo.setDescription(workOrder.getDescription());
 
-            // Atualiza as notas (que agora virão com a justificativa do frontend)
             targetWo.setNotes(workOrder.getNotes());
             targetWo.setInstallDate(workOrder.getInstallDate());
 
-            // Verifica o novo valor
             BigDecimal newTotal = workOrder.getTotalValue();
             if (newTotal != null && newTotal.compareTo(BigDecimal.ZERO) > 0) {
                 targetWo.setTotalValue(newTotal);
@@ -115,17 +117,15 @@ public class WorkOrderController {
                 targetWo.setTotalValue(workOrderService.calculateTotalValueFromItems(workOrder));
             }
 
-            // Se o valor total for diferente, marcamos a flag para alterar o Contas a Receber
             if (oldTotal != null && targetWo.getTotalValue().compareTo(oldTotal) != 0) {
                 isTotalChanged = true;
 
-                // Extrai o motivo exato digitado no frontend capturando a linha do log gerada
                 String osNotes = workOrder.getNotes() != null ? workOrder.getNotes() : "";
                 if (osNotes.contains("VALOR ALTERADO")) {
                     String[] lines = osNotes.split("\n");
                     for (int i = lines.length - 1; i >= 0; i--) {
                         if (lines[i].contains("VALOR ALTERADO")) {
-                            changeReasonMsg = lines[i]; // Captura a linha "[DD/MM/YYYY] VALOR ALTERADO... Motivo: XYZ"
+                            changeReasonMsg = lines[i];
                             break;
                         }
                     }
@@ -174,9 +174,13 @@ public class WorkOrderController {
                     if (i == 0) ar.setDueDate(targetWo.getInstallDate());
                     else ar.setDueDate(targetWo.getInstallDate().plusMonths(i));
 
+                    if (!"cancelled".equals(targetWo.getStatus()) && "cancelled".equals(ar.getStatus())) {
+                        ar.setStatus("pending");
+                        ar.setNotes((ar.getNotes() != null ? ar.getNotes() : "") + "\n[Sistema] Reativado após edição da O.S.");
+                    }
+
                     if (isTotalChanged) {
                         ar.setTotalAmount(i == installmentsCount - 1 ? lastInstallment : installmentValue);
-
                         String currentNotes = ar.getNotes() != null ? ar.getNotes() : "";
                         ar.setNotes(currentNotes + "\n[Sistema] " + changeReasonMsg);
                     }
@@ -222,6 +226,7 @@ public class WorkOrderController {
         if(wo != null) {
             wo.setStatus("cancelled");
             wo.setNotes((wo.getNotes() != null ? wo.getNotes() : "") + "\n>>> CANCELADA: " + reason);
+
             if(wo.getQuote() != null) {
                 Quote q = wo.getQuote();
                 q.setWorkOrder(null);
@@ -229,6 +234,16 @@ public class WorkOrderController {
                 wo.setQuote(null);
             }
             workOrderService.save(wo);
+
+            List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
+                    .filter(r -> r.getWorkOrder() != null && r.getWorkOrder().getId().equals(id))
+                    .collect(Collectors.toList());
+
+            for (AccountsReceivable ar : receivables) {
+                ar.setStatus("cancelled");
+                ar.setNotes((ar.getNotes() != null ? ar.getNotes() : "") + "\n[Sistema] Cancelado junto com a O.S.");
+                receivableRepo.save(ar);
+            }
         }
         return ResponseEntity.ok().build();
     }
