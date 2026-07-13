@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface AccountsPayableRepository extends JpaRepository<AccountsPayable, UUID> {
 
-    List<AccountsPayable> findAllByOrderByDueDateAsc();
+    List<AccountsPayable> findAllByOrderByDueDateAscCreatedAtAsc();
 
     List<AccountsPayable> findByStatusNotOrderByDueDateAsc(String status);
 

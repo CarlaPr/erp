@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "accounts_payable")
@@ -54,14 +55,10 @@ public class AccountsPayable {
     @Column(name = "payment_date")
     private LocalDate paymentDate;
 
-    /*
-     * pending / partial / paid / cancelled
-     */
+
     @Column(nullable = false)
     private String status = "pending";
 
-    // REGRA DE NEGÓCIO (A1): mesmo conceito do lado de Contas a Receber — "Pago"
-    // (empresa confirmou) é diferente de "Conciliado" (banco confirmou).
     @Column(name = "reconciliation_status")
     private String reconciliationStatus = "NAO_CONCILIADO";
 
@@ -77,8 +74,18 @@ public class AccountsPayable {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    // ─── Getters & Setters ───────────────────────────────────────────────────
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+    }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public Supplier getSupplier() { return supplier; }

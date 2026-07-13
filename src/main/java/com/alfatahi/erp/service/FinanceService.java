@@ -28,7 +28,7 @@ public class FinanceService {
         this.workOrderRepository = workOrderRepository;
     }
 
-    public List<AccountsPayable> listAllPayables() { return payableRepository.findAllByOrderByDueDateAsc(); }
+    public List<AccountsPayable> listAllPayables() { return payableRepository.findAllByOrderByDueDateAscCreatedAtAsc(); }
     public List<AccountsReceivable> listAllReceivables() { return receivableRepository.findAllByOrderByDueDateAsc(); }
     public List<BankAccount> listAllAccounts() { return bankAccountRepository.findAll(); }
     public AccountsPayable savePayable(AccountsPayable p) { return payableRepository.save(p); }

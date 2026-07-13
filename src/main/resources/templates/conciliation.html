@@ -22,9 +22,14 @@
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Conciliação Bancária</h2>
             <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Importação de extratos OFX e auditoria de caixa.</p>
         </div>
-        <button onclick="toggleModal('ofxModal', true)" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm">
-            <i data-lucide="upload-cloud" class="w-5 h-5"></i> Importar Extrato (OFX)
-        </button>
+        <div class="flex gap-3">
+            <button onclick="toggleModal('accountModal', true)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm text-sm border border-slate-200 dark:border-slate-700">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i> Nova Conta Bancária
+            </button>
+            <button onclick="toggleModal('ofxModal', true)" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Importar Extrato (OFX)
+            </button>
+        </div>
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -92,7 +97,7 @@
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2">Conta Bancária (Destino)</label>
                     <select name="bankAccountId" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base">
                         <option value="">Selecione a Conta...</option>
-                        <option th:each="acc : ${bankAccounts}" th:value="${acc.id}" th:text="${acc.bankName + ' - ' + acc.accountNumber}"></option>
+                        <option th:each="acc : ${bankAccounts}" th:value="${acc.id}" th:text="${acc.bankName + ' - ' + acc.name}"></option>
                     </select>
                 </div>
                 <div>
@@ -107,6 +112,40 @@
                 <div class="flex justify-end gap-3 pt-4 mt-6 border-t border-slate-200 dark:border-slate-800">
                     <button type="button" onclick="toggleModal('ofxModal', false)" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-base">Cancelar</button>
                     <button type="submit" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-500 dark:hover:bg-emerald-600 dark:text-slate-900 font-black transition-colors shadow-lg shadow-emerald-500/20 text-base">Processar Ficheiro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="accountModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
+            <button type="button" onclick="toggleModal('accountModal', false)" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Adicionar Conta Bancária</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">Cadastre um banco para importar seus extratos.</p>
+
+            <form th:action="@{/conciliation/add-account}" method="POST" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2">Nome da Conta (Apelido)</label>
+                    <input type="text" name="name" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500" placeholder="Ex: Conta Itaú Principal, Caixa Físico">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2">Instituição Bancária</label>
+                    <input type="text" name="bankName" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500" placeholder="Ex: Itaú, Santander, Nubank">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-2">Tipo de Conta</label>
+                    <select name="type" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 dark:focus:border-cyan-500">
+                        <option value="checking">Conta Corrente</option>
+                        <option value="savings">Conta Poupança</option>
+                        <option value="cash">Caixa Interno (Dinheiro)</option>
+                        <option value="investment">Investimentos</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 mt-6 border-t border-slate-200 dark:border-slate-800">
+                    <button type="button" onclick="toggleModal('accountModal', false)" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-base">Cancelar</button>
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black transition-colors shadow-lg shadow-brand-500/20 text-base">Salvar Conta</button>
                 </div>
             </form>
         </div>

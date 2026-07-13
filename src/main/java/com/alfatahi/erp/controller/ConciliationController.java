@@ -26,10 +26,10 @@ import java.util.UUID;
 @RequestMapping("/conciliation")
 public class ConciliationController {
 
-    private static final BigDecimal TOLERANCIA = new BigDecimal("0.05"); // arredondamento
+    private static final BigDecimal TOLERANCIA = new BigDecimal("0.05");
     private static final long JANELA_DIAS = 5;
-    private static final BigDecimal FAIXA_MIN = new BigDecimal("0.50"); // 50% do esperado
-    private static final BigDecimal FAIXA_MAX = new BigDecimal("1.10"); // 110% do esperado
+    private static final BigDecimal FAIXA_MIN = new BigDecimal("0.50");
+    private static final BigDecimal FAIXA_MAX = new BigDecimal("1.10");
 
     private final BankTransactionRepository bankRepo;
     private final AccountsPayableRepository payRepo;
@@ -74,6 +74,9 @@ public class ConciliationController {
         model.addAttribute("saidasPendentes", saidasPendentes);
         model.addAttribute("divergentesCount", divergentesCount);
         model.addAttribute("newTx", new BankTransaction());
+
+        // LINHA NOVA AQUI:
+        model.addAttribute("bankAccounts", bankAccountRepository.findAll());
 
         return "conciliation";
     }
@@ -133,16 +136,21 @@ public class ConciliationController {
         return "redirect:/conciliation";
     }
 
-    @PostMapping("/upload")
+    @PostMapping("/upload-ofx")
     @Transactional
     public String uploadOfx(@RequestParam("file") MultipartFile file,
+                            @RequestParam("bankAccountId") UUID bankAccountId, // NOVO PARÂMETRO
                             RedirectAttributes redirectAttributes) {
         try {
+            BankAccount account = bankAccountRepository.findById(bankAccountId)
+                    .orElseThrow(() -> new RuntimeException("Conta bancária não encontrada."));
+
             List<BankTransaction> transactions = ofxParserService.parse(file);
 
             int novos = 0, duplicados = 0, conciliados = 0, divergentes = 0;
 
             for (BankTransaction tx : transactions) {
+                tx.setBankAccount(account);
 
                 if (tx.getExternalId() != null && bankRepo.existsByExternalId(tx.getExternalId())) {
                     duplicados++;
@@ -166,9 +174,25 @@ public class ConciliationController {
 
             redirectAttributes.addFlashAttribute("successMsg", msg.toString());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMsg",
-                    "Erro ao processar o arquivo OFX: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMsg", "Erro ao processar o arquivo OFX: " + e.getMessage());
         }
+        return "redirect:/conciliation";
+    }
+
+    @PostMapping("/add-account")
+    public String addAccount(@RequestParam String name,
+                             @RequestParam String bankName,
+                             @RequestParam String type,
+                             RedirectAttributes redirectAttributes) {
+        BankAccount acc = new BankAccount();
+        acc.setName(name);
+        acc.setBankName(bankName);
+        acc.setType(type);
+        acc.setCurrentBalance(BigDecimal.ZERO);
+
+        bankAccountRepository.save(acc);
+
+        redirectAttributes.addFlashAttribute("successMsg", "Conta bancária adicionada com sucesso!");
         return "redirect:/conciliation";
     }
 
@@ -207,7 +231,7 @@ public class ConciliationController {
             AccountsPayable best = null;
             BigDecimal bestDiff = null;
 
-            for (AccountsPayable p : payRepo.findAllByOrderByDueDateAsc()) {
+            for (AccountsPayable p : payRepo.findAllByOrderByDueDateAscCreatedAtAsc()) {
                 if (!"paid".equals(p.getStatus()) && !"partial".equals(p.getStatus())) continue;
                 if ("CONCILIADO".equals(p.getReconciliationStatus())) continue;
                 if (p.getDueDate() == null) continue;
@@ -215,7 +239,7 @@ public class ConciliationController {
                 long daysDiff = Math.abs(ChronoUnit.DAYS.between(p.getDueDate(), tx.getTransactionDate()));
                 if (daysDiff > JANELA_DIAS) continue;
 
-                BigDecimal expected = p.getTotalAmount(); // contas a pagar nao tem taxa de cartao neste app
+                BigDecimal expected = p.getTotalAmount();
                 if (expected == null || expected.compareTo(BigDecimal.ZERO) <= 0) continue;
 
                 BigDecimal ratio = tx.getAmount().divide(expected, 4, RoundingMode.HALF_UP);
