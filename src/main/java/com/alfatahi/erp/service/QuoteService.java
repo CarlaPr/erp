@@ -11,6 +11,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -20,12 +21,14 @@ public class QuoteService {
     private final WorkOrderRepository osRepo;
     private final AccountsReceivableRepository finRepo;
     private final ScheduleService scheduleService;
+    private final PaymentTermsService paymentTermsService;
 
-    public QuoteService(QuoteRepository quoteRepo, WorkOrderRepository osRepo, AccountsReceivableRepository finRepo, ScheduleService scheduleService) {
+    public QuoteService(QuoteRepository quoteRepo, WorkOrderRepository osRepo, AccountsReceivableRepository finRepo, ScheduleService scheduleService, PaymentTermsService paymentTermsService) {
         this.quoteRepo = quoteRepo;
         this.osRepo = osRepo;
         this.finRepo = finRepo;
         this.scheduleService = scheduleService;
+        this.paymentTermsService = paymentTermsService;
     }
 
     private BigDecimal calcularAreaM2(BigDecimal width, BigDecimal height) {
@@ -51,14 +54,19 @@ public class QuoteService {
 
     @Transactional
     public void approveQuote(UUID quoteId) {
-        Quote quote = quoteRepo.findById(quoteId).orElseThrow(() -> new RuntimeException("Orçamento não encontrado"));
+        Quote quote = quoteRepo.findById(quoteId)
+                .orElseThrow(() -> new RuntimeException("Orçamento não encontrado"));
 
         if (!"pending".equals(quote.getStatus()) && !"sent".equals(quote.getStatus())) {
-            throw new IllegalStateException("Orçamento não pode ser aprovado no status atual: " + quote.getStatus());
+            throw new IllegalStateException(
+                    "Orçamento não pode ser aprovado no status atual: " + quote.getStatus());
         }
 
+        // ── 1. Cria a Ordem de Serviço ───────────────────────────────────────
         WorkOrder os = new WorkOrder();
-        String osNumber = quote.getNumber() != null ? quote.getNumber().replace("ORC-", "OS-") : "OS-NOVO";
+        String osNumber = quote.getNumber() != null
+                ? quote.getNumber().replace("ORC-", "OS-")
+                : "OS-NOVO";
         os.setNumber(osNumber);
         os.setClient(quote.getClient());
         os.setTitle("Venda: " + quote.getNumber());
@@ -67,60 +75,51 @@ public class QuoteService {
         if (quote.getObservations() != null && !quote.getObservations().isBlank()) {
             description += ". OBS: " + quote.getObservations();
         }
-        if (description.length() > 255) {
-            description = description.substring(0, 255);
-        }
-
+        if (description.length() > 255) description = description.substring(0, 255);
         os.setDescription(description);
         os.setStatus("in_progress");
 
+        // ── 2. Calcula o valor final respeitando o desconto do orçamento ──────
         BigDecimal subtotal = BigDecimal.ZERO;
         if (quote.getItems() != null && !quote.getItems().isEmpty()) {
             for (QuoteItem item : quote.getItems()) {
                 BigDecimal area = calcularAreaM2(item.getWidth(), item.getHeight());
-                BigDecimal precoUnitarioComArea = item.getUnitPrice().multiply(area);
-                BigDecimal itemTotal = item.getQuantity().multiply(precoUnitarioComArea);
-                subtotal = subtotal.add(itemTotal);
+                BigDecimal precoComArea = item.getUnitPrice().multiply(area);
+                subtotal = subtotal.add(item.getQuantity().multiply(precoComArea));
             }
         }
 
         BigDecimal discountAmount = BigDecimal.ZERO;
-        if (quote.getDiscountPercent() != null && quote.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+        if (quote.getDiscountPercent() != null
+                && quote.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
             discountAmount = subtotal.multiply(quote.getDiscountPercent())
                     .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         }
 
         BigDecimal finalTotal = subtotal.subtract(discountAmount);
-        if (finalTotal.compareTo(BigDecimal.ZERO) < 0) {
-            finalTotal = BigDecimal.ZERO;
-        }
-
+        if (finalTotal.compareTo(BigDecimal.ZERO) < 0) finalTotal = BigDecimal.ZERO;
         os.setTotalValue(finalTotal);
 
         LocalDate dataEntrega = calculateBusinessDays(LocalDate.now(), 15);
         os.setInstallDate(dataEntrega);
 
+        // ── 3. Copia itens para a OS ─────────────────────────────────────────
         if (quote.getItems() != null) {
             for (QuoteItem qi : quote.getItems()) {
                 WorkOrderItem osItem = new WorkOrderItem();
                 BigDecimal w = qi.getWidth() != null ? qi.getWidth() : BigDecimal.ZERO;
                 BigDecimal h = qi.getHeight() != null ? qi.getHeight() : BigDecimal.ZERO;
                 String dimensions = (w.compareTo(BigDecimal.ZERO) > 0 || h.compareTo(BigDecimal.ZERO) > 0)
-                        ? " (LxA: " + w + "x" + h + ")"
-                        : "";
+                        ? " (LxA: " + w + "x" + h + ")" : "";
                 String cat = qi.getCategory() != null ? qi.getCategory() : "Item";
                 String prod = qi.getProduct() != null ? qi.getProduct() : "Sem descrição";
                 osItem.setDescription(cat + " - " + prod + dimensions);
                 osItem.setQuantity(qi.getQuantity());
-
                 BigDecimal area = calcularAreaM2(w, h);
                 osItem.setUnitPrice(qi.getUnitPrice().multiply(area));
                 osItem.setUnitCost(BigDecimal.ZERO);
                 osItem.setWorkOrder(os);
-
-                if (os.getItems() == null) {
-                    os.setItems(new ArrayList<>());
-                }
+                if (os.getItems() == null) os.setItems(new ArrayList<>());
                 os.getItems().add(osItem);
             }
         }
@@ -132,24 +131,47 @@ public class QuoteService {
 
         os = osRepo.saveAndFlush(os);
         quoteRepo.saveAndFlush(quote);
-
         scheduleService.createFromApprovedQuote(quote, os);
 
+        // ── 4. Gera Contas a Receber com as regras reais de pagamento ─────────
+        //
+        // CRÉDITO  → 1 parcela única, valor bruto cheio, sem parcelamento interno.
+        //            A taxa variável da maquininha só é aplicada na modal "Receber".
+        // DÉBITO   → 1 parcela única, integral, vence na entrega.
+        // PIX      → 50/50 (padrão), 100% antecipado, ou 100% na entrega.
+        // DINHEIRO → idem ao PIX (flexível).
+        //
         String paymentMethod = quote.getPaymentMethod();
+        String paymentPlan   = quote.getPaymentPlan();
 
-        int numParcelasCliente = (quote.getInstallments() != null && quote.getInstallments() > 0) ? quote.getInstallments() : 1;
+        List<PaymentTermsService.PlannedInstallment> installments =
+                paymentTermsService.generateInstallments(
+                        paymentMethod, paymentPlan, finalTotal, LocalDate.now(), dataEntrega);
 
-        AccountsReceivable receivable = new AccountsReceivable();
-        receivable.setClient(quote.getClient());
-        receivable.setWorkOrder(os);
-        receivable.setPaymentMethod(paymentMethod);
-        receivable.setDescription(numParcelasCliente == 1
-                ? "Ref. " + quote.getNumber()
-                : "Ref. " + quote.getNumber() + " — Pago em " + numParcelasCliente + "x no cartão (recebimento integral via maquininha)");
-        receivable.setTotalAmount(finalTotal);
-        receivable.setInstallments(numParcelasCliente);
-        receivable.setDueDate(dataEntrega);
-        receivable.setStatus("pending");
-        finRepo.save(receivable);
+        int total = installments.size();
+        for (int i = 0; i < total; i++) {
+            PaymentTermsService.PlannedInstallment inst = installments.get(i);
+            AccountsReceivable receivable = new AccountsReceivable();
+            receivable.setClient(quote.getClient());
+            receivable.setWorkOrder(os);
+            receivable.setPaymentMethod(paymentMethod);
+            receivable.setPaymentStage(inst.getStage());
+            receivable.setReferenceMonth(inst.getDueDate().withDayOfMonth(1));
+
+            String desc;
+            if (total == 1) {
+                desc = "Ref. " + quote.getNumber();
+            } else {
+                String stageLabel = PaymentTermsService.STAGE_ENTRADA.equals(inst.getStage())
+                        ? "Entrada (50%)" : "Saldo na Entrega (50%)";
+                desc = "Ref. " + quote.getNumber() + " — " + stageLabel;
+            }
+            receivable.setDescription(desc);
+            receivable.setTotalAmount(inst.getAmount());
+            receivable.setInstallments(total);
+            receivable.setDueDate(inst.getDueDate());
+            receivable.setStatus("pending");
+            finRepo.save(receivable);
+        }
     }
 }

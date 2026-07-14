@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Fechamento Mensal - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Fechamento Mensal</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Período: <strong>dia 1 a dia 6</strong> de cada mês. Saldo final vira saldo de abertura do próximo.
+            </p>
+        </div>
+        <a href="/cash-ledger"
+           class="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm">
+            <i data-lucide="book-open" class="w-4 h-4"></i> Livro Caixa
+        </a>
+    </header>
+
+    <div th:if="${success}" class="mb-6 flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300 rounded-2xl p-4 text-sm font-semibold">
+        <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0 text-emerald-500"></i>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="mb-6 flex items-center gap-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-rose-800 dark:text-rose-300 rounded-2xl p-4 text-sm font-semibold">
+        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 text-rose-500"></i>
+        <span th:text="${error}"></span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 shadow-sm h-fit">
+            <h3 class="text-base font-black text-slate-900 dark:text-white mb-1">Fechar Período</h3>
+            <p class="text-xs text-slate-500 mb-5">
+                Disponível a partir do <strong>dia 6</strong> do mês corrente.
+                Após fechado, o período não pode ser reaberto.
+            </p>
+
+            <div th:if="${!canClose}"
+                 class="mb-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 rounded-xl p-3 text-xs font-semibold flex items-center gap-2">
+                <i data-lucide="lock" class="w-4 h-4 shrink-0"></i>
+                Fechamento disponível a partir do dia 6 do mês.
+            </div>
+
+            <form th:if="${canClose}" th:action="@{/financial-closing/execute}" method="POST" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Ano</label>
+                        <input type="number" name="year" th:value="${suggestedYear}"
+                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-brand-500"/>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Mês</label>
+                        <select name="month"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-brand-500">
+                            <option value="1"  th:selected="${suggestedMonth == 1}">Janeiro</option>
+                            <option value="2"  th:selected="${suggestedMonth == 2}">Fevereiro</option>
+                            <option value="3"  th:selected="${suggestedMonth == 3}">Março</option>
+                            <option value="4"  th:selected="${suggestedMonth == 4}">Abril</option>
+                            <option value="5"  th:selected="${suggestedMonth == 5}">Maio</option>
+                            <option value="6"  th:selected="${suggestedMonth == 6}">Junho</option>
+                            <option value="7"  th:selected="${suggestedMonth == 7}">Julho</option>
+                            <option value="8"  th:selected="${suggestedMonth == 8}">Agosto</option>
+                            <option value="9"  th:selected="${suggestedMonth == 9}">Setembro</option>
+                            <option value="10" th:selected="${suggestedMonth == 10}">Outubro</option>
+                            <option value="11" th:selected="${suggestedMonth == 11}">Novembro</option>
+                            <option value="12" th:selected="${suggestedMonth == 12}">Dezembro</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Observações (opcional)</label>
+                    <textarea name="notes" rows="2" placeholder="Ex.: mês com 2 feriados..."
+                              class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 resize-none"></textarea>
+                </div>
+                <button type="submit"
+                        onclick="return confirm('Confirmar o fechamento do período selecionado? Esta ação não pode ser desfeita.')"
+                        class="w-full bg-violet-600 hover:bg-violet-700 text-white font-black px-4 py-3 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
+                    <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                    Executar Fechamento
+                </button>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 dark:border-slate-800/80">
+                <h3 class="text-base font-black text-slate-900 dark:text-white">Histórico de Fechamentos</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800/50">
+                    <tr>
+                        <th class="p-4">Período</th>
+                        <th class="p-4 text-right">Saldo Inicial</th>
+                        <th class="p-4 text-right">Entradas</th>
+                        <th class="p-4 text-right">Saídas</th>
+                        <th class="p-4 text-right">Desp. Fin.</th>
+                        <th class="p-4 text-right font-black">Saldo Final</th>
+                        <th class="p-4">Responsável</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                    <tr th:each="c : ${closings}" class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                        <td class="p-4 font-semibold text-slate-700 dark:text-slate-300"
+                            th:text="${#temporals.format(c.periodStart, 'dd/MM/yyyy')} + ' a ' + ${#temporals.format(c.periodEnd, 'dd/MM/yyyy')}">
+                            01/07 a 06/07
+                        </td>
+                        <td class="p-4 text-right font-mono text-slate-500"
+                            th:text="|R$ ${#numbers.formatDecimal(c.openingBalance, 1, 'POINT', 2, 'COMMA')}|">R$ 0</td>
+                        <td class="p-4 text-right font-mono text-emerald-600 dark:text-emerald-400"
+                            th:text="|+ R$ ${#numbers.formatDecimal(c.totalIn, 1, 'POINT', 2, 'COMMA')}|">R$ 0</td>
+                        <td class="p-4 text-right font-mono text-rose-600 dark:text-rose-400"
+                            th:text="|- R$ ${#numbers.formatDecimal(c.totalOut, 1, 'POINT', 2, 'COMMA')}|">R$ 0</td>
+                        <td class="p-4 text-right font-mono text-amber-600 dark:text-amber-400"
+                            th:text="|- R$ ${#numbers.formatDecimal(c.financialExpenses, 1, 'POINT', 2, 'COMMA')}|">R$ 0</td>
+                        <td class="p-4 text-right font-mono font-black"
+                            th:classappend="${c.closingBalance.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}"
+                            th:text="|R$ ${#numbers.formatDecimal(c.closingBalance, 1, 'POINT', 2, 'COMMA')}|">R$ 0</td>
+                        <td class="p-4 text-xs text-slate-500" th:text="${c.closedBy ?: '—'}">sistema</td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(closings)}">
+                        <td colspan="7" class="p-10 text-center text-slate-400 dark:text-slate-500">
+                            <i data-lucide="calendar" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>
+                            <p>Nenhum fechamento realizado ainda.</p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Livro Caixa - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Livro Caixa</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Extrato cronológico com saldo após cada movimento — somente caixa real.</p>
+        </div>
+        <a href="/financial-closing" class="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-md">
+            <i data-lucide="calendar-check" class="w-4 h-4"></i> Fechamentos Mensais
+        </a>
+    </header>
+
+    <!-- Filtro de período -->
+    <form th:action="@{/cash-ledger}" method="GET"
+          class="flex flex-wrap gap-4 mb-6 bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm items-end w-fit">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">De</label>
+            <input type="date" name="from" th:value="${from}"
+                   class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 text-sm font-semibold"/>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Até</label>
+            <input type="date" name="to" th:value="${to}"
+                   class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 text-sm font-semibold"/>
+        </div>
+        <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all text-sm shadow-md">
+            <i data-lucide="filter" class="w-4 h-4"></i> Filtrar
+        </button>
+    </form>
+
+    <!-- KPI bar -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 p-4 shadow-sm">
+            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Saldo Abertura</p>
+            <p class="text-xl font-black text-slate-700 dark:text-slate-200"
+               th:text="|R$ ${#numbers.formatDecimal(openingBalance, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
+        </div>
+        <div class="bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 p-4 shadow-sm">
+            <p class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">Total Entradas</p>
+            <p class="text-xl font-black text-emerald-600 dark:text-emerald-400"
+               th:text="|+ R$ ${#numbers.formatDecimal(totalEntradas, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
+        </div>
+        <div class="bg-rose-50 dark:bg-rose-500/10 rounded-2xl border border-rose-200 dark:border-rose-500/20 p-4 shadow-sm">
+            <p class="text-[11px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-widest mb-1">Total Saídas</p>
+            <p class="text-xl font-black text-rose-600 dark:text-rose-400"
+               th:text="|- R$ ${#numbers.formatDecimal(totalSaidas, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 p-4 shadow-sm"
+             th:classappend="${saldoFinal != null and saldoFinal.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'border-emerald-200 dark:border-emerald-500/20' : 'border-rose-200 dark:border-rose-500/20'}">
+            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Saldo Final</p>
+            <p class="text-xl font-black"
+               th:classappend="${saldoFinal != null and saldoFinal.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}"
+               th:text="|R$ ${#numbers.formatDecimal(saldoFinal, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
+        </div>
+    </div>
+
+    <!-- Tabela do Livro Caixa -->
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[900px]">
+            <thead>
+            <tr class="bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700/50">
+                <th class="p-4">Data</th>
+                <th class="p-4">Tipo</th>
+                <th class="p-4">Parte</th>
+                <th class="p-4">Descrição</th>
+                <th class="p-4">OS</th>
+                <th class="p-4">Forma Pgto</th>
+                <th class="p-4 text-right text-emerald-600 dark:text-emerald-400">Entrada</th>
+                <th class="p-4 text-right text-rose-600 dark:text-rose-400">Saída</th>
+                <th class="p-4 text-right font-black">Saldo</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+
+            <!-- Linha de saldo inicial -->
+            <tr class="bg-slate-50 dark:bg-slate-800/30 italic">
+                <td class="p-3 pl-4 text-xs text-slate-500" th:text="${#temporals.format(from, 'dd/MM/yyyy')}">01/07/2026</td>
+                <td class="p-3 pl-4" colspan="5"><span class="text-xs text-slate-400">Saldo de Abertura</span></td>
+                <td class="p-3 text-right font-mono text-xs text-slate-400">—</td>
+                <td class="p-3 text-right font-mono text-xs text-slate-400">—</td>
+                <td class="p-3 pr-4 text-right font-mono font-black text-sm text-slate-700 dark:text-slate-200"
+                    th:text="|R$ ${#numbers.formatDecimal(openingBalance, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</td>
+            </tr>
+
+            <tr th:each="entry : ${entries}"
+                th:classappend="${entry.type.name() == 'ENTRADA'} ? 'hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5' : 'hover:bg-rose-50/40 dark:hover:bg-rose-500/5'">
+                <td class="p-3 pl-4 text-xs text-slate-500 font-semibold"
+                    th:text="${#temporals.format(entry.date, 'dd/MM/yyyy')}">01/07</td>
+
+                <td class="p-3">
+                    <span th:if="${entry.type.name() == 'ENTRADA'}"
+                          class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/15 px-2 py-0.5 rounded-full">
+                        <i data-lucide="arrow-up" class="w-3 h-3"></i> Entrada
+                    </span>
+                    <span th:if="${entry.type.name() == 'SAIDA'}"
+                          th:classappend="${entry.financialExpense} ? 'text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/15' : 'text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/15'"
+                          class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full">
+                        <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        <span th:text="${entry.financialExpense} ? 'Taxa' : 'Saída'">Saída</span>
+                    </span>
+                </td>
+
+                <td class="p-3 text-slate-700 dark:text-slate-300 font-semibold max-w-[140px] truncate"
+                    th:text="${entry.party}">—</td>
+                <td class="p-3 text-slate-500 dark:text-slate-400 max-w-[200px] truncate"
+                    th:text="${entry.description}">—</td>
+                <td class="p-3 font-mono text-xs text-slate-500"
+                    th:text="${entry.workOrderNumber}">OS-1</td>
+                <td class="p-3 text-xs text-slate-500"
+                    th:text="${entry.paymentMethod ?: '—'}">PIX</td>
+
+                <td class="p-3 pr-4 text-right font-mono font-semibold text-emerald-600 dark:text-emerald-400"
+                    th:text="${entry.entrada.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? |R$ ${#numbers.formatDecimal(entry.entrada, 1, 'POINT', 2, 'COMMA')}| : '—'">—</td>
+                <td class="p-3 pr-4 text-right font-mono font-semibold text-rose-600 dark:text-rose-400"
+                    th:text="${entry.saida.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? |R$ ${#numbers.formatDecimal(entry.saida, 1, 'POINT', 2, 'COMMA')}| : '—'">—</td>
+                <td class="p-3 pr-4 text-right font-mono font-black"
+                    th:classappend="${entry.saldo.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'text-slate-900 dark:text-white' : 'text-rose-600 dark:text-rose-400'}"
+                    th:text="|R$ ${#numbers.formatDecimal(entry.saldo, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</td>
+            </tr>
+
+            <tr th:if="${#lists.isEmpty(entries)}">
+                <td colspan="9" class="p-10 text-center text-slate-400 dark:text-slate-500">
+                    <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>
+                    <p>Nenhuma movimentação no período selecionado.</p>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>

@@ -1,15 +1,15 @@
 package com.alfatahi.erp.service;
 
+import com.alfatahi.erp.entity.AccountsReceivable;
 import com.alfatahi.erp.entity.WorkOrder;
 import com.alfatahi.erp.entity.WorkOrderItem;
-import com.alfatahi.erp.entity.AccountsReceivable;
-import com.alfatahi.erp.repository.WorkOrderRepository;
-import com.alfatahi.erp.repository.WorkOrderItemRepository;
 import com.alfatahi.erp.repository.AccountsReceivableRepository;
-import org.springframework.transaction.annotation.Transactional;
+import com.alfatahi.erp.repository.WorkOrderItemRepository;
+import com.alfatahi.erp.repository.WorkOrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -21,17 +21,19 @@ public class WorkOrderService {
     private final WorkOrderItemRepository itemRepository;
     private final ScheduleService scheduleService;
     private final AccountsReceivableRepository receivableRepository;
+    private final PaymentTermsService paymentTermsService;
 
     public WorkOrderService(WorkOrderRepository workOrderRepository,
                             WorkOrderItemRepository itemRepository,
                             ScheduleService scheduleService,
-                            AccountsReceivableRepository receivableRepository) {
+                            AccountsReceivableRepository receivableRepository,
+                            PaymentTermsService paymentTermsService) {
         this.workOrderRepository = workOrderRepository;
         this.itemRepository = itemRepository;
         this.scheduleService = scheduleService;
         this.receivableRepository = receivableRepository;
+        this.paymentTermsService = paymentTermsService;
     }
-
 
     public List<WorkOrder> listAll() {
         return workOrderRepository.findAllByOrderByCreatedAtDesc();
@@ -84,54 +86,82 @@ public class WorkOrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-
     public BigDecimal calculateTotalValueFromItems(WorkOrder workOrder) {
         if (workOrder.getItems() == null || workOrder.getItems().isEmpty()) {
             return BigDecimal.ZERO;
         }
-
         return workOrder.getItems().stream()
                 .map(item -> item.getQuantity().multiply(item.getUnitPrice()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-
+    /**
+     * Gera Contas a Receber para uma OS criada manualmente (fora do fluxo de aprovação
+     * de Orçamento), aplicando as regras reais de forma de pagamento via PaymentTermsService.
+     *
+     * NÃO usa mais a divisão genérica por N parcelas quando o método for Crédito:
+     * Crédito → sempre 1 conta a receber (parcela única, valor bruto integral).
+     * PIX/Dinheiro → respeita o paymentPlan (50/50 padrão, 100% antecipado ou 100% entrega).
+     * Débito → sempre 1 conta, integral.
+     *
+     * @param paymentPlan SPLIT_50_50 | FULL_UPFRONT | FULL_ON_DELIVERY (para PIX/Dinheiro)
+     */
     @Transactional
-    public void createReceivablesForWorkOrder(UUID workOrderId, int installments, String paymentMethod, LocalDate firstDueDate) {
+    public void createReceivablesForWorkOrder(UUID workOrderId,
+                                              String paymentMethod,
+                                              String paymentPlan,
+                                              LocalDate firstDueDate) {
         WorkOrder workOrder = findById(workOrderId);
 
         if (workOrder.getTotalValue() == null || workOrder.getTotalValue().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Ordem de Serviço deve ter valor total maior que zero");
         }
 
-        int numParcelas = installments > 0 ? installments : 1;
+        LocalDate deliveryDate = firstDueDate != null ? firstDueDate
+                : (workOrder.getInstallDate() != null ? workOrder.getInstallDate() : LocalDate.now().plusDays(15));
 
-        BigDecimal valorParcela = workOrder.getTotalValue()
-                .divide(new BigDecimal(numParcelas), 2, RoundingMode.HALF_UP);
-        BigDecimal somaParcelasAnteriores = valorParcela.multiply(new BigDecimal(numParcelas - 1));
-        BigDecimal valorUltimaParcela = workOrder.getTotalValue().subtract(somaParcelasAnteriores);
+        List<PaymentTermsService.PlannedInstallment> plan =
+                paymentTermsService.generateInstallments(
+                        paymentMethod, paymentPlan,
+                        workOrder.getTotalValue(), LocalDate.now(), deliveryDate);
 
-        for (int i = 0; i < numParcelas; i++) {
-            boolean isUltima = (i == numParcelas - 1);
+        int total = plan.size();
+        for (int i = 0; i < total; i++) {
+            PaymentTermsService.PlannedInstallment inst = plan.get(i);
             AccountsReceivable parcela = new AccountsReceivable();
-
             parcela.setClient(workOrder.getClient());
             parcela.setWorkOrder(workOrder);
             parcela.setPaymentMethod(paymentMethod);
-            parcela.setDescription(numParcelas == 1
-                    ? "Ref. " + workOrder.getNumber()
-                    : "Ref. " + workOrder.getNumber() + " — Parcela " + (i+1) + "/" + numParcelas);
+            parcela.setPaymentStage(inst.getStage());
+            parcela.setReferenceMonth(inst.getDueDate().withDayOfMonth(1));
 
-            parcela.setTotalAmount(isUltima ? valorUltimaParcela : valorParcela);
-
-            LocalDate dueDate = numParcelas == 1
-                    ? (firstDueDate != null ? firstDueDate : workOrder.getInstallDate())
-                    : (firstDueDate != null ? firstDueDate : workOrder.getInstallDate()).plusMonths(i + 1);
-
-            parcela.setDueDate(dueDate);
+            String desc;
+            if (total == 1) {
+                desc = "Ref. " + workOrder.getNumber();
+            } else {
+                String stageLabel = PaymentTermsService.STAGE_ENTRADA.equals(inst.getStage())
+                        ? "Entrada (50%)" : "Saldo na Entrega (50%)";
+                desc = "Ref. " + workOrder.getNumber() + " — " + stageLabel;
+            }
+            parcela.setDescription(desc);
+            parcela.setTotalAmount(inst.getAmount());
+            parcela.setInstallments(total);
+            parcela.setDueDate(inst.getDueDate());
             parcela.setStatus("pending");
-
             receivableRepository.save(parcela);
         }
+    }
+
+    /**
+     * Sobrecarga de compatibilidade para chamadas legadas que passam {@code installments} como int.
+     * Para Crédito com múltiplas parcelas no cartão, o sistema IGNORA o número de parcelas e
+     * gera sempre 1 conta a receber (regra de negócio: a empresa recebe um único depósito).
+     */
+    @Transactional
+    public void createReceivablesForWorkOrder(UUID workOrderId, int installments,
+                                              String paymentMethod, LocalDate firstDueDate) {
+        // Mantém compatibilidade com chamadas anteriores; paymentPlan padrão = SPLIT_50_50
+        createReceivablesForWorkOrder(workOrderId, paymentMethod,
+                PaymentTermsService.PLAN_SPLIT_50_50, firstDueDate);
     }
 }

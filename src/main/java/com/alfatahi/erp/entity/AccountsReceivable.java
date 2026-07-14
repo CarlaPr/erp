@@ -63,6 +63,26 @@ public class AccountsReceivable {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
+    /**
+     * Etapa da forma de pagamento que esta parcela representa: "entrada", "entrega" ou "unico".
+     * Usado para saber, ao gerar as parcelas, se essa é a entrada de um PIX/Dinheiro 50/50,
+     * o saldo na entrega, ou uma parcela única (débito integral, crédito líquido, ou 100% antecipado).
+     */
+    @Column(name = "payment_stage")
+    private String paymentStage = "unico";
+
+    /**
+     * Mês/ano de competência ao qual esta receita realmente pertence (pode ser diferente do
+     * vencimento quando o cliente paga antecipadamente um serviço que só será executado depois).
+     * Usado para separar Receita do Período x Receita Antecipada x Receita Futura no dashboard.
+     */
+    @Column(name = "reference_month")
+    private LocalDate referenceMonth;
+
+    public String getPaymentStage() { return paymentStage != null ? paymentStage : "unico"; }
+    public void setPaymentStage(String paymentStage) { this.paymentStage = paymentStage; }
+    public LocalDate getReferenceMonth() { return referenceMonth != null ? referenceMonth : dueDate; }
+    public void setReferenceMonth(LocalDate referenceMonth) { this.referenceMonth = referenceMonth; }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }

@@ -198,6 +198,17 @@
                         <input type="number" id="quoteInstallments" min="1" value="1" oninput="if(this.value < 1) this.value = 1;" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-sm text-center" />
                     </div>
 
+                    <!-- Plano de pagamento: aparece só para PIX e Dinheiro -->
+                    <div class="md:col-span-4" id="paymentPlanContainer" style="display: none;">
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-1 text-[13px]">Plano de Pagamento</label>
+                        <select id="quotePaymentPlan"
+                                class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-sm font-semibold">
+                            <option value="SPLIT_50_50">50% Entrada + 50% Entrega (padrão)</option>
+                            <option value="FULL_UPFRONT">100% Antecipado</option>
+                            <option value="FULL_ON_DELIVERY">100% na Entrega</option>
+                        </select>
+                    </div>
+
                     <div class="md:col-span-4" id="discountContainer">
                         <label class="block text-slate-700 dark:text-slate-400 font-bold mb-1 text-[13px] text-emerald-600 dark:text-emerald-400">Desconto Opcional (%)</label>
                         <input type="number" id="quoteDiscount" step="0.01" min="0" max="100" value="0" oninput="renderQuoteItems()" class="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-300 dark:border-emerald-700/50 rounded-lg px-3 py-2 text-emerald-900 dark:text-emerald-300 outline-none focus:border-emerald-500 transition-colors text-sm text-center font-bold" />
@@ -951,14 +962,19 @@
 
     function togglePaymentOptions() {
         const payment = document.getElementById('quotePayment').value || '';
-        const instContainer = document.getElementById('installmentsContainer');
+        const instContainer  = document.getElementById('installmentsContainer');
+        const planContainer  = document.getElementById('paymentPlanContainer');
 
-        if (payment.includes('Crédito') || payment.includes('Link de Pagamento')) {
-            instContainer.style.display = 'block';
-        } else {
-            instContainer.style.display = 'none';
-            document.getElementById('quoteInstallments').value = 1;
-        }
+        const isCredito = payment.includes('Crédito') || payment.includes('Link de Pagamento');
+        const isPlannable = payment.includes('PIX') || payment.includes('Dinheiro');
+
+        // Parcelas (campo legado): só mostra para Crédito, mas agora é informativa
+        instContainer.style.display = isCredito ? 'block' : 'none';
+        if (!isCredito) document.getElementById('quoteInstallments').value = 1;
+
+        // Plano de pagamento: só para PIX e Dinheiro
+        planContainer.style.display = isPlannable ? 'block' : 'none';
+
         renderQuoteItems();
     }
 
@@ -1206,6 +1222,9 @@
             dateCreated: dateToSave,
             paymentMethod: document.getElementById('quotePayment').value,
             installments: installmentsValue,
+            paymentPlan: (document.getElementById('quotePaymentPlan')?.offsetParent !== null
+                          ? document.getElementById('quotePaymentPlan').value
+                          : 'SPLIT_50_50'),
             discountPercent: discountPct,
             observations: document.getElementById('quoteObs').value,
             warranty: document.getElementById('quoteWarranty').value,

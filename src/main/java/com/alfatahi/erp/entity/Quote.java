@@ -44,6 +44,17 @@ public class Quote {
 
     private Integer installments = 1;
 
+    /**
+     * Plano de pagamento para PIX e Dinheiro: SPLIT_50_50 (padrão: 50% entrada / 50% entrega),
+     * FULL_UPFRONT (100% antecipado) ou FULL_ON_DELIVERY (100% na entrega).
+     * Ignorado para Débito (sempre integral no ato) e Crédito (sempre parcela única líquida).
+     */
+    @Column(name = "payment_plan", length = 20)
+    private String paymentPlan = "SPLIT_50_50";
+
+    public String getPaymentPlan() { return paymentPlan != null ? paymentPlan : "SPLIT_50_50"; }
+    public void setPaymentPlan(String paymentPlan) { this.paymentPlan = paymentPlan; }
+
     @Column(name = "date_created")
     private LocalDateTime dateCreated = LocalDateTime.now();
 

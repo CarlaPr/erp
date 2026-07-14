@@ -240,14 +240,13 @@ public class ReceivableController {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             return "redirect:/receivables?error=invalid_amount";
         }
-        financeService.processReceivablePayment(id, amount, paymentDate, cardFee, notes);
+        // Passa paymentMethod ao service para que ele o grave na Despesa Financeira de taxa
+        financeService.processReceivablePayment(id, amount, paymentDate, cardFee, paymentMethod, notes);
 
         AccountsReceivable ar = receivableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
 
-        if (paymentMethod != null && !paymentMethod.isBlank()) ar.setPaymentMethod(paymentMethod);
         if (discount != null) ar.setDiscount(discount);
-        if (cardFee != null) ar.setCardFeePercentage(cardFee);
 
         receivableRepository.save(ar);
 

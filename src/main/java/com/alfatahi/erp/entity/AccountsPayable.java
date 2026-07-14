@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "accounts_payable")
@@ -55,10 +54,14 @@ public class AccountsPayable {
     @Column(name = "payment_date")
     private LocalDate paymentDate;
 
-
+    /*
+     * pending / partial / paid / cancelled
+     */
     @Column(nullable = false)
     private String status = "pending";
 
+    // REGRA DE NEGÓCIO (A1): mesmo conceito do lado de Contas a Receber — "Pago"
+    // (empresa confirmou) é diferente de "Conciliado" (banco confirmou).
     @Column(name = "reconciliation_status")
     private String reconciliationStatus = "NAO_CONCILIADO";
 
@@ -74,18 +77,28 @@ public class AccountsPayable {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    /**
+     * Marca esta despesa como "Despesa Financeira" (ex.: taxa de maquininha, juros/tarifas bancárias)
+     * em vez de custo de produção/CMV. Despesas financeiras aparecem em linha própria no DRE e
+     * não contaminam a margem da obra.
+     */
+    @Column(name = "is_financial_expense", nullable = false)
+    private Boolean financialExpense = false;
 
-    @PrePersist
-    protected void onCreate() {
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
-        }
-    }
+    /**
+     * Quando esta despesa nasce automaticamente de um recebimento (taxa de cartão), guarda
+     * o id da Conta a Receber de origem, para auditoria e rastreabilidade.
+     */
+    @Column(name = "source_receivable_id")
+    private UUID sourceReceivableId;
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Boolean getFinancialExpense() { return financialExpense != null ? financialExpense : false; }
+    public void setFinancialExpense(Boolean financialExpense) { this.financialExpense = financialExpense; }
+    public UUID getSourceReceivableId() { return sourceReceivableId; }
+    public void setSourceReceivableId(UUID sourceReceivableId) { this.sourceReceivableId = sourceReceivableId; }
+
+    // ─── Getters & Setters ───────────────────────────────────────────────────
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public Supplier getSupplier() { return supplier; }

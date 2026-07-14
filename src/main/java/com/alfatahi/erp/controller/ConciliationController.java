@@ -231,7 +231,7 @@ public class ConciliationController {
             AccountsPayable best = null;
             BigDecimal bestDiff = null;
 
-            for (AccountsPayable p : payRepo.findAllByOrderByDueDateAscCreatedAtAsc()) {
+            for (AccountsPayable p : payRepo.findAllByOrderByDueDateAsc()) {
                 if (!"paid".equals(p.getStatus()) && !"partial".equals(p.getStatus())) continue;
                 if ("CONCILIADO".equals(p.getReconciliationStatus())) continue;
                 if (p.getDueDate() == null) continue;

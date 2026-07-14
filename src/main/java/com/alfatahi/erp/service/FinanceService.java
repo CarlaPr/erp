@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,20 +29,15 @@ public class FinanceService {
         this.workOrderRepository = workOrderRepository;
     }
 
-    public List<AccountsPayable> listAllPayables() { return payableRepository.findAllByOrderByDueDateAscCreatedAtAsc(); }
+    public List<AccountsPayable> listAllPayables()       { return payableRepository.findAllByOrderByDueDateAsc(); }
     public List<AccountsReceivable> listAllReceivables() { return receivableRepository.findAllByOrderByDueDateAsc(); }
-    public List<BankAccount> listAllAccounts() { return bankAccountRepository.findAll(); }
-    public AccountsPayable savePayable(AccountsPayable p) { return payableRepository.save(p); }
+    public List<BankAccount> listAllAccounts()           { return bankAccountRepository.findAll(); }
+    public AccountsPayable savePayable(AccountsPayable p)     { return payableRepository.save(p); }
     public AccountsReceivable saveReceivable(AccountsReceivable r) { return receivableRepository.save(r); }
-    public BankAccount saveAccount(BankAccount a) { return bankAccountRepository.save(a); }
+    public BankAccount saveAccount(BankAccount a)        { return bankAccountRepository.save(a); }
 
-    public BigDecimal getTotalReceivables() {
-        return receivableRepository.sumTotalReceivables();
-    }
-
-    public BigDecimal getTotalPayables() {
-        return payableRepository.sumTotalPayables();
-    }
+    public BigDecimal getTotalReceivables() { return receivableRepository.sumTotalReceivables(); }
+    public BigDecimal getTotalPayables()    { return payableRepository.sumTotalPayables(); }
 
     @Transactional
     public void createDefaultAccountIfEmpty() {
@@ -64,15 +60,9 @@ public class FinanceService {
         BigDecimal newTotalPaid = ap.getPaidAmount().add(amountPaid);
         ap.setPaidAmount(newTotalPaid);
 
-        if (paymentDate != null) {
-            ap.setPaymentDate(paymentDate);
-        }
-        if (paymentMethod != null && !paymentMethod.isBlank()) {
-            ap.setPaymentMethod(paymentMethod);
-        }
-        if (notes != null && !notes.isBlank()) {
-            ap.setNotes(notes);
-        }
+        if (paymentDate != null)                                    ap.setPaymentDate(paymentDate);
+        if (paymentMethod != null && !paymentMethod.isBlank())      ap.setPaymentMethod(paymentMethod);
+        if (notes != null && !notes.isBlank())                      ap.setNotes(notes);
 
         if (newTotalPaid.compareTo(BigDecimal.ZERO) > 0
                 && newTotalPaid.compareTo(ap.getTotalAmount()) < 0) {
@@ -90,9 +80,20 @@ public class FinanceService {
         payableRepository.save(ap);
     }
 
+    /**
+     * Registra um recebimento parcial ou total de uma Conta a Receber.
+     *
+     * Regras:
+     *  - amountReceived é o valor BRUTO cobrado do cliente (conforme o recibo).
+     *  - Se houver taxa de cartão, ela é descontada do bruto → valor líquido entra no caixa.
+     *  - A taxa é registrada como Conta a Pagar do tipo "Despesa Financeira", vinculada à OS,
+     *    SEM criar WorkOrderItem (que contaminaria o CMV da obra).
+     *  - O status é atualizado com base no acumulado bruto vs. total da conta.
+     */
     @Transactional
     public void processReceivablePayment(UUID receivableId, BigDecimal amountReceived,
-                                         LocalDate paymentDate, BigDecimal cardFeePercent, String notes) {
+                                         LocalDate paymentDate, BigDecimal cardFeePercent,
+                                         String paymentMethod, String notes) {
         AccountsReceivable ar = receivableRepository.findById(receivableId)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada: " + receivableId));
 
@@ -113,56 +114,61 @@ public class FinanceService {
             netAmount = amountReceived;
         }
 
-        BigDecimal current = ar.getReceivedAmount() != null ? ar.getReceivedAmount() : BigDecimal.ZERO;
-        BigDecimal newTotalReceived = current.add(netAmount);
+        // Acumula valores (suporte a múltiplos recebimentos parciais)
+        BigDecimal newNetTotal   = ar.getReceivedAmount().add(netAmount);
+        BigDecimal newGrossTotal = ar.getGrossReceivedAmount().add(amountReceived);
+        BigDecimal newFeeTotal   = ar.getFeeAmount().add(feeForThisPayment);
 
-        BigDecimal newTotalGross = (ar.getGrossReceivedAmount() != null ? ar.getGrossReceivedAmount() : BigDecimal.ZERO)
-                .add(amountReceived);
+        ar.setReceivedAmount(newNetTotal);
+        ar.setGrossReceivedAmount(newGrossTotal);
+        ar.setFeeAmount(newFeeTotal);
 
-        ar.setReceivedAmount(newTotalReceived);
-        ar.setGrossReceivedAmount(newTotalGross);
+        if (paymentDate != null)                               ar.setPaymentDate(paymentDate);
+        if (paymentMethod != null && !paymentMethod.isBlank()) ar.setPaymentMethod(paymentMethod);
+        if (cardFeePercent != null && cardFeePercent.compareTo(BigDecimal.ZERO) > 0)
+            ar.setCardFeePercentage(cardFeePercent);
 
-        BigDecimal currentFeeAmount = ar.getFeeAmount() != null ? ar.getFeeAmount() : BigDecimal.ZERO;
-        ar.setFeeAmount(currentFeeAmount.add(feeForThisPayment));
-
-        if (paymentDate != null) ar.setPaymentDate(paymentDate);
-        if (notes != null && !notes.isBlank()) ar.setNotes(notes);
-
+        // Observação de auditoria no campo notes da conta a receber
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String dateStr = (paymentDate != null ? paymentDate : LocalDate.now()).format(fmt);
+        String autoNote;
         if (feeForThisPayment.compareTo(BigDecimal.ZERO) > 0) {
-            String autoNote = String.format(
-                    "[Taxa de %.2f%% = Custo de R$ %.2f | Bruto: R$ %.2f | Líquido no Caixa: R$ %.2f]",
-                    fee, feeForThisPayment, amountReceived, netAmount);
-            String existing = ar.getNotes();
-            ar.setNotes((existing != null && !existing.isBlank() ? existing + "\n" : "") + autoNote);
+            autoNote = String.format("[%s] Recebido R$ %.2f bruto | Taxa %.2f%% = R$ %.2f | Líquido no Caixa: R$ %.2f",
+                    dateStr, amountReceived, fee, feeForThisPayment, netAmount);
+        } else {
+            autoNote = String.format("[%s] Recebido R$ %.2f", dateStr, amountReceived);
+        }
+        if (notes != null && !notes.isBlank()) autoNote = autoNote + " | Obs: " + notes;
+        String existingNotes = ar.getNotes();
+        ar.setNotes((existingNotes != null && !existingNotes.isBlank() ? existingNotes + "\n" : "") + autoNote);
 
-            WorkOrder wo = ar.getWorkOrder();
-            if (wo != null) {
-                WorkOrderItem feeItem = new WorkOrderItem();
-                feeItem.setWorkOrder(wo);
-                String dateStr = paymentDate != null ? paymentDate.toString() : LocalDate.now().toString();
-
-                feeItem.setDescription("[OP] Outros | " + dateStr + " | Taxa de Maquininha/Banco ||| Despesa Financeira Automática");
-                feeItem.setQuantity(BigDecimal.valueOf(1));
-                feeItem.setUnitCost(feeForThisPayment);
-                feeItem.setUnitPrice(BigDecimal.ZERO);
-
-                wo.getItems().add(feeItem);
-                workOrderRepository.save(wo);
-            }
+        // ── Registra a taxa como Despesa Financeira (NÃO WorkOrderItem) ──────
+        if (feeForThisPayment.compareTo(BigDecimal.ZERO) > 0) {
+            AccountsPayable taxaPayable = new AccountsPayable();
+            taxaPayable.setDescription("Taxa de Maquininha — " + (ar.getWorkOrder() != null
+                    ? ar.getWorkOrder().getNumber() : ar.getDescription())
+                    + " (" + dateStr + ")");
+            taxaPayable.setCategory("financial");
+            taxaPayable.setSubcategory("Taxa Cartão");
+            taxaPayable.setFinancialExpense(true);
+            taxaPayable.setSourceReceivableId(ar.getId());
+            taxaPayable.setTotalAmount(feeForThisPayment);
+            taxaPayable.setPaidAmount(feeForThisPayment);   // já é debitada automaticamente
+            taxaPayable.setStatus("paid");
+            taxaPayable.setDueDate(paymentDate != null ? paymentDate : LocalDate.now());
+            taxaPayable.setPaymentDate(paymentDate != null ? paymentDate : LocalDate.now());
+            taxaPayable.setPaymentMethod(paymentMethod);
+            taxaPayable.setWorkOrder(ar.getWorkOrder());
+            taxaPayable.setNotes("Gerado automaticamente ao processar recebimento de "
+                    + (ar.getClient() != null ? ar.getClient().getName() : "cliente avulso"));
+            payableRepository.save(taxaPayable);
         }
 
-        // ATUALIZA O STATUS E INJETA A OBSERVAÇÃO DE PAGAMENTO PARCIAL E DATA FINAL AQUI NO SERVIÇO
-        if (newTotalGross.compareTo(BigDecimal.ZERO) > 0
-                && newTotalGross.compareTo(ar.getTotalAmount()) < 0) {
+        // ── Atualiza status da Conta a Receber ───────────────────────────────
+        if (newGrossTotal.compareTo(BigDecimal.ZERO) > 0
+                && newGrossTotal.compareTo(ar.getTotalAmount()) < 0) {
             ar.setStatus("partial");
-
-            // Registra nas observações
-            String dataStr = paymentDate != null ? paymentDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            String novaObs = "Pgto Parcial em " + dataStr + ": R$ " + amountReceived.toString();
-            String obsAtual = ar.getNotes() != null ? ar.getNotes() : "";
-            ar.setNotes(obsAtual.isEmpty() ? novaObs : obsAtual + "\n" + novaObs);
-
-        } else if (newTotalGross.compareTo(ar.getTotalAmount()) >= 0) {
+        } else if (newGrossTotal.compareTo(ar.getTotalAmount()) >= 0) {
             ar.setStatus("received");
             if (ar.getPaymentDate() == null) {
                 ar.setPaymentDate(paymentDate != null ? paymentDate : LocalDate.now());
@@ -179,17 +185,13 @@ public class FinanceService {
         receivableRepository.save(ar);
     }
 
-    public java.util.Map<String, java.math.BigDecimal> getExpensesBySubcategory() {
+    public java.util.Map<String, BigDecimal> getExpensesBySubcategory() {
         return payableRepository.findAll().stream()
                 .filter(p -> p.getSubcategory() != null && !p.getSubcategory().trim().isEmpty())
                 .collect(java.util.stream.Collectors.groupingBy(
                         AccountsPayable::getSubcategory,
                         java.util.stream.Collectors.reducing(
-                                java.math.BigDecimal.ZERO,
-                                AccountsPayable::getTotalAmount,
-                                java.math.BigDecimal::add
-                        )
-                ));
+                                BigDecimal.ZERO, AccountsPayable::getTotalAmount, BigDecimal::add)));
     }
 
     @Transactional

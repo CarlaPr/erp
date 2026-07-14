@@ -88,6 +88,16 @@
                 <td th:each="col : ${dreColumns}" class="p-4 text-right font-mono border-l border-slate-100 dark:border-slate-800/50 text-rose-600 dark:text-rose-400" th:text="'- R$ ' + ${col.despesasFixas}">0,00</td>
             </tr>
 
+            <tr class="bg-slate-50 dark:bg-slate-800/20 font-bold hover:bg-slate-100 dark:hover:bg-slate-800/40 border-t border-slate-200 dark:border-slate-700">
+                <td class="p-4 pl-6 text-slate-900 dark:text-white">= LUCRO OPERACIONAL</td>
+                <td th:each="col : ${dreColumns}" class="p-4 text-right font-mono border-l border-slate-200 dark:border-slate-800/50 text-base text-slate-900 dark:text-white font-bold" th:text="'R$ ' + ${col.lucroOperacional}">0,00</td>
+            </tr>
+
+            <tr class="text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                <td class="p-4 pl-10">(-) Despesas Financeiras (Taxas Cartão)</td>
+                <td th:each="col : ${dreColumns}" class="p-4 text-right font-mono border-l border-slate-100 dark:border-slate-800/50 text-amber-600 dark:text-amber-400" th:text="'- R$ ' + ${col.despesasFinanceiras}">0,00</td>
+            </tr>
+
             <tr class="bg-emerald-50 dark:bg-emerald-500/10 border-t-[3px] border-emerald-200 dark:border-emerald-500/30">
                 <td class="p-5 pl-6 text-emerald-700 dark:text-emerald-400 font-black uppercase text-base">= LUCRO LÍQUIDO FINAL</td>
                 <td th:each="col : ${dreColumns}" class="p-5 text-right font-mono font-black border-l border-emerald-200 dark:border-emerald-500/30 text-lg" th:classappend="${col.lucroLiquido >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}" th:text="'R$ ' + ${col.lucroLiquido}">0,00</td>
