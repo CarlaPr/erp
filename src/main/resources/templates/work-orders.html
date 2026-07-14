@@ -109,9 +109,13 @@
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex items-center gap-4">
                             <span class="font-black text-slate-900 dark:text-white text-lg tracking-tight" th:text="${wo.number}">OS-0000</span>
+
                             <span class="px-3 py-1 rounded-lg text-xs font-bold tracking-wider uppercase border"
-                                  th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent' : 'bg-brand-50 text-brand-700 border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent'"
-                                  th:text="${wo.status == 'completed' or wo.status == 'delivered' ? 'Entregue' : 'Em Andamento'}">Status</span>
+                                  th:classappend="${wo.status == 'completed' or wo.status == 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent' :
+                              (wo.status == 'cancelled' or wo.status == 'canceled' ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-transparent' :
+                              'bg-brand-50 text-brand-700 border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent')}"
+                                  th:text="${wo.status == 'completed' or wo.status == 'delivered' ? 'Entregue' :
+                        (wo.status == 'cancelled' or wo.status == 'canceled' ? 'Cancelado' : 'Em Andamento')}">Status</span>
                         </div>
 
                         <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
