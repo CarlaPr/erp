@@ -53,15 +53,9 @@ public class AccountsPayable {
 
     @Column(name = "payment_date")
     private LocalDate paymentDate;
-
-    /*
-     * pending / partial / paid / cancelled
-     */
     @Column(nullable = false)
     private String status = "pending";
 
-    // REGRA DE NEGÓCIO (A1): mesmo conceito do lado de Contas a Receber — "Pago"
-    // (empresa confirmou) é diferente de "Conciliado" (banco confirmou).
     @Column(name = "reconciliation_status")
     private String reconciliationStatus = "NAO_CONCILIADO";
 
@@ -77,18 +71,9 @@ public class AccountsPayable {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    /**
-     * Marca esta despesa como "Despesa Financeira" (ex.: taxa de maquininha, juros/tarifas bancárias)
-     * em vez de custo de produção/CMV. Despesas financeiras aparecem em linha própria no DRE e
-     * não contaminam a margem da obra.
-     */
     @Column(name = "is_financial_expense", nullable = false)
     private Boolean financialExpense = false;
 
-    /**
-     * Quando esta despesa nasce automaticamente de um recebimento (taxa de cartão), guarda
-     * o id da Conta a Receber de origem, para auditoria e rastreabilidade.
-     */
     @Column(name = "source_receivable_id")
     private UUID sourceReceivableId;
 
@@ -133,9 +118,6 @@ public class AccountsPayable {
     public void setRecurring(Boolean recurring) { this.recurring = recurring; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
-
-    // ─── Helpers para a view ─────────────────────────────────────────────────
-
     public BigDecimal getBalance() {
         return totalAmount.subtract(getPaidAmount());
     }

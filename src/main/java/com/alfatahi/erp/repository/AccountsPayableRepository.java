@@ -39,7 +39,6 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
             "AND a.dueDate >= :inicio AND a.dueDate < :fim")
     BigDecimal sumDespesasFixasByMonthAndYear(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
-    /** Despesas Financeiras (taxa de cartão, tarifas bancárias) — linha própria no DRE */
     @Query("SELECT COALESCE(SUM(a.totalAmount), 0) FROM AccountsPayable a " +
             "WHERE a.financialExpense = true " +
             "AND a.status != 'cancelled' " +
@@ -49,13 +48,11 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
     @Query("SELECT COALESCE(SUM(p.paidAmount), 0) FROM AccountsPayable p WHERE p.status IN ('paid', 'partial')")
     BigDecimal sumTotalPayables();
 
-    /** Total de despesas financeiras já pagas — para o Livro Caixa e Dashboard */
     @Query("SELECT COALESCE(SUM(p.paidAmount), 0) FROM AccountsPayable p " +
             "WHERE p.financialExpense = true AND p.status IN ('paid', 'partial') " +
             "AND p.paymentDate >= :inicio AND p.paymentDate < :fim")
     BigDecimal sumDespesasFinanceirasRecebidas(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
-    /** Saídas reais (pagas) no período — para o Livro Caixa */
     @Query("SELECT COALESCE(SUM(p.paidAmount), 0) FROM AccountsPayable p " +
             "WHERE p.status IN ('paid', 'partial') " +
             "AND p.paymentDate >= :inicio AND p.paymentDate < :fim")

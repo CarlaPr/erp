@@ -15,10 +15,6 @@ public interface AccountsReceivableRepository extends JpaRepository<AccountsRece
 
     List<AccountsReceivable> findByStatusNotOrderByDueDateAsc(String status);
 
-    /**
-     * Receita Bruta = valor total cobrado ao cliente (grossReceivedAmount) no período.
-     * Usa a data de pagamento (caixa de entrada real).
-     */
     @Query("SELECT COALESCE(SUM(COALESCE(a.grossReceivedAmount,0) + COALESCE(a.feeAmount,0)), 0) FROM AccountsReceivable a " +
             "WHERE a.paymentDate >= :inicio AND a.paymentDate < :fim")
     BigDecimal sumReceivedByMonthAndYear(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
@@ -29,14 +25,13 @@ public interface AccountsReceivableRepository extends JpaRepository<AccountsRece
             "AND r.paymentDate >= :inicio AND r.paymentDate < :fim")
     BigDecimal sumEntradasRealByPeriod(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
-    /** Receitas antecipadas: pagas hoje mas referentes a meses futuros */
+
     @Query("SELECT COALESCE(SUM(r.grossReceivedAmount), 0) FROM AccountsReceivable r " +
             "WHERE r.status IN ('received', 'partial') " +
             "AND r.paymentDate >= :inicio AND r.paymentDate < :fim " +
             "AND r.referenceMonth > :fim")
     BigDecimal sumReceitasAntecipadas(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
-    /** Receitas Futuras: ainda pendentes, referentes ao período corrente */
     @Query("SELECT COALESCE(SUM(r.totalAmount - COALESCE(r.grossReceivedAmount,0)), 0) FROM AccountsReceivable r " +
             "WHERE r.status IN ('pending', 'partial') " +
             "AND r.referenceMonth >= :inicio AND r.referenceMonth < :fim")
@@ -48,12 +43,10 @@ public interface AccountsReceivableRepository extends JpaRepository<AccountsRece
     @Query("SELECT COALESCE(SUM(r.receivedAmount), 0) FROM AccountsReceivable r WHERE r.status IN ('received', 'partial')")
     BigDecimal sumTotalReceivables();
 
-    /** Total de taxas de cartão cobradas no período */
     @Query("SELECT COALESCE(SUM(r.feeAmount), 0) FROM AccountsReceivable r " +
             "WHERE r.feeAmount > 0 AND r.paymentDate >= :inicio AND r.paymentDate < :fim")
     BigDecimal sumTaxasCartaoByPeriod(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
-    /** Pendentes ativos (para fechamento mensal) */
     @Query("SELECT COALESCE(SUM(r.totalAmount - COALESCE(r.grossReceivedAmount,0)), 0) FROM AccountsReceivable r " +
             "WHERE r.status IN ('pending', 'partial') AND r.dueDate >= :inicio AND r.dueDate < :fim")
     BigDecimal sumPendentesByPeriod(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);

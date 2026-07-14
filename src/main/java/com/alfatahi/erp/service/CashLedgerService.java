@@ -15,13 +15,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Monta o Livro Caixa real: entradas (recebimentos líquidos) e saídas (pagamentos)
- * ordenados cronologicamente, com o saldo acumulado recalculado após cada movimento.
- *
- * NÃO cria nova tabela — combina os dados já existentes em AccountsReceivable e
- * AccountsPayable para evitar duplicidade de estado.
- */
 @Service
 public class CashLedgerService {
 
@@ -37,19 +30,11 @@ public class CashLedgerService {
         this.closingRepo    = closingRepo;
     }
 
-    /**
-     * Retorna o Livro Caixa para o período informado.
-     *
-     * @param from  início (inclusive)
-     * @param to    fim (inclusive)
-     * @param openingBalance saldo de abertura do período (vindo do fechamento anterior)
-     */
     @Transactional(readOnly = true)
     public List<CashLedgerEntryDto> buildLedger(LocalDate from, LocalDate to,
                                                   BigDecimal openingBalance) {
         List<CashLedgerEntryDto> entries = new ArrayList<>();
 
-        // ── Entradas: recebimentos líquidos efetivados ────────────────────────
         for (AccountsReceivable ar : receivableRepo.findAll()) {
             if (!"received".equals(ar.getStatus()) && !"partial".equals(ar.getStatus())) continue;
             LocalDate pd = ar.getPaymentDate();
@@ -63,13 +48,12 @@ public class CashLedgerService {
             e.setDescription(ar.getDescription());
             e.setWorkOrderNumber(ar.getWorkOrder() != null ? ar.getWorkOrder().getNumber() : "—");
             e.setPaymentMethod(ar.getPaymentMethod());
-            e.setEntrada(ar.getReceivedAmount());   // valor LÍQUIDO no caixa
+            e.setEntrada(ar.getReceivedAmount());
             e.setOrigin("Recebimento");
             e.setNotes(ar.getNotes());
             entries.add(e);
         }
 
-        // ── Saídas: pagamentos efetivados (incluindo taxas de cartão) ─────────
         for (AccountsPayable ap : payableRepo.findAll()) {
             if (!"paid".equals(ap.getStatus()) && !"partial".equals(ap.getStatus())) continue;
             LocalDate pd = ap.getPaymentDate();
@@ -91,11 +75,9 @@ public class CashLedgerService {
             entries.add(e);
         }
 
-        // ── Ordena por data e, em caso de empate, Entradas antes de Saídas ───
         entries.sort(Comparator.comparing(CashLedgerEntryDto::getDate)
                 .thenComparing(e -> e.getType() == CashLedgerEntryDto.EntryType.ENTRADA ? 0 : 1));
 
-        // ── Calcula saldo acumulado ───────────────────────────────────────────
         BigDecimal saldo = openingBalance != null ? openingBalance : BigDecimal.ZERO;
         for (CashLedgerEntryDto e : entries) {
             saldo = saldo.add(e.getEntrada()).subtract(e.getSaida());
@@ -105,7 +87,6 @@ public class CashLedgerService {
         return entries;
     }
 
-    /** Saldo de abertura: vem do último fechamento, ou zero se não houver nenhum. */
     public BigDecimal getOpeningBalance() {
         return closingRepo.findLatestClosing()
                 .map(fc -> fc.getClosingBalance())

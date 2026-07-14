@@ -62,7 +62,6 @@ public class QuoteService {
                     "Orçamento não pode ser aprovado no status atual: " + quote.getStatus());
         }
 
-        // ── 1. Cria a Ordem de Serviço ───────────────────────────────────────
         WorkOrder os = new WorkOrder();
         String osNumber = quote.getNumber() != null
                 ? quote.getNumber().replace("ORC-", "OS-")
@@ -79,7 +78,6 @@ public class QuoteService {
         os.setDescription(description);
         os.setStatus("in_progress");
 
-        // ── 2. Calcula o valor final respeitando o desconto do orçamento ──────
         BigDecimal subtotal = BigDecimal.ZERO;
         if (quote.getItems() != null && !quote.getItems().isEmpty()) {
             for (QuoteItem item : quote.getItems()) {
@@ -103,7 +101,6 @@ public class QuoteService {
         LocalDate dataEntrega = calculateBusinessDays(LocalDate.now(), 15);
         os.setInstallDate(dataEntrega);
 
-        // ── 3. Copia itens para a OS ─────────────────────────────────────────
         if (quote.getItems() != null) {
             for (QuoteItem qi : quote.getItems()) {
                 WorkOrderItem osItem = new WorkOrderItem();
@@ -133,14 +130,6 @@ public class QuoteService {
         quoteRepo.saveAndFlush(quote);
         scheduleService.createFromApprovedQuote(quote, os);
 
-        // ── 4. Gera Contas a Receber com as regras reais de pagamento ─────────
-        //
-        // CRÉDITO  → 1 parcela única, valor bruto cheio, sem parcelamento interno.
-        //            A taxa variável da maquininha só é aplicada na modal "Receber".
-        // DÉBITO   → 1 parcela única, integral, vence na entrega.
-        // PIX      → 50/50 (padrão), 100% antecipado, ou 100% na entrega.
-        // DINHEIRO → idem ao PIX (flexível).
-        //
         String paymentMethod = quote.getPaymentMethod();
         String paymentPlan   = quote.getPaymentPlan();
 

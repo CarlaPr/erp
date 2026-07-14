@@ -80,16 +80,6 @@ public class FinanceService {
         payableRepository.save(ap);
     }
 
-    /**
-     * Registra um recebimento parcial ou total de uma Conta a Receber.
-     *
-     * Regras:
-     *  - amountReceived é o valor BRUTO cobrado do cliente (conforme o recibo).
-     *  - Se houver taxa de cartão, ela é descontada do bruto → valor líquido entra no caixa.
-     *  - A taxa é registrada como Conta a Pagar do tipo "Despesa Financeira", vinculada à OS,
-     *    SEM criar WorkOrderItem (que contaminaria o CMV da obra).
-     *  - O status é atualizado com base no acumulado bruto vs. total da conta.
-     */
     @Transactional
     public void processReceivablePayment(UUID receivableId, BigDecimal amountReceived,
                                          LocalDate paymentDate, BigDecimal cardFeePercent,

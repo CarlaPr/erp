@@ -15,7 +15,6 @@ public interface FinancialClosingRepository extends JpaRepository<FinancialClosi
 
     Optional<FinancialClosing> findByPeriodStart(LocalDate periodStart);
 
-    /** Retorna o fechamento mais recente, para calcular o saldo de abertura do próximo. */
     @Query("SELECT f FROM FinancialClosing f ORDER BY f.periodStart DESC LIMIT 1")
     Optional<FinancialClosing> findLatestClosing();
 }

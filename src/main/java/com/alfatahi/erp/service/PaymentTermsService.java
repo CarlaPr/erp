@@ -8,20 +8,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Centraliza as regras reais de forma de pagamento da vidraçaria:
- *
- * PIX      -> normalmente 50% entrada / 50% entrega, mas pode ser 100% antecipado.
- * Dinheiro -> 100% antecipado, 50/50, ou 100% na entrega.
- * Débito   -> sempre integral, dinheiro entra praticamente no mesmo dia.
- * Crédito  -> sempre 1 parcela única e líquida: a operadora é quem parcela para o
- *             cliente, a empresa recebe um único depósito. NUNCA gerar N contas a receber
- *             pelo número de parcelas do cartão do cliente.
- *
- * Reaproveitada tanto na aprovação de Orçamento quanto na criação manual de
- * Contas a Receber para uma Ordem de Serviço, para que a regra nunca fique duplicada
- * ou divergente entre os dois pontos de entrada.
- */
 @Service
 public class PaymentTermsService {
 
@@ -50,18 +36,6 @@ public class PaymentTermsService {
         public String getStage() { return stage; }
     }
 
-    /**
-     * Gera o plano de parcelas de acordo com a forma de pagamento.
-     *
-     * @param paymentMethod texto livre vindo do formulário (ex.: "PIX", "Dinheiro", "Débito",
-     *                      "Crédito"); a checagem é por conteúdo (contains) para tolerar
-     *                      combinações como "PIX, Débito" escolhidas no orçamento.
-     * @param paymentPlan   SPLIT_50_50 / FULL_UPFRONT / FULL_ON_DELIVERY — só é considerado
-     *                      para PIX e Dinheiro.
-     * @param totalValue    valor cheio (bruto) da venda.
-     * @param today         data de hoje / aprovação (usada como vencimento da entrada).
-     * @param deliveryDate  data prevista de entrega/instalação.
-     */
     public List<PlannedInstallment> generateInstallments(String paymentMethod, String paymentPlan,
                                                           BigDecimal totalValue, LocalDate today,
                                                           LocalDate deliveryDate) {
@@ -72,20 +46,15 @@ public class PaymentTermsService {
         boolean isDebito = method.contains("Débito") || method.contains("Debito");
 
         if (isCredito) {
-            // Regra de ouro do cartão de crédito: sempre 1 única conta a receber.
-            // A modal de "Receber" (FinanceService) é quem, no momento do recebimento,
-            // aplica a taxa variável da maquininha sobre este valor bruto.
             plan.add(new PlannedInstallment(totalValue, deliveryDate, STAGE_UNICO));
             return plan;
         }
 
         if (isDebito) {
-            // Pagamento integral, cai na conta praticamente no mesmo dia da transação.
             plan.add(new PlannedInstallment(totalValue, deliveryDate, STAGE_UNICO));
             return plan;
         }
 
-        // PIX ou Dinheiro: respeita o plano escolhido.
         String plano = paymentPlan != null ? paymentPlan : PLAN_SPLIT_50_50;
 
         switch (plano) {

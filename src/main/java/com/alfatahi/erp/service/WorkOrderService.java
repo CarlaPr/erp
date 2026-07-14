@@ -95,17 +95,6 @@ public class WorkOrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    /**
-     * Gera Contas a Receber para uma OS criada manualmente (fora do fluxo de aprovação
-     * de Orçamento), aplicando as regras reais de forma de pagamento via PaymentTermsService.
-     *
-     * NÃO usa mais a divisão genérica por N parcelas quando o método for Crédito:
-     * Crédito → sempre 1 conta a receber (parcela única, valor bruto integral).
-     * PIX/Dinheiro → respeita o paymentPlan (50/50 padrão, 100% antecipado ou 100% entrega).
-     * Débito → sempre 1 conta, integral.
-     *
-     * @param paymentPlan SPLIT_50_50 | FULL_UPFRONT | FULL_ON_DELIVERY (para PIX/Dinheiro)
-     */
     @Transactional
     public void createReceivablesForWorkOrder(UUID workOrderId,
                                               String paymentMethod,
@@ -152,15 +141,9 @@ public class WorkOrderService {
         }
     }
 
-    /**
-     * Sobrecarga de compatibilidade para chamadas legadas que passam {@code installments} como int.
-     * Para Crédito com múltiplas parcelas no cartão, o sistema IGNORA o número de parcelas e
-     * gera sempre 1 conta a receber (regra de negócio: a empresa recebe um único depósito).
-     */
     @Transactional
     public void createReceivablesForWorkOrder(UUID workOrderId, int installments,
                                               String paymentMethod, LocalDate firstDueDate) {
-        // Mantém compatibilidade com chamadas anteriores; paymentPlan padrão = SPLIT_50_50
         createReceivablesForWorkOrder(workOrderId, paymentMethod,
                 PaymentTermsService.PLAN_SPLIT_50_50, firstDueDate);
     }

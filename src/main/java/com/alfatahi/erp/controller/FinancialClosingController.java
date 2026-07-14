@@ -26,7 +26,6 @@ public class FinancialClosingController {
         model.addAttribute("currentPage", "financial-closing");
         model.addAttribute("closings",    closings);
 
-        // Mês sugerido para o próximo fechamento
         java.time.LocalDate hoje = java.time.LocalDate.now();
         model.addAttribute("suggestedYear",  hoje.getYear());
         model.addAttribute("suggestedMonth", hoje.getMonthValue());

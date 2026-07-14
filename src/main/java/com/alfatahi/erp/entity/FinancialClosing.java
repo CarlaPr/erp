@@ -6,10 +6,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Representa o fechamento financeiro mensal da empresa (período de 01 a 06 de cada mês).
- * O saldo final de um fechamento vira automaticamente o saldo de abertura do próximo período.
- */
 @Entity
 @Table(name = "financial_closings")
 public class FinancialClosing {

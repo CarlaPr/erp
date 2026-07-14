@@ -3,18 +3,13 @@ package com.alfatahi.erp.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/**
- * Linha do Livro Caixa.
- * Une entradas (Contas a Receber recebidas) e saídas (Contas a Pagar pagas) em
- * uma visão cronológica com saldo acumulado após cada movimento.
- */
 public class CashLedgerEntryDto {
 
     public enum EntryType { ENTRADA, SAIDA }
 
     private LocalDate date;
     private EntryType type;
-    private String party;           // cliente ou fornecedor
+    private String party;
     private String description;
     private String workOrderNumber;
     private String paymentMethod;
@@ -22,7 +17,7 @@ public class CashLedgerEntryDto {
     private BigDecimal saida   = BigDecimal.ZERO;
     private BigDecimal saldo   = BigDecimal.ZERO;
     private String notes;
-    private String origin;          // "Recebimento", "Pagamento", "Taxa Cartão"
+    private String origin;
     private boolean financialExpense;
 
     public LocalDate getDate()         { return date; }

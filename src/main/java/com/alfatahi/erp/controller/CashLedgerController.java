@@ -35,7 +35,6 @@ public class CashLedgerController {
         BigDecimal openingBalance = cashLedgerService.getOpeningBalance();
         List<CashLedgerEntryDto> entries = cashLedgerService.buildLedger(from, to, openingBalance);
 
-        // KPIs do período
         BigDecimal totalEntradas = entries.stream()
                 .map(CashLedgerEntryDto::getEntrada)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
