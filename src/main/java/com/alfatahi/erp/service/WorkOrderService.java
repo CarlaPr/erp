@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -76,13 +77,19 @@ public class WorkOrderService {
                 .orElseThrow(() -> new IllegalArgumentException("Ordem de Serviço não encontrada: " + id));
     }
 
-    // --- ATUALIZADO PARA DELETAR A AGENDA ANTES DA OS ---
     @Transactional
     public void delete(UUID id) {
-        // Exclui a agenda vinculada (se houver) para não violar a chave estrangeira
-        scheduleService.onWorkOrderDeleted(id);
+        WorkOrder wo = workOrderRepository.findById(id).orElse(null);
 
-        workOrderRepository.deleteById(id);
+        if (wo != null) {
+            scheduleService.onWorkOrderDeleted(id);
+
+            if (wo.getItems() != null && !wo.getItems().isEmpty()) {
+                itemRepository.deleteAll(wo.getItems());
+            }
+
+            workOrderRepository.delete(wo);
+        }
     }
 
     public BigDecimal calculateObraCost(UUID workOrderId) {
@@ -114,35 +121,69 @@ public class WorkOrderService {
         LocalDate deliveryDate = firstDueDate != null ? firstDueDate
                 : (workOrder.getInstallDate() != null ? workOrder.getInstallDate() : LocalDate.now().plusDays(15));
 
-        List<PaymentTermsService.PlannedInstallment> plan =
-                paymentTermsService.generateInstallments(
-                        paymentMethod, paymentPlan,
-                        workOrder.getTotalValue(), LocalDate.now(), deliveryDate);
+        String pmUpper = paymentMethod != null ? paymentMethod.toUpperCase() : "";
+        boolean forceSplit = pmUpper.contains("PIX") || pmUpper.contains("DINHEIRO") || pmUpper.contains("DÉBITO") || pmUpper.contains("DEBITO");
 
-        int total = plan.size();
-        for (int i = 0; i < total; i++) {
-            PaymentTermsService.PlannedInstallment inst = plan.get(i);
-            AccountsReceivable parcela = new AccountsReceivable();
-            parcela.setClient(workOrder.getClient());
-            parcela.setWorkOrder(workOrder);
-            parcela.setPaymentMethod(paymentMethod);
-            parcela.setPaymentStage(inst.getStage());
-            parcela.setReferenceMonth(inst.getDueDate().withDayOfMonth(1));
+        if (forceSplit) {
+            BigDecimal entrada = workOrder.getTotalValue().divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
+            BigDecimal saldo = workOrder.getTotalValue().subtract(entrada);
 
-            String desc;
-            if (total == 1) {
-                desc = "Ref. " + workOrder.getNumber();
-            } else {
-                String stageLabel = PaymentTermsService.STAGE_ENTRADA.equals(inst.getStage())
-                        ? "Entrada (50%)" : "Saldo na Entrega (50%)";
-                desc = "Ref. " + workOrder.getNumber() + " — " + stageLabel;
+            AccountsReceivable rec1 = new AccountsReceivable();
+            rec1.setClient(workOrder.getClient());
+            rec1.setWorkOrder(workOrder);
+            rec1.setPaymentMethod(paymentMethod);
+            rec1.setPaymentStage("ENTRADA");
+            rec1.setReferenceMonth(LocalDate.now().withDayOfMonth(1));
+            rec1.setDescription("Ref. " + workOrder.getNumber() + " — Entrada (50%)");
+            rec1.setTotalAmount(entrada);
+            rec1.setInstallments(2);
+            rec1.setDueDate(LocalDate.now());
+            rec1.setStatus("pending");
+            receivableRepository.save(rec1);
+
+            AccountsReceivable rec2 = new AccountsReceivable();
+            rec2.setClient(workOrder.getClient());
+            rec2.setWorkOrder(workOrder);
+            rec2.setPaymentMethod(paymentMethod);
+            rec2.setPaymentStage("ENTREGA");
+            rec2.setReferenceMonth(deliveryDate.withDayOfMonth(1));
+            rec2.setDescription("Ref. " + workOrder.getNumber() + " — Saldo na Entrega (50%)");
+            rec2.setTotalAmount(saldo);
+            rec2.setInstallments(2);
+            rec2.setDueDate(deliveryDate);
+            rec2.setStatus("pending");
+            receivableRepository.save(rec2);
+        } else {
+            List<PaymentTermsService.PlannedInstallment> plan =
+                    paymentTermsService.generateInstallments(
+                            paymentMethod, paymentPlan,
+                            workOrder.getTotalValue(), LocalDate.now(), deliveryDate);
+
+            int total = plan.size();
+            for (int i = 0; i < total; i++) {
+                PaymentTermsService.PlannedInstallment inst = plan.get(i);
+                AccountsReceivable parcela = new AccountsReceivable();
+                parcela.setClient(workOrder.getClient());
+                parcela.setWorkOrder(workOrder);
+                parcela.setPaymentMethod(paymentMethod);
+                parcela.setPaymentStage(inst.getStage());
+                parcela.setReferenceMonth(inst.getDueDate().withDayOfMonth(1));
+
+                String desc;
+                if (total == 1) {
+                    desc = "Ref. " + workOrder.getNumber();
+                } else {
+                    String stageLabel = PaymentTermsService.STAGE_ENTRADA.equals(inst.getStage())
+                            ? "Entrada (50%)" : "Saldo na Entrega (50%)";
+                    desc = "Ref. " + workOrder.getNumber() + " — " + stageLabel;
+                }
+                parcela.setDescription(desc);
+                parcela.setTotalAmount(inst.getAmount());
+                parcela.setInstallments(total);
+                parcela.setDueDate(inst.getDueDate());
+                parcela.setStatus("pending");
+                receivableRepository.save(parcela);
             }
-            parcela.setDescription(desc);
-            parcela.setTotalAmount(inst.getAmount());
-            parcela.setInstallments(total);
-            parcela.setDueDate(inst.getDueDate());
-            parcela.setStatus("pending");
-            receivableRepository.save(parcela);
         }
     }
 

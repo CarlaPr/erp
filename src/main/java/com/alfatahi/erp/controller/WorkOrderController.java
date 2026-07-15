@@ -4,7 +4,6 @@ import com.alfatahi.erp.entity.*;
 import com.alfatahi.erp.repository.*;
 import com.alfatahi.erp.service.*;
 import org.hibernate.Hibernate;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,7 +19,6 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/work-orders")
 public class WorkOrderController {
-
 
     private final WorkOrderService workOrderService;
     private final ClientService clientService;
@@ -31,11 +28,13 @@ public class WorkOrderController {
     private final WorkOrderRepository workOrderRepo;
     private final ClientRepository clientRepository;
     private final AccountsReceivableRepository receivableRepo;
+    private final AccountsPayableRepository payableRepo;
 
     public WorkOrderController(WorkOrderService workOrderService, ClientService clientService,
                                ServiceCategoryRepository categoryRepository, ProfileRepository profileRepository,
                                QuoteRepository quoteRepository, WorkOrderRepository workOrderRepo,
-                               ClientRepository clientRepository, AccountsReceivableRepository receivableRepo) {
+                               ClientRepository clientRepository, AccountsReceivableRepository receivableRepo,
+                               AccountsPayableRepository payableRepo) {
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
@@ -44,6 +43,7 @@ public class WorkOrderController {
         this.workOrderRepo = workOrderRepo;
         this.clientRepository = clientRepository;
         this.receivableRepo = receivableRepo;
+        this.payableRepo = payableRepo;
     }
 
     @GetMapping
@@ -248,7 +248,6 @@ public class WorkOrderController {
         return ResponseEntity.ok().build();
     }
 
-    // --- ATUALIZADO PARA DESVINCULAR OS DEPENDENTES ANTES DA EXCLUSÃO FÍSICA ---
     @DeleteMapping("/{id}")
     @ResponseBody
     @Transactional
@@ -256,24 +255,41 @@ public class WorkOrderController {
         WorkOrder wo = workOrderService.findById(id);
 
         if (wo != null) {
-            // 1. Desvincular de orçamento (se existir)
             if (wo.getQuote() != null) {
                 Quote q = wo.getQuote();
                 q.setWorkOrder(null);
-                quoteRepository.save(q);
+                quoteRepository.saveAndFlush(q);
             }
 
-            // 2. Excluir contas a receber associadas à O.S.
             List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
                     .filter(r -> r.getWorkOrder() != null && r.getWorkOrder().getId().equals(id))
                     .collect(Collectors.toList());
             receivableRepo.deleteAll(receivables);
+            receivableRepo.flush();
 
-            // 3. Deleta a O.S. e a Agenda (graças à alteração no WorkOrderService)
+            List<AccountsPayable> payables = payableRepo.findAll();
+            for (AccountsPayable p : payables) {
+                boolean changed = false;
+
+                if (p.getWorkOrder() != null && p.getWorkOrder().getId().equals(id)) {
+                    p.setWorkOrder(null);
+                    changed = true;
+                }
+
+                if (p.getAllocations() != null && !p.getAllocations().isEmpty()) {
+                    boolean removed = p.getAllocations().removeIf(alloc ->
+                            alloc.getWorkOrder() != null && alloc.getWorkOrder().getId().equals(id)
+                    );
+                    if (removed) changed = true;
+                }
+
+                if (changed) {
+                    payableRepo.saveAndFlush(p);
+                }
+            }
             workOrderService.delete(id);
         }
 
         return ResponseEntity.ok().build();
     }
-
 }

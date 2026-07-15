@@ -130,37 +130,77 @@ public class QuoteService {
         quoteRepo.saveAndFlush(quote);
         scheduleService.createFromApprovedQuote(quote, os);
 
-        String paymentMethod = quote.getPaymentMethod();
+        String paymentMethod = quote.getPaymentMethod() != null ? quote.getPaymentMethod() : "";
         String paymentPlan   = quote.getPaymentPlan();
 
-        List<PaymentTermsService.PlannedInstallment> installments =
-                paymentTermsService.generateInstallments(
-                        paymentMethod, paymentPlan, finalTotal, LocalDate.now(), dataEntrega);
+        // Verifica se a forma de pagamento se enquadra na regra de 50/50 obrigatória
+        String pmUpper = paymentMethod.toUpperCase();
+        boolean forceSplit = pmUpper.contains("PIX") || pmUpper.contains("DINHEIRO") || pmUpper.contains("DÉBITO") || pmUpper.contains("DEBITO");
 
-        int total = installments.size();
-        for (int i = 0; i < total; i++) {
-            PaymentTermsService.PlannedInstallment inst = installments.get(i);
-            AccountsReceivable receivable = new AccountsReceivable();
-            receivable.setClient(quote.getClient());
-            receivable.setWorkOrder(os);
-            receivable.setPaymentMethod(paymentMethod);
-            receivable.setPaymentStage(inst.getStage());
-            receivable.setReferenceMonth(inst.getDueDate().withDayOfMonth(1));
+        if (forceSplit) {
+            // Separa os valores rigorosamente em 50%
+            BigDecimal entrada = finalTotal.divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
+            BigDecimal saldo = finalTotal.subtract(entrada);
 
-            String desc;
-            if (total == 1) {
-                desc = "Ref. " + quote.getNumber();
-            } else {
-                String stageLabel = PaymentTermsService.STAGE_ENTRADA.equals(inst.getStage())
-                        ? "Entrada (50%)" : "Saldo na Entrega (50%)";
-                desc = "Ref. " + quote.getNumber() + " — " + stageLabel;
+            // 1. Recebível de Entrada (Vencimento hoje)
+            AccountsReceivable rec1 = new AccountsReceivable();
+            rec1.setClient(quote.getClient());
+            rec1.setWorkOrder(os);
+            rec1.setPaymentMethod(paymentMethod);
+            rec1.setPaymentStage("ENTRADA");
+            rec1.setReferenceMonth(LocalDate.now().withDayOfMonth(1));
+            rec1.setDescription("Ref. " + quote.getNumber() + " — Entrada (50%)");
+            rec1.setTotalAmount(entrada);
+            rec1.setInstallments(2);
+            rec1.setDueDate(LocalDate.now()); // Vencimento no ato da aprovação
+            rec1.setStatus("pending");
+            finRepo.save(rec1);
+
+            // 2. Recebível de Entrega (Vencimento na data da instalação)
+            AccountsReceivable rec2 = new AccountsReceivable();
+            rec2.setClient(quote.getClient());
+            rec2.setWorkOrder(os);
+            rec2.setPaymentMethod(paymentMethod);
+            rec2.setPaymentStage("ENTREGA");
+            rec2.setReferenceMonth(dataEntrega.withDayOfMonth(1));
+            rec2.setDescription("Ref. " + quote.getNumber() + " — Saldo na Entrega (50%)");
+            rec2.setTotalAmount(saldo);
+            rec2.setInstallments(2);
+            rec2.setDueDate(dataEntrega); // Vencimento na entrega
+            rec2.setStatus("pending");
+            finRepo.save(rec2);
+
+        } else {
+            // Lógica padrão para Crédito ou outras formas
+            List<PaymentTermsService.PlannedInstallment> installments =
+                    paymentTermsService.generateInstallments(
+                            paymentMethod, paymentPlan, finalTotal, LocalDate.now(), dataEntrega);
+
+            int total = installments.size();
+            for (int i = 0; i < total; i++) {
+                PaymentTermsService.PlannedInstallment inst = installments.get(i);
+                AccountsReceivable receivable = new AccountsReceivable();
+                receivable.setClient(quote.getClient());
+                receivable.setWorkOrder(os);
+                receivable.setPaymentMethod(paymentMethod);
+                receivable.setPaymentStage(inst.getStage());
+                receivable.setReferenceMonth(inst.getDueDate().withDayOfMonth(1));
+
+                String desc;
+                if (total == 1) {
+                    desc = "Ref. " + quote.getNumber();
+                } else {
+                    String stageLabel = PaymentTermsService.STAGE_ENTRADA.equals(inst.getStage())
+                            ? "Entrada (50%)" : "Saldo na Entrega (50%)";
+                    desc = "Ref. " + quote.getNumber() + " — " + stageLabel;
+                }
+                receivable.setDescription(desc);
+                receivable.setTotalAmount(inst.getAmount());
+                receivable.setInstallments(total);
+                receivable.setDueDate(inst.getDueDate());
+                receivable.setStatus("pending");
+                finRepo.save(receivable);
             }
-            receivable.setDescription(desc);
-            receivable.setTotalAmount(inst.getAmount());
-            receivable.setInstallments(total);
-            receivable.setDueDate(inst.getDueDate());
-            receivable.setStatus("pending");
-            finRepo.save(receivable);
         }
     }
 
@@ -168,17 +208,12 @@ public class QuoteService {
     public void deleteQuote(UUID quoteId) {
         Quote quote = quoteRepo.findById(quoteId).orElse(null);
         if (quote != null) {
-            // Desvincular da O.S. (se existir) para evitar falha de Constraint
             if (quote.getWorkOrder() != null) {
                 WorkOrder os = quote.getWorkOrder();
                 os.setQuote(null);
                 osRepo.save(os);
             }
-
-            // Remover os rastros na agenda
             scheduleService.onQuoteCancelled(quoteId);
-
-            // Excluir permanentemente do banco de dados
             quoteRepo.delete(quote);
         }
     }

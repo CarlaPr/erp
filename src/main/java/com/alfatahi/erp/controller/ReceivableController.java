@@ -8,9 +8,6 @@ import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.WorkOrderRepository;
 import com.alfatahi.erp.service.ClientService;
 import com.alfatahi.erp.service.FinanceService;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
-import java.beans.PropertyEditorSupport;
 import com.alfatahi.erp.service.WorkOrderService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
@@ -162,10 +159,12 @@ public class ReceivableController {
             receivable.setWorkOrder(wo);
 
             if (wo != null) {
+                // Se o valor estiver a 0, assume o valor da OS.
                 if (receivable.getTotalAmount() == null || receivable.getTotalAmount().compareTo(BigDecimal.ZERO) == 0) {
                     receivable.setTotalAmount(wo.getTotalValue());
                 }
-                if (wo.getInstallDate() != null) {
+                // Respeita a data introduzida manualmente. Se estiver vazia, usa a da OS.
+                if (receivable.getDueDate() == null && wo.getInstallDate() != null) {
                     receivable.setDueDate(wo.getInstallDate());
                 }
             }
@@ -190,21 +189,15 @@ public class ReceivableController {
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
 
         ar.setDescription(form.getDescription());
-        ar.setReferenceMonth(form.getReferenceMonth());
+
+        // AGORA RESPEITAMOS O VALOR E A DATA INTRODUZIDOS NO FORMULÁRIO (Mesmo que exista OS)
+        ar.setTotalAmount(form.getTotalAmount());
+        ar.setDueDate(form.getDueDate());
 
         if (form.getWorkOrder() != null && form.getWorkOrder().getId() != null) {
             WorkOrder wo = workOrderService.findById(form.getWorkOrder().getId());
             ar.setWorkOrder(wo);
-
-            if (wo != null) {
-                ar.setTotalAmount(wo.getTotalValue());
-                if (wo.getInstallDate() != null) {
-                    ar.setDueDate(wo.getInstallDate());
-                }
-            }
         } else {
-            ar.setTotalAmount(form.getTotalAmount());
-            ar.setDueDate(form.getDueDate());
             ar.setWorkOrder(null);
         }
 
@@ -245,6 +238,7 @@ public class ReceivableController {
             return "redirect:/receivables?error=invalid_amount";
         }
 
+        // Repassa os descontos e as taxas para o Service (que agora envia para a O.S.)
         financeService.processReceivablePayment(id, amount, paymentDate, cardFee, discount, paymentMethod, notes);
 
         return "redirect:/receivables?success=payment_processed";
@@ -319,21 +313,5 @@ public class ReceivableController {
                     taxa, desconto, r.getTotalAmount(), r.getNetReceivedAmount(), r.getBalance(), r.getStatus());
         }
         writer.flush();
-    }
-
-    @InitBinder
-    public void initBinder(WebDataBinder binder) {
-        binder.registerCustomEditor(LocalDate.class, "referenceMonth", new PropertyEditorSupport() {
-            @Override
-            public void setAsText(String text) {
-                if (text != null && text.matches("\\d{4}-\\d{2}")) { // Se vier no formato YYYY-MM
-                    setValue(LocalDate.parse(text + "-01")); // Força o dia 01
-                } else if (text != null && !text.isEmpty()) {
-                    setValue(LocalDate.parse(text));
-                } else {
-                    setValue(null);
-                }
-            }
-        });
     }
 }
