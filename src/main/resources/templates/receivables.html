@@ -213,6 +213,7 @@
                                 th:data-description="${r?.description}"
                                 th:data-total="${r?.totalAmount}"
                                 th:data-duedate="${r?.dueDate}"
+                                th:data-referencemonth="${r?.referenceMonth != null ? #temporals.format(r.referenceMonth, 'yyyy-MM') : ''}"
                                 th:data-notes="${r?.notes}"
                                 th:data-client="${r?.client != null ? r.client.id : ''}"
                                 th:data-workorder="${r?.workOrder != null ? r.workOrder.id : ''}"
@@ -226,7 +227,8 @@
                                     this.dataset.notes,
                                     this.dataset.client,
                                     this.dataset.workorder,
-                                    this.dataset.received
+                                    this.dataset.received,
+                                    this.dataset.referencemonth
                                     )"
                                 class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors" title="Editar">
                             <i data-lucide="edit" class="w-5 h-5"></i>
@@ -721,11 +723,12 @@
         }
     }
 
-    function openEditModal(id, description, total, dueDate, installments, notes, client, workOrder, receivedAmount){
+    function openEditModal(id, description, total, dueDate, installments, notes, client, workOrder, receivedAmount, referenceMonth){
         document.getElementById("editForm").action = "/receivables/edit/" + id;
         document.getElementById("editDescription").value = description || "";
         document.getElementById("editTotalAmount").value = total || "";
         document.getElementById("editDueDate").value = dueDate || "";
+        document.getElementById("editReferenceMonth").value = referenceMonth || "";
         document.getElementById("editInstallments").value = installments || 1;
         document.getElementById("editNotes").value = notes || "";
         document.getElementById("editClient").value = client || "";

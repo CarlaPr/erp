@@ -13,11 +13,15 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
+import java.beans.PropertyEditorSupport;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.UUID;
@@ -46,6 +50,28 @@ public class ReceivableController {
         this.financeService = financeService;
         this.clientRepository = clientRepository;
         this.workOrderRepository = workOrderRepository;
+    }
+
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(LocalDate.class, "referenceMonth", new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) {
+                if (text == null || text.isBlank()) {
+                    setValue(null);
+                    return;
+                }
+                YearMonth ym = YearMonth.parse(text, DateTimeFormatter.ofPattern("yyyy-MM"));
+                setValue(ym.atDay(1));
+            }
+
+            @Override
+            public String getAsText() {
+                LocalDate value = (LocalDate) getValue();
+                return value != null ? YearMonth.from(value).toString() : "";
+            }
+        });
     }
 
     @Transactional(readOnly = true)
@@ -159,11 +185,9 @@ public class ReceivableController {
             receivable.setWorkOrder(wo);
 
             if (wo != null) {
-                // Se o valor estiver a 0, assume o valor da OS.
                 if (receivable.getTotalAmount() == null || receivable.getTotalAmount().compareTo(BigDecimal.ZERO) == 0) {
                     receivable.setTotalAmount(wo.getTotalValue());
                 }
-                // Respeita a data introduzida manualmente. Se estiver vazia, usa a da OS.
                 if (receivable.getDueDate() == null && wo.getInstallDate() != null) {
                     receivable.setDueDate(wo.getInstallDate());
                 }
@@ -190,9 +214,9 @@ public class ReceivableController {
 
         ar.setDescription(form.getDescription());
 
-        // AGORA RESPEITAMOS O VALOR E A DATA INTRODUZIDOS NO FORMULÁRIO (Mesmo que exista OS)
         ar.setTotalAmount(form.getTotalAmount());
         ar.setDueDate(form.getDueDate());
+        ar.setReferenceMonth(form.getReferenceMonth());
 
         if (form.getWorkOrder() != null && form.getWorkOrder().getId() != null) {
             WorkOrder wo = workOrderService.findById(form.getWorkOrder().getId());
@@ -238,7 +262,6 @@ public class ReceivableController {
             return "redirect:/receivables?error=invalid_amount";
         }
 
-        // Repassa os descontos e as taxas para o Service (que agora envia para a O.S.)
         financeService.processReceivablePayment(id, amount, paymentDate, cardFee, discount, paymentMethod, notes);
 
         return "redirect:/receivables?success=payment_processed";
