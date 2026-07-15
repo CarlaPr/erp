@@ -39,7 +39,6 @@
         </div>
     </div>
 
-    <!-- Filtros Dinâmicos -->
     <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm mb-8">
         <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
             <div class="md:col-span-2">
@@ -75,7 +74,6 @@
                     <option value="all">Todos os Status</option>
                     <option value="in_progress">Em Andamento</option>
                     <option value="completed">Entregue</option>
-                    <option value="cancelled">Cancelada</option>
                 </select>
             </div>
             <div class="flex items-end">
@@ -89,7 +87,6 @@
     <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 shadow-sm">
         <div class="space-y-4">
 
-            <!-- Card Individual OS -->
             <div th:each="wo : ${orders}"
                  th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}"
                  class="js-os-card bg-slate-50 dark:bg-[#1A2533] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 relative overflow-hidden flex flex-col sm:flex-row gap-4 sm:gap-6 hover:border-brand-300 dark:hover:border-slate-600 transition-all hover:shadow-md"
@@ -123,8 +120,8 @@
                                     class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar">
                                 <i data-lucide="edit" class="w-5 h-5"></i>
                             </button>
-                            <button type="button" th:if="${wo.status != 'cancelled' && wo.status != 'canceled'}" th:data-id="${wo.id}" onclick="openCancelModal(this.getAttribute('data-id'))"
-                                    class="p-2 hover:bg-rose-100 dark:hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg transition-colors" title="Cancelar">
+                            <button type="button" th:data-id="${wo.id}" onclick="openDeleteOsModal(this.getAttribute('data-id'))"
+                                    class="p-2 hover:bg-rose-100 dark:hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg transition-colors" title="Excluir Definitivamente">
                                 <i data-lucide="trash-2" class="w-5 h-5"></i>
                             </button>
                         </div>
@@ -193,10 +190,10 @@
         </div>
     </div>
 
-    <div id="cancelOsModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
+    <div id="deleteOsModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
 
-            <button type="button" onclick="closeModal('cancelOsModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+            <button type="button" onclick="closeModal('deleteOsModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
@@ -204,29 +201,24 @@
                 <i data-lucide="alert-triangle" class="w-7 h-7"></i>
             </div>
 
-            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">Cancelar Ordem de Serviço</h3>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">Excluir Ordem de Serviço</h3>
             <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                Esta OS não será apagada, mas ficará arquivada no histórico com status <b>cancelado</b>. Por favor, informe o motivo:
+                Atenção! Esta ação irá <b>apagar permanentemente</b> a O.S. do sistema, incluindo suas contas a receber vinculadas. <b>Esta ação não pode ser desfeita.</b>
             </p>
 
-            <textarea id="cancelReason" rows="3"
-                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-slate-900 dark:text-white outline-none focus:border-rose-500 transition-all text-base mb-6"
-                      placeholder="Ex: Cliente desistiu da obra..."></textarea>
-
             <div class="flex justify-end gap-3">
-                <button type="button" onclick="closeModal('cancelOsModal')"
+                <button type="button" onclick="closeModal('deleteOsModal')"
                         class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">
-                    Voltar
+                    Cancelar
                 </button>
-                <button type="button" onclick="executeCancelOS()"
+                <button type="button" onclick="executeDeleteOS()"
                         class="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-base">
-                    Confirmar Cancelamento
+                    Confirmar Exclusão
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL PRINCIPAL: EDIÇÃO DA O.S.-->
     <div id="osModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-40 overflow-y-auto py-10 p-4">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-5xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
 
@@ -240,7 +232,6 @@
                 <form id="osForm" onsubmit="saveFullOS(event)" class="space-y-8 text-sm">
                     <input type="hidden" id="osId" />
 
-                    <!-- 1. CABEÇALHO DA OS -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 dark:bg-slate-800/30 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50">
                         <div>
                             <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider">OS (Título)</label>
@@ -251,7 +242,6 @@
                             <select id="osStatus" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-base">
                                 <option value="in_progress">Em Obra</option>
                                 <option value="completed">Concluído</option>
-                                <option value="cancelled">Cancelada</option>
                             </select>
                         </div>
                         <div>
@@ -283,7 +273,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. ITENS VENDIDOS -->
                     <div id="soldItemsContainer" class="hidden">
                         <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                             <i data-lucide="package-check" class="w-5 h-5 text-emerald-600 dark:text-emerald-500"></i> Itens Vendidos (Origem do Orçamento)
@@ -303,13 +292,11 @@
                         </div>
                     </div>
 
-                    <!-- 3. CUSTOS DE PRODUÇÃO E MATERIAIS (CMV) -->
                     <div>
                         <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                             Custos de Produção e Materiais (CMV)
                         </h4>
 
-                        <!-- Materiais / Produtos -->
                         <div class="bg-white dark:bg-[#1A2533] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6 shadow-sm">
                             <div class="flex justify-between items-center mb-6">
                                 <h5 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -328,7 +315,6 @@
                             </div>
                         </div>
 
-                        <!-- Custos Operacionais -->
                         <div class="bg-white dark:bg-[#1A2533] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6 shadow-sm">
                             <div class="flex justify-between items-center mb-6">
                                 <h5 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -347,7 +333,6 @@
                             </div>
                         </div>
 
-                        <!-- Resumo Financeiro -->
                         <div class="bg-brand-50 dark:bg-cyan-900/20 border border-brand-200 dark:border-cyan-800/40 rounded-2xl p-6 shadow-sm">
                             <h5 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6 border-b border-brand-200 dark:border-cyan-800/40 pb-4">
                                 <i data-lucide="dollar-sign" class="w-6 h-6 text-brand-600 dark:text-cyan-400"></i> Resumo Financeiro
@@ -376,7 +361,6 @@
                 </form>
             </div>
 
-            <!-- 4. FOOTER -->
             <div class="bg-slate-50 dark:bg-[#0F172A] border-t border-slate-200 dark:border-slate-800 p-8 flex justify-end gap-4 rounded-b-2xl">
                 <button type="button" onclick="closeModal('osModal')" class="px-8 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">Sair</button>
                 <button type="button" onclick="saveFullOS(event)" class="px-8 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 transition-all text-base">Gravar O.S.</button>
@@ -386,7 +370,6 @@
 
 
     <div id="receiptModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto py-10 p-4">
-        <!-- O Recibo sempre será branco para manter consistência ao imprimir -->
         <div class="bg-white text-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl p-12 relative font-sans border border-slate-200 print:p-0 print:shadow-none print:w-full print:border-none" id="printableReceiptArea">
             <button onclick="closeModal('receiptModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full print:hidden transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
 
@@ -526,7 +509,7 @@
     let soldItems        = [];
     let materialItems    = [];
     let operationalItems = [];
-    let osIdToCancel     = null;
+    let osIdToDelete     = null; // Alterado de osIdToCancel para osIdToDelete
     let originalTotalValue = 0;
     let originalNotes = "";
 
@@ -576,9 +559,7 @@
                 matchStatus = true;
             } else if (statusTerm === 'completed' && (statusData === 'completed' || statusData === 'delivered')) {
                 matchStatus = true;
-            } else if (statusTerm === 'cancelled' && (statusData === 'cancelled' || statusData === 'canceled')) {
-                matchStatus = true;
-            } else if (statusTerm === 'in_progress' && statusData !== 'completed' && statusData !== 'delivered' && statusData !== 'cancelled' && statusData !== 'canceled') {
+            } else if (statusTerm === 'in_progress' && statusData !== 'completed' && statusData !== 'delivered') {
                 matchStatus = true;
             } else if (statusTerm === statusData) {
                 matchStatus = true;
@@ -747,27 +728,24 @@
         }
     }
 
-    function openCancelModal(id) {
-        osIdToCancel = id;
-        document.getElementById('cancelReason').value = '';
-        document.getElementById('cancelOsModal').classList.remove('hidden');
-        document.getElementById('cancelOsModal').classList.add('flex');
+    function openDeleteOsModal(id) {
+        osIdToDelete = id;
+        document.getElementById('deleteOsModal').classList.remove('hidden');
+        document.getElementById('deleteOsModal').classList.add('flex');
     }
 
-    function executeCancelOS() {
-        const reason = document.getElementById('cancelReason').value;
-        if (!reason) return alert('Por favor, informe o motivo.');
+    function executeDeleteOS() {
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-        fetch(`/work-orders/cancel/${osIdToCancel}`, {
-            method: 'POST',
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+        fetch(`/work-orders/${osIdToDelete}`, {
+            method: 'DELETE',
             headers: {
-                'Content-Type': 'text/plain',
-                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
-            },
-            body: reason
+                ...(csrfToken ? { [csrfHeader]: csrfToken } : {})
+            }
         }).then(res => {
             if(res.ok) window.location.reload();
-        })
+            else alert("Erro ao excluir Ordem de Serviço.");
+        });
     }
 
     async function handleQuoteChange() {

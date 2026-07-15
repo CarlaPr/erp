@@ -76,7 +76,12 @@ public class WorkOrderService {
                 .orElseThrow(() -> new IllegalArgumentException("Ordem de Serviço não encontrada: " + id));
     }
 
+    // --- ATUALIZADO PARA DELETAR A AGENDA ANTES DA OS ---
+    @Transactional
     public void delete(UUID id) {
+        // Exclui a agenda vinculada (se houver) para não violar a chave estrangeira
+        scheduleService.onWorkOrderDeleted(id);
+
         workOrderRepository.deleteById(id);
     }
 

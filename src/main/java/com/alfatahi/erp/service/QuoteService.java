@@ -163,4 +163,23 @@ public class QuoteService {
             finRepo.save(receivable);
         }
     }
+
+    @Transactional
+    public void deleteQuote(UUID quoteId) {
+        Quote quote = quoteRepo.findById(quoteId).orElse(null);
+        if (quote != null) {
+            // Desvincular da O.S. (se existir) para evitar falha de Constraint
+            if (quote.getWorkOrder() != null) {
+                WorkOrder os = quote.getWorkOrder();
+                os.setQuote(null);
+                osRepo.save(os);
+            }
+
+            // Remover os rastros na agenda
+            scheduleService.onQuoteCancelled(quoteId);
+
+            // Excluir permanentemente do banco de dados
+            quoteRepo.delete(quote);
+        }
+    }
 }

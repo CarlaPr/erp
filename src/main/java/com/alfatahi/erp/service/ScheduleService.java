@@ -30,7 +30,7 @@ public class ScheduleService {
     private final WorkOrderRepository workOrderRepo;
 
     public ScheduleService(ScheduleRepository scheduleRepo, ScheduleHistoryRepository historyRepo,
-                            WorkOrderRepository workOrderRepo) {
+                           WorkOrderRepository workOrderRepo) {
         this.scheduleRepo = scheduleRepo;
         this.historyRepo = historyRepo;
         this.workOrderRepo = workOrderRepo;
@@ -60,7 +60,6 @@ public class ScheduleService {
         return schedule;
     }
 
-
     @Transactional(readOnly = true)
     public List<ScheduleDto> listAllDto() {
         return scheduleRepo.findAllWithRelations().stream()
@@ -83,7 +82,6 @@ public class ScheduleService {
                         && s.getScheduledDate().equals(date))
                 .collect(Collectors.toList());
     }
-
 
     @Transactional
     public String save(ScheduleSaveRequest req) {
@@ -175,10 +173,9 @@ public class ScheduleService {
         syncWorkOrder(schedule);
     }
 
-
     @Transactional
     public void onQuoteCancelled(UUID quoteId) {
-        scheduleRepo.findByQuoteId(quoteId).ifPresent(scheduleRepo::delete);
+        scheduleRepo.findByQuoteId(quoteId).ifPresent(this::deleteScheduleAndHistory);
     }
 
     @Transactional
@@ -188,6 +185,20 @@ public class ScheduleService {
             scheduleRepo.saveAndFlush(schedule);
             addHistory(schedule, "Cancelado", "Ordem de Serviço vinculada foi cancelada.", null);
         });
+    }
+
+    @Transactional
+    public void onWorkOrderDeleted(UUID workOrderId) {
+        scheduleRepo.findByWorkOrderId(workOrderId).ifPresent(this::deleteScheduleAndHistory);
+    }
+
+    // --- NOVO MÉTODO: Limpa o histórico antes de excluir a agenda para evitar DataIntegrityViolation ---
+    private void deleteScheduleAndHistory(Schedule schedule) {
+        List<ScheduleHistory> historyList = historyRepo.findByScheduleIdOrderByEventDateAsc(schedule.getId());
+        if (historyList != null && !historyList.isEmpty()) {
+            historyRepo.deleteAll(historyList);
+        }
+        scheduleRepo.delete(schedule);
     }
 
     @Transactional
@@ -204,7 +215,6 @@ public class ScheduleService {
             }
         });
     }
-
 
     @Transactional
     public int refreshOverdueStatuses() {
@@ -223,7 +233,6 @@ public class ScheduleService {
         }
         return candidates.size();
     }
-
 
     @Transactional(readOnly = true)
     public Map<String, Object> getKpis() {
@@ -250,7 +259,6 @@ public class ScheduleService {
 
         return kpis;
     }
-
 
     private boolean isLate(Schedule s, LocalDate today) {
         if (Schedule.STATUS_CONCLUIDO.equals(s.getStatus()) || Schedule.STATUS_CANCELADO.equals(s.getStatus())) {

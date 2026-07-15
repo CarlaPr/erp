@@ -2043,6 +2043,35 @@
         document.getElementById('itemProd').focus();
     }
 
+    function deleteQuote(id) {
+        quoteIdToDelete = id;
+        toggleModal('deleteQuoteModal', true);
+    }
+
+    function executeDeleteQuote() {
+        if (!quoteIdToDelete) return;
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+
+        const headers = {};
+        if (csrfToken) {
+            headers[csrfHeader] = csrfToken;
+        }
+
+        fetch(`/quotes/${quoteIdToDelete}`, {
+            method: 'DELETE',
+            headers: headers
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                console.error("Erro ao deletar orçamento.");
+                alert('Erro ao excluir Orçamento.');
+            }
+        }).catch(err => console.error("Erro crítico:", err));
+    }
+
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 </body>

@@ -395,19 +395,10 @@ public class QuoteController {
         }
     }
 
-    @PostMapping("/cancel/{id}")
+    @DeleteMapping("/{id}")
     @ResponseBody
-    public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody String reason) {
-        Quote quote = quoteRepo.findById(id).orElseThrow();
-        quote.setStatus("cancelled");
-
-        String obs = quote.getObservations() != null ? quote.getObservations() : "";
-        quote.setObservations(obs + "\n[Motivo Cancelamento: " + reason + "]");
-
-        quoteRepo.save(quote);
-
-        scheduleService.onQuoteCancelled(id);
-
+    public ResponseEntity<?> delete(@PathVariable UUID id) {
+        quoteService.deleteQuote(id);
         return ResponseEntity.ok().build();
     }
 

@@ -248,10 +248,31 @@ public class WorkOrderController {
         return ResponseEntity.ok().build();
     }
 
+    // --- ATUALIZADO PARA DESVINCULAR OS DEPENDENTES ANTES DA EXCLUSÃO FÍSICA ---
     @DeleteMapping("/{id}")
     @ResponseBody
+    @Transactional
     public ResponseEntity<?> delete(@PathVariable UUID id) {
-        workOrderService.delete(id);
+        WorkOrder wo = workOrderService.findById(id);
+
+        if (wo != null) {
+            // 1. Desvincular de orçamento (se existir)
+            if (wo.getQuote() != null) {
+                Quote q = wo.getQuote();
+                q.setWorkOrder(null);
+                quoteRepository.save(q);
+            }
+
+            // 2. Excluir contas a receber associadas à O.S.
+            List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
+                    .filter(r -> r.getWorkOrder() != null && r.getWorkOrder().getId().equals(id))
+                    .collect(Collectors.toList());
+            receivableRepo.deleteAll(receivables);
+
+            // 3. Deleta a O.S. e a Agenda (graças à alteração no WorkOrderService)
+            workOrderService.delete(id);
+        }
+
         return ResponseEntity.ok().build();
     }
 

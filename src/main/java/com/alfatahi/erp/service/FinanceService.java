@@ -4,10 +4,12 @@ import com.alfatahi.erp.entity.*;
 import com.alfatahi.erp.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -83,7 +85,8 @@ public class FinanceService {
     @Transactional
     public void processReceivablePayment(UUID receivableId, BigDecimal amountReceived,
                                          LocalDate paymentDate, BigDecimal cardFeePercent,
-                                         String paymentMethod, String notes) {
+                                         BigDecimal discountAmount, String paymentMethod, String notes) {
+
         AccountsReceivable ar = receivableRepository.findById(receivableId)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada: " + receivableId));
 
@@ -118,6 +121,11 @@ public class FinanceService {
         if (cardFeePercent != null && cardFeePercent.compareTo(BigDecimal.ZERO) > 0)
             ar.setCardFeePercentage(cardFeePercent);
 
+        // Atualiza a visualização do desconto atrelado na própria conta
+        if (discountAmount != null) {
+            ar.setDiscount(discountAmount);
+        }
+
         // Observação de auditoria no campo notes da conta a receber
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String dateStr = (paymentDate != null ? paymentDate : LocalDate.now()).format(fmt);
@@ -128,30 +136,53 @@ public class FinanceService {
         } else {
             autoNote = String.format("[%s] Recebido R$ %.2f", dateStr, amountReceived);
         }
+
+        if (discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0) {
+            autoNote += String.format(" | Desconto Concedido: R$ %.2f", discountAmount);
+        }
+
         if (notes != null && !notes.isBlank()) autoNote = autoNote + " | Obs: " + notes;
         String existingNotes = ar.getNotes();
         ar.setNotes((existingNotes != null && !existingNotes.isBlank() ? existingNotes + "\n" : "") + autoNote);
 
-        // ── Registra a taxa como Despesa Financeira (NÃO WorkOrderItem) ──────
-        if (feeForThisPayment.compareTo(BigDecimal.ZERO) > 0) {
-            AccountsPayable taxaPayable = new AccountsPayable();
-            taxaPayable.setDescription("Taxa de Maquininha — " + (ar.getWorkOrder() != null
-                    ? ar.getWorkOrder().getNumber() : ar.getDescription())
-                    + " (" + dateStr + ")");
-            taxaPayable.setCategory("financial");
-            taxaPayable.setSubcategory("Taxa Cartão");
-            taxaPayable.setFinancialExpense(true);
-            taxaPayable.setSourceReceivableId(ar.getId());
-            taxaPayable.setTotalAmount(feeForThisPayment);
-            taxaPayable.setPaidAmount(feeForThisPayment);   // já é debitada automaticamente
-            taxaPayable.setStatus("paid");
-            taxaPayable.setDueDate(paymentDate != null ? paymentDate : LocalDate.now());
-            taxaPayable.setPaymentDate(paymentDate != null ? paymentDate : LocalDate.now());
-            taxaPayable.setPaymentMethod(paymentMethod);
-            taxaPayable.setWorkOrder(ar.getWorkOrder());
-            taxaPayable.setNotes("Gerado automaticamente ao processar recebimento de "
-                    + (ar.getClient() != null ? ar.getClient().getName() : "cliente avulso"));
-            payableRepository.save(taxaPayable);
+        // ── REGISTRA TAXA/DESCONTO COMO CUSTO OPERACIONAL NA O.S. (NÃO NO CONTAS A PAGAR) ──────
+        if (ar.getWorkOrder() != null) {
+            WorkOrder wo = ar.getWorkOrder();
+            boolean hasOsChanges = false;
+            String opDateStr = (paymentDate != null ? paymentDate : LocalDate.now()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+            if (wo.getItems() == null) {
+                wo.setItems(new ArrayList<>());
+            }
+
+            // 1. Taxa da maquininha
+            if (feeForThisPayment.compareTo(BigDecimal.ZERO) > 0) {
+                WorkOrderItem opFee = new WorkOrderItem();
+                opFee.setWorkOrder(wo);
+                // Utilizando a formatação oficial do javascript [OP] Categoria | Data | Obs ||| Descrição
+                opFee.setDescription("[OP] Outros | " + opDateStr + " | Taxa " + fee + "% ||| Taxa de Maquininha — " + (paymentMethod != null ? paymentMethod : "Automática"));
+                opFee.setQuantity(BigDecimal.ONE);
+                opFee.setUnitCost(feeForThisPayment);
+                opFee.setUnitPrice(BigDecimal.ZERO);
+                wo.getItems().add(opFee);
+                hasOsChanges = true;
+            }
+
+            // 2. Desconto
+            if (discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0) {
+                WorkOrderItem opDiscount = new WorkOrderItem();
+                opDiscount.setWorkOrder(wo);
+                opDiscount.setDescription("[OP] Outros | " + opDateStr + " | ||| Desconto Concedido — " + (paymentMethod != null ? paymentMethod : "Automático"));
+                opDiscount.setQuantity(BigDecimal.ONE);
+                opDiscount.setUnitCost(discountAmount);
+                opDiscount.setUnitPrice(BigDecimal.ZERO);
+                wo.getItems().add(opDiscount);
+                hasOsChanges = true;
+            }
+
+            if (hasOsChanges) {
+                workOrderRepository.save(wo);
+            }
         }
 
         // ── Atualiza status da Conta a Receber ───────────────────────────────
