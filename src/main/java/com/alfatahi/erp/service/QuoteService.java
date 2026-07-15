@@ -147,7 +147,7 @@ public class QuoteService {
             rec1.setClient(quote.getClient());
             rec1.setWorkOrder(os);
             rec1.setPaymentMethod(paymentMethod);
-            rec1.setPaymentStage("ENTRADA");
+            rec1.setPaymentStage(PaymentTermsService.STAGE_ENTRADA);
             rec1.setReferenceMonth(LocalDate.now().withDayOfMonth(1));
             rec1.setDescription("Ref. " + quote.getNumber() + " — Entrada (50%)");
             rec1.setTotalAmount(entrada);
@@ -161,7 +161,7 @@ public class QuoteService {
             rec2.setClient(quote.getClient());
             rec2.setWorkOrder(os);
             rec2.setPaymentMethod(paymentMethod);
-            rec2.setPaymentStage("ENTREGA");
+            rec2.setPaymentStage(PaymentTermsService.STAGE_ENTREGA);
             rec2.setReferenceMonth(dataEntrega.withDayOfMonth(1));
             rec2.setDescription("Ref. " + quote.getNumber() + " — Saldo na Entrega (50%)");
             rec2.setTotalAmount(saldo);

@@ -132,7 +132,7 @@ public class WorkOrderService {
             rec1.setClient(workOrder.getClient());
             rec1.setWorkOrder(workOrder);
             rec1.setPaymentMethod(paymentMethod);
-            rec1.setPaymentStage("ENTRADA");
+            rec1.setPaymentStage(PaymentTermsService.STAGE_ENTRADA);
             rec1.setReferenceMonth(LocalDate.now().withDayOfMonth(1));
             rec1.setDescription("Ref. " + workOrder.getNumber() + " — Entrada (50%)");
             rec1.setTotalAmount(entrada);
@@ -145,7 +145,7 @@ public class WorkOrderService {
             rec2.setClient(workOrder.getClient());
             rec2.setWorkOrder(workOrder);
             rec2.setPaymentMethod(paymentMethod);
-            rec2.setPaymentStage("ENTREGA");
+            rec2.setPaymentStage(PaymentTermsService.STAGE_ENTREGA);
             rec2.setReferenceMonth(deliveryDate.withDayOfMonth(1));
             rec2.setDescription("Ref. " + workOrder.getNumber() + " — Saldo na Entrega (50%)");
             rec2.setTotalAmount(saldo);
