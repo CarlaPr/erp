@@ -36,6 +36,9 @@ public class Quote {
     @Column(columnDefinition = "text")
     private String observations;
 
+    @Column(name = "seller_name", length = 100)
+    private String sellerName;
+
     @Column(columnDefinition = "text")
     private String warranty;
 
@@ -76,6 +79,9 @@ public class Quote {
     private String clientSignature;
 
     // Getters e Setters
+    public String getSellerName() { return sellerName; }
+    public void setSellerName(String sellerName) { this.sellerName = sellerName; }
+
     public BigDecimal getDiscountPercent() { return discountPercent; }
     public void setDiscountPercent(BigDecimal discountPercent) { this.discountPercent = discountPercent; }
 

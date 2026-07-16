@@ -555,6 +555,11 @@
                                 <span class="text-[11px] text-slate-400 font-bold block uppercase tracking-wide">Data de emissão</span>
                                 <span id="recDate" class="text-sm font-black text-white">--/--/----</span>
                             </div>
+
+                            <div class="mt-2 pt-2 border-t border-slate-700 text-left">
+                                <span class="text-[11px] text-slate-400 font-bold block uppercase tracking-wide">Vendedor(a)</span>
+                                <span id="recSeller" style="text-transform: capitalize;" class="text-sm font-black text-white truncate max-w-[160px] inline-block">--</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -978,7 +983,7 @@
         document.getElementById('itemCat').value = '';
         document.getElementById('quotePayment').value = 'PIX';
         document.querySelectorAll('.pay-method-cb').forEach(cb => cb.checked = (cb.value === 'PIX'));
-        document.getElementById('quoteClientName').value = ''; // Limpa o input visual
+        document.getElementById('quoteClientName').value = '';
 
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('quoteDate').value = today;
@@ -1002,11 +1007,9 @@
         const isCredito = payment.includes('Crédito') || payment.includes('Link de Pagamento');
         const isPlannable = payment.includes('PIX') || payment.includes('Dinheiro');
 
-        // Parcelas (campo legado): só mostra para Crédito, mas agora é informativa
         instContainer.style.display = isCredito ? 'block' : 'none';
         if (!isCredito) document.getElementById('quoteInstallments').value = 1;
 
-        // Plano de pagamento: só para PIX e Dinheiro
         planContainer.style.display = isPlannable ? 'block' : 'none';
 
         renderQuoteItems();
@@ -1141,7 +1144,7 @@
                     });
                 }
 
-                togglePaymentOptions(); // Ajusta os painéis antes de renderizar
+                togglePaymentOptions();
                 renderQuoteItems();
 
                 const modalTitle = document.querySelector('#quoteModal h3');
@@ -1395,28 +1398,6 @@
         }
     }
 
-    function cancelQuote(id) {
-        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
-
-        const headers = { 'Content-Type': 'text/plain' };
-        if (csrfToken) {
-            headers[csrfHeader] = csrfToken;
-        }
-
-        fetch(`/quotes/cancel/${id}`, {
-            method: 'POST',
-            headers: headers,
-            body: "Cancelado via Painel de Controle Comercial"
-        }).then(response => {
-            if (response.ok) {
-                window.location.reload();
-            } else {
-                console.error("Erro na comunicação de status.");
-            }
-        }).catch(err => console.error("Erro crítico:", err));
-    }
-
     function setPdfButtonsLoading(buttons, loading, loadingHtml, originalHtmlMap) {
         buttons.forEach(b => {
             if (!b) return;
@@ -1431,7 +1412,6 @@
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
-
 
     async function generateReceiptPdfBlob() {
         if (!currentActiveQuoteIdForPdf) {
@@ -1462,7 +1442,6 @@
             const newTab = window.open(pdfUrl, '_blank');
 
             if (!newTab) {
-                // Pop-up bloqueado: faz download via blob como fallback
                 const pdfBlob = await generateReceiptPdfBlob();
                 downloadBlobFile(pdfBlob, buildQuoteShareFileName());
             }
@@ -1653,6 +1632,7 @@
                 let discountPct = q.discountPercent || 0;
                 let net = q.totalValue || (calculatedGross - (calculatedGross * (discountPct / 100)));
 
+                document.getElementById('recSeller').innerText = q.sellerName ? q.sellerName : 'Não informado';
                 const recSubtotalRow = document.getElementById('recSubtotalRow');
                 const recDiscountRow = document.getElementById('recDiscountRow');
 

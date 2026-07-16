@@ -1,0 +1,1 @@
+ALTER TABLE quotes ADD COLUMN seller_name VARCHAR(100);

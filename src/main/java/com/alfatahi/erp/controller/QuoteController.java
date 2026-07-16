@@ -51,10 +51,6 @@ public class QuoteController {
         this.templateEngine = templateEngine;
     }
 
-    // ============================================================
-    //  GERAÇÃO SERVER-SIDE DE PDF  –  /quotes/pdf/{id}
-    //  Funciona identicamente em qualquer browser/dispositivo.
-    // ============================================================
     @GetMapping("/pdf/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> downloadPdf(@PathVariable UUID id) {
@@ -64,7 +60,6 @@ public class QuoteController {
             if (quote.getProfile() != null) Hibernate.initialize(quote.getProfile());
             if (quote.getClient() != null)  Hibernate.initialize(quote.getClient());
 
-            // ── Cálculo dos itens (mesma lógica do JavaScript original) ──
             List<Map<String, String>> itemRows = new ArrayList<>();
             BigDecimal gross = BigDecimal.ZERO;
 
@@ -98,7 +93,6 @@ public class QuoteController {
                 net = gross.subtract(discAmt);
             }
 
-            // ── Parcelamento ──
             String pm = nvlStr(quote.getPaymentMethod(), "");
             boolean showInstall = (pm.contains("Crédito") || pm.contains("Link de Pagamento"))
                     && quote.getInstallments() != null && quote.getInstallments() > 1;
@@ -108,14 +102,12 @@ public class QuoteController {
                 installText = "Em até " + quote.getInstallments() + "x de " + formatBRL(val);
             }
 
-            // ── Dados da empresa (perfil) ──
             String companyName    = quote.getProfile() != null ? nvlStr(quote.getProfile().getCompanyName(), "") : "";
             String companyDoc     = quote.getProfile() != null ? nvlStr(quote.getProfile().getDocument(), "--") : "--";
             String companyAddress = quote.getProfile() != null ? nvlStr(quote.getProfile().getAddress(), "") : "";
             String companyEmail   = quote.getProfile() != null ? nvlStr(quote.getProfile().getEmail(), "") : "";
             String companyPhone   = quote.getProfile() != null ? nvlStr(quote.getProfile().getPhone(), "") : "";
 
-            // ── Dados do cliente ──
             String clientName = quote.getClient() != null ? nvlStr(quote.getClient().getName(), "Consumidor Final") : "Consumidor Final";
             String clientDoc  = quote.getClient() != null ? nvlStr(quote.getClient().getDocument(), "") : "";
             String clientPhone= quote.getClient() != null ? nvlStr(quote.getClient().getPhone(), "") : "";
@@ -128,19 +120,19 @@ public class QuoteController {
             }
             boolean hasClientDetails = !clientDoc.isEmpty() || !clientPhone.isEmpty() || !clientEmail.isEmpty() || !clientAddr.isEmpty();
 
-            // ── Imagens como Base64 ──
             String logoB64    = toBase64Uri(quote.getProfile() != null ? quote.getProfile().getLogoUrl() : null);
             String sigCoB64   = toBase64Uri(quote.getProfile() != null ? quote.getProfile().getSignatureUrl() : null);
             String sigCliB64  = toBase64Uri(nvlStr(quote.getClientSignature(), null));
             boolean clientSigned = quote.getClientSignature() != null && !quote.getClientSignature().isBlank();
 
-            // ── Número e data ──
             String num = nvlStr(quote.getNumber(), "ORC-0000").replace("ORC-", "");
             String dt  = quote.getDateCreated() != null
                     ? quote.getDateCreated().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "--/--/----";
 
-            // ── Monta contexto Thymeleaf ──
+            String seller = nvlStr(quote.getSellerName(), "Não informado");
+
             Context ctx = new Context(Locale.forLanguageTag("pt-BR"));
+            ctx.setVariable("sellerName",        seller);
             ctx.setVariable("numDisplay",        num);
             ctx.setVariable("dateFormatted",     dt);
             ctx.setVariable("companyName",       companyName);
@@ -340,7 +332,7 @@ public class QuoteController {
 
     @PostMapping(value = "/save-ajax", consumes = "application/json")
     @ResponseBody
-    public ResponseEntity<?> saveAjax(@RequestBody Quote quote) {
+    public ResponseEntity<?> saveAjax(@RequestBody Quote quote, java.security.Principal principal) {
 
         ensureItemDescriptions(quote.getItems());
 
@@ -348,7 +340,6 @@ public class QuoteController {
             Quote existing = quoteRepo.findById(quote.getId()).orElseThrow();
             existing.setClient(quote.getClient());
             existing.setProfile(quote.getProfile());
-
             if (quote.getDateCreated() != null) {
                 existing.setDateCreated(quote.getDateCreated());
             }
@@ -374,6 +365,11 @@ public class QuoteController {
         if (quote.getDateCreated() == null) {
             quote.setDateCreated(LocalDateTime.now());
         }
+
+        if (principal != null) {
+            quote.setSellerName(principal.getName());
+        }
+
         if (quote.getItems() != null) {
             for (QuoteItem item : quote.getItems()) {
                 item.setQuote(quote);

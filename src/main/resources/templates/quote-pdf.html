@@ -128,9 +128,7 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════
-     RODAPÉ – repete em cada página via position: running()
-     ════════════════════════════════════════════════════════ -->
+
 <div id="page-footer">
     <table style="width:100%; border-collapse:collapse;">
         <tr>
@@ -144,12 +142,8 @@
     </table>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     CABEÇALHO – Logo, Empresa, Número do Orçamento
-     ════════════════════════════════════════════════════════ -->
 <table class="header-table">
     <tr>
-        <!-- Coluna esquerda: logo + dados da empresa -->
         <td style="vertical-align:top; padding-right:16px;">
             <div th:if="${logoBase64 != null}" style="margin-bottom:10px;">
                 <img th:src="${logoBase64}" style="max-height:72px; max-width:150px;" alt="Logo"/>
@@ -161,21 +155,21 @@
                  th:text="${companyEmail + (!companyEmail.isEmpty() && !companyPhone.isEmpty() ? ' | ' : '') + companyPhone}"></div>
         </td>
 
-        <!-- Coluna direita: badge com número e data -->
         <td style="vertical-align:top; text-align:right; white-space:nowrap;">
             <div class="quote-badge">
                 <div class="quote-badge-label">ORÇAMENTO</div>
                 <div class="quote-badge-num" th:text="${'N° ' + numDisplay}">N° 0000</div>
+
                 <div class="quote-badge-date-label">Data de emissão</div>
                 <div class="quote-badge-date-val" th:text="${dateFormatted}">--/--/----</div>
+
+                <div class="quote-badge-date-label">Vendedor(a)</div>
+                <div class="quote-badge-date-val" style="text-transform: capitalize;" th:text="${sellerName}">--</div>
             </div>
         </td>
     </tr>
 </table>
 
-<!-- ═══════════════════════════════════════════════════════════
-     CLIENTE
-     ════════════════════════════════════════════════════════ -->
 <table class="client-table avoid-break">
     <tr>
         <td class="client-bar"></td>
@@ -211,9 +205,6 @@
     </tr>
 </table>
 
-<!-- ═══════════════════════════════════════════════════════════
-     TABELA DE ITENS
-     ════════════════════════════════════════════════════════ -->
 <table class="items-table">
     <thead>
         <tr>
@@ -238,9 +229,7 @@
     </tbody>
 </table>
 
-<!-- ═══════════════════════════════════════════════════════════
-     TOTAIS
-     ════════════════════════════════════════════════════════ -->
+
 <table class="totals-table avoid-break">
     <!-- Subtotal (só aparece quando há desconto) -->
     <tr th:if="${hasDiscount}" style="background:#f8fafc;">
@@ -264,9 +253,7 @@
     </tr>
 </table>
 
-<!-- ═══════════════════════════════════════════════════════════
-     FORMAS DE PAGAMENTO
-     ════════════════════════════════════════════════════════ -->
+
 <table class="section-box avoid-break">
     <tr>
         <td class="section-header-cell">
@@ -278,9 +265,6 @@
     </tr>
 </table>
 
-<!-- ═══════════════════════════════════════════════════════════
-     TERMOS DE GARANTIA
-     ════════════════════════════════════════════════════════ -->
 <table class="section-box avoid-break">
     <tr>
         <td class="section-header-cell">
@@ -292,9 +276,6 @@
     </tr>
 </table>
 
-<!-- ═══════════════════════════════════════════════════════════
-     CONDIÇÕES E OBSERVAÇÕES
-     ════════════════════════════════════════════════════════ -->
 <table class="section-box avoid-break">
     <tr>
         <td class="section-header-cell">
@@ -306,9 +287,6 @@
     </tr>
 </table>
 
-<!-- ═══════════════════════════════════════════════════════════
-     ASSINATURAS
-     ════════════════════════════════════════════════════════ -->
 <div class="sig-section">
     <table class="sig-table">
         <tr>
