@@ -264,8 +264,10 @@ public class WorkOrderController {
             List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
                     .filter(r -> r.getWorkOrder() != null && r.getWorkOrder().getId().equals(id))
                     .collect(Collectors.toList());
-            receivableRepo.deleteAll(receivables);
-            receivableRepo.flush();
+
+            List<UUID> receivableIds = receivables.stream()
+                    .map(AccountsReceivable::getId)
+                    .collect(Collectors.toList());
 
             List<AccountsPayable> payables = payableRepo.findAll();
             for (AccountsPayable p : payables) {
@@ -283,10 +285,19 @@ public class WorkOrderController {
                     if (removed) changed = true;
                 }
 
+                if (p.getSourceReceivableId() != null && receivableIds.contains(p.getSourceReceivableId())) {
+                    p.setSourceReceivableId(null);
+                    changed = true;
+                }
+
                 if (changed) {
                     payableRepo.saveAndFlush(p);
                 }
             }
+
+            receivableRepo.deleteAll(receivables);
+            receivableRepo.flush();
+
             workOrderService.delete(id);
         }
 
