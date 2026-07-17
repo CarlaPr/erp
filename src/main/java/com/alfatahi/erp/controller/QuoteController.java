@@ -190,13 +190,6 @@ public class QuoteController {
         }
     }
 
-    // ── Helpers ──────────────────────────────────────────────────
-
-    /**
-     * Registra a fonte Inter (a mesma usada na tela de Orçamentos) no motor de PDF.
-     * O openhtmltopdf não carrega fontes via @font-face com data-URI de forma confiável,
-     * por isso os arquivos .ttf são embutidos no classpath e registrados diretamente aqui.
-     */
     private void registerFonts(PdfRendererBuilder builder) {
         int[] weights = {400, 500, 600, 700, 800, 900};
         for (int weight : weights) {
@@ -215,7 +208,6 @@ public class QuoteController {
         return nf.format(v != null ? v : BigDecimal.ZERO);
     }
 
-    /** Converte uma URL de imagem em data URI base64, para embutir no HTML do PDF. */
     private String toBase64Uri(String url) {
         if (url == null || url.isBlank()) return null;
         if (url.startsWith("data:"))       return url;  // já é data URI
