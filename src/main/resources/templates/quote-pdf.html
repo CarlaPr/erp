@@ -7,11 +7,6 @@
         /* ── Reset ─────────────────────────────────────────── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* Opcional: Garantir que títulos usem Poppins */
-        h1, h2, h3, h4, .company-name-main, .client-name-main {
-            font-family: 'Poppins', sans-serif !important;
-        }
-
         /* ── Página A4 ──────────────────────────────────────── */
         @page {
             size: A4 portrait;
@@ -25,8 +20,8 @@
             @bottom-right {
                 content: "Página " counter(page) " de " counter(pages);
                 font-size: 8px;
-                font-family: 'Poppins', 'Inter', sans-serif;
-                color: #6b7280;
+                font-family: 'Inter', sans-serif;
+                color: #94a3b8;
                 font-weight: bold;
                 vertical-align: top;
                 padding-top: 5mm;
@@ -37,93 +32,111 @@
         #page-footer {
             position: running(page-footer);
             font-size: 8.5px;
-            font-family: 'Poppins', 'Inter', sans-serif;
-            color: #6b7280;
+            font-family: 'Inter', sans-serif;
+            color: #94a3b8;
             border-top: 1px solid #e2e8f0;
             padding-top: 4px;
         }
-        #page-footer .footer-company { font-size: 9.5px; font-weight: bold; color: #111827; text-transform: uppercase; letter-spacing: 0.5px; }
+        #page-footer .footer-company { font-size: 9.5px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
 
         /* ── Base ───────────────────────────────────────────── */
         body {
-            font-family: 'Poppins', 'Inter', sans-serif;
-            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+            font-size: 10.5px;
             color: #1e293b;
             background: #ffffff;
-            line-height: 1.4;
+            line-height: 1.45;
+            font-weight: 400;
         }
 
         /* ── Utilitários ────────────────────────────────────── */
         .avoid-break { page-break-inside: avoid; }
-        .mono { font-family: "Courier New", Courier, monospace; }
+        .mono { font-family: 'Inter', sans-serif; font-weight: 700; }
         .label-track {
-            font-size: 9px;
-            font-weight: bold;
+            font-size: 8.5px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            font-family: "Courier New", Courier, monospace;
+            letter-spacing: 1.5px;
+            color: #94a3b8;
         }
 
         /* ── Cabeçalho (empresa + número do orçamento) ──────── */
-        .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #111827; padding-bottom: 12px; margin-bottom: 14px; }
-        .company-name-main { font-size: 13px; font-weight: 900; color: #111827; text-transform: uppercase; letter-spacing: -0.5px; }
-        .company-detail { font-size: 10px; color: #475569; margin-top: 3px; line-height: 1.5; }
-        .quote-badge { background: #111827; color: #ffffff; padding: 12px 16px; border-radius: 8px; min-width: 155px; display: inline-block; }
-        .quote-badge-label { font-size: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; color: #9ca3af; margin-bottom: 4px; font-family: 'Poppins', 'Inter', sans-serif;}
-        .quote-badge-num { font-size: 26px; font-weight: 900; font-family: "Courier New", Courier, monospace; line-height: 1; }
-        .quote-badge-date-label { font-size: 8px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-family: 'Poppins', 'Inter', sans-serif; border-top: 1px solid #374151; margin-top: 8px; padding-top: 6px; }
-        .quote-badge-date-val { font-size: 12px; font-weight: 900; color: #ffffff; }
+        .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #0f172a; padding-bottom: 14px; margin-bottom: 16px; }
+
+        /* Sub-tabela: logo ao lado dos dados da empresa (nunca embaixo) */
+        .company-block { border-collapse: collapse; }
+        .company-logo-cell { vertical-align: middle; padding-right: 16px; width: 1%; white-space: nowrap; }
+        .company-logo-cell img { max-height: 58px; max-width: 130px; display: block; }
+        .company-info-cell { vertical-align: middle; }
+
+        .company-name-main { font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: -0.3px; line-height: 1.15; }
+        .company-detail { font-size: 9.5px; color: #475569; margin-top: 3px; font-weight: 600; line-height: 1.5; }
+        .company-contact-row { margin-top: 5px; }
+        .company-contact-row img { width: 10px; height: 10px; vertical-align: middle; margin-right: 5px; position: relative; top: -1px; }
+        .company-contact-row span { font-size: 9.5px; color: #475569; font-weight: 600; vertical-align: middle; }
+        .company-contact-sep { display: inline-block; width: 14px; }
+
+        .quote-badge { background: #0f172a; color: #ffffff; padding: 13px 18px; border-radius: 16px; min-width: 160px; }
+        .quote-badge-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; margin-bottom: 3px; }
+        .quote-badge-num { font-size: 25px; font-weight: 800; font-family: 'Inter', sans-serif; line-height: 1.15; padding: 2px 0; }
+        .quote-badge-date-label { font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-top: 1px solid #334155; margin-top: 8px; padding-top: 7px; }
+        .quote-badge-date-val { font-size: 11.5px; font-weight: 800; color: #ffffff; }
 
         /* ── Seção do cliente ───────────────────────────────── */
-        .client-table { width: 100%; border-collapse: collapse; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 12px; }
-        .client-bar { width: 4px; background: #111827; padding: 0; }
-        .client-inner { padding: 10px 14px; }
-        .client-name-main { font-size: 18px; font-weight: 900; color: #111827; line-height: 1.1; margin-top: 3px; }
-        .client-details-row { margin-top: 8px; border-top: 1px solid #e2e8f0; padding-top: 6px; font-size: 10px; color: #475569; font-weight: 600; }
+        .client-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
+        .client-table { width: 100%; border-collapse: collapse; }
+        .client-bar-cell { width: 4px; background: #0f172a; padding: 0; }
+        .client-inner { padding: 12px 16px; }
+        .client-name-main { font-size: 17px; font-weight: 800; color: #0f172a; line-height: 1.15; margin-top: 3px; }
+        .client-details-row { margin-top: 9px; border-top: 1px solid #e2e8f0; padding-top: 7px; font-size: 9.5px; color: #475569; font-weight: 600; }
 
         /* ── Tabela de itens ────────────────────────────────── */
-        .items-table { width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; font-size: 11px; margin-bottom: 0; }
-        .items-table th { background: #111827; color: #ffffff; font-weight: bold; text-transform: uppercase; font-size: 9px; letter-spacing: 1px; padding: 8px 10px; }
-        .items-table th.col-desc  { text-align: left;   padding-left:  14px; width: 50%; }
+        .items-wrapper { border: 1px solid #e2e8f0; border-radius: 14px 14px 0 0; overflow: hidden; margin-bottom: 0; }
+        .items-table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+        .items-table th { background: #0f172a; color: #ffffff; font-weight: 700; text-transform: uppercase; font-size: 8.5px; letter-spacing: 1px; padding: 9px 10px; }
+        .items-table th.col-desc  { text-align: left;   padding-left:  16px; width: 50%; }
         .items-table th.col-unit  { text-align: center; width: 8%; }
         .items-table th.col-qty   { text-align: center; width: 9%; }
         .items-table th.col-price { text-align: right;  width: 16%; }
-        .items-table th.col-sub   { text-align: right;  padding-right: 14px; width: 17%; }
-        .items-table td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
-        .items-table td.col-desc-td { padding-left: 14px; }
-        .items-table td.col-sub-td  { padding-right: 14px; text-align: right; font-family: "Courier New", Courier, monospace; font-weight: bold; }
-        .item-category { font-weight: 900; font-size: 13px; color: #020617; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; }
-        .item-product  { font-size: 10px;  color: #475569; margin-top: 3px; white-space: pre-line; line-height: 1.5; }
+        .items-table th.col-sub   { text-align: right;  padding-right: 16px; width: 17%; }
+        .items-table td { padding: 9px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        .items-table td.col-desc-td { padding-left: 16px; }
+        .items-table td.col-sub-td  { padding-right: 16px; text-align: right; font-weight: 700; }
+        .item-category { font-weight: 800; font-size: 12px; color: #0f172a; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.25; }
+        .item-product  { font-size: 9.5px;  color: #475569; margin-top: 3px; white-space: pre-line; line-height: 1.55; font-weight: 500; }
 
-        /* ── Totais ─────────────────────────────────────────── */
-        .totals-table { width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-top: none; margin-bottom: 12px; }
-        .totals-table td { padding: 8px 14px; }
-        .totals-table .subtotal-label { font-size: 9px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 2px; font-family: 'Poppins', 'Inter', sans-serif; }
-        .totals-table .subtotal-val   { text-align: right; font-size: 15px; font-family: 'Poppins', 'Inter', sans-serif; color: #475569; }
-        .totals-table .discount-label { font-size: 9px; font-weight: bold; color: #e11d48; text-transform: uppercase; letter-spacing: 2px; font-family: 'Poppins', 'Inter', sans-serif; }
-        .totals-table .discount-val   { text-align: right; font-size: 15px; font-family: 'Poppins', 'Inter', sans-serif; color: #e11d48; }
-        .totals-table .total-bg  { background: #111827; }
-        .totals-table .total-label-cell { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; font-family: 'Poppins', 'Inter', sans-serif; color: #94a3b8; }
-        .totals-table .total-val-cell   { text-align: right; font-size: 22px; font-weight: 900; font-family: 'Poppins', 'Inter', sans-serif; color: #ffffff; }
+        /* ── Totais (encaixado logo abaixo da tabela de itens, mesmo "cartão") ── */
+        .totals-wrapper { border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 14px 14px; overflow: hidden; margin-bottom: 14px; }
+        .totals-table { width: 100%; border-collapse: collapse; }
+        .totals-table td { padding: 9px 16px; }
+        .totals-table .subtotal-label { font-size: 8.5px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; }
+        .totals-table .subtotal-val   { text-align: right; font-size: 14px; color: #475569; font-weight: 600; }
+        .totals-table .discount-label { font-size: 8.5px; font-weight: 700; color: #e11d48; text-transform: uppercase; letter-spacing: 1.5px; }
+        .totals-table .discount-val   { text-align: right; font-size: 14px; color: #be123c; font-weight: 700; }
+        .totals-table .total-bg  { background: #0f172a; }
+        .totals-table .total-label-cell { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #cbd5e1; }
+        .totals-table .total-val-cell   { text-align: right; font-size: 20px; font-weight: 800; color: #ffffff; }
         .totals-table .install-bg  { background: #1e293b; }
-        .totals-table .install-label   { font-size: 9px;  font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-family: 'Poppins', 'Inter', sans-serif; color: #94a3b8; }
-        .totals-table .install-val     { text-align: right; font-size: 16px; font-weight: 900; font-family: 'Poppins', 'Inter', sans-serif; color: #34d399; }
+        .totals-table .install-label   { font-size: 8.5px;  font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+        .totals-table .install-val     { text-align: right; font-size: 14.5px; font-weight: 800; color: #34d399; }
 
         /* ── Caixas de seção (Pagamento, Garantia, Obs) ─────── */
-        .section-box { width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; margin-bottom: 12px; }
-        .section-header-cell { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 6px 12px; }
-        .section-header-text { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: #475569; font-family: 'Poppins', 'Inter', sans-serif; }
-        .section-body-cell { background: #ffffff; padding: 12px; font-size: 11px; color: #334155; font-weight: 600; white-space: pre-line; line-height: 1.6; }
+        .section-box { border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
+        .section-box table { width: 100%; border-collapse: collapse; }
+        .section-header-cell { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 7px 14px; }
+        .section-header-cell img { width: 12px; height: 12px; vertical-align: middle; margin-right: 6px; position: relative; top: -1px; }
+        .section-header-text { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; vertical-align: middle; }
+        .section-body-cell { background: #ffffff; padding: 13px 14px; font-size: 10px; color: #334155; font-weight: 500; white-space: pre-line; line-height: 1.6; }
 
         /* ── Assinaturas ─────────────────────────────────────── */
-        .sig-section { border-top: 2px dashed #cbd5e1; padding-top: 24px; margin-top: 16px; page-break-inside: avoid; }
+        .sig-section { border-top: 2px dashed #cbd5e1; padding-top: 26px; margin-top: 18px; page-break-inside: avoid; }
         .sig-table { width: 100%; border-collapse: collapse; }
-        .sig-cell { width: 50%; text-align: center; padding: 0 28px; vertical-align: bottom; }
-        .sig-image-box { height: 64px; text-align: center; }
-        .sig-image-box img { max-height: 60px; max-width: 180px; }
-        .sig-line { border-top: 2px solid #111827; padding-top: 6px; margin-top: 6px; }
-        .sig-name  { font-size: 12px; font-weight: 900; color: #111827; }
-        .sig-label { font-size: 10px; color: #64748b; font-weight: bold; margin-top: 2px; }
+        .sig-cell { width: 50%; text-align: center; padding: 0 30px; vertical-align: bottom; }
+        .sig-image-box { height: 62px; text-align: center; }
+        .sig-image-box img { max-height: 58px; max-width: 175px; }
+        .sig-line { border-top: 2px solid #0f172a; padding-top: 7px; margin-top: 6px; }
+        .sig-name  { font-size: 11.5px; font-weight: 800; color: #0f172a; }
+        .sig-label { font-size: 9.5px; color: #64748b; font-weight: 600; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -144,18 +157,28 @@
 
 <table class="header-table">
     <tr>
-        <td style="vertical-align:top; padding-right:16px;">
-            <div th:if="${logoBase64 != null}" style="margin-bottom:10px;">
-                <img th:src="${logoBase64}" style="max-height:72px; max-width:150px;" alt="Logo"/>
-            </div>
-            <div class="company-name-main" th:text="${companyName}">EMPRESA</div>
-            <div class="company-detail" th:text="${'CNPJ/CPF: ' + companyDoc}">CNPJ/CPF: --</div>
-            <div class="company-detail" th:if="${!companyAddress.isEmpty()}" th:text="${companyAddress}"></div>
-            <div class="company-detail" style="margin-top:4px;"
-                 th:text="${companyEmail + (!companyEmail.isEmpty() && !companyPhone.isEmpty() ? ' | ' : '') + companyPhone}"></div>
+        <td style="vertical-align:middle;">
+            <table class="company-block">
+                <tr>
+                    <td class="company-logo-cell" th:if="${logoBase64 != null}">
+                        <img th:src="${logoBase64}" alt="Logo"/>
+                    </td>
+                    <td class="company-info-cell">
+                        <div class="company-name-main" th:text="${companyName}">EMPRESA</div>
+                        <div class="company-detail" th:text="${'CNPJ/CPF: ' + companyDoc}">CNPJ/CPF: --</div>
+                        <div class="company-detail" th:if="${!companyAddress.isEmpty()}" th:text="${companyAddress}"></div>
+                        <div class="company-contact-row" th:if="${!companyEmail.isEmpty()}">
+                            <img src="data:image/png;base64,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" alt=""/><span th:text="${companyEmail}"></span>
+                        </div>
+                        <div class="company-contact-row" th:if="${!companyPhone.isEmpty()}">
+                            <img src="data:image/png;base64,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" alt=""/><span th:text="${companyPhone}"></span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </td>
 
-        <td style="vertical-align:top; text-align:right; white-space:nowrap;">
+        <td style="vertical-align:top; text-align:right; white-space:nowrap; width:1%;">
             <div class="quote-badge">
                 <div class="quote-badge-label">ORÇAMENTO</div>
                 <div class="quote-badge-num" th:text="${'N° ' + numDisplay}">N° 0000</div>
@@ -170,122 +193,133 @@
     </tr>
 </table>
 
-<table class="client-table avoid-break">
-    <tr>
-        <td class="client-bar"></td>
-        <td class="client-inner">
-            <div class="label-track" style="color:#9ca3af;">Orçamento elaborado para</div>
-            <div class="client-name-main" th:text="${clientName}">Cliente</div>
-
-            <div class="client-details-row" th:if="${hasClientDetails}">
-                <table style="width:100%; border-collapse:collapse; border-top:1px solid #e2e8f0; margin-top:8px; padding-top:6px;">
-                    <tr>
-                        <td th:if="${!clientDoc.isEmpty()}"   style="padding:2px 16px 2px 0; font-size:10px; color:#475569;">
-                            <strong>CPF/CNPJ:</strong>
-                            <span class="mono" th:text="${clientDoc}"></span>
-                        </td>
-                        <td th:if="${!clientPhone.isEmpty()}" style="padding:2px 16px 2px 0; font-size:10px; color:#475569;">
-                            <strong>Telefone:</strong>
-                            <span th:text="${clientPhone}"></span>
-                        </td>
-                        <td th:if="${!clientEmail.isEmpty()}" style="padding:2px 0; font-size:10px; color:#475569;">
-                            <strong>E-mail:</strong>
-                            <span th:text="${clientEmail}"></span>
-                        </td>
-                    </tr>
-                    <tr th:if="${!clientAddress.isEmpty()}">
-                        <td colspan="3" style="padding:2px 0; font-size:10px; color:#475569;">
-                            <strong>Endereço:</strong>
-                            <span th:text="${clientAddress}"></span>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </td>
-    </tr>
-</table>
-
-<table class="items-table">
-    <thead>
+<div class="client-box avoid-break">
+    <table class="client-table">
         <tr>
-            <th class="col-desc">Descrição do Serviço / Produto</th>
-            <th class="col-unit">Unid.</th>
-            <th class="col-qty">Qtd.</th>
-            <th class="col-price">V. Unit.</th>
-            <th class="col-sub">Subtotal</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr th:each="row : ${itemRows}" class="avoid-break">
-            <td class="col-desc-td">
-                <div class="item-category" th:text="${row.category}">Categoria</div>
-                <div class="item-product"  th:if="${!row.product.isEmpty()}" th:text="${row.product}"></div>
+            <td class="client-bar-cell"></td>
+            <td class="client-inner">
+                <div class="label-track">Orçamento elaborado para</div>
+                <div class="client-name-main" th:text="${clientName}">Cliente</div>
+
+                <div class="client-details-row" th:if="${hasClientDetails}">
+                    <table style="width:100%; border-collapse:collapse;">
+                        <tr>
+                            <td th:if="${!clientDoc.isEmpty()}"   style="padding:2px 16px 2px 0; font-size:9.5px; color:#475569;">
+                                <strong>CPF/CNPJ:</strong>
+                                <span class="mono" th:text="${clientDoc}"></span>
+                            </td>
+                            <td th:if="${!clientPhone.isEmpty()}" style="padding:2px 16px 2px 0; font-size:9.5px; color:#475569;">
+                                <strong>Telefone:</strong>
+                                <span th:text="${clientPhone}"></span>
+                            </td>
+                            <td th:if="${!clientEmail.isEmpty()}" style="padding:2px 0; font-size:9.5px; color:#475569;">
+                                <strong>E-mail:</strong>
+                                <span th:text="${clientEmail}"></span>
+                            </td>
+                        </tr>
+                        <tr th:if="${!clientAddress.isEmpty()}">
+                            <td colspan="3" style="padding:2px 0; font-size:9.5px; color:#475569;">
+                                <strong>Endereço:</strong>
+                                <span th:text="${clientAddress}"></span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </td>
-            <td style="text-align:center; color:#64748b; font-size:10px;" class="mono">un</td>
-            <td style="text-align:center; font-weight:bold;" th:text="${row.quantity}">1</td>
-            <td style="text-align:right; color:#64748b;" class="mono" th:text="${row.unitPrice}">R$ 0,00</td>
-            <td class="col-sub-td" th:text="${row.subtotal}">R$ 0,00</td>
         </tr>
-    </tbody>
-</table>
+    </table>
+</div>
+
+<div class="items-wrapper">
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th class="col-desc">Descrição do Serviço / Produto</th>
+                <th class="col-unit">Unid.</th>
+                <th class="col-qty">Qtd.</th>
+                <th class="col-price">V. Unit.</th>
+                <th class="col-sub">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="row : ${itemRows}" class="avoid-break">
+                <td class="col-desc-td">
+                    <div class="item-category" th:text="${row.category}">Categoria</div>
+                    <div class="item-product"  th:if="${!row.product.isEmpty()}" th:text="${row.product}"></div>
+                </td>
+                <td style="text-align:center; color:#64748b; font-size:9.5px; font-weight:600;">un</td>
+                <td style="text-align:center; font-weight:700;" th:text="${row.quantity}">1</td>
+                <td style="text-align:right; color:#64748b; font-weight:600;" th:text="${row.unitPrice}">R$ 0,00</td>
+                <td class="col-sub-td" th:text="${row.subtotal}">R$ 0,00</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="totals-wrapper avoid-break">
+    <table class="totals-table">
+        <!-- Subtotal (só aparece quando há desconto) -->
+        <tr th:if="${hasDiscount}" style="background:#f8fafc;">
+            <td class="subtotal-label">Subtotal:</td>
+            <td class="subtotal-val" th:text="${gross}">R$ 0,00</td>
+        </tr>
+        <!-- Desconto -->
+        <tr th:if="${hasDiscount}" style="background:#fff1f2;">
+            <td class="discount-label">Desconto:</td>
+            <td class="discount-val" th:text="${discountPct + '%'}">0%</td>
+        </tr>
+        <!-- Total -->
+        <tr class="total-bg">
+            <td class="total-label-cell">Valor Total do Orçamento</td>
+            <td class="total-val-cell" th:text="${net}">R$ 0,00</td>
+        </tr>
+        <!-- Parcelamento -->
+        <tr th:if="${showInstallments}" class="install-bg">
+            <td class="install-label">Parcelado em:</td>
+            <td class="install-val" th:text="${installmentsText}">10x</td>
+        </tr>
+    </table>
+</div>
 
 
-<table class="totals-table avoid-break">
-    <!-- Subtotal (só aparece quando há desconto) -->
-    <tr th:if="${hasDiscount}" style="background:#f8fafc;">
-        <td class="subtotal-label">Subtotal:</td>
-        <td class="subtotal-val" th:text="${gross}">R$ 0,00</td>
-    </tr>
-    <!-- Desconto -->
-    <tr th:if="${hasDiscount}" style="background:#fff1f2;">
-        <td class="discount-label">Desconto:</td>
-        <td class="discount-val" th:text="${discountPct + '%'}">0%</td>
-    </tr>
-    <!-- Total -->
-    <tr class="total-bg">
-        <td class="total-label-cell">Valor Total do Orçamento</td>
-        <td class="total-val-cell" th:text="${net}">R$ 0,00</td>
-    </tr>
-    <!-- Parcelamento -->
-    <tr th:if="${showInstallments}" class="install-bg">
-        <td class="install-label">Parcelado em:</td>
-        <td class="install-val" th:text="${installmentsText}">10x</td>
-    </tr>
-</table>
+<div class="section-box avoid-break">
+    <table>
+        <tr>
+            <td class="section-header-cell">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7bNHAAAABmJLR0QA/wD/AP+gvaeTAAACyUlEQVR4nO3bPWhTURQH8P95LzRCEVEQERV0qQhVcBSkS0NTi4hLUhwKBYs0rZNScBLFqdBBKDZYFYWCokmlk/bDQtBBcBJtqaCDooIuRWsdWvPecdDAey83noLJ6ws9v+1+hZM/N/eGRwIopZRSSimllAobSROS6UwCLqdB1AJgN4DG2pdVU98BfCDmWTDdmRzPvvrX5IoBdXT2NzmucwOglqqXGB0MptsrxYbzhYmr30wTjAG1pftbiN0JAFtrWl50zFtOrP3xw+FPwYGygNpTmf0MPMfGCadkbgV0pJAbWfZ2WsFZDB7FxgsHAJobCEPBTt8OSqYzCTBmwqspchx2nebp8dE3pY5YYEJnhYUrzBhYLcbHKh1m9aL1VM8O24ldJKY+w7BNZHcDuFDq8AfEMN5YzBiYzmeHq1jnupm9d/MrgP5kOtMARk/ZBEISnoCCZ9BO04uuFuNj1SwyCqxi7HKFoX2+eYHBzaYV9f6xMjFd6X9t8TbKbjHlpwEJNCCBBiTQgATBL4pGyVSGa11IVOkOEmhAAg1IoAEJNCDBmm6xqVxWfLhfj9ZyO+sOEmhAAg1IoAEJNCCBBiTQgAQakEADEmhAAg1IoAEJNCCBBiTQgAQakEADEgQDWjJNOp7q3RVCLaFKpk5vqzD0w9sIBvTetOIX0aX/Lylq4l3mfvrsbfmfSRNPgulQ2RpGT1u6dzXG1pVHuZEv1SsyfH92TrwL4EHTOIGf+tseic6+A7bLrwHYNawx0oitxGT+2myp7fuIPbk/skDArfDLioyCNxzAcIu5mxrPAZgLraToWHRd90ywsyyg6bGhn5YTOwZgPpSyomERjJMz49ffBgeMZ827hRdLe5qO3rVtZzsBh7GGfwXVsQJAJ6by2ZemQfGNd6TOHnTgdANoBbAXgV+B1qFlAB8JeAa2HgTPHKWUUkoppZRS6+83DSavm2t7op8AAAAASUVORK5CYII=" alt=""/><span class="section-header-text">Formas de Pagamento Aceitas</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="section-body-cell" th:text="${paymentMethod}">--</td>
+        </tr>
+    </table>
+</div>
 
+<div class="section-box avoid-break">
+    <table>
+        <tr>
+            <td class="section-header-cell">
+                <img src="data:image/png;base64,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" alt=""/><span class="section-header-text">Termos de Garantia</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="section-body-cell" style="min-height:50px;" th:text="${warranty.isEmpty() ? ' ' : warranty}"></td>
+        </tr>
+    </table>
+</div>
 
-<table class="section-box avoid-break">
-    <tr>
-        <td class="section-header-cell">
-            <span class="section-header-text">Formas de Pagamento Aceitas</span>
-        </td>
-    </tr>
-    <tr>
-        <td class="section-body-cell" th:text="${paymentMethod}">--</td>
-    </tr>
-</table>
-
-<table class="section-box avoid-break">
-    <tr>
-        <td class="section-header-cell">
-            <span class="section-header-text">Termos de Garantia</span>
-        </td>
-    </tr>
-    <tr>
-        <td class="section-body-cell" style="min-height:50px;" th:text="${warranty.isEmpty() ? ' ' : warranty}"></td>
-    </tr>
-</table>
-
-<table class="section-box avoid-break">
-    <tr>
-        <td class="section-header-cell">
-            <span class="section-header-text">Condições &amp; Observações</span>
-        </td>
-    </tr>
-    <tr>
-        <td class="section-body-cell" style="min-height:50px;" th:text="${observations.isEmpty() ? ' ' : observations}"></td>
-    </tr>
-</table>
+<div class="section-box avoid-break">
+    <table>
+        <tr>
+            <td class="section-header-cell">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7bNHAAAABmJLR0QA/wD/AP+gvaeTAAAEjklEQVR4nO2cXUxcRRTHf+eCLGoxNu2Ln/HV9NEoUdLEVMPSqGCEpUq1WmraXetDS9LYRx5tookRs1QTKym1SpcmLX0oUGNJKkKTvlZ9LqlJExsNNA0L7B4fWPzo3nXmLncqJPNLeNhzZ/4z/HfuuXMPGcDj8ThEXOsnOzJ7RGhVeAp4OCbdGeCSqp4bHz76bUyaoTgzKPna3oeoCQZBXnA1RomhoK527/mv+2ZdiNe6EAVEamoGFFybA7BDF5buA1pdiAcuRJMdmT0KzS60w1B4JdmZbneh7cQghDYnuv81pPK6C103Bi0n5LuKIs+50K02SUtL577tqsFOoAl4BIt8NpbrX/VDobe3N5i6eqNg0bQAzKjyA3ByfLh/FNCo40WecLJ9/xaC4lfA01H7xmEQQDKVifyLApcLgez+bij7c5ROkW6x5lR6G0FxmirMWQM01hT1cnMqvS1KJ2uDku37twhyFtgQeWprhwZBzry4470nbTvYGiSl22o9m7NCQ02RL7FML1YGtXTu204Mt1Vvb6+rp2ZE9NmWzrTVPs1qJ116WoUxr2jPAsHgRC57ayWYTKVnQB69s/HU1RuFZCpjM2RkFK6P5/r/GrO1tbshn6h7G+QjIFHeXrqAMZOu7atG6B5D0Z7x3NH+O+MC0wodltqxIOiVf34eGTk2B3zW3JERET4t66A02ejaLvmy1QBQn184ERYvEgxZ6saGEJwLiy8sJQYrdHnMRtfWoNCVVvqWyhjPZYeB05baq0bg+9Fc9ljYtYkzn/xRoVudjbazpJnI53er4LRWA8vmaKHwJlXskm1wVe5YWV1vNHekzwZB8LKqbgUej0n+V+CKICOllePEHHBo0Aqlip/zleSKNbIvWbt4gwx4gwx4gwx4gwx4gwx4gwx4gww42SimUqm6Od30oYq8AwQgg/n7bx+aGBiYt2i/MeJwv4vqQIPcPJzL5RZWOfUynBg0K5uPAAf+juj7iVv31gKhxaDy9pHYqCIHZ2WzAAer1KiIm1tM2VUWE96iUpkzrH0cY8aAz0EGXP3p+XhZTBmk0lt3WPs4xowBJznoAf3tgzndpP9K0htuH7JsX12S5ubhVUy5Ik4MKj1Neko/sbe/m/gcZMAbZMAbZMAbZMAbZMAbZMAbZMAbZMCXOwz4cocBX+4w4HOQAV/uMODLHQZ8ucOAz0EGvEEGvEEGvEEGvEEGvEEGvEEGvEEGbA1aDAu2tnY3xDgXJ7zUlam0M7cqjdgadD0smK9POHmDjpOlRak0x2s2/W1fNX4EniiLKh8nU2kJ6u457uo/H1TL868eeLC+bn6Xqh4Juy7KpI2O5XkxTojQFXIpAdJXXFjqc3UOrHryqFY+VFhATtqo2J5ClmQqMwU0WrZf0whMjub6t2JxxsM2B2lAsRsIPf60zpgrFgvvYnkAxvoxfz73+U+ItLG+TZpDpG389Be/2HaItA8aO5W9WAikUWE6+tz+XwQmtVh4ZuxU9mLEftWN19KZblaVnQJNunxk0+oE311kEbgGeqmowTcXhrMXcHiuzOPxVMWfg92VA80y8s8AAAAASUVORK5CYII=" alt=""/><span class="section-header-text">Condições &amp; Observações</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="section-body-cell" style="min-height:50px;" th:text="${observations.isEmpty() ? ' ' : observations}"></td>
+        </tr>
+    </table>
+</div>
 
 <div class="sig-section">
     <table class="sig-table">
@@ -294,7 +328,7 @@
             <td class="sig-cell">
                 <div class="sig-image-box">
                     <img th:if="${sigCompanyBase64 != null}" th:src="${sigCompanyBase64}"
-                         style="max-height:60px; max-width:180px;" alt="Assinatura Empresa"/>
+                         style="max-height:58px; max-width:175px;" alt="Assinatura Empresa"/>
                 </div>
                 <div class="sig-line">
                     <div class="sig-name"  th:text="${companyName.isEmpty() ? 'Empresa' : companyName}">Empresa</div>
@@ -305,7 +339,7 @@
             <td class="sig-cell">
                 <div class="sig-image-box">
                     <img th:if="${sigClientBase64 != null}" th:src="${sigClientBase64}"
-                         style="max-height:60px; max-width:180px;" alt="Assinatura Cliente"/>
+                         style="max-height:58px; max-width:175px;" alt="Assinatura Cliente"/>
                 </div>
                 <div class="sig-line">
                     <div class="sig-name"  th:text="${clientName}">Cliente</div>

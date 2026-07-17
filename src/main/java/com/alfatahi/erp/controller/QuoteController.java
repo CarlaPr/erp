@@ -167,6 +167,7 @@ public class QuoteController {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
+            registerFonts(builder);
             builder.withHtmlContent(html, null);
             builder.toStream(out);
             builder.run();
@@ -190,6 +191,21 @@ public class QuoteController {
     }
 
     // ── Helpers ──────────────────────────────────────────────────
+
+    /**
+     * Registra a fonte Inter (a mesma usada na tela de Orçamentos) no motor de PDF.
+     * O openhtmltopdf não carrega fontes via @font-face com data-URI de forma confiável,
+     * por isso os arquivos .ttf são embutidos no classpath e registrados diretamente aqui.
+     */
+    private void registerFonts(PdfRendererBuilder builder) {
+        int[] weights = {400, 500, 600, 700, 800, 900};
+        for (int weight : weights) {
+            String path = "/fonts/Inter-" + weight + ".ttf";
+            builder.useFont(() -> getClass().getResourceAsStream(path), "Inter", weight,
+                    PdfRendererBuilder.FontStyle.NORMAL, true);
+        }
+    }
+
     private BigDecimal nvl(BigDecimal v) { return v != null ? v : BigDecimal.ZERO; }
     private BigDecimal nvl(BigDecimal v, BigDecimal def) { return v != null ? v : def; }
     private String nvlStr(String v, String def) { return (v != null && !v.isBlank()) ? v : (def != null ? def : ""); }

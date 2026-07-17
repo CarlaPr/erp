@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${'Relatório ' + os.number}">Relatório de O.S.</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        h1, h2, h3, .company-name-main { font-family: 'Poppins', sans-serif !important; }
+
+        @page {
+            size: A4 portrait;
+            margin: 12mm 12mm 20mm 12mm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 8px; color: #6b7280; font-weight: bold;
+            }
+        }
+
+        body { font-family: 'Poppins', 'Inter', sans-serif; font-size: 11px; color: #1e293b; line-height: 1.4; }
+
+        .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #111827; padding-bottom: 12px; margin-bottom: 14px; }
+        .company-name-main { font-size: 13px; font-weight: 900; color: #111827; text-transform: uppercase; }
+        .company-detail { font-size: 10px; color: #475569; margin-top: 3px; }
+        .os-badge { background: #111827; color: #fff; padding: 12px 16px; border-radius: 8px; min-width: 150px; text-align: right; }
+        .os-badge-label { font-size: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; color: #9ca3af; }
+        .os-badge-num { font-size: 24px; font-weight: 900; font-family: 'Courier New', monospace; }
+        .os-badge-status { font-size: 10px; font-weight: 700; margin-top: 6px; padding: 3px 8px; border-radius: 20px; display: inline-block; background: #0ea5e9; color: #fff; }
+
+        .client-table { width: 100%; border-collapse: collapse; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 14px; }
+        .client-bar { width: 4px; background: #111827; }
+        .client-inner { padding: 10px 14px; }
+        .client-name-main { font-size: 15px; font-weight: 900; color: #111827; }
+        .client-details-row { margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px; font-size: 9.5px; color: #475569; font-weight: 600; }
+
+        .kpi-row { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin-bottom: 14px; }
+        .kpi-card { border-radius: 8px; padding: 10px 12px; text-align: left; width: 25%; }
+        .kpi-revenue { background: #ecfdf5; border: 1px solid #a7f3d0; }
+        .kpi-cost { background: #fef2f2; border: 1px solid #fecaca; }
+        .kpi-profit { background: #eff6ff; border: 1px solid #bfdbfe; }
+        .kpi-margin { background: #fefce8; border: 1px solid #fde68a; }
+        .kpi-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; color: #64748b; }
+        .kpi-value { font-size: 15px; font-weight: 900; color: #111827; margin-top: 3px; }
+
+        table.items-table { width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; font-size: 10px; }
+        .items-table th { background: #111827; color: #fff; font-weight: bold; text-transform: uppercase; font-size: 8.5px; letter-spacing: 0.5px; padding: 7px 8px; }
+        .items-table td { padding: 6px 8px; border-bottom: 1px solid #eef2f7; }
+        .items-table tbody tr:nth-child(even) { background: #f8fafc; }
+        .items-table tfoot td { border-top: 2px solid #111827; font-weight: 900; background: #f1f5f9; padding-top: 8px; }
+        .num { text-align: right; font-family: 'Courier New', monospace; }
+        .profit-pos { color: #16a34a; font-weight: 900; }
+        .profit-neg { color: #dc2626; font-weight: 900; }
+
+        .notes-box { margin-top: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; font-size: 9.5px; color: #475569; }
+        .notes-title { font-weight: bold; color: #111827; font-size: 9.5px; text-transform: uppercase; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<table class="header-table">
+    <tr>
+        <td style="width: 62%;">
+            <div class="company-name-main" th:text="${companyName}">Empresa</div>
+            <div class="company-detail" th:text="${companyDoc}"></div>
+            <div class="company-detail" th:text="${companyAddress}"></div>
+            <div class="company-detail"><span th:text="${companyEmail}"></span> <span th:if="${companyPhone}"> · </span><span th:text="${companyPhone}"></span></div>
+        </td>
+        <td style="width: 38%;">
+            <div class="os-badge">
+                <div class="os-badge-label">Relatório de Ordem de Serviço</div>
+                <div class="os-badge-num" th:text="${os.number}">OS-0000</div>
+                <div class="os-badge-status" th:text="${os.statusLabel}">Status</div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<table class="client-table">
+    <tr>
+        <td class="client-bar"></td>
+        <td class="client-inner">
+            <div class="client-name-main" th:text="${os.clientName}">Cliente</div>
+            <div class="client-details-row">
+                <span th:if="${os.clientDocument}" th:text="'Doc: ' + ${os.clientDocument}"></span>
+                <span th:if="${os.clientPhone}" th:text="'  ·  Tel: ' + ${os.clientPhone}"></span>
+                <span th:if="${os.clientCity}" th:text="'  ·  ' + ${os.clientCity}"></span>
+                <br/>
+                <span th:text="'Título: ' + ${os.title}"></span>
+                <span th:if="${os.categoryName}" th:text="'  ·  Categoria: ' + ${os.categoryName}"></span> <br/>
+                <span th:text="'Criada em: ' + ${createdAtFmt}"></span>
+                <span th:if="${installDateFmt}" th:text="'  ·  Instalação: ' + ${installDateFmt}"></span>
+                <span th:if="${areaFmt}" th:text="'  ·  Área: ' + ${areaFmt} + ' m²'"></span>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<table class="kpi-row">
+    <tr>
+        <td class="kpi-card kpi-revenue">
+            <div class="kpi-label">Receita (Venda)</div>
+            <div class="kpi-value" th:text="${revenueFmt}">R$ 0,00</div>
+        </td>
+        <td class="kpi-card kpi-cost">
+            <div class="kpi-label">Custo (Materiais/Produção)</div>
+            <div class="kpi-value" th:text="${costFmt}">R$ 0,00</div>
+        </td>
+        <td class="kpi-card kpi-profit">
+            <div class="kpi-label">Lucro</div>
+            <div class="kpi-value" th:text="${profitFmt}">R$ 0,00</div>
+        </td>
+        <td class="kpi-card kpi-margin">
+            <div class="kpi-label">Margem</div>
+            <div class="kpi-value" th:text="${marginFmt}">0%</div>
+        </td>
+    </tr>
+</table>
+
+<table class="items-table avoid-break">
+    <thead>
+    <tr>
+        <th style="text-align:left; width: 30%;">Item Vendido / Material</th>
+        <th class="num" style="width: 9%;">Qtd.</th>
+        <th class="num" style="width: 14%;">Custo Unit.</th>
+        <th class="num" style="width: 14%;">Preço Unit.</th>
+        <th class="num" style="width: 11%;">Custo Total</th>
+        <th class="num" style="width: 11%;">Receita Total</th>
+        <th class="num" style="width: 11%;">Lucro</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="item : ${itemRows}">
+        <td th:text="${item.description}"></td>
+        <td class="num" th:text="${item.quantity}"></td>
+        <td class="num" th:text="${item.unitCost}"></td>
+        <td class="num" th:text="${item.unitPrice}"></td>
+        <td class="num" th:text="${item.totalCost}"></td>
+        <td class="num" th:text="${item.totalPrice}"></td>
+        <td class="num" th:text="${item.profit}" th:classappend="${item.profitPositive} ? 'profit-pos' : 'profit-neg'"></td>
+    </tr>
+    <tr th:if="${itemRows == null or itemRows.isEmpty()}">
+        <td colspan="7" style="text-align:center; padding: 14px; color:#94a3b8;">Nenhum item cadastrado nesta O.S.</td>
+    </tr>
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan="4">TOTAL</td>
+        <td class="num" th:text="${costFmt}"></td>
+        <td class="num" th:text="${revenueFmt}"></td>
+        <td class="num" th:text="${profitFmt}" th:classappend="${profitPositive} ? 'profit-pos' : 'profit-neg'"></td>
+    </tr>
+    </tfoot>
+</table>
+
+<div class="notes-box" th:if="${notes}">
+    <div class="notes-title">Observações</div>
+    <div th:utext="${notesHtml}"></div>
+</div>
+
+</body>
+</html>

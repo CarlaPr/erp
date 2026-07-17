@@ -7,7 +7,9 @@
 <div th:replace="~{fragments/layout :: topbar}"></div>
 
 <main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
+
+    <!-- Cabeçalho -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Clientes</h2>
             <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Gerenciamento da carteira de clientes do sistema.</p>
@@ -17,6 +19,27 @@
         </button>
     </header>
 
+    <!-- Barra de Pesquisa (Refatorada para Tailwind) -->
+    <div class="mb-6 max-w-3xl">
+        <form th:action="@{/clients}" method="get" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-grow">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+                </div>
+                <input type="text" name="search" th:value="${search}" class="block w-full pl-11 pr-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl leading-5 bg-white dark:bg-[#131C2F] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-cyan-500 dark:focus:border-cyan-500 transition-colors shadow-sm" placeholder="Pesquisar por nome, e-mail ou documento...">
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600 px-6 py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                    Pesquisar
+                </button>
+                <a th:href="@{/clients}" th:if="${search != null and search != ''}" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-600 dark:text-slate-300 px-5 py-3 rounded-xl font-medium transition-colors flex items-center justify-center shadow-sm whitespace-nowrap">
+                    Limpar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabela de Clientes -->
     <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[720px]">
             <thead>
@@ -54,15 +77,24 @@
                     </form>
                 </td>
             </tr>
+
+            <!-- Empty State Melhorado -->
             <tr th:if="${#lists.isEmpty(clients)}">
-                <td colspan="6" class="p-10 text-center text-slate-500 font-medium text-base">
-                    Nenhum cliente cadastrado ainda.
+                <td colspan="6" class="p-12 text-center">
+                    <div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400">
+                        <div class="bg-slate-100 dark:bg-slate-800 rounded-full p-4 mb-4">
+                            <i data-lucide="inbox" class="w-8 h-8 text-slate-400 dark:text-slate-500"></i>
+                        </div>
+                        <p class="text-lg font-bold text-slate-700 dark:text-slate-300">Nenhum cliente encontrado</p>
+                        <p class="text-sm mt-1 max-w-sm mx-auto">Tente ajustar seus termos de pesquisa ou adicione um novo cliente ao sistema.</p>
+                    </div>
                 </td>
             </tr>
             </tbody>
         </table>
     </div>
 
+    <!-- Modal de Cadastro/Edição -->
     <div id="clientModal" th:class="${isEditing} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
@@ -85,7 +117,7 @@
                                 th:field="*{name}"
                                 required
                                 maxlength="150"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-cyan-500 transition-colors"
                         />
                     </div>
 
@@ -96,13 +128,9 @@
                         <select
                                 id="type"
                                 th:field="*{type}"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5">
-                            <option value="individual">
-                                Pessoa Física (CPF)
-                            </option>
-                            <option value="company">
-                                Pessoa Jurídica (CNPJ)
-                            </option>
+                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors">
+                            <option value="individual">Pessoa Física (CPF)</option>
+                            <option value="company">Pessoa Jurídica (CNPJ)</option>
                         </select>
                     </div>
 
@@ -116,11 +144,9 @@
                                 th:field="*{document}"
                                 maxlength="18"
                                 autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
                         />
-                        <p id="documentError"
-                           class="hidden text-red-500 text-sm mt-1">
-                        </p>
+                        <p id="documentError" class="hidden text-red-500 text-sm mt-1"></p>
                     </div>
 
                     <div>
@@ -133,12 +159,9 @@
                                 th:field="*{email}"
                                 maxlength="120"
                                 autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
                         />
-                        <p id="emailError"
-                           class="hidden text-red-500 text-sm mt-1">
-                        </p>
-
+                        <p id="emailError" class="hidden text-red-500 text-sm mt-1"></p>
                     </div>
 
                     <div>
@@ -152,11 +175,9 @@
                                 maxlength="15"
                                 autocomplete="off"
                                 placeholder="(11) 99999-9999"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
                         />
-                        <p id="phoneError"
-                           class="hidden text-red-500 text-sm mt-1">
-                        </p>
+                        <p id="phoneError" class="hidden text-red-500 text-sm mt-1"></p>
                     </div>
 
                     <div>
@@ -169,7 +190,7 @@
                                 maxlength="9"
                                 placeholder="00000-000"
                                 autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
                         />
                         <p id="cepError" class="hidden text-red-500 text-sm mt-1"></p>
                     </div>
@@ -184,7 +205,7 @@
                                 th:field="*{city}"
                                 maxlength="100"
                                 autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
                         />
                         <p id="cityError" class="hidden text-red-500 text-sm mt-1"></p>
                     </div>
@@ -199,17 +220,17 @@
                                 th:field="*{address}"
                                 maxlength="250"
                                 placeholder="Será preenchido automaticamente ao digitar o CEP..."
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5"
+                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
                         />
                         <p id="addressError" class="hidden text-red-500 text-sm mt-1"></p>
                     </div>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-8">
-                    <a href="/clients" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700">
+                    <a href="/clients" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium">
                         Cancelar
                     </a>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white">
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 text-white dark:text-slate-900 font-bold transition-colors">
                         Salvar Cliente
                     </button>
                 </div>
@@ -278,24 +299,18 @@
     }
 
     documentInput?.addEventListener("input", () => {
-
         if (typeInput.value === "company") {
-            documentInput.value =
-                formatCNPJ(documentInput.value);
+            documentInput.value = formatCNPJ(documentInput.value);
         } else {
-            documentInput.value =
-                formatCPF(documentInput.value);
+            documentInput.value = formatCPF(documentInput.value);
         }
-
     });
 
     phoneInput?.addEventListener("input", () => {
-        phoneInput.value =
-            formatPhone(phoneInput.value);
+        phoneInput.value = formatPhone(phoneInput.value);
     });
 
     function showError(id, msg) {
-
         const el = document.getElementById(id);
 
         if (!msg) {
@@ -308,26 +323,16 @@
     }
 
     function validateForm(e) {
-
         let valid = true;
-        const doc =
-            documentInput.value.trim();
-        const phone =
-            phoneInput.value.trim();
-        const email =
-            document.getElementById("email").value.trim();
-        const address =
-            document.getElementById("address").value.trim();
-        const city =
-            document.getElementById("city").value.trim();
+        const doc = documentInput.value.trim();
+        const phone = phoneInput.value.trim();
+        const email = document.getElementById("email").value.trim();
+        const address = document.getElementById("address").value.trim();
+        const city = document.getElementById("city").value.trim();
 
         if (doc !== "") {
-            const numbers =
-                onlyNumbers(doc);
-            const expected =
-                typeInput.value === "company"
-                    ? 14
-                    : 11;
+            const numbers = onlyNumbers(doc);
+            const expected = typeInput.value === "company" ? 14 : 11;
             if (numbers.length !== expected) {
                 showError(
                     "documentError",
@@ -342,16 +347,9 @@
         }
 
         if (phone !== "") {
-            const numbers =
-                onlyNumbers(phone);
-            if (
-                numbers.length < 10 ||
-                numbers.length > 11
-            ) {
-                showError(
-                    "phoneError",
-                    "Telefone inválido"
-                );
+            const numbers = onlyNumbers(phone);
+            if (numbers.length < 10 || numbers.length > 11) {
+                showError("phoneError", "Telefone inválido");
                 valid = false;
             } else {
                 showError("phoneError");
@@ -359,13 +357,9 @@
         }
 
         if (email !== "") {
-            const regex =
-                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!regex.test(email)) {
-                showError(
-                    "emailError",
-                    "E-mail inválido"
-                );
+                showError("emailError", "E-mail inválido");
                 valid = false;
             } else {
                 showError("emailError");
@@ -374,10 +368,7 @@
 
         if (address !== "") {
             if (address.length < 5) {
-                showError(
-                    "addressError",
-                    "Endereço muito curto"
-                );
+                showError("addressError", "Endereço muito curto");
                 valid = false;
             } else {
                 showError("addressError");
@@ -386,12 +377,8 @@
 
         if (city !== "") {
             if (!/^[A-Za-zÀ-ÿ\s]+$/.test(city)) {
-                showError(
-                    "cityError",
-                    "Cidade não pode conter números"
-                );
+                showError("cityError", "Cidade não pode conter números");
                 valid = false;
-
             } else {
                 showError("cityError");
             }
@@ -441,12 +428,8 @@
             showError('cepError', 'Falha ao buscar CEP. Verifique a internet.');
         }
     }
-    document
-        .querySelector("form")
-        .addEventListener(
-            "submit",
-            validateForm
-        );
+
+    document.querySelector("form[action*='/clients/save']").addEventListener("submit", validateForm);
 
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>

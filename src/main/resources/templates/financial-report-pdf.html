@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${title}">Relatório</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        h1, h2, h3, .company-name-main { font-family: 'Poppins', sans-serif !important; }
+
+        @page {
+            size: A4 landscape;
+            margin: 12mm 10mm 20mm 10mm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 8px;
+                color: #6b7280;
+                font-weight: bold;
+            }
+            @bottom-left {
+                content: element(page-footer);
+            }
+        }
+
+        #page-footer {
+            position: running(page-footer);
+            font-size: 8px;
+            color: #6b7280;
+        }
+
+        body { font-family: 'Poppins', 'Inter', sans-serif; font-size: 10.5px; color: #1e293b; }
+
+        .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #111827; padding-bottom: 10px; margin-bottom: 12px; }
+        .company-name-main { font-size: 13px; font-weight: 900; color: #111827; text-transform: uppercase; }
+        .company-detail { font-size: 9px; color: #475569; margin-top: 2px; }
+        .report-badge { background: #111827; color: #fff; padding: 8px 14px; border-radius: 8px; text-align: right; }
+        .report-badge-title { font-size: 8px; text-transform: uppercase; letter-spacing: 1.5px; color: #9ca3af; }
+        .report-title-main { font-size: 16px; font-weight: 900; }
+        .report-subtitle { font-size: 9.5px; color: #cbd5e1; margin-top: 2px; }
+
+        .kpi-table { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin-bottom: 12px; }
+        .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; text-align: left; }
+        .kpi-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: bold; }
+        .kpi-value { font-size: 14px; font-weight: 900; color: #111827; margin-top: 2px; }
+
+        table.data-table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+        table.data-table thead { display: table-header-group; }
+        table.data-table th { background: #111827; color: #fff; text-transform: uppercase; font-size: 8.3px; letter-spacing: 0.5px; padding: 6px 7px; text-align: left; }
+        table.data-table td { padding: 5px 7px; border-bottom: 1px solid #eef2f7; }
+        table.data-table tbody tr:nth-child(even) { background: #f8fafc; }
+        table.data-table tfoot td { border-top: 2px solid #111827; font-weight: 900; padding-top: 7px; background: #f1f5f9; }
+        .num { text-align: right; font-family: 'Courier New', monospace; }
+        .center { text-align: center; }
+
+        .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; color: #111827; margin: 16px 0 6px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; }
+        .footnote { margin-top: 10px; font-size: 8.5px; color: #64748b; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div id="page-footer">
+    <span th:text="${companyName}">Empresa</span> — Relatório gerado em <span th:text="${generatedAt}"></span>
+</div>
+
+<table class="header-table">
+    <tr>
+        <td style="width: 60%;">
+            <div class="company-name-main" th:text="${companyName}">Empresa</div>
+            <div class="company-detail" th:text="${companyDoc}"></div>
+            <div class="company-detail" th:text="${companyAddress}"></div>
+            <div class="company-detail">
+                <span th:text="${companyEmail}"></span> <span th:if="${companyPhone}"> · </span><span th:text="${companyPhone}"></span>
+            </div>
+        </td>
+        <td style="width: 40%;">
+            <div class="report-badge">
+                <div class="report-badge-title">Relatório</div>
+                <div class="report-title-main" th:text="${title}">Título</div>
+                <div class="report-subtitle" th:text="${subtitle}"></div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<table class="kpi-table" th:if="${kpis != null and !kpis.isEmpty()}">
+    <tr>
+        <td class="kpi-card" th:each="kpi : ${kpis}">
+            <div class="kpi-label" th:text="${kpi.label}"></div>
+            <div class="kpi-value" th:text="${kpi.value}"></div>
+        </td>
+    </tr>
+</table>
+
+<table class="data-table avoid-break">
+    <thead>
+    <tr>
+        <th th:each="col : ${columns}" th:text="${col}"></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="row : ${rows}">
+        <td th:each="cell, iter : ${row}"
+            th:text="${cell}"
+            th:classappend="${iter.index >= numericColumnsFrom} ? 'num' : ''"></td>
+    </tr>
+    <tr th:if="${rows == null or rows.isEmpty()}">
+        <td th:attr="colspan=${columns.size()}" class="center" style="padding: 14px; color:#94a3b8;">Nenhum registro encontrado para os filtros selecionados.</td>
+    </tr>
+    </tbody>
+    <tfoot th:if="${totalsRow != null}">
+    <tr>
+        <td th:each="cell, iter : ${totalsRow}"
+            th:text="${cell}"
+            th:classappend="${iter.index >= numericColumnsFrom} ? 'num' : ''"></td>
+    </tr>
+    </tfoot>
+</table>
+
+<div th:if="${extraSections != null}">
+    <div th:each="section : ${extraSections}">
+        <div class="section-title" th:text="${section.title}"></div>
+        <table class="data-table avoid-break">
+            <thead>
+            <tr>
+                <th th:each="col : ${section.columns}" th:text="${col}"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${section.rows}">
+                <td th:each="cell : ${row}" th:text="${cell}"></td>
+            </tr>
+            </tbody>
+            <tfoot th:if="${section.totalsRow != null}">
+            <tr>
+                <td th:each="cell : ${section.totalsRow}" th:text="${cell}"></td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div class="footnote" th:if="${footNote}" th:text="${footNote}"></div>
+
+</body>
+</html>

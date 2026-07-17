@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Relatórios - Alfa Tahi')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Central de Relatórios</h2>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Exporte relatórios gerenciais e contábeis em PDF ou Excel, de forma individual ou consolidada.</p>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+        <!-- ══════════ ORDENS DE SERVIÇO — CONSOLIDADO ══════════ -->
+        <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 shadow-sm xl:col-span-2">
+            <div class="flex items-center gap-3 mb-1">
+                <div class="p-2.5 rounded-xl bg-brand-50 dark:bg-cyan-500/10"><i data-lucide="file-text" class="w-5 h-5 text-brand-600 dark:text-cyan-400"></i></div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Ordens de Serviço — Receita, Custo e Lucro</h3>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-5 ml-[52px]">Item vendido, custo de materiais/produção, receita e lucro. Filtre por período/cliente/status ou exporte todas juntas.</p>
+
+            <form method="GET" action="/reports/work-orders/pdf" target="_blank" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">De</label>
+                    <input type="date" name="from" th:value="${defaultFrom}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Até</label>
+                    <input type="date" name="to" th:value="${defaultTo}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Cliente</label>
+                    <select name="clientId" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500">
+                        <option value="">Todos</option>
+                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Status</label>
+                    <select name="status" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500">
+                        <option value="">Todos</option>
+                        <option value="pending">Pendente</option>
+                        <option value="in_progress">Em Produção</option>
+                        <option value="completed">Concluída</option>
+                        <option value="cancelled">Cancelada</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2 pb-2.5">
+                    <input type="checkbox" name="detailed" value="true" id="detailedChk" class="w-4 h-4 rounded accent-brand-600">
+                    <label for="detailedChk" class="text-xs font-semibold text-slate-600 dark:text-slate-300">Detalhar itens</label>
+                </div>
+
+                <div class="md:col-span-5 flex flex-wrap gap-3 mt-1">
+                    <button type="submit" formaction="/reports/work-orders/pdf" formtarget="_blank"
+                            class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm shadow-sm">
+                        <i data-lucide="file-down" class="w-4 h-4"></i> Exportar PDF (Consolidado)
+                    </button>
+                    <button type="submit" formaction="/reports/work-orders/excel"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm shadow-sm">
+                        <i data-lucide="sheet" class="w-4 h-4"></i> Exportar Excel (Consolidado)
+                    </button>
+                </div>
+            </form>
+
+            <div class="border-t border-slate-200 dark:border-slate-800 mt-5 pt-5">
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Relatório individual de uma O.S.</p>
+                <form method="GET" action="/reports/work-orders/pdf" target="_blank" class="flex flex-col md:flex-row gap-3">
+                    <select id="osSelect" class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500">
+                        <option value="">Selecione a O.S. ...</option>
+                        <option th:each="os : ${workOrders}" th:value="${os.id}"
+                                th:text="${os.number + ' — ' + os.clientName + ' (' + os.statusLabel + ')'}"></option>
+                    </select>
+                    <button type="button" onclick="openOsReport('pdf')" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm shadow-sm">
+                        <i data-lucide="file-down" class="w-4 h-4"></i> PDF Individual
+                    </button>
+                    <button type="button" onclick="openOsReport('excel')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm shadow-sm">
+                        <i data-lucide="sheet" class="w-4 h-4"></i> Excel Individual
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ══════════ CONTAS A RECEBER ══════════ -->
+        <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-1">
+                <div class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10"><i data-lucide="trending-up" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i></div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Contas a Receber</h3>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-5 ml-[52px]">Controle de recebimentos por vencimento e status.</p>
+            <form method="GET" action="/reports/receivables/pdf" target="_blank" class="grid grid-cols-2 gap-4 items-end">
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">De</label>
+                    <input type="date" name="from" th:value="${defaultFrom}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm"/></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Até</label>
+                    <input type="date" name="to" th:value="${defaultTo}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm"/></div>
+                <div class="col-span-2"><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Status</label>
+                    <select name="status" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm">
+                        <option value="">Todos</option><option value="pending">Pendente</option><option value="partial">Parcial</option>
+                        <option value="received">Recebido</option><option value="cancelled">Cancelado</option>
+                    </select>
+                </div>
+                <div class="col-span-2 flex gap-3">
+                    <button type="submit" formaction="/reports/receivables/pdf" formtarget="_blank" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="file-down" class="w-4 h-4"></i> PDF</button>
+                    <button type="submit" formaction="/reports/receivables/excel" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="sheet" class="w-4 h-4"></i> Excel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ══════════ CONTAS A PAGAR ══════════ -->
+        <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-1">
+                <div class="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/10"><i data-lucide="trending-down" class="w-5 h-5 text-rose-600 dark:text-rose-400"></i></div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Contas a Pagar</h3>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-5 ml-[52px]">Despesas, fornecedores, CMV e despesas fixas.</p>
+            <form method="GET" action="/reports/payables/pdf" target="_blank" class="grid grid-cols-2 gap-4 items-end">
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">De</label>
+                    <input type="date" name="from" th:value="${defaultFrom}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm"/></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Até</label>
+                    <input type="date" name="to" th:value="${defaultTo}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm"/></div>
+                <div class="col-span-2"><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Status</label>
+                    <select name="status" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm">
+                        <option value="">Todos</option><option value="pending">Pendente</option><option value="partial">Parcial</option>
+                        <option value="paid">Pago</option><option value="cancelled">Cancelado</option>
+                    </select>
+                </div>
+                <div class="col-span-2 flex gap-3">
+                    <button type="submit" formaction="/reports/payables/pdf" formtarget="_blank" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="file-down" class="w-4 h-4"></i> PDF</button>
+                    <button type="submit" formaction="/reports/payables/excel" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="sheet" class="w-4 h-4"></i> Excel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ══════════ FLUXO DE CAIXA ══════════ -->
+        <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-1">
+                <div class="p-2.5 rounded-xl bg-teal-50 dark:bg-teal-500/10"><i data-lucide="book-open" class="w-5 h-5 text-teal-600 dark:text-teal-400"></i></div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Fluxo de Caixa</h3>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-5 ml-[52px]">Livro caixa com entradas, saídas e saldo do período.</p>
+            <form method="GET" action="/reports/cashflow/pdf" target="_blank" class="grid grid-cols-2 gap-4 items-end">
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">De</label>
+                    <input required type="date" name="from" th:value="${defaultFrom}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm"/></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Até</label>
+                    <input required type="date" name="to" th:value="${defaultTo}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm"/></div>
+                <div class="col-span-2 flex gap-3">
+                    <button type="submit" formaction="/reports/cashflow/pdf" formtarget="_blank" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="file-down" class="w-4 h-4"></i> PDF</button>
+                    <button type="submit" formaction="/reports/cashflow/excel" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="sheet" class="w-4 h-4"></i> Excel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ══════════ DRE GERENCIAL ══════════ -->
+        <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-1">
+                <div class="p-2.5 rounded-xl bg-brand-50 dark:bg-cyan-500/10"><i data-lucide="bar-chart-3" class="w-5 h-5 text-brand-600 dark:text-cyan-400"></i></div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">DRE Gerencial</h3>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-5 ml-[52px]">Demonstrativo de resultado: receita, CMV, despesas e lucro líquido.</p>
+            <form method="GET" action="/reports/dre/pdf" target="_blank" class="grid grid-cols-3 gap-4 items-end">
+                <div class="col-span-3"><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tipo</label>
+                    <select name="type" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm">
+                        <option value="comparative">Comparativo (últimos 4 meses)</option>
+                        <option value="single">Mensal</option>
+                        <option value="annual">Anual</option>
+                    </select>
+                </div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mês</label>
+                    <select name="month" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm">
+                        <option th:each="mm : ${#numbers.sequence(1,12)}" th:value="${mm}" th:text="${mm}" th:selected="${mm == currentMonth}"></option>
+                    </select>
+                </div>
+                <div class="col-span-2"><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Ano</label>
+                    <select name="year" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm">
+                        <option th:each="yy : ${years}" th:value="${yy}" th:text="${yy}" th:selected="${yy == currentYear}"></option>
+                    </select>
+                </div>
+                <div class="col-span-3 flex gap-3">
+                    <button type="submit" formaction="/reports/dre/pdf" formtarget="_blank" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="file-down" class="w-4 h-4"></i> PDF</button>
+                    <button type="submit" formaction="/reports/dre/excel" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="sheet" class="w-4 h-4"></i> Excel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ══════════ RELATÓRIO PARA O CONTADOR ══════════ -->
+        <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-1">
+                <div class="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-500/10"><i data-lucide="calculator" class="w-5 h-5 text-violet-600 dark:text-violet-400"></i></div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Relatório para o Contador</h3>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-5 ml-[52px]">DRE do mês + recebimentos e pagamentos por categoria, prontos para envio à contabilidade.</p>
+            <form method="GET" action="/reports/accountant/pdf" target="_blank" class="grid grid-cols-2 gap-4 items-end">
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mês</label>
+                    <select name="month" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm">
+                        <option th:each="mm : ${#numbers.sequence(1,12)}" th:value="${mm}" th:text="${mm}" th:selected="${mm == currentMonth}"></option>
+                    </select>
+                </div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Ano</label>
+                    <select name="year" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm">
+                        <option th:each="yy : ${years}" th:value="${yy}" th:text="${yy}" th:selected="${yy == currentYear}"></option>
+                    </select>
+                </div>
+                <div class="col-span-2 flex gap-3">
+                    <button type="submit" formaction="/reports/accountant/pdf" formtarget="_blank" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="file-down" class="w-4 h-4"></i> PDF</button>
+                    <button type="submit" formaction="/reports/accountant/excel" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="sheet" class="w-4 h-4"></i> Excel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ══════════ CADASTROS ══════════ -->
+        <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 shadow-sm xl:col-span-2">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800"><i data-lucide="address-book" class="w-5 h-5 text-slate-600 dark:text-slate-300"></i></div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Cadastros</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                    <p class="font-semibold text-sm mb-3 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> Clientes</p>
+                    <div class="flex gap-3">
+                        <a href="/reports/clients/pdf" target="_blank" class="flex-1 text-center bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm">PDF</a>
+                        <a href="/reports/clients/excel" class="flex-1 text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm">Excel</a>
+                    </div>
+                </div>
+                <div class="border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                    <p class="font-semibold text-sm mb-3 flex items-center gap-2"><i data-lucide="truck" class="w-4 h-4"></i> Fornecedores</p>
+                    <div class="flex gap-3">
+                        <a href="/reports/suppliers/pdf" target="_blank" class="flex-1 text-center bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm">PDF</a>
+                        <a href="/reports/suppliers/excel" class="flex-1 text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm">Excel</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<script th:replace="~{fragments/layout :: lucide-script}"></script>
+<script>
+    function openOsReport(kind) {
+        const id = document.getElementById('osSelect').value;
+        if (!id) { alert('Selecione uma Ordem de Serviço.'); return; }
+        window.open('/reports/work-orders/' + id + '/' + kind, '_blank');
+    }
+</script>
+
+</body>
+</html>

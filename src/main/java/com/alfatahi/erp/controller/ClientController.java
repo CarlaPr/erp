@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Controller
@@ -18,11 +19,23 @@ public class ClientController {
         this.clientService = clientService;
     }
 
+    // Método unificado para listar e pesquisar
     @GetMapping
-    public String listClients(Model model) {
+    public String listClients(@RequestParam(value = "search", required = false) String search, Model model) {
         model.addAttribute("currentPage", "clients");
-        model.addAttribute("clients", clientService.listAllActive());
+
+        List<Client> clients;
+        // Verifica se há um termo de pesquisa
+        if (search != null && !search.trim().isEmpty()) {
+            clients = clientService.getAllClients(search); // Método de busca que você criou no service
+        } else {
+            clients = clientService.listAllActive(); // Comportamento padrão: lista todos os ativos
+        }
+
+        model.addAttribute("clients", clients);
+        model.addAttribute("search", search); // Mantém o termo na tela
         model.addAttribute("newClient", new Client()); // Objeto vazio para o modal de cadastro
+
         return "clients";
     }
 

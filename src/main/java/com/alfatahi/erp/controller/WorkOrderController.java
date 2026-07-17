@@ -51,8 +51,8 @@ public class WorkOrderController {
     public String index(Model model) {
         List<WorkOrder> orders = workOrderRepo.findAllWithItemsOrderByCreatedAtDesc();
 
-        com.alfatahi.erp.entity.Profile profile = profileRepository.findAll().stream().findFirst().orElseGet(() -> {
-            com.alfatahi.erp.entity.Profile p = new com.alfatahi.erp.entity.Profile();
+        Profile profile = profileRepository.findAll().stream().findFirst().orElseGet(() -> {
+            Profile p = new Profile();
             p.setCompanyName("Alfa Tahi");
             return profileRepository.save(p);
         });

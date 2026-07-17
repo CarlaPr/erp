@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Relatório Consolidado de Ordens de Serviço</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        h1, h2, h3, .company-name-main { font-family: 'Poppins', sans-serif !important; }
+
+        @page {
+            size: A4 landscape;
+            margin: 12mm 10mm 20mm 10mm;
+            @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 8px; color: #6b7280; font-weight: bold; }
+        }
+
+        body { font-family: 'Poppins', 'Inter', sans-serif; font-size: 10.5px; color: #1e293b; }
+
+        .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #111827; padding-bottom: 10px; margin-bottom: 12px; }
+        .company-name-main { font-size: 13px; font-weight: 900; color: #111827; text-transform: uppercase; }
+        .company-detail { font-size: 9px; color: #475569; margin-top: 2px; }
+        .report-badge { background: #111827; color: #fff; padding: 8px 14px; border-radius: 8px; text-align: right; }
+        .report-badge-title { font-size: 8px; text-transform: uppercase; letter-spacing: 1.5px; color: #9ca3af; }
+        .report-title-main { font-size: 16px; font-weight: 900; }
+        .report-subtitle { font-size: 9.5px; color: #cbd5e1; margin-top: 2px; }
+
+        .kpi-table { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin-bottom: 12px; }
+        .kpi-card { border-radius: 6px; padding: 8px 10px; text-align: left; }
+        .kpi-revenue { background: #ecfdf5; border: 1px solid #a7f3d0; }
+        .kpi-cost { background: #fef2f2; border: 1px solid #fecaca; }
+        .kpi-profit { background: #eff6ff; border: 1px solid #bfdbfe; }
+        .kpi-margin { background: #fefce8; border: 1px solid #fde68a; }
+        .kpi-count { background: #f8fafc; border: 1px solid #e2e8f0; }
+        .kpi-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: bold; }
+        .kpi-value { font-size: 14px; font-weight: 900; color: #111827; margin-top: 2px; }
+
+        table.data-table { width: 100%; border-collapse: collapse; font-size: 9.3px; }
+        table.data-table thead { display: table-header-group; }
+        table.data-table th { background: #111827; color: #fff; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px; padding: 6px 7px; text-align: left; }
+        table.data-table td { padding: 5px 7px; border-bottom: 1px solid #eef2f7; }
+        table.data-table tbody tr:nth-child(even) { background: #f8fafc; }
+        table.data-table tfoot td { border-top: 2px solid #111827; font-weight: 900; padding-top: 7px; background: #f1f5f9; }
+        .num { text-align: right; font-family: 'Courier New', monospace; }
+        .profit-pos { color: #16a34a; }
+        .profit-neg { color: #dc2626; }
+        .status-chip { font-size: 7.7px; font-weight: bold; padding: 2px 6px; border-radius: 10px; text-transform: uppercase; background: #e2e8f0; color: #334155; }
+
+        .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; color: #111827; margin: 18px 0 6px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; }
+        .os-detail-title { font-size: 9.5px; font-weight: 900; color: #111827; margin: 10px 0 4px 0; }
+        .avoid-break { page-break-inside: avoid; }
+    </style>
+</head>
+<body>
+
+<table class="header-table">
+    <tr>
+        <td style="width: 60%;">
+            <div class="company-name-main" th:text="${companyName}">Empresa</div>
+            <div class="company-detail" th:text="${companyDoc}"></div>
+            <div class="company-detail" th:text="${companyAddress}"></div>
+        </td>
+        <td style="width: 40%;">
+            <div class="report-badge">
+                <div class="report-badge-title">Relatório Consolidado</div>
+                <div class="report-title-main">Ordens de Serviço</div>
+                <div class="report-subtitle" th:text="${subtitle}"></div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<table class="kpi-table">
+    <tr>
+        <td class="kpi-card kpi-count">
+            <div class="kpi-label">Qtd. de O.S.</div>
+            <div class="kpi-value" th:text="${totalCount}">0</div>
+        </td>
+        <td class="kpi-card kpi-revenue">
+            <div class="kpi-label">Receita Total</div>
+            <div class="kpi-value" th:text="${revenueFmt}">R$ 0,00</div>
+        </td>
+        <td class="kpi-card kpi-cost">
+            <div class="kpi-label">Custo Total</div>
+            <div class="kpi-value" th:text="${costFmt}">R$ 0,00</div>
+        </td>
+        <td class="kpi-card kpi-profit">
+            <div class="kpi-label">Lucro Total</div>
+            <div class="kpi-value" th:text="${profitFmt}">R$ 0,00</div>
+        </td>
+        <td class="kpi-card kpi-margin">
+            <div class="kpi-label">Margem Média</div>
+            <div class="kpi-value" th:text="${marginFmt}">0%</div>
+        </td>
+    </tr>
+</table>
+
+<table class="data-table avoid-break">
+    <thead>
+    <tr>
+        <th style="width:9%">Número</th>
+        <th style="width:20%">Cliente</th>
+        <th style="width:10%">Status</th>
+        <th style="width:9%">Data</th>
+        <th style="width:13%" class="num">Receita</th>
+        <th style="width:13%" class="num">Custo</th>
+        <th style="width:13%" class="num">Lucro</th>
+        <th style="width:9%" class="num">Margem</th>
+        <th style="width:4%" class="num">Itens</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="row : ${rows}">
+        <td th:text="${row.number}"></td>
+        <td th:text="${row.clientName}"></td>
+        <td><span class="status-chip" th:text="${row.statusLabel}"></span></td>
+        <td th:text="${row.dateFmt}"></td>
+        <td class="num" th:text="${row.revenueFmt}"></td>
+        <td class="num" th:text="${row.costFmt}"></td>
+        <td class="num" th:text="${row.profitFmt}" th:classappend="${row.profitPositive} ? 'profit-pos' : 'profit-neg'"></td>
+        <td class="num" th:text="${row.marginFmt}"></td>
+        <td class="num" th:text="${row.itemCount}"></td>
+    </tr>
+    <tr th:if="${rows == null or rows.isEmpty()}">
+        <td colspan="9" style="text-align:center; padding: 14px; color:#94a3b8;">Nenhuma O.S. encontrada para os filtros selecionados.</td>
+    </tr>
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan="4">TOTAL</td>
+        <td class="num" th:text="${revenueFmt}"></td>
+        <td class="num" th:text="${costFmt}"></td>
+        <td class="num" th:text="${profitFmt}"></td>
+        <td class="num" th:text="${marginFmt}"></td>
+        <td class="num" th:text="${totalCount}"></td>
+    </tr>
+    </tfoot>
+</table>
+
+<div th:if="${detailed}">
+    <div class="section-title">Detalhamento por Item / Material de cada O.S.</div>
+    <div th:each="os : ${detailRows}" class="avoid-break">
+        <div class="os-detail-title" th:text="${os.number + ' — ' + os.clientName + ' (' + os.statusLabel + ')'}"></div>
+        <table class="data-table" style="margin-bottom: 8px;">
+            <thead>
+            <tr>
+                <th style="width:34%">Item / Material</th>
+                <th class="num" style="width:9%">Qtd.</th>
+                <th class="num" style="width:14%">Custo Unit.</th>
+                <th class="num" style="width:14%">Preço Unit.</th>
+                <th class="num" style="width:14%">Custo Total</th>
+                <th class="num" style="width:15%">Receita Total</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${os.items}">
+                <td th:text="${item.description}"></td>
+                <td class="num" th:text="${item.quantity}"></td>
+                <td class="num" th:text="${item.unitCost}"></td>
+                <td class="num" th:text="${item.unitPrice}"></td>
+                <td class="num" th:text="${item.totalCost}"></td>
+                <td class="num" th:text="${item.totalPrice}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

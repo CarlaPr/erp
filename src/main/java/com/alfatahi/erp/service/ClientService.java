@@ -31,6 +31,13 @@ public class ClientService {
                 .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado com o ID: " + id));
     }
 
+    public List<Client> getAllClients(String search) {
+        if (search != null && !search.trim().isEmpty()) {
+            return clientRepository.searchClients(search);
+        }
+        return clientRepository.findAll();
+    }
+
     public void delete(UUID id) {
         Client client = findById(id);
         client.setIsActive(false);
