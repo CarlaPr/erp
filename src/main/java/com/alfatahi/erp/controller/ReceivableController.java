@@ -167,13 +167,13 @@ public class ReceivableController {
         model.addAttribute("filterDateFrom", dateFrom);
         model.addAttribute("filterDateTo", dateTo);
         model.addAttribute("filterPaymentMethod", paymentMethod);
-        model.addAttribute("filterWorkOrderId", workOrderId);
 
         return "receivables";
     }
 
     @PostMapping("/save")
     public String save(@ModelAttribute("newReceivable") AccountsReceivable receivable) {
+
         if (receivable.getClient() != null && receivable.getClient().getId() != null) {
             receivable.setClient(clientService.findById(receivable.getClient().getId()));
         } else {
@@ -201,6 +201,16 @@ public class ReceivableController {
         if (receivable.getDiscount() == null) receivable.setDiscount(BigDecimal.ZERO);
         if (receivable.getCardFeePercentage() == null) receivable.setCardFeePercentage(BigDecimal.ZERO);
 
+        // Processar paymentStage
+        if (receivable.getPaymentStage() == null || receivable.getPaymentStage().isBlank()) {
+            receivable.setPaymentStage("unico");
+        }
+
+        // Definir referenceMonth se não estiver definido
+        if (receivable.getReferenceMonth() == null) {
+            receivable.setReferenceMonth(receivable.getDueDate().withDayOfMonth(1));
+        }
+
         receivable.setStatus("pending");
         receivableRepository.save(receivable);
 
@@ -213,10 +223,14 @@ public class ReceivableController {
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
 
         ar.setDescription(form.getDescription());
-
         ar.setTotalAmount(form.getTotalAmount());
         ar.setDueDate(form.getDueDate());
         ar.setReferenceMonth(form.getReferenceMonth());
+
+        // Atualizar paymentStage
+        if (form.getPaymentStage() != null && !form.getPaymentStage().isBlank()) {
+            ar.setPaymentStage(form.getPaymentStage());
+        }
 
         if (form.getWorkOrder() != null && form.getWorkOrder().getId() != null) {
             WorkOrder wo = workOrderService.findById(form.getWorkOrder().getId());
@@ -319,7 +333,7 @@ public class ReceivableController {
         response.getOutputStream().write(0xBF);
 
         java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(response.getOutputStream(), "UTF-8"));
-        writer.println("Vencimento;Data Pagamento;Cliente;O.S.;Descricao;Forma Pgto;Taxa Cartao (%);Desconto (R$);Total;Recebido;Pendente;Status");
+        writer.println("Vencimento;Data Pagamento;Cliente;O.S.;Descricao;Forma Pgto;Taxa Cartao (%);Desconto (R$);Total;Recebido;Pendente;Estágio;Status");
         java.util.Locale ptBR = new java.util.Locale("pt", "BR");
 
         for (AccountsReceivable r : list) {
@@ -330,10 +344,11 @@ public class ReceivableController {
             BigDecimal taxa = r.getCardFeePercentage() != null ? r.getCardFeePercentage() : BigDecimal.ZERO;
             BigDecimal desconto = r.getDiscount() != null ? r.getDiscount() : BigDecimal.ZERO;
             String payDate = r.getPaymentDate() != null ? r.getPaymentDate().toString() : "";
+            String stage = r.getPaymentStage() != null ? r.getPaymentStage() : "único";
 
-            writer.printf(ptBR, "%s;%s;%s;%s;%s;%s;%.2f;%.2f;%.2f;%.2f;%.2f;%s\n",
+            writer.printf(ptBR, "%s;%s;%s;%s;%s;%s;%.2f;%.2f;%.2f;%.2f;%.2f;%s;%s\n",
                     r.getDueDate(), payDate, clientName, osNumber, desc, formPgto,
-                    taxa, desconto, r.getTotalAmount(), r.getNetReceivedAmount(), r.getBalance(), r.getStatus());
+                    taxa, desconto, r.getTotalAmount(), r.getNetReceivedAmount(), r.getBalance(), stage, r.getStatus());
         }
         writer.flush();
     }

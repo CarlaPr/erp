@@ -107,90 +107,90 @@ public class WorkOrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    @Transactional
-    public void createReceivablesForWorkOrder(UUID workOrderId,
-                                              String paymentMethod,
-                                              String paymentPlan,
-                                              LocalDate firstDueDate) {
-        WorkOrder workOrder = findById(workOrderId);
-
-        if (workOrder.getTotalValue() == null || workOrder.getTotalValue().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Ordem de Serviço deve ter valor total maior que zero");
-        }
-
-        LocalDate deliveryDate = firstDueDate != null ? firstDueDate
-                : (workOrder.getInstallDate() != null ? workOrder.getInstallDate() : LocalDate.now().plusDays(15));
-
-        String pmUpper = paymentMethod != null ? paymentMethod.toUpperCase() : "";
-        boolean forceSplit = pmUpper.contains("PIX") || pmUpper.contains("DINHEIRO") || pmUpper.contains("DÉBITO") || pmUpper.contains("DEBITO");
-
-        if (forceSplit) {
-            BigDecimal entrada = workOrder.getTotalValue().divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
-            BigDecimal saldo = workOrder.getTotalValue().subtract(entrada);
-
-            AccountsReceivable rec1 = new AccountsReceivable();
-            rec1.setClient(workOrder.getClient());
-            rec1.setWorkOrder(workOrder);
-            rec1.setPaymentMethod(paymentMethod);
-            rec1.setPaymentStage(PaymentTermsService.STAGE_ENTRADA);
-            rec1.setReferenceMonth(LocalDate.now().withDayOfMonth(1));
-            rec1.setDescription("Ref. " + workOrder.getNumber() + " — Entrada (50%)");
-            rec1.setTotalAmount(entrada);
-            rec1.setInstallments(2);
-            rec1.setDueDate(LocalDate.now());
-            rec1.setStatus("pending");
-            receivableRepository.save(rec1);
-
-            AccountsReceivable rec2 = new AccountsReceivable();
-            rec2.setClient(workOrder.getClient());
-            rec2.setWorkOrder(workOrder);
-            rec2.setPaymentMethod(paymentMethod);
-            rec2.setPaymentStage(PaymentTermsService.STAGE_ENTREGA);
-            rec2.setReferenceMonth(deliveryDate.withDayOfMonth(1));
-            rec2.setDescription("Ref. " + workOrder.getNumber() + " — Saldo na Entrega (50%)");
-            rec2.setTotalAmount(saldo);
-            rec2.setInstallments(2);
-            rec2.setDueDate(deliveryDate);
-            rec2.setStatus("pending");
-            receivableRepository.save(rec2);
-        } else {
-            List<PaymentTermsService.PlannedInstallment> plan =
-                    paymentTermsService.generateInstallments(
-                            paymentMethod, paymentPlan,
-                            workOrder.getTotalValue(), LocalDate.now(), deliveryDate);
-
-            int total = plan.size();
-            for (int i = 0; i < total; i++) {
-                PaymentTermsService.PlannedInstallment inst = plan.get(i);
-                AccountsReceivable parcela = new AccountsReceivable();
-                parcela.setClient(workOrder.getClient());
-                parcela.setWorkOrder(workOrder);
-                parcela.setPaymentMethod(paymentMethod);
-                parcela.setPaymentStage(inst.getStage());
-                parcela.setReferenceMonth(inst.getDueDate().withDayOfMonth(1));
-
-                String desc;
-                if (total == 1) {
-                    desc = "Ref. " + workOrder.getNumber();
-                } else {
-                    String stageLabel = PaymentTermsService.STAGE_ENTRADA.equals(inst.getStage())
-                            ? "Entrada (50%)" : "Saldo na Entrega (50%)";
-                    desc = "Ref. " + workOrder.getNumber() + " — " + stageLabel;
-                }
-                parcela.setDescription(desc);
-                parcela.setTotalAmount(inst.getAmount());
-                parcela.setInstallments(total);
-                parcela.setDueDate(inst.getDueDate());
-                parcela.setStatus("pending");
-                receivableRepository.save(parcela);
-            }
-        }
-    }
-
-    @Transactional
-    public void createReceivablesForWorkOrder(UUID workOrderId, int installments,
-                                              String paymentMethod, LocalDate firstDueDate) {
-        createReceivablesForWorkOrder(workOrderId, paymentMethod,
-                PaymentTermsService.PLAN_SPLIT_50_50, firstDueDate);
-    }
+//    @Transactional
+//    public void createReceivablesForWorkOrder(UUID workOrderId,
+//                                              String paymentMethod,
+//                                              String paymentPlan,
+//                                              LocalDate firstDueDate) {
+//        WorkOrder workOrder = findById(workOrderId);
+//
+//        if (workOrder.getTotalValue() == null || workOrder.getTotalValue().compareTo(BigDecimal.ZERO) <= 0) {
+//            throw new IllegalArgumentException("Ordem de Serviço deve ter valor total maior que zero");
+//        }
+//
+//        LocalDate deliveryDate = firstDueDate != null ? firstDueDate
+//                : (workOrder.getInstallDate() != null ? workOrder.getInstallDate() : LocalDate.now().plusDays(15));
+//
+//        String pmUpper = paymentMethod != null ? paymentMethod.toUpperCase() : "";
+//        boolean forceSplit = pmUpper.contains("PIX") || pmUpper.contains("DINHEIRO") || pmUpper.contains("DÉBITO") || pmUpper.contains("DEBITO");
+//
+//        if (forceSplit) {
+//            BigDecimal entrada = workOrder.getTotalValue().divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
+//            BigDecimal saldo = workOrder.getTotalValue().subtract(entrada);
+//
+//            AccountsReceivable rec1 = new AccountsReceivable();
+//            rec1.setClient(workOrder.getClient());
+//            rec1.setWorkOrder(workOrder);
+//            rec1.setPaymentMethod(paymentMethod);
+//            rec1.setPaymentStage(PaymentTermsService.STAGE_ENTRADA);
+//            rec1.setReferenceMonth(LocalDate.now().withDayOfMonth(1));
+//            rec1.setDescription("Ref. " + workOrder.getNumber() + " — Entrada (50%)");
+//            rec1.setTotalAmount(entrada);
+//            rec1.setInstallments(2);
+//            rec1.setDueDate(LocalDate.now());
+//            rec1.setStatus("pending");
+//            receivableRepository.save(rec1);
+//
+//            AccountsReceivable rec2 = new AccountsReceivable();
+//            rec2.setClient(workOrder.getClient());
+//            rec2.setWorkOrder(workOrder);
+//            rec2.setPaymentMethod(paymentMethod);
+//            rec2.setPaymentStage(PaymentTermsService.STAGE_ENTREGA);
+//            rec2.setReferenceMonth(deliveryDate.withDayOfMonth(1));
+//            rec2.setDescription("Ref. " + workOrder.getNumber() + " — Saldo na Entrega (50%)");
+//            rec2.setTotalAmount(saldo);
+//            rec2.setInstallments(2);
+//            rec2.setDueDate(deliveryDate);
+//            rec2.setStatus("pending");
+//            receivableRepository.save(rec2);
+//        } else {
+//            List<PaymentTermsService.PlannedInstallment> plan =
+//                    paymentTermsService.generateInstallments(
+//                            paymentMethod, paymentPlan,
+//                            workOrder.getTotalValue(), LocalDate.now(), deliveryDate);
+//
+//            int total = plan.size();
+//            for (int i = 0; i < total; i++) {
+//                PaymentTermsService.PlannedInstallment inst = plan.get(i);
+//                AccountsReceivable parcela = new AccountsReceivable();
+//                parcela.setClient(workOrder.getClient());
+//                parcela.setWorkOrder(workOrder);
+//                parcela.setPaymentMethod(paymentMethod);
+//                parcela.setPaymentStage(inst.getStage());
+//                parcela.setReferenceMonth(inst.getDueDate().withDayOfMonth(1));
+//
+//                String desc;
+//                if (total == 1) {
+//                    desc = "Ref. " + workOrder.getNumber();
+//                } else {
+//                    String stageLabel = PaymentTermsService.STAGE_ENTRADA.equals(inst.getStage())
+//                            ? "Entrada (50%)" : "Saldo na Entrega (50%)";
+//                    desc = "Ref. " + workOrder.getNumber() + " — " + stageLabel;
+//                }
+//                parcela.setDescription(desc);
+//                parcela.setTotalAmount(inst.getAmount());
+//                parcela.setInstallments(total);
+//                parcela.setDueDate(inst.getDueDate());
+//                parcela.setStatus("pending");
+//                receivableRepository.save(parcela);
+//            }
+//        }
+//    }
+//
+//    @Transactional
+//    public void createReceivablesForWorkOrder(UUID workOrderId, int installments,
+//                                              String paymentMethod, LocalDate firstDueDate) {
+//        createReceivablesForWorkOrder(workOrderId, paymentMethod,
+//                PaymentTermsService.PLAN_SPLIT_50_50, firstDueDate);
+//    }
 }
