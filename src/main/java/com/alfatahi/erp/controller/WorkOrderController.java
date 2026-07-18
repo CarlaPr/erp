@@ -5,6 +5,8 @@ import com.alfatahi.erp.repository.*;
 import com.alfatahi.erp.service.*;
 import org.hibernate.Hibernate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -57,21 +59,34 @@ public class WorkOrderController {
             return profileRepository.save(p);
         });
 
-        BigDecimal totalRevenue = orders.stream()
-                .filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus()))
-                .map(wo -> wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalCost = orders.stream()
-                .filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus()))
-                .map(wo -> wo.getTotalCost() != null ? wo.getTotalCost() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal globalProfit = totalRevenue.subtract(totalCost);
+        // Valores padrão zerados
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        BigDecimal totalCost = BigDecimal.ZERO;
+        BigDecimal globalProfit = BigDecimal.ZERO;
         BigDecimal averageMargin = BigDecimal.ZERO;
 
-        if (totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
-            averageMargin = globalProfit.multiply(new BigDecimal("100")).divide(totalRevenue, 2, RoundingMode.HALF_UP);
+        // Verifica a role do usuário logado
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isTecnico = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("TECNICO") || a.getAuthority().equals("ROLE_TECNICO"));
+
+        // Calcula os KPIs globais apenas se o usuário NÃO for técnico
+        if (!isTecnico) {
+            totalRevenue = orders.stream()
+                    .filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus()))
+                    .map(wo -> wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            totalCost = orders.stream()
+                    .filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus()))
+                    .map(wo -> wo.getTotalCost() != null ? wo.getTotalCost() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            globalProfit = totalRevenue.subtract(totalCost);
+
+            if (totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
+                averageMargin = globalProfit.multiply(new BigDecimal("100")).divide(totalRevenue, 2, RoundingMode.HALF_UP);
+            }
         }
 
         model.addAttribute("orders", orders);

@@ -151,22 +151,18 @@
                     <div class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5" th:text="${r.description}">Desc</div>
                     <div th:if="${r.paymentMethod != null}"
                          class="text-xs text-slate-400 dark:text-slate-500 font-bold mt-1" th:text="${r.paymentMethod}"></div>
-                    <!-- Etapa do pagamento: Entrada (50%) -->
                     <span th:if="${r.paymentStage == 'entrada'}"
                           class="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">
                         ⬆ Entrada
                     </span>
-                    <!-- Etapa do pagamento: Entrega (50%) -->
                     <span th:if="${r.paymentStage == 'entrega'}"
                           class="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400">
                         ✅ Entrega
                     </span>
-                    <!-- Pagamento único (cartão, link de pagamento, débito à vista, etc.) -->
                     <span th:if="${r.paymentStage == null or r.paymentStage == 'unico'}"
                           class="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
                         ✅ Recebimento Total
                     </span>
-                    <!-- Competência: exibida sempre, inclusive no mês atual -->
                     <span th:if="${r.referenceMonth != null}"
                           class="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 uppercase tracking-wide">
                         📅 Compet. <span th:text="${#temporals.format(r.referenceMonth, 'MM/yyyy')}"></span>
@@ -195,16 +191,16 @@
 
                 <td class="p-5 text-center">
                     <span class="inline-block px-3 py-1 rounded-lg font-bold text-xs"
-                          th:classappend="${r.paymentStage == 'entrada'} ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                                          : ${r.paymentStage == 'entrega'} ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300'
-                                          : ${r.paymentStage == 'recebimento_total'} ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                                          : ${r.paymentStage == 'competencia'} ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
-                                          : 'bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300'"
-                          th:text="${r.paymentStage == 'entrada'} ? '⬆ Entrada'
-                                  : ${r.paymentStage == 'entrega'} ? '✅ Entrega'
-                                  : ${r.paymentStage == 'recebimento_total'} ? '✅ Recebimento'
-                                  : ${r.paymentStage == 'competencia'} ? '📅 Compet.'
-                                  : 'Único'">
+                          th:classappend="${r.paymentStage == 'entrada' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                                  : (r.paymentStage == 'entrega' ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300'
+                                  : (r.paymentStage == 'recebimento_total' ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                                  : (r.paymentStage == 'competencia' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
+                                  : 'bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300')))}"
+                          th:text="${r.paymentStage == 'entrada' ? '⬆ Entrada'
+                                    : (r.paymentStage == 'entrega' ? '✅ Entrega'
+                                    : (r.paymentStage == 'recebimento_total' ? '✅ Recebimento Total'
+                                    : (r.paymentStage == 'competencia' ? '📅 Compet.'
+                                    : 'Único')))}">
                     </span>
                 </td>
 
@@ -235,18 +231,20 @@
                                 th:data-client="${r?.client != null ? r.client.id : ''}"
                                 th:data-workorder="${r?.workOrder != null ? r.workOrder.id : ''}"
                                 th:data-received="${r?.receivedAmount}"
+                                th:data-paymentstage="${r?.paymentStage}"
                                 onclick="openEditModal(
-                                    this.dataset.id,
-                                    this.dataset.description,
-                                    this.dataset.total,
-                                    this.dataset.duedate,
-                                    '',
-                                    this.dataset.notes,
-                                    this.dataset.client,
-                                    this.dataset.workorder,
-                                    this.dataset.received,
-                                    this.dataset.referencemonth
-                                    )"
+                                            this.dataset.id,
+                                            this.dataset.description,
+                                            this.dataset.total,
+                                            this.dataset.duedate,
+                                            '',
+                                            this.dataset.notes,
+                                            this.dataset.client,
+                                            this.dataset.workorder,
+                                            this.dataset.received,
+                                            this.dataset.referencemonth,
+                                            this.dataset.paymentstage
+                                            )"
                                 class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors" title="Editar">
                             <i data-lucide="edit" class="w-5 h-5"></i>
                         </button>
@@ -264,6 +262,7 @@
         </table>
     </div>
 
+    <!-- MODAL NOVA RECEITA -->
     <div id="receivableModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -292,19 +291,31 @@
                     <!-- Cliente -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Cliente</label>
-                        <select name="client.id" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
-                            <option value="">-- Selecione --</option>
-                            <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
-                        </select>
+                        <input type="hidden" th:field="*{client.id}" id="newClientId">
+                        <div class="flex gap-2">
+                            <input type="text" id="newClientDisplay" readonly placeholder="Selecione..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white cursor-pointer outline-none transition-all text-base" onclick="openClientSearch('new')">
+                            <button type="button" onclick="clearClient('new')" class="px-3 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 hover:text-rose-500 transition-colors" title="Limpar">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                            <button type="button" onclick="openClientSearch('new')" class="px-3 bg-emerald-50 dark:bg-slate-800 border border-emerald-200 dark:border-slate-700 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-slate-700 transition-colors" title="Buscar">
+                                <i data-lucide="search" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- OS Relacionada -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">O.S. Relacionada</label>
-                        <select name="workOrder.id" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
-                            <option value="">-- Nenhuma --</option>
-                            <option th:each="wo : ${workOrders}" th:value="${wo.id}" th:text="${wo.number + ' - ' + wo.title}"></option>
-                        </select>
+                        <input type="hidden" th:field="*{workOrder.id}" id="newWorkOrderId">
+                        <div class="flex gap-2">
+                            <input type="text" id="newWorkOrderDisplay" readonly placeholder="Selecione..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white cursor-pointer outline-none transition-all text-base" onclick="openOsSearch('new')">
+                            <button type="button" onclick="clearOs('new')" class="px-3 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 hover:text-rose-500 transition-colors" title="Limpar">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                            <button type="button" onclick="openOsSearch('new')" class="px-3 bg-emerald-50 dark:bg-slate-800 border border-emerald-200 dark:border-slate-700 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-slate-700 transition-colors" title="Buscar">
+                                <i data-lucide="search" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Vencimento -->
@@ -360,10 +371,6 @@
                                 <input type="radio" name="paymentStage" value="recebimento_total" class="w-4 h-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500">
                                 <span class="text-sm font-bold text-slate-700 dark:text-slate-300">✅ Recebimento Total</span>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="radio" name="paymentStage" value="competencia" class="w-4 h-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">📅 Compet.</span>
-                            </label>
                         </div>
                     </div>
 
@@ -382,6 +389,65 @@
         </div>
     </div>
 
+    <!-- MODAL BUSCA DE CLIENTE -->
+    <div id="clientSearchModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+
+            <button type="button" onclick="closeModal('clientSearchModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-4 border-b border-slate-200 dark:border-slate-700 pb-4 flex items-center gap-2">
+                <i data-lucide="users" class="text-brand-600 dark:text-cyan-400 w-6 h-6"></i> Selecionar Cliente
+            </h3>
+
+            <div class="flex gap-2 mb-4">
+                <div class="relative flex-1">
+                    <input type="text" id="searchClientInput" oninput="filterClientsInModal()" placeholder="Buscar por nome..." autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-sm transition-colors" />
+                    <i data-lucide="search" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400"></i>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar border border-slate-200 dark:border-slate-700 rounded-xl min-h-[300px]">
+                <ul id="clientSearchList" class="divide-y divide-slate-100 dark:divide-slate-800">
+                </ul>
+                <div id="emptyClientSearch" class="hidden text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                    Nenhum cliente encontrado.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BUSCA DE O.S. -->
+    <div id="osSearchModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+
+            <button type="button" onclick="closeModal('osSearchModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-4 border-b border-slate-200 dark:border-slate-700 pb-4 flex items-center gap-2">
+                <i data-lucide="clipboard-list" class="text-brand-600 dark:text-cyan-400 w-6 h-6"></i> Selecionar O.S.
+            </h3>
+
+            <div class="flex gap-2 mb-4">
+                <div class="relative flex-1">
+                    <input type="text" id="searchOsInput" oninput="filterOsInModal()" placeholder="Buscar por número, título ou cliente..." autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-sm transition-colors" />
+                    <i data-lucide="search" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400"></i>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar border border-slate-200 dark:border-slate-700 rounded-xl min-h-[300px]">
+                <ul id="osSearchList" class="divide-y divide-slate-100 dark:divide-slate-800">
+                </ul>
+                <div id="emptyOsSearch" class="hidden text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                    Nenhuma O.S. encontrada.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RECEBIMENTO PARCIAL / INTEGRAL -->
     <div id="receiveModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -419,7 +485,6 @@
                     </div>
 
                     <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto</label>
@@ -463,6 +528,7 @@
         </div>
     </div>
 
+    <!-- MODAL EDITAR -->
     <div id="editModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -493,23 +559,31 @@
                     <!-- Cliente -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Cliente</label>
-                        <select name="client" id="editClient" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
-                            <option value="">-- Selecione --</option>
-                            <th:block th:each="c : ${clients}">
-                                <option th:value="${c.id}" th:text="${c.name}"></option>
-                            </th:block>
-                        </select>
+                        <input type="hidden" name="client" id="editClientId">
+                        <div class="flex gap-2">
+                            <input type="text" id="editClientDisplay" readonly placeholder="Selecione..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white cursor-pointer outline-none transition-all text-base" onclick="openClientSearch('edit')">
+                            <button type="button" onclick="clearClient('edit')" class="px-3 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 hover:text-rose-500 transition-colors" title="Limpar">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                            <button type="button" onclick="openClientSearch('edit')" class="px-3 bg-brand-50 dark:bg-slate-800 border border-brand-200 dark:border-slate-700 rounded-xl text-brand-600 dark:text-cyan-400 hover:bg-brand-100 dark:hover:bg-slate-700 transition-colors" title="Buscar">
+                                <i data-lucide="search" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- OS Relacionada -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">O.S. Relacionada</label>
-                        <select name="workOrder" id="editWorkOrder" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
-                            <option value="">-- Nenhuma --</option>
-                            <th:block th:each="wo : ${workOrders}">
-                                <option th:value="${wo.id}" th:text="${wo.number + ' - ' + wo.title}"></option>
-                            </th:block>
-                        </select>
+                        <input type="hidden" name="workOrder" id="editWorkOrderId">
+                        <div class="flex gap-2">
+                            <input type="text" id="editWorkOrderDisplay" readonly placeholder="Selecione..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white cursor-pointer outline-none transition-all text-base" onclick="openOsSearch('edit')">
+                            <button type="button" onclick="clearOs('edit')" class="px-3 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 hover:text-rose-500 transition-colors" title="Limpar">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                            <button type="button" onclick="openOsSearch('edit')" class="px-3 bg-brand-50 dark:bg-slate-800 border border-brand-200 dark:border-slate-700 rounded-xl text-brand-600 dark:text-cyan-400 hover:bg-brand-100 dark:hover:bg-slate-700 transition-colors" title="Buscar">
+                                <i data-lucide="search" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Vencimento -->
@@ -523,7 +597,7 @@
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Competência (Mês/Ano)</label>
                         <input type="month" name="referenceMonth" id="editReferenceMonth"
                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
-                        <p class="text-[11px] text-slate-400 mt-1">Preencha apenas quando o recebimento for antecipado (refere-se a mês futuro).</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Preencha apenas quando o recebimento for antecipado.</p>
                     </div>
 
                     <!-- Parcelas -->
@@ -587,6 +661,7 @@
         </div>
     </div>
 
+    <!-- MODAL CANCELAR -->
     <div id="cancelModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200 text-center">
 
@@ -611,6 +686,7 @@
         </div>
     </div>
 
+    <!-- MODAL EXPORTAR EXCEL -->
     <div id="exportModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -638,6 +714,19 @@
         </div>
     </div>
 
+    <!-- ARMAZENAMENTO OCULTO PARA OS SCRIPTS DOS MODAIS DE BUSCA -->
+    <select id="hiddenClientsData" class="hidden">
+        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+    </select>
+    <select id="hiddenOsData" class="hidden">
+        <option th:each="wo : ${workOrders}"
+                th:value="${wo.id}"
+                th:data-number="${wo.number}"
+                th:data-title="${wo.title}"
+                th:data-client="${wo.client != null ? wo.client.name : ''}">
+        </option>
+    </select>
+
 </main>
 
 <style>
@@ -649,7 +738,6 @@
         text-transform:uppercase;
         margin-bottom:6px;
     }
-
     .input-form{
         width:100%;
         background:#0f172a;
@@ -658,28 +746,188 @@
         padding:10px 14px;
         color:white;
     }
-
     .btn-primary{
         padding:10px 24px;
         border-radius:8px;
         font-weight:700;
     }
-
     .btn-secondary{
         padding:10px 20px;
         border-radius:8px;
         color:#cbd5e1;
     }
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 20px;
+    }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #334155;
+    }
 </style>
 
 <script>
-
     const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
     function openModal(id)  { const m = document.getElementById(id); m.classList.remove('hidden'); m.classList.add('flex'); }
     function closeModal(id) { const m = document.getElementById(id); m.classList.remove('flex'); m.classList.add('hidden'); }
 
+    // --- LÓGICA DE BUSCA DE CLIENTES E O.S. ---
+    let clientsList = [];
+    let osList = [];
+    let currentTargetType = ''; // 'new' ou 'edit'
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Carrega dados para pesquisa de Clientes
+        document.querySelectorAll('#hiddenClientsData option').forEach(opt => {
+            clientsList.push({ id: opt.value, name: opt.text });
+        });
+
+        // Carrega dados para pesquisa de O.S.
+        document.querySelectorAll('#hiddenOsData option').forEach(opt => {
+            osList.push({
+                id: opt.value,
+                number: opt.getAttribute('data-number'),
+                title: opt.getAttribute('data-title'),
+                clientName: opt.getAttribute('data-client')
+            });
+        });
+    });
+
+    /* -- Funções para Cliente -- */
+    function openClientSearch(target) {
+        currentTargetType = target;
+        document.getElementById('searchClientInput').value = '';
+        renderClients(clientsList);
+        openModal('clientSearchModal');
+    }
+
+    function renderClients(list) {
+        const ul = document.getElementById('clientSearchList');
+        const empty = document.getElementById('emptyClientSearch');
+        ul.innerHTML = '';
+        if(list.length === 0) {
+            ul.classList.add('hidden');
+            empty.classList.remove('hidden');
+        } else {
+            ul.classList.remove('hidden');
+            empty.classList.add('hidden');
+            list.forEach(c => {
+                const li = document.createElement('li');
+                li.className = "p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors flex items-center justify-between";
+                li.onclick = () => selectClient(c.id, c.name);
+                li.innerHTML = `<span class="font-bold text-slate-900 dark:text-white">${c.name}</span><i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>`;
+                ul.appendChild(li);
+            });
+            if(window.lucide) lucide.createIcons();
+        }
+    }
+
+    function filterClientsInModal() {
+        const query = document.getElementById('searchClientInput').value.toLowerCase();
+        const filtered = clientsList.filter(c => c.name.toLowerCase().includes(query));
+        renderClients(filtered);
+    }
+
+    function selectClient(id, name) {
+        if(currentTargetType === 'new') {
+            document.getElementById('newClientId').value = id;
+            document.getElementById('newClientDisplay').value = name;
+        } else {
+            document.getElementById('editClientId').value = id;
+            document.getElementById('editClientDisplay').value = name;
+        }
+        closeModal('clientSearchModal');
+    }
+
+    function clearClient(target) {
+        if(target === 'new') {
+            document.getElementById('newClientId').value = '';
+            document.getElementById('newClientDisplay').value = '';
+        } else {
+            document.getElementById('editClientId').value = '';
+            document.getElementById('editClientDisplay').value = '';
+        }
+    }
+
+    /* -- Funções para O.S. -- */
+    function openOsSearch(target) {
+        currentTargetType = target;
+        document.getElementById('searchOsInput').value = '';
+        renderOs(osList);
+        openModal('osSearchModal');
+    }
+
+    function renderOs(list) {
+        const ul = document.getElementById('osSearchList');
+        const empty = document.getElementById('emptyOsSearch');
+        ul.innerHTML = '';
+        if(list.length === 0) {
+            ul.classList.add('hidden');
+            empty.classList.remove('hidden');
+        } else {
+            ul.classList.remove('hidden');
+            empty.classList.add('hidden');
+            list.forEach(wo => {
+                const li = document.createElement('li');
+                li.className = "p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors flex items-center justify-between";
+                li.onclick = () => selectOs(wo.id, wo.number, wo.clientName);
+
+                const clientText = wo.clientName ? `Cliente: ${wo.clientName}` : 'Sem cliente vinculado';
+                li.innerHTML = `
+                    <div>
+                        <span class="font-bold text-slate-900 dark:text-white block">${wo.number} - ${wo.title}</span>
+                        <span class="text-sm text-slate-500 dark:text-slate-400 mt-1">${clientText}</span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                `;
+                ul.appendChild(li);
+            });
+            if(window.lucide) lucide.createIcons();
+        }
+    }
+
+    function filterOsInModal() {
+        const query = document.getElementById('searchOsInput').value.toLowerCase();
+        const filtered = osList.filter(wo =>
+            (wo.number && wo.number.toLowerCase().includes(query)) ||
+            (wo.title && wo.title.toLowerCase().includes(query)) ||
+            (wo.clientName && wo.clientName.toLowerCase().includes(query))
+        );
+        renderOs(filtered);
+    }
+
+    function selectOs(id, number, clientName) {
+        let displayName = number;
+        if(clientName) displayName += ` (${clientName})`;
+
+        if(currentTargetType === 'new') {
+            document.getElementById('newWorkOrderId').value = id;
+            document.getElementById('newWorkOrderDisplay').value = displayName;
+        } else {
+            document.getElementById('editWorkOrderId').value = id;
+            document.getElementById('editWorkOrderDisplay').value = displayName;
+        }
+        closeModal('osSearchModal');
+    }
+
+    function clearOs(target) {
+        if(target === 'new') {
+            document.getElementById('newWorkOrderId').value = '';
+            document.getElementById('newWorkOrderDisplay').value = '';
+        } else {
+            document.getElementById('editWorkOrderId').value = '';
+            document.getElementById('editWorkOrderDisplay').value = '';
+        }
+    }
+
+    // --- CÁLCULOS E OUTROS MODAIS ---
     function calculateDiscountPreview() {
         const grossStr = document.getElementById('newReceivableGross').value;
         const gross = parseFloat(grossStr) || 0;
@@ -730,23 +978,7 @@
             .classList.remove("hidden");
     }
 
-    function updateReceivePreview() {
-        const amount = parseFloat(document.getElementById("receiveAmountInput")?.value) || 0;
-        const fee = parseFloat(document.getElementById("receiveCardFee")?.value) || 0;
-        const preview = document.getElementById("netPreview");
-        if (!preview) return;
-        if (fee > 0 && amount > 0) {
-            const feeAmount = amount * (fee / 100);
-            const net = amount - feeAmount;
-            preview.innerText =
-                `Taxa ${fee.toFixed(2)}%: R$ ${feeAmount.toFixed(2)}→ líquido: R$ ${net.toFixed(2)}`;
-        } else {
-            preview.innerText = "";
-        }
-    }
-
     function confirmCancel(id){
-
         document.getElementById("cancelForm").action =
             "/receivables/cancel/" + id;
 
@@ -786,7 +1018,7 @@
         }
     }
 
-    function openEditModal(id, description, total, dueDate, installments, notes, client, workOrder, receivedAmount, referenceMonth){
+    function openEditModal(id, description, total, dueDate, installments, notes, client, workOrder, receivedAmount, referenceMonth, paymentStageArg){
         document.getElementById("editForm").action = "/receivables/edit/" + id;
         document.getElementById("editDescription").value = description || "";
         document.getElementById("editTotalAmount").value = total || "";
@@ -794,11 +1026,31 @@
         document.getElementById("editReferenceMonth").value = referenceMonth || "";
         document.getElementById("editInstallments").value = installments || 1;
         document.getElementById("editNotes").value = notes || "";
-        document.getElementById("editClient").value = client || "";
-        document.getElementById("editWorkOrder").value = workOrder || "";
         document.getElementById("editReceivedAmount").value = receivedAmount || 0;
 
-        const paymentStage = receivable.paymentStage || 'unico';
+        // Assinalar o cliente visualmente
+        document.getElementById("editClientId").value = client || "";
+        if(client) {
+            const cObj = clientsList.find(c => c.id === client);
+            document.getElementById("editClientDisplay").value = cObj ? cObj.name : "";
+        } else {
+            document.getElementById("editClientDisplay").value = "";
+        }
+
+        // Assinalar a O.S. visualmente
+        document.getElementById("editWorkOrderId").value = workOrder || "";
+        if(workOrder) {
+            const wObj = osList.find(wo => wo.id === workOrder);
+            if(wObj) {
+                document.getElementById("editWorkOrderDisplay").value = wObj.number + (wObj.clientName ? ` (${wObj.clientName})` : "");
+            } else {
+                document.getElementById("editWorkOrderDisplay").value = "";
+            }
+        } else {
+            document.getElementById("editWorkOrderDisplay").value = "";
+        }
+
+        const paymentStage = paymentStageArg || 'unico';
         document.querySelectorAll('input[name="paymentStage"]').forEach(radio => {
             radio.checked = radio.value === paymentStage;
         });
@@ -819,11 +1071,9 @@
         const dateTo = `${year}-${month}-${lastDay}`;
 
         const currentPath = window.location.pathname;
-
         const url = `${currentPath}/export?dateFrom=${dateFrom}&dateTo=${dateTo}`;
 
         window.location.href = url;
-
         closeModal('exportModal');
     }
 
