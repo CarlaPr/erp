@@ -76,7 +76,7 @@
         <nav class="flex-1 overflow-y-auto px-5 py-2 space-y-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
 
             <!-- SETOR COMERCIAL: Visível para GESTAO, TECNICO e COMERCIAL -->
-            <div sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO', 'TECNICO', 'COMERCIAL')" class="space-y-1">
+            <div sec:authorize="hasAnyAuthority('GESTAO', 'TECNICO', 'VENDAS')" class="space-y-1">
                 <div class="px-3 pt-3 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Comercial</div>
 
                 <a href="/commercial" th:classappend="${currentPage == 'commercial'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
@@ -93,7 +93,7 @@
                 </a>
             </div>
 
-            <div sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO', 'TECNICO')" class="space-y-1">
+            <div sec:authorize="hasAnyAuthority('GESTAO', 'TECNICO')" class="space-y-1">
                 <div class="px-3 pt-6 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Administrativo</div>
 
                 <a href="/dashboard" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'dashboard'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
