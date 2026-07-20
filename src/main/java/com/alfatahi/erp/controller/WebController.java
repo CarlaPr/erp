@@ -70,28 +70,24 @@ public class WebController {
         LocalDate fimMes    = ym.atEndOfMonth().plusDays(1);  // exclusive para queries
 
         // ═══════════════════════════════════════════════════════════════════════
-        // CAIXA REAL — apenas dinheiro que efetivamente entrou ou saiu
+        // CAIXA REAL — Global (Independente do mês selecionado)
         // ═══════════════════════════════════════════════════════════════════════
 
-        // Total recebido (líquido = após deduzir taxa de cartão) do mês selecionado
+        // Total recebido de todos os tempos (saldo real global)
         BigDecimal totalRecebidoReal = receivableRepo.findAll().stream()
                 .filter(r -> ("received".equals(r.getStatus()) || "partial".equals(r.getStatus()))
-                        && r.getPaymentDate() != null
-                        && !r.getPaymentDate().isBefore(inicioMes)
-                        && r.getPaymentDate().isBefore(fimMes))
+                        && r.getPaymentDate() != null)
                 .map(AccountsReceivable::getReceivedAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Total pago (saiu do caixa) do mês selecionado
+        // Total pago de todos os tempos (saldo real global)
         BigDecimal totalPagoReal = payableRepo.findAll().stream()
                 .filter(p -> ("paid".equals(p.getStatus()) || "partial".equals(p.getStatus()))
-                        && p.getPaymentDate() != null
-                        && !p.getPaymentDate().isBefore(inicioMes)
-                        && p.getPaymentDate().isBefore(fimMes))
+                        && p.getPaymentDate() != null)
                 .map(AccountsPayable::getPaidAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Saldo Real do mês = dinheiro que entrou – dinheiro que saiu (NUNCA soma previsão)
+        // Saldo Real = Todo dinheiro que já entrou – todo dinheiro que já saiu (Saldo Global)
         BigDecimal saldoReal = totalRecebidoReal.subtract(totalPagoReal);
 
         // Entradas de hoje (se for o mês atual)
