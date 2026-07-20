@@ -47,12 +47,11 @@
 
 <main class="flex-1 lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 min-h-screen max-w-full overflow-x-hidden">
 
-    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
-        <div>
-
+    <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-10">
+        <div class="flex-1">
             <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none">Dashboard Executivo</h1>
             <p class="text-slate-500 dark:text-slate-400 mt-1.5 text-sm">
-                Visão consolidada do negócio ·
+                Visão consolidada do negócio sobre o mês selecionado ·
                 <span class="text-slate-700 dark:text-slate-300 font-semibold"
                       th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">
                             02/07/2026
@@ -60,24 +59,52 @@
             </p>
         </div>
 
-        <div class="flex items-center gap-3 flex-shrink-0">
-            <a href="/work-orders"
-               class="flex items-center gap-2 bg-white dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm dark:shadow-none">
-                <i data-lucide="clipboard-list" class="w-4 h-4"></i> Ordens de Serviço
-            </a>
-            <a href="/quotes"
-               class="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 dark:hover:bg-cyan-400 text-white dark:text-slate-900 font-black px-4 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/25">
-                <i data-lucide="file-plus-2" class="w-4 h-4"></i> Novo Orçamento
-            </a>
+        <!-- Filtro de Período -->
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <div class="flex gap-2 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2 shadow-sm dark:shadow-none">
+                <select id="mesSelecionado" onchange="atualizarDashboard()"
+                        class="bg-transparent dark:text-white text-sm font-semibold px-3 py-1.5 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer">
+                    <option th:each="m : ${#numbers.sequence(1, 12)}"
+                            th:value="${m}"
+                            th:text="${'Janeiro,Fevereiro,Março,Abril,Maio,Junho,Julho,Agosto,Setembro,Outubro,Novembro,Dezembro'.split(',')[m-1]}"
+                            th:selected="${m == mesSelecionado}">Janeiro</option>
+                </select>
+                <select id="anoSelecionado" onchange="atualizarDashboard()"
+                        class="bg-transparent dark:text-white text-sm font-semibold px-3 py-1.5 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer">
+                    <option th:each="a : ${#numbers.sequence(2023, 2026)}"
+                            th:value="${a}"
+                            th:text="${a}"
+                            th:selected="${a == anoSelecionado}">2024</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <a href="/work-orders"
+                   class="flex items-center gap-2 bg-white dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm dark:shadow-none">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Ordens de Serviço
+                </a>
+                <a href="/quotes"
+                   class="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 dark:hover:bg-cyan-400 text-white dark:text-slate-900 font-black px-4 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/25">
+                    <i data-lucide="file-plus-2" class="w-4 h-4"></i> Novo Orçamento
+                </a>
+            </div>
         </div>
     </header>
+
+    <script>
+        function atualizarDashboard() {
+            const mes = document.getElementById('mesSelecionado').value;
+            const ano = document.getElementById('anoSelecionado').value;
+            window.location.href = `/dashboard?mes=${mes}&ano=${ano}`;
+        }
+    </script>
 
     <section class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
 
         <div class="kpi-card kpi-accent relative bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 card-hover shadow-sm dark:shadow-none"
              style="--accent: linear-gradient(90deg,#f59e0b,#fbbf24); animation-delay:.1s">
             <div class="flex items-start justify-between mb-4">
-                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Receber<br><span class="text-amber-500">Previsto</span></span>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Receber<br><span class="text-amber-500">Previsto no Mês Selecionado</span></span>
                 <span class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center flex-shrink-0">
           <i data-lucide="clock" class="w-4.5 h-4.5 text-amber-600 dark:text-amber-400"></i>
         </span>
@@ -95,7 +122,7 @@
         <div class="kpi-card kpi-accent relative bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 card-hover shadow-sm dark:shadow-none"
              style="--accent: linear-gradient(90deg,#f43f5e,#fb7185); animation-delay:.15s">
             <div class="flex items-start justify-between mb-4">
-                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Pagar<br><span class="text-rose-500">Previsto</span></span>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Pagar<br><span class="text-rose-500">Previsto no Mês Selecionado</span></span>
                 <span class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-500/15 flex items-center justify-center flex-shrink-0">
           <i data-lucide="arrow-down-circle" class="w-4.5 h-4.5 text-rose-600 dark:text-rose-400"></i>
         </span>
