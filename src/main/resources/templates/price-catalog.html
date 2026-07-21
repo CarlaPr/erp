@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Catálogo de Insumos - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Catálogo de Insumos</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Tabela de preços de compra (vidros, alumínio, ferragens, silicone e acessórios). Fonte usada pelo Plano de Corte para calcular custos previstos.</p>
+        </div>
+        <div class="flex gap-2">
+            <label class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-5 rounded-xl flex items-center gap-2 cursor-pointer text-sm">
+                <i data-lucide="upload" class="w-5 h-5"></i> Importar Excel
+                <input type="file" id="importFile" accept=".xlsx,.xls" class="hidden" onchange="importExcel()">
+            </label>
+            <button onclick="openForm()" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:text-slate-900 font-bold py-3 px-5 rounded-xl flex items-center gap-2 text-sm">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Insumo
+            </button>
+        </div>
+    </header>
+
+    <p class="text-xs text-slate-400 mb-4">
+        A importação em lote aceita planilhas .xlsx com as colunas: categoria, nome, fabricante, tipo_vidro, espessura, cor,
+        acabamento, linha_aluminio, perfil_aluminio, categoria_ferragem, codigo, unidade, preco, preco_minimo.
+        Itens com o mesmo nome/categoria são atualizados (gerando novo registro de histórico); os demais são criados.
+    </p>
+
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead><tr class="text-left text-[11px] uppercase text-slate-500 border-b border-slate-200 dark:border-slate-700">
+                <th class="py-3 px-4">Categoria</th><th class="py-3 px-4">Nome</th><th class="py-3 px-4">Especificação</th>
+                <th class="py-3 px-4">Unidade</th><th class="py-3 px-4">Preço</th><th class="py-3 px-4">Vigência</th>
+                <th class="py-3 px-4">Fornecedor</th><th class="py-3 px-4">Status</th><th></th>
+            </tr></thead>
+            <tbody>
+                <tr th:each="i : ${items}" class="border-b border-slate-100 dark:border-slate-800">
+                    <td class="py-2 px-4" th:text="${i.category}"></td>
+                    <td class="py-2 px-4 font-bold" th:text="${i.name}"></td>
+                    <td class="py-2 px-4 text-xs text-slate-500"
+                        th:text="${i.category.name() == 'GLASS'} ? (${i.glassType} + ' ' + ${i.thickness} + 'mm ' + ${i.color} + ' ' + ${i.finish}) :
+                                  (${i.category.name() == 'ALUMINUM'} ? (${i.aluminumLine} + ' ' + ${i.aluminumProfile}) :
+                                  (${i.hardwareCategory} ?: ${i.code}))"></td>
+                    <td class="py-2 px-4" th:text="${i.unit}"></td>
+                    <td class="py-2 px-4 font-black" th:text="'R$ ' + ${#numbers.formatDecimal(i.price, 1, 'POINT', 4, 'COMMA')}"></td>
+                    <td class="py-2 px-4 text-xs" th:text="${i.effectiveDate != null ? #temporals.format(i.effectiveDate, 'dd/MM/yyyy') : '-'}"></td>
+                    <td class="py-2 px-4 text-xs" th:text="${i.supplier != null ? i.supplier.name : '-'}"></td>
+                    <td class="py-2 px-4">
+                        <span th:if="${i.active}" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">Ativo</span>
+                        <span th:unless="${i.active}" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-500">Inativo</span>
+                    </td>
+                    <td class="py-2 px-4 text-right">
+                        <button th:data-id="${i.id}" onclick="editItem(this)" class="text-slate-400 hover:text-brand-600 mr-2"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button th:data-id="${i.id}" onclick="viewHistory(this)" class="text-slate-400 hover:text-violet-600 mr-2"><i data-lucide="history" class="w-4 h-4"></i></button>
+                        <button th:data-id="${i.id}" onclick="deleteItem(this)" class="text-rose-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <p th:if="${#lists.isEmpty(items)}" class="text-center text-slate-400 py-10">Nenhum insumo cadastrado ainda.</p>
+    </div>
+</main>
+
+<!-- Modal item -->
+<div id="itemModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-2xl my-8">
+        <h3 class="font-black text-lg mb-1" id="itemModalTitle">Insumo do Catálogo</h3>
+        <p class="text-xs text-slate-400 mb-4">Alterar o preço aqui gera automaticamente um novo registro no histórico de preços.</p>
+        <input type="hidden" id="fId">
+        <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-xs font-bold text-slate-500">Categoria</label>
+                <select id="fCategory" onchange="toggleFields()" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                    <option th:each="c : ${categories}" th:value="${c}" th:text="${c}"></option>
+                </select>
+            </div>
+            <div><label class="text-xs font-bold text-slate-500">Unidade</label>
+                <select id="fUnit" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                    <option th:each="u : ${units}" th:value="${u}" th:text="${u}"></option>
+                </select>
+            </div>
+            <div class="col-span-2"><label class="text-xs font-bold text-slate-500">Nome</label><input id="fName" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+            <div><label class="text-xs font-bold text-slate-500">Fabricante</label><input id="fManufacturer" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+            <div><label class="text-xs font-bold text-slate-500">Fornecedor</label>
+                <select id="fSupplier" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                    <option value="">-</option>
+                    <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                </select>
+            </div>
+
+            <div id="glassFields" class="col-span-2 grid grid-cols-4 gap-3">
+                <div><label class="text-xs font-bold text-slate-500">Tipo</label><input id="fGlassType" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+                <div><label class="text-xs font-bold text-slate-500">Espessura</label><input id="fThickness" type="number" step="0.1" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+                <div><label class="text-xs font-bold text-slate-500">Cor</label><input id="fColor" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+                <div><label class="text-xs font-bold text-slate-500">Acabamento</label><input id="fFinish" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+            </div>
+            <div id="aluminumFields" class="col-span-2 grid grid-cols-2 gap-3 hidden">
+                <div><label class="text-xs font-bold text-slate-500">Linha</label><input id="fAluminumLine" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+                <div><label class="text-xs font-bold text-slate-500">Perfil</label><input id="fAluminumProfile" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+            </div>
+            <div id="hardwareFields" class="col-span-2 hidden">
+                <label class="text-xs font-bold text-slate-500">Categoria da Ferragem</label><input id="fHardwareCategory" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+            </div>
+            <div><label class="text-xs font-bold text-slate-500">Código</label><input id="fCode" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+
+            <div><label class="text-xs font-bold text-slate-500">Preço</label><input id="fPrice" type="number" step="0.0001" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+            <div><label class="text-xs font-bold text-slate-500">Preço Mínimo</label><input id="fMinPrice" type="number" step="0.0001" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+            <div class="col-span-2"><label class="text-xs font-bold text-slate-500">Motivo da alteração (se for atualização de preço)</label><input id="fReason" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700" placeholder="Ex: reajuste tabela julho/2026 do fornecedor X"></div>
+            <div class="col-span-2"><label class="text-xs font-bold text-slate-500">Observações</label><textarea id="fNotes" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></textarea></div>
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+            <button onclick="closeModal('itemModal')" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm">Cancelar</button>
+            <button onclick="submitItem()" class="px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<div id="historyModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-lg">
+        <h3 class="font-black text-lg mb-4">Histórico de Preços</h3>
+        <div id="historyBody" class="space-y-2 text-sm max-h-96 overflow-y-auto"></div>
+        <div class="flex justify-end mt-4"><button onclick="closeModal('historyModal')" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm">Fechar</button></div>
+    </div>
+</div>
+
+<script>
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+
+    function toggleFields() {
+        const cat = document.getElementById('fCategory').value;
+        document.getElementById('glassFields').classList.toggle('hidden', cat !== 'GLASS');
+        document.getElementById('aluminumFields').classList.toggle('hidden', cat !== 'ALUMINUM');
+        document.getElementById('hardwareFields').classList.toggle('hidden', cat !== 'HARDWARE');
+    }
+
+    function openForm() {
+        ['fId','fName','fManufacturer','fGlassType','fThickness','fColor','fFinish','fAluminumLine','fAluminumProfile',
+         'fHardwareCategory','fCode','fPrice','fMinPrice','fReason','fNotes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('fSupplier').value = '';
+        document.getElementById('itemModalTitle').innerText = 'Novo Insumo';
+        toggleFields();
+        openModal('itemModal');
+    }
+
+    async function editItem(btn) {
+        const id = btn.getAttribute('data-id');
+        const res = await fetch('/price-catalog/' + id);
+        if (!res.ok) { alert('Não foi possível carregar o insumo.'); return; }
+        const item = await res.json();
+
+        document.getElementById('fId').value = item.id;
+        document.getElementById('fCategory').value = item.category;
+        document.getElementById('fName').value = item.name || '';
+        document.getElementById('fManufacturer').value = item.manufacturer || '';
+        document.getElementById('fSupplier').value = item.supplier ? item.supplier.id : '';
+        document.getElementById('fGlassType').value = item.glassType || '';
+        document.getElementById('fThickness').value = item.thickness != null ? item.thickness : '';
+        document.getElementById('fColor').value = item.color || '';
+        document.getElementById('fFinish').value = item.finish || '';
+        document.getElementById('fAluminumLine').value = item.aluminumLine || '';
+        document.getElementById('fAluminumProfile').value = item.aluminumProfile || '';
+        document.getElementById('fHardwareCategory').value = item.hardwareCategory || '';
+        document.getElementById('fCode').value = item.code || '';
+        document.getElementById('fUnit').value = item.unit;
+        document.getElementById('fPrice').value = item.price != null ? item.price : '';
+        document.getElementById('fMinPrice').value = item.minPrice != null ? item.minPrice : '';
+        document.getElementById('fReason').value = '';
+        document.getElementById('fNotes').value = item.notes || '';
+
+        document.getElementById('itemModalTitle').innerText = 'Editar Insumo — ' + item.name;
+        toggleFields();
+        openModal('itemModal');
+    }
+
+    async function submitItem() {
+        const payload = {
+            id: document.getElementById('fId').value || null,
+            category: document.getElementById('fCategory').value,
+            name: document.getElementById('fName').value,
+            manufacturer: document.getElementById('fManufacturer').value,
+            supplierId: document.getElementById('fSupplier').value || null,
+            glassType: document.getElementById('fGlassType').value,
+            thickness: document.getElementById('fThickness').value || null,
+            color: document.getElementById('fColor').value,
+            finish: document.getElementById('fFinish').value,
+            aluminumLine: document.getElementById('fAluminumLine').value,
+            aluminumProfile: document.getElementById('fAluminumProfile').value,
+            hardwareCategory: document.getElementById('fHardwareCategory').value,
+            code: document.getElementById('fCode').value,
+            unit: document.getElementById('fUnit').value,
+            price: document.getElementById('fPrice').value,
+            minPrice: document.getElementById('fMinPrice').value || null,
+            reason: document.getElementById('fReason').value,
+            notes: document.getElementById('fNotes').value
+        };
+        const res = await fetch('/price-catalog/save-ajax', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken }, body: JSON.stringify(payload)
+        });
+        if (!res.ok) { alert('Erro ao salvar: ' + await res.text()); return; }
+        closeModal('itemModal');
+        window.location.reload();
+    }
+
+    async function deleteItem(btn) {
+        if (!confirm('Excluir este insumo do catálogo?')) return;
+        await fetch('/price-catalog/' + btn.getAttribute('data-id'), { method: 'DELETE', headers: { [csrfHeader]: csrfToken } });
+        window.location.reload();
+    }
+
+    async function viewHistory(btn) {
+        const res = await fetch('/price-catalog/' + btn.getAttribute('data-id') + '/history');
+        const rows = await res.json();
+        const body = document.getElementById('historyBody');
+        body.innerHTML = rows.length ? '' : '<p class="text-slate-400">Sem histórico registrado.</p>';
+        rows.forEach(h => {
+            body.innerHTML += `<div class="border-b border-slate-100 dark:border-slate-800 pb-2">
+                <div class="flex justify-between"><b>R$ ${Number(h.newPrice).toFixed(4)}</b><span class="text-xs text-slate-400">${new Date(h.changedAt).toLocaleString('pt-BR')}</span></div>
+                <p class="text-xs text-slate-500">Anterior: ${h.oldPrice != null ? 'R$ ' + Number(h.oldPrice).toFixed(4) : '-'} · Por: ${h.changedBy || '-'}</p>
+                <p class="text-xs text-slate-500">${h.reason || ''}</p>
+            </div>`;
+        });
+        openModal('historyModal');
+    }
+
+    async function importExcel() {
+        const file = document.getElementById('importFile').files[0];
+        if (!file) return;
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/price-catalog/import', { method: 'POST', headers: { [csrfHeader]: csrfToken }, body: fd });
+        const result = await res.json();
+        if (result.error) { alert('Erro: ' + result.error); return; }
+        alert(`Importação concluída: ${result.imported} insumo(s) atualizado(s)/criado(s).` + (result.errors && result.errors.length ? `\nErros:\n${result.errors.join('\n')}` : ''));
+        window.location.reload();
+    }
+
+    lucide.createIcons();
+</script>
+</body>
+</html>

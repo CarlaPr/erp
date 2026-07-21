@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Regras de Desconto - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Regras de Desconto e Folga Técnica</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Parametrize os descontos/folgas usados no cálculo automático da medida final de corte no Plano de Corte. Nenhum valor fica fixo no código — edite livremente conforme o fabricante/linha de perfil.</p>
+        </div>
+        <button onclick="openForm()" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:text-slate-900 font-bold py-3 px-5 rounded-xl flex items-center gap-2 text-sm">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Conjunto de Regras
+        </button>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div th:each="rs : ${ruleSets}" class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <div class="flex justify-between items-start mb-2">
+                <h3 class="font-black text-slate-900 dark:text-white" th:text="${rs.name}"></h3>
+                <div class="flex gap-2">
+                    <button th:data-id="${rs.id}" onclick="deleteRuleSet(this)" class="text-rose-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+            <p class="text-xs text-slate-500 mb-3" th:text="${rs.description}"></p>
+            <table class="w-full text-xs">
+                <thead><tr class="text-left uppercase text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                    <th class="py-1">Parâmetro</th><th class="py-1">Dimensão</th><th class="py-1">Valor (mm)</th>
+                </tr></thead>
+                <tbody>
+                    <tr th:each="p : ${rs.parameters}" class="border-b border-slate-50 dark:border-slate-800/50">
+                        <td class="py-1" th:text="${p.label}"></td>
+                        <td class="py-1" th:text="${p.dimension}"></td>
+                        <td class="py-1 font-bold" th:text="${p.valueMm}"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button th:data-id="${rs.id}" onclick="editRuleSet(this)" class="mt-3 text-brand-600 dark:text-cyan-400 font-bold text-xs hover:underline">Editar parâmetros</button>
+        </div>
+        <div th:if="${#lists.isEmpty(ruleSets)}" class="md:col-span-2 text-center py-12 text-slate-400">Nenhum conjunto de regras cadastrado.</div>
+    </div>
+</main>
+
+<div id="formModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-2xl my-8">
+        <h3 class="font-black text-lg mb-4" id="formModalTitle">Conjunto de Regras</h3>
+        <input type="hidden" id="rsId">
+        <div class="grid grid-cols-2 gap-3 mb-3">
+            <div><label class="text-xs font-bold text-slate-500">Nome</label><input id="rsName" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+            <div><label class="text-xs font-bold text-slate-500">Tipo de vidro (opcional)</label><input id="rsGlassType" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+            <div class="col-span-2"><label class="text-xs font-bold text-slate-500">Descrição</label><input id="rsDescription" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+        </div>
+
+        <div class="flex justify-between items-center mb-2">
+            <h4 class="font-bold text-sm">Parâmetros</h4>
+            <button onclick="addParamRow()" class="text-brand-600 dark:text-cyan-400 text-xs font-bold hover:underline flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar parâmetro</button>
+        </div>
+        <div id="paramRows" class="space-y-2"></div>
+
+        <div class="flex justify-end gap-2 mt-6">
+            <button onclick="closeModal('formModal')" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm">Cancelar</button>
+            <button onclick="submitRuleSet()" class="px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+
+    function paramRowHtml(key = '', label = '', dimension = 'BOTH', value = 0) {
+        return `<div class="grid grid-cols-12 gap-2 items-center param-row">
+            <input class="col-span-3 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-xs param-key" placeholder="chave (ex: LATERAL_DISCOUNT)" value="${key}">
+            <input class="col-span-4 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-xs param-label" placeholder="Rótulo (ex: Desconto lateral)" value="${label}">
+            <select class="col-span-2 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-xs param-dimension">
+                <option value="WIDTH" ${dimension==='WIDTH'?'selected':''}>Largura</option>
+                <option value="HEIGHT" ${dimension==='HEIGHT'?'selected':''}>Altura</option>
+                <option value="BOTH" ${dimension==='BOTH'?'selected':''}>Ambas</option>
+            </select>
+            <input type="number" step="0.1" class="col-span-2 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-xs param-value" value="${value}">
+            <button onclick="this.closest('.param-row').remove()" class="col-span-1 text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>`;
+    }
+
+    function addParamRow() {
+        document.getElementById('paramRows').insertAdjacentHTML('beforeend', paramRowHtml());
+        lucide.createIcons();
+    }
+
+    function openForm() {
+        document.getElementById('rsId').value = '';
+        document.getElementById('rsName').value = '';
+        document.getElementById('rsGlassType').value = '';
+        document.getElementById('rsDescription').value = '';
+        document.getElementById('formModalTitle').innerText = 'Novo Conjunto de Regras';
+        document.getElementById('paramRows').innerHTML = '';
+        addParamRow();
+        openModal('formModal');
+        lucide.createIcons();
+    }
+
+    async function editRuleSet(btn) {
+        const id = btn.getAttribute('data-id');
+        const res = await fetch('/cut-rule-sets/' + id);
+        if (!res.ok) { alert('Não foi possível carregar o conjunto de regras.'); return; }
+        const rs = await res.json();
+
+        document.getElementById('rsId').value = rs.id;
+        document.getElementById('rsName').value = rs.name || '';
+        document.getElementById('rsGlassType').value = rs.glassType || '';
+        document.getElementById('rsDescription').value = rs.description || '';
+        document.getElementById('formModalTitle').innerText = 'Editar Conjunto de Regras — ' + rs.name;
+
+        const rows = document.getElementById('paramRows');
+        rows.innerHTML = '';
+        (rs.parameters || []).forEach(p => rows.insertAdjacentHTML('beforeend', paramRowHtml(p.paramKey, p.label, p.dimension, p.valueMm)));
+        if (!rs.parameters || rs.parameters.length === 0) addParamRow();
+
+        openModal('formModal');
+        lucide.createIcons();
+    }
+
+    async function submitRuleSet() {
+        const parameters = Array.from(document.querySelectorAll('.param-row')).map(row => ({
+            paramKey: row.querySelector('.param-key').value,
+            label: row.querySelector('.param-label').value,
+            dimension: row.querySelector('.param-dimension').value,
+            valueMm: parseFloat(row.querySelector('.param-value').value) || 0
+        }));
+        const payload = {
+            id: document.getElementById('rsId').value || null,
+            name: document.getElementById('rsName').value,
+            glassType: document.getElementById('rsGlassType').value,
+            description: document.getElementById('rsDescription').value,
+            active: true,
+            parameters
+        };
+        const res = await fetch('/cut-rule-sets/save-ajax', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken }, body: JSON.stringify(payload)
+        });
+        if (!res.ok) { alert('Erro ao salvar: ' + await res.text()); return; }
+        closeModal('formModal');
+        window.location.reload();
+    }
+
+    async function deleteRuleSet(btn) {
+        if (!confirm('Excluir este conjunto de regras?')) return;
+        await fetch('/cut-rule-sets/' + btn.getAttribute('data-id'), { method: 'DELETE', headers: { [csrfHeader]: csrfToken } });
+        window.location.reload();
+    }
+
+    lucide.createIcons();
+</script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 package com.alfatahi.erp.service.report;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.openhtmltopdf.svgsupport.BatikSVGDrawer;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -32,6 +33,7 @@ public class PdfReportService {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
+            builder.useSVGDrawer(new BatikSVGDrawer());
             builder.withHtmlContent(html, null);
             builder.toStream(out);
             builder.run();

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Plano de Corte</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @page { size: A4; margin: 12mm 10mm 18mm 10mm;
+            @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 8px; color: #6b7280; }
+        }
+        body { font-family: 'Inter', sans-serif; font-size: 10px; color: #1e293b; }
+        .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #111827; padding-bottom: 10px; margin-bottom: 12px; }
+        .company-name { font-size: 14px; font-weight: 900; text-transform: uppercase; }
+        .badge { background: #111827; color: #fff; padding: 8px 14px; border-radius: 8px; text-align: right; }
+        .badge-title { font-size: 8px; text-transform: uppercase; letter-spacing: 1.5px; color: #9ca3af; }
+        .badge-value { font-size: 16px; font-weight: 900; }
+
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+        .info-table td { font-size: 9.5px; padding: 3px 6px; vertical-align: top; }
+        .info-label { color: #64748b; font-weight: bold; text-transform: uppercase; font-size: 7.5px; }
+
+        .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; margin: 14px 0 6px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; }
+
+        table.data-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 8px; }
+        table.data-table th { background: #111827; color: #fff; text-transform: uppercase; font-size: 7.8px; padding: 5px 6px; text-align: left; }
+        table.data-table td { padding: 4px 6px; border-bottom: 1px solid #eef2f7; }
+        table.data-table tbody tr:nth-child(even) { background: #f8fafc; }
+        .num { text-align: right; font-family: 'Courier New', monospace; }
+
+        .cost-table { width: 60%; margin-top: 6px; border-collapse: collapse; }
+        .cost-table td { padding: 4px 8px; font-size: 9.5px; }
+        .cost-table .total-row td { border-top: 2px solid #111827; font-weight: 900; }
+
+        .footer-box { margin-top: 20px; border-top: 1px solid #cbd5e1; padding-top: 8px; font-size: 8.5px; color: #64748b; }
+        .signature-line { margin-top: 34px; width: 220px; border-top: 1px solid #334155; text-align: center; font-size: 8.5px; padding-top: 4px; }
+
+        .drawing-box { border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; page-break-inside: avoid; }
+        .drawing-box svg { width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+
+<table class="header-table">
+    <tr>
+        <td>
+            <div class="company-name" th:text="${workOrder.client != null ? '' : ''}"></div>
+            <div class="company-name">TAHI GLASS</div>
+            <div style="font-size:9px;color:#475569;margin-top:2px;">Plano de Corte enviado para fornecedor de vidros / têmpera</div>
+        </td>
+        <td style="text-align:right;">
+            <div class="badge">
+                <div class="badge-title">Plano de Corte</div>
+                <div class="badge-value" th:text="${plan.title}">Plano de Corte 01</div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<table class="info-table">
+    <tr>
+        <td style="width:25%;"><div class="info-label">Ordem de Serviço</div><div th:text="${workOrder.number}"></div></td>
+        <td style="width:25%;"><div class="info-label">Cliente</div><div th:text="${workOrder.client != null ? workOrder.client.name : '-'}"></div></td>
+        <td style="width:25%;"><div class="info-label">Cidade</div><div th:text="${workOrder.client != null ? workOrder.client.city : '-'}"></div></td>
+        <td style="width:25%;"><div class="info-label">Telefone</div><div th:text="${workOrder.client != null ? workOrder.client.phone : '-'}"></div></td>
+    </tr>
+    <tr>
+        <td><div class="info-label">Serviço</div><div th:text="${workOrder.category != null ? workOrder.category.name : '-'}"></div></td>
+        <td><div class="info-label">Status</div><div th:text="${plan.status}"></div></td>
+        <td><div class="info-label">Origem</div><div th:text="${workOrder.quote != null ? ('Orçamento ' + workOrder.quote.number) : 'Manual'}"></div></td>
+        <td><div class="info-label">Responsável</div><div th:text="${plan.responsible ?: '-'}"></div></td>
+    </tr>
+</table>
+
+<div class="section-title">Lista de Vidros / Croqui Técnico</div>
+<table class="data-table">
+    <thead>
+    <tr>
+        <th>#</th><th>Descrição / Ambiente</th><th>Vidro</th><th>Bruta (mm)</th><th>Final (mm)</th>
+        <th>Qtd</th><th>Área (m²)</th><th>Ângulo / Borda</th><th>Furos/Recortes</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="it, iter : ${plan.items}">
+        <td th:text="${iter.count}"></td>
+        <td th:text="${it.description} + ' / ' + ${it.environment ?: '-'}"></td>
+        <td th:text="${it.glassType} + ' ' + ${it.thickness} + 'mm ' + ${it.color} + ' ' + ${it.finish}"></td>
+        <td th:text="${it.grossWidth} + ' x ' + ${it.grossHeight}"></td>
+        <td th:text="${it.finalWidth} + ' x ' + ${it.finalHeight}"></td>
+        <td class="num" th:text="${it.quantity}"></td>
+        <td class="num" th:text="${#numbers.formatDecimal(it.area, 1, 'POINT', 3, 'COMMA')}"></td>
+        <td th:text="${it.angleType ?: '-'} + ' / ' + ${it.edgeWork ?: '-'}"></td>
+        <td th:text="${it.drillingCount ?: 0} + ' furo(s) / ' + ${it.notchCount ?: 0} + ' recorte(s)'"></td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="section-title">Croqui Técnico (Vista Frontal das Peças)</div>
+<div th:each="it : ${plan.items}" class="drawing-box">
+    <th:block th:utext="${itemDrawings.get(it.id)}"></th:block>
+</div>
+
+<div class="section-title">Lista de Materiais (Ferragens / Alumínio / Silicone / Outros)</div>
+<table class="data-table">
+    <thead><tr><th>Categoria</th><th>Descrição</th><th>Qtd</th><th>Unidade</th><th>Fornecedor</th></tr></thead>
+    <tbody>
+    <tr th:each="m : ${plan.materials}">
+        <td th:text="${m.category}"></td>
+        <td th:text="${m.description}"></td>
+        <td class="num" th:text="${m.quantity}"></td>
+        <td th:text="${m.unit ?: '-'}"></td>
+        <td th:text="${m.supplierName ?: '-'}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="section-title">Resumo de Custos Previstos</div>
+<table class="cost-table">
+    <tr><td>Área total de vidro</td><td class="num" th:text="${#numbers.formatDecimal(plan.glassArea, 1, 'POINT', 3, 'COMMA')} + ' m²'"></td></tr>
+    <tr><td>Peso estimado</td><td class="num" th:text="${#numbers.formatDecimal(plan.estimatedWeight, 1, 'POINT', 2, 'COMMA')} + ' kg'"></td></tr>
+    <tr><td>Custo dos vidros</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.glassCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+    <tr><td>Ferragens</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.hardwareCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+    <tr><td>Alumínio</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.aluminumCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+    <tr><td>Silicone</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.siliconeCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+    <tr><td>Outros materiais</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.otherMaterialsCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+    <tr class="total-row"><td>Custo Previsto Total da Produção</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.totalCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+</table>
+
+<div th:if="${plan.notes != null and !plan.notes.isEmpty()}">
+    <div class="section-title">Observações</div>
+    <p style="font-size:9.5px;" th:text="${plan.notes}"></p>
+</div>
+
+<div class="footer-box">
+    <p>Documento gerado automaticamente pelo ERP Tahi Glass em <span th:text="${#temporals.format(generatedAt, 'dd/MM/yyyy HH:mm')}"></span>. Os valores de custo são uma previsão técnica de compra, calculada a partir da tabela de preços vigente no momento da geração deste plano.</p>
+    <div class="signature-line">Responsável Técnico</div>
+</div>
+
+</body>
+</html>

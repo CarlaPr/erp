@@ -21,7 +21,7 @@
     </header>
 
     <!-- BLOCO DE KPIS GLOBAIS - OCULTO PARA A ROLE TECNICO -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" sec:authorize="!hasAuthority('TECNICO')">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8" sec:authorize="!hasAuthority('TECNICO')">
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
             <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Receita Total</p>
             <p class="text-2xl font-black text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
@@ -37,6 +37,11 @@
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-brand-600 dark:border-l-cyan-500">
             <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Margem Média</p>
             <p class="text-2xl font-black text-brand-700 dark:text-cyan-400" th:text="${#numbers.formatDecimal(averageMargin, 1, 'POINT', 2, 'COMMA')} + '%'">0.00%</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-amber-500">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Custo Previsto de Produção</p>
+            <p class="text-2xl font-black text-amber-600 dark:text-amber-400" th:text="'R$ ' + ${#numbers.formatDecimal(totalPredictedProductionCost, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            <p class="text-[11px] text-slate-400 mt-1">Soma dos Planos de Corte das OS em andamento</p>
         </div>
     </div>
 
@@ -117,6 +122,10 @@
                         </div>
 
                         <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                            <a th:href="@{'/cut-plans/os/' + ${wo.id}}"
+                               class="p-2 hover:bg-amber-100 dark:hover:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg transition-colors" title="Gerar Plano de Corte">
+                                <i data-lucide="scissors" class="w-5 h-5"></i>
+                            </a>
                             <button type="button" th:data-id="${wo.id}" onclick="editOs(this.getAttribute('data-id'))"
                                     class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar">
                                 <i data-lucide="edit" class="w-5 h-5"></i>
@@ -146,8 +155,8 @@
                     </div>
 
                     <!-- BLOCO DE KPIS INDIVIDUAL - OCULTO PARA A ROLE TECNICO -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6" sec:authorize="!hasAuthority('TECNICO')"
-                         th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}">
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-6" sec:authorize="!hasAuthority('TECNICO')"
+                         th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, custoPrevisto=${cutPlanCosts.get(wo.id) != null ? cutPlanCosts.get(wo.id) : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}, saldoAtual=${receita - custo - custoPrevisto}">
 
                         <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
                             <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Receita</p>
@@ -157,9 +166,13 @@
                             <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Custos</p>
                             <p class="text-sm font-black text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(custo, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
                         </div>
+                        <div class="bg-amber-50 dark:bg-amber-500/10 p-4 rounded-xl" title="Estimativa de Custos vinda do(s) Plano(s) de Corte">
+                            <p class="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase mb-1">Custo Previsto (Produção)</p>
+                            <p class="text-sm font-black text-amber-700 dark:text-amber-400" th:text="'R$ ' + ${#numbers.formatDecimal(custoPrevisto, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                        </div>
                         <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Lucro</p>
-                            <p class="text-sm font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(lucro, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Lucro / Saldo Atual</p>
+                            <p class="text-sm font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(saldoAtual, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
                         </div>
                         <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
                             <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Margem</p>
