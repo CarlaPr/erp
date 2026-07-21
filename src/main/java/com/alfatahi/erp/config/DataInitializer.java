@@ -25,7 +25,6 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Verifica primeiro se o admin JÁ EXISTE para não fazer nada à toa
         if (userRepository.findByUsername("admin").isEmpty()) {
 
             String adminPass = System.getenv("ADMIN_PASSWORD");
