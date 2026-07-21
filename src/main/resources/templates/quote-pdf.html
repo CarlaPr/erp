@@ -4,10 +4,9 @@
     <meta charset="UTF-8"/>
     <title th:text="${'ORC-' + numDisplay + ' – Orçamento'}">Orçamento</title>
     <style>
-        /* ── Reset ─────────────────────────────────────────── */
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* ── Página A4 ──────────────────────────────────────── */
         @page {
             size: A4 portrait;
             margin: 12mm 12mm 30mm 12mm;
@@ -28,7 +27,6 @@
             }
         }
 
-        /* ── Rodapé que repete em cada página ───────────────── */
         #page-footer {
             position: running(page-footer);
             font-size: 8.5px;
@@ -39,7 +37,6 @@
         }
         #page-footer .footer-company { font-size: 9.5px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* ── Base ───────────────────────────────────────────── */
         body {
             font-family: 'Inter', sans-serif;
             font-size: 10.5px;
@@ -49,7 +46,6 @@
             font-weight: 400;
         }
 
-        /* ── Utilitários ────────────────────────────────────── */
         .avoid-break { page-break-inside: avoid; }
         .mono { font-family: 'Inter', sans-serif; font-weight: 700; }
         .label-track {
@@ -60,10 +56,8 @@
             color: #94a3b8;
         }
 
-        /* ── Cabeçalho (empresa + número do orçamento) ──────── */
         .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #0f172a; padding-bottom: 14px; margin-bottom: 16px; }
 
-        /* Sub-tabela: logo ao lado dos dados da empresa (nunca embaixo) */
         .company-block { border-collapse: collapse; }
         .company-logo-cell { vertical-align: middle; padding-right: 16px; width: 1%; white-space: nowrap; }
         .company-logo-cell img { max-height: 58px; max-width: 130px; display: block; }
@@ -82,7 +76,6 @@
         .quote-badge-date-label { font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-top: 1px solid #334155; margin-top: 8px; padding-top: 7px; }
         .quote-badge-date-val { font-size: 11.5px; font-weight: 800; color: #ffffff; }
 
-        /* ── Seção do cliente ───────────────────────────────── */
         .client-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
         .client-table { width: 100%; border-collapse: collapse; }
         .client-bar-cell { width: 4px; background: #0f172a; padding: 0; }
@@ -90,7 +83,6 @@
         .client-name-main { font-size: 17px; font-weight: 800; color: #0f172a; line-height: 1.15; margin-top: 3px; }
         .client-details-row { margin-top: 9px; border-top: 1px solid #e2e8f0; padding-top: 7px; font-size: 9.5px; color: #475569; font-weight: 600; }
 
-        /* ── Tabela de itens ────────────────────────────────── */
         .items-wrapper { border: 1px solid #e2e8f0; border-radius: 14px 14px 0 0; overflow: hidden; margin-bottom: 0; }
         .items-table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
         .items-table th { background: #0f172a; color: #ffffff; font-weight: 700; text-transform: uppercase; font-size: 8.5px; letter-spacing: 1px; padding: 9px 10px; }
@@ -105,7 +97,6 @@
         .item-category { font-weight: 800; font-size: 12px; color: #0f172a; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.25; }
         .item-product  { font-size: 9.5px;  color: #475569; margin-top: 3px; white-space: pre-line; line-height: 1.55; font-weight: 500; }
 
-        /* ── Totais (encaixado logo abaixo da tabela de itens, mesmo "cartão") ── */
         .totals-wrapper { border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 14px 14px; overflow: hidden; margin-bottom: 14px; }
         .totals-table { width: 100%; border-collapse: collapse; }
         .totals-table td { padding: 9px 16px; }
@@ -120,7 +111,6 @@
         .totals-table .install-label   { font-size: 8.5px;  font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
         .totals-table .install-val     { text-align: right; font-size: 14.5px; font-weight: 800; color: #34d399; }
 
-        /* ── Caixas de seção (Pagamento, Garantia, Obs) ─────── */
         .section-box { border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
         .section-box table { width: 100%; border-collapse: collapse; }
         .section-header-cell { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 7px 14px; }
@@ -128,7 +118,6 @@
         .section-header-text { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; vertical-align: middle; }
         .section-body-cell { background: #ffffff; padding: 13px 14px; font-size: 10px; color: #334155; font-weight: 500; white-space: pre-line; line-height: 1.6; }
 
-        /* ── Assinaturas ─────────────────────────────────────── */
         .sig-section { border-top: 2px dashed #cbd5e1; padding-top: 26px; margin-top: 18px; page-break-inside: avoid; }
         .sig-table { width: 100%; border-collapse: collapse; }
         .sig-cell { width: 50%; text-align: center; padding: 0 30px; vertical-align: bottom; }

@@ -2,20 +2,34 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/erp_db}
     username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:PRS823}
+    password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
 
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
     show-sql: false
+
+    open-in-view: false
     properties:
       hibernate:
         format_sql: false
+
+  main:
+    lazy-initialization: true
 
   flyway:
     enabled: true
     baseline-on-migrate: true
     repair-on-validate: true
     baseline-version: "1"
+
+server:
+  tomcat:
+    threads:
+      max: 50
+      min-spare: 5

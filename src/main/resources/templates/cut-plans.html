@@ -32,10 +32,10 @@
     </header>
 
     <!-- Lista de planos existentes -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8" id="planListGrid">
-        <div th:each="plan : ${plans}"
-             class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:border-brand-400 dark:hover:border-cyan-500 transition-all"
-             th:onclick="'openPlan(\'' + ${plan.id} + '\')'">
+    <div th:each="plan : ${plans}"
+         class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:border-brand-400 dark:hover:border-cyan-500 transition-all"
+         th:data-id="${plan.id}"
+         onclick="openPlan(this.getAttribute('data-id'))">
             <div class="flex justify-between items-start mb-3">
                 <h3 class="font-black text-slate-900 dark:text-white" th:text="${plan.title}">Plano de Corte 01</h3>
                 <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase bg-brand-50 text-brand-700 dark:bg-cyan-500/10 dark:text-cyan-400" th:text="${plan.status}">draft</span>

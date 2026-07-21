@@ -2,7 +2,6 @@ package com.alfatahi.erp.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,8 +25,8 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
-                        // Libera rotas públicas
-                        .requestMatchers("/login", "/css/**", "/js/**", "/public/**").permitAll()
+                        .requestMatchers("/login", "/css/**", "/js/**", "/img/**", "/images/**", "/public/**").permitAll()
+
                         .requestMatchers("/admin/users/**").hasAuthority("GESTAO")
 
                         .requestMatchers("/dashboard", "/payables/**", "/receivables/**",
@@ -50,9 +49,19 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
-                .httpBasic(Customizer.withDefaults());
+                .httpBasic(httpBasic -> httpBasic.disable())
+
+                .exceptionHandling(ex -> ex
+                        .accessDeniedPage("/acesso-negado")
+                )
+
+                .sessionManagement(session -> session
+                        .invalidSessionUrl("/login?expired=true")
+                );
+
         return http.build();
     }
 }
