@@ -15,12 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Centraliza a montagem dos dados usados nos relatórios de Ordem de Serviço
- * (individual e consolidado). Outros relatórios (financeiro, contábil) usam
- * diretamente os repositórios/serviços já existentes (Contas a Pagar/Receber,
- * DRE, Fluxo de Caixa) através do ReportController.
- */
+
 @Service
 public class ReportService {
 
@@ -37,10 +32,7 @@ public class ReportService {
         return toDto(wo);
     }
 
-    /**
-     * Filtra as Ordens de Serviço por período (data de criação), cliente e status.
-     * Qualquer filtro pode vir nulo/vazio, o que significa "sem restrição" naquele campo.
-     */
+
     @Transactional(readOnly = true)
     public List<WorkOrderReportDto> filterWorkOrders(LocalDate from, LocalDate to, UUID clientId, String status) {
         LocalDateTime start = from != null ? LocalDateTime.of(from, LocalTime.MIN) : null;

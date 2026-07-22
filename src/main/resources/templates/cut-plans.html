@@ -9,21 +9,21 @@
 <main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen" id="app-root"
       th:data-work-order-id="${workOrder.id}">
 
+    <!-- ── Header ─────────────────────────────────────────────── -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
             <a href="/work-orders" class="text-sm text-slate-500 hover:text-brand-600 dark:hover:text-cyan-400 font-bold flex items-center gap-1 mb-2">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar para Ordens de Serviço
             </a>
             <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                Plano de Corte — <span th:text="${workOrder.number}">OS-0000</span>
+                Plano de Corte — <span class="text-brand-600 dark:text-cyan-400" th:text="${workOrder.number}">OS-0000</span>
             </h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Cliente: <span th:text="${workOrder.client != null ? workOrder.client.name : 'Avulso'}"></span> ·
-                Telefone: <span th:text="${workOrder.client != null ? workOrder.client.phone : '-'}"></span> ·
-                Serviço: <span th:text="${workOrder.category != null ? workOrder.category.name : '-'}"></span> ·
-                Status: <span th:text="${workOrder.status}"></span> ·
-                Origem: <span th:text="${workOrder.quote != null ? ('Orçamento ' + workOrder.quote.number) : 'Manual'}"></span>
-            </p>
+            <div class="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <span><i data-lucide="user" class="w-3 h-3 inline mr-1"></i><span th:text="${workOrder.client != null ? workOrder.client.name : 'Avulso'}"></span></span>
+                <span><i data-lucide="phone" class="w-3 h-3 inline mr-1"></i><span th:text="${workOrder.client != null ? workOrder.client.phone : '-'}"></span></span>
+                <span><i data-lucide="wrench" class="w-3 h-3 inline mr-1"></i><span th:text="${workOrder.category != null ? workOrder.category.name : '-'}"></span></span>
+                <span th:if="${workOrder.quote != null}"><i data-lucide="file-signature" class="w-3 h-3 inline mr-1"></i>Orçamento <span th:text="${workOrder.quote.number}"></span></span>
+            </div>
         </div>
         <button type="button" onclick="createPlan()"
                 class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-all shadow-md text-sm">
@@ -31,239 +31,475 @@
         </button>
     </header>
 
-    <!-- Lista de planos existentes -->
-    <div th:each="plan : ${plans}"
-         class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:border-brand-400 dark:hover:border-cyan-500 transition-all"
-         th:data-id="${plan.id}"
-         onclick="openPlan(this.getAttribute('data-id'))">
-            <div class="flex justify-between items-start mb-3">
-                <h3 class="font-black text-slate-900 dark:text-white" th:text="${plan.title}">Plano de Corte 01</h3>
-                <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase bg-brand-50 text-brand-700 dark:bg-cyan-500/10 dark:text-cyan-400" th:text="${plan.status}">draft</span>
+    <!-- ── Explicação rápida para o técnico ───────────────────── -->
+    <div class="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl p-4 mb-6 flex gap-3 items-start">
+        <i data-lucide="info" class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"></i>
+        <div class="text-sm text-blue-800 dark:text-blue-200">
+            <strong>Como usar:</strong> Crie um Plano de Corte para cada tipo de vidro ou ambiente. Lance as peças (vidros) com suas medidas e os materiais complementares (ferragens, alumínio, silicone). Em seguida, gere o <strong>PDF de Pedido para Têmpera</strong> para enviar ao fornecedor com todas as medidas, furos e croquis técnicos.
+        </div>
+    </div>
+
+    <!-- ── Lista de planos existentes ─────────────────────────── -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6" id="plansGrid">
+        <div th:each="plan : ${plans}"
+             class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:border-brand-400 dark:hover:border-cyan-500 transition-all group"
+             th:data-id="${plan.id}"
+             onclick="openPlan(this.getAttribute('data-id'))">
+            <div class="flex justify-between items-start mb-2">
+                <h3 class="font-black text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-cyan-400 transition-colors" th:text="${plan.title}">Plano de Corte 01</h3>
+                <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase"
+                      th:classappend="${plan.status.toString() == 'draft'} ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' :
+                                      ${plan.status.toString() == 'in_production'} ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' :
+                                      ${plan.status.toString() == 'sent_to_supplier'} ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300' :
+                                      ${plan.status.toString() == 'done'} ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' :
+                                      'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'"
+                      th:text="${plan.status.toString() == 'draft' ? 'Rascunho' :
+                                plan.status.toString() == 'in_production' ? 'Em Produção' :
+                                plan.status.toString() == 'sent_to_supplier' ? 'Enviado à Têmpera' :
+                                plan.status.toString() == 'done' ? 'Concluído' : 'Cancelado'}">
+                </span>
             </div>
-            <p class="text-xs text-slate-500 mb-3" th:text="${plan.items.size()} + ' peça(s) · ' + ${plan.materials.size()} + ' item(ns) de material'"></p>
-            <div class="flex justify-between items-center text-sm">
-                <span class="text-slate-500">Custo Previsto</span>
+            <p class="text-xs text-slate-500 mb-3 flex items-center gap-3">
+                <span><i data-lucide="square" class="w-3 h-3 inline mr-1"></i><span th:text="${plan.items.size()}">0</span> peça(s)</span>
+                <span><i data-lucide="wrench" class="w-3 h-3 inline mr-1"></i><span th:text="${plan.materials.size()}">0</span> material(is)</span>
+            </p>
+            <div class="flex justify-between items-center text-sm pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span class="text-slate-400 text-xs">Custo Previsto</span>
                 <span class="font-black text-amber-600 dark:text-amber-400"
                       th:text="'R$ ' + ${#numbers.formatDecimal(plan.totalCost, 1, 'POINT', 2, 'COMMA')}"></span>
             </div>
         </div>
-        <div th:if="${#lists.isEmpty(plans)}" class="lg:col-span-3 text-center py-12 bg-white dark:bg-[#131C2F] rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
-            <p class="text-slate-500">Nenhum plano de corte ainda. Clique em "Novo Plano de Corte" para começar.</p>
+        <div th:if="${#lists.isEmpty(plans)}" class="md:col-span-3 text-center py-16 bg-white dark:bg-[#131C2F] rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+            <i data-lucide="clipboard-list" class="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3"></i>
+            <p class="text-slate-500 font-semibold">Nenhum plano de corte criado ainda.</p>
+            <p class="text-slate-400 text-sm mt-1">Clique em "Novo Plano de Corte" para começar.</p>
         </div>
     </div>
 
-    <!-- Editor do plano selecionado -->
+    <!-- ── Editor do plano selecionado ────────────────────────── -->
     <div id="planEditor" class="hidden space-y-6">
 
+        <!-- Toolbar do plano -->
         <div class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm flex flex-wrap gap-3 items-center justify-between">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 flex-wrap">
                 <h3 class="text-xl font-black text-slate-900 dark:text-white" id="planTitleLabel">Plano de Corte 01</h3>
-                <select id="planStatusSelect" onchange="changeStatus()" class="text-xs font-bold rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
-                    <option value="draft">Rascunho</option>
-                    <option value="in_production">Em Produção</option>
-                    <option value="sent_to_supplier">Enviado ao Fornecedor</option>
-                    <option value="done">Concluído</option>
-                    <option value="cancelled">Cancelado</option>
+                <select id="planStatusSelect" onchange="changeStatus()"
+                        class="text-xs font-bold rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700 dark:text-white py-1 px-2">
+                    <option value="draft">📋 Rascunho</option>
+                    <option value="in_production">🔧 Em Produção</option>
+                    <option value="sent_to_supplier">📤 Enviado à Têmpera</option>
+                    <option value="done">✅ Concluído</option>
+                    <option value="cancelled">❌ Cancelado</option>
                 </select>
             </div>
             <div class="flex gap-2 flex-wrap">
-                <button onclick="runOptimize()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded-xl text-sm flex items-center gap-2">
-                    <i data-lucide="layout-grid" class="w-4 h-4"></i> Otimizar Chapas
-                </button>
-                <a id="pdfLink" href="#" target="_blank" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded-xl text-sm flex items-center gap-2">
-                    <i data-lucide="file-text" class="w-4 h-4"></i> Gerar PDF
+                <a id="pdfLink" href="#" target="_blank"
+                   class="bg-slate-900 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-xl text-sm flex items-center gap-2 transition-all">
+                    <i data-lucide="file-down" class="w-4 h-4"></i> Gerar PDF Têmpera
                 </a>
-                <button onclick="deletePlan()" class="bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 font-bold py-2 px-4 rounded-xl text-sm flex items-center gap-2">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir
+                <button onclick="deletePlan()"
+                        class="bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20 font-bold py-2 px-4 rounded-xl text-sm flex items-center gap-2 transition-all">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Plano
                 </button>
             </div>
         </div>
 
         <!-- Painel de Custos -->
         <div class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <h4 class="font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2"><i data-lucide="calculator" class="w-5 h-5"></i> Painel de Custos Previstos</h4>
-            <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
-                <div class="bg-slate-100 dark:bg-slate-900/50 p-3 rounded-xl"><p class="text-[10px] uppercase font-bold text-slate-500">Vidros</p><p class="font-black" id="costGlass">R$ 0,00</p></div>
-                <div class="bg-slate-100 dark:bg-slate-900/50 p-3 rounded-xl"><p class="text-[10px] uppercase font-bold text-slate-500">Ferragens</p><p class="font-black" id="costHardware">R$ 0,00</p></div>
-                <div class="bg-slate-100 dark:bg-slate-900/50 p-3 rounded-xl"><p class="text-[10px] uppercase font-bold text-slate-500">Alumínio</p><p class="font-black" id="costAluminum">R$ 0,00</p></div>
-                <div class="bg-slate-100 dark:bg-slate-900/50 p-3 rounded-xl"><p class="text-[10px] uppercase font-bold text-slate-500">Silicone</p><p class="font-black" id="costSilicone">R$ 0,00</p></div>
-                <div class="bg-slate-100 dark:bg-slate-900/50 p-3 rounded-xl"><p class="text-[10px] uppercase font-bold text-slate-500">Outros</p><p class="font-black" id="costOther">R$ 0,00</p></div>
-                <div class="bg-amber-50 dark:bg-amber-500/10 p-3 rounded-xl border border-amber-200 dark:border-amber-500/30"><p class="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400">Total Previsto</p><p class="font-black text-amber-700 dark:text-amber-400" id="costTotal">R$ 0,00</p></div>
+            <h4 class="font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2 text-sm">
+                <i data-lucide="calculator" class="w-4 h-4 text-amber-500"></i> Custo Previsto do Plano
+            </h4>
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Vidros</p>
+                    <p class="font-black text-slate-800 dark:text-white text-sm" id="costGlass">R$ 0,00</p>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Ferragens</p>
+                    <p class="font-black text-slate-800 dark:text-white text-sm" id="costHardware">R$ 0,00</p>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Alumínio</p>
+                    <p class="font-black text-slate-800 dark:text-white text-sm" id="costAluminum">R$ 0,00</p>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Silicone</p>
+                    <p class="font-black text-slate-800 dark:text-white text-sm" id="costSilicone">R$ 0,00</p>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Outros</p>
+                    <p class="font-black text-slate-800 dark:text-white text-sm" id="costOther">R$ 0,00</p>
+                </div>
+                <div class="bg-amber-50 dark:bg-amber-500/10 p-3 rounded-xl border border-amber-200 dark:border-amber-500/30">
+                    <p class="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 mb-1">Total Previsto</p>
+                    <p class="font-black text-amber-700 dark:text-amber-400 text-sm" id="costTotal">R$ 0,00</p>
+                </div>
             </div>
-            <p class="text-xs text-slate-400 mt-3">Área total de vidro: <span id="totalArea">0</span> m² · Peso estimado: <span id="totalWeight">0</span> kg</p>
+            <p class="text-xs text-slate-400 mt-3">
+                Área total: <strong id="totalArea">0</strong> m²
+                &nbsp;·&nbsp; Peso estimado: <strong id="totalWeight">0</strong> kg
+            </p>
         </div>
 
         <!-- Peças de vidro -->
         <div class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
             <div class="flex justify-between items-center mb-4">
-                <h4 class="font-black text-slate-900 dark:text-white flex items-center gap-2"><i data-lucide="square" class="w-5 h-5"></i> Peças de Vidro</h4>
-                <button onclick="openItemForm()" class="text-brand-600 dark:text-cyan-400 font-bold text-sm hover:underline flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar Peça</button>
+                <div>
+                    <h4 class="font-black text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+                        <i data-lucide="layers" class="w-4 h-4 text-brand-600 dark:text-cyan-400"></i>
+                        Peças de Vidro para Têmpera
+                    </h4>
+                    <p class="text-xs text-slate-400 mt-0.5">Informe medida bruta (vão) e a regra aplicará os descontos automaticamente, ou preencha diretamente a medida final.</p>
+                </div>
+                <button onclick="openItemForm()"
+                        class="text-brand-600 dark:text-cyan-400 font-bold text-sm hover:underline flex items-center gap-1 bg-brand-50 dark:bg-cyan-500/10 px-3 py-1.5 rounded-lg">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Peça
+                </button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead><tr class="text-left text-[11px] uppercase text-slate-500 border-b border-slate-200 dark:border-slate-700">
-                        <th class="py-2 pr-2">Descrição / Ambiente</th><th class="py-2 pr-2">Vidro</th>
-                        <th class="py-2 pr-2">Bruta (L x A)</th><th class="py-2 pr-2">Final (L x A)</th>
-                        <th class="py-2 pr-2">Qtd</th><th class="py-2 pr-2">Área</th><th class="py-2 pr-2">Custo</th><th></th>
-                    </tr></thead>
+                    <thead>
+                    <tr class="text-left text-[11px] uppercase text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                        <th class="py-2 pr-3">#</th>
+                        <th class="py-2 pr-3">Descrição / Ambiente</th>
+                        <th class="py-2 pr-3">Tipo / Cor / Esp.</th>
+                        <th class="py-2 pr-3">Vão Bruto</th>
+                        <th class="py-2 pr-3">Medida Final</th>
+                        <th class="py-2 pr-3">Qtd</th>
+                        <th class="py-2 pr-3">Área</th>
+                        <th class="py-2 pr-3">Furos/Rec.</th>
+                        <th class="py-2"></th>
+                    </tr>
+                    </thead>
                     <tbody id="itemsTableBody"></tbody>
                 </table>
-                <p id="itemsEmptyMsg" class="text-slate-400 text-sm py-4">Nenhuma peça lançada ainda.</p>
+                <p id="itemsEmptyMsg" class="text-slate-400 text-sm py-6 text-center hidden">
+                    <i data-lucide="inbox" class="w-5 h-5 mx-auto mb-1 opacity-50"></i>
+                    Nenhuma peça lançada. Clique em "Adicionar Peça" para começar.
+                </p>
             </div>
         </div>
 
-        <!-- Materiais (ferragens, alumínio, silicone, outros) -->
+        <!-- Materiais -->
         <div class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
             <div class="flex justify-between items-center mb-4">
-                <h4 class="font-black text-slate-900 dark:text-white flex items-center gap-2"><i data-lucide="wrench" class="w-5 h-5"></i> Ferragens, Alumínio, Silicone e Outros</h4>
-                <button onclick="openMaterialForm()" class="text-brand-600 dark:text-cyan-400 font-bold text-sm hover:underline flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar Item</button>
+                <div>
+                    <h4 class="font-black text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+                        <i data-lucide="package" class="w-4 h-4 text-violet-500"></i>
+                        Materiais para a Obra
+                    </h4>
+                    <p class="text-xs text-slate-400 mt-0.5">Ferragens, perfis de alumínio, silicone e outros insumos necessários.</p>
+                </div>
+                <button onclick="openMaterialForm()"
+                        class="text-violet-600 dark:text-violet-400 font-bold text-sm hover:underline flex items-center gap-1 bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 rounded-lg">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Material
+                </button>
             </div>
-            <table class="w-full text-sm">
-                <thead><tr class="text-left text-[11px] uppercase text-slate-500 border-b border-slate-200 dark:border-slate-700">
-                    <th class="py-2 pr-2">Categoria</th><th class="py-2 pr-2">Descrição</th><th class="py-2 pr-2">Qtd</th>
-                    <th class="py-2 pr-2">Unid.</th><th class="py-2 pr-2">Vlr Unit.</th><th class="py-2 pr-2">Total</th><th class="py-2 pr-2">Fornecedor</th><th></th>
-                </tr></thead>
-                <tbody id="materialsTableBody"></tbody>
-            </table>
-            <p id="materialsEmptyMsg" class="text-slate-400 text-sm py-4">Nenhum item lançado ainda.</p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                    <tr class="text-left text-[11px] uppercase text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                        <th class="py-2 pr-3">Categoria</th>
+                        <th class="py-2 pr-3">Descrição</th>
+                        <th class="py-2 pr-3">Qtd</th>
+                        <th class="py-2 pr-3">Unid.</th>
+                        <th class="py-2 pr-3">Vlr Unit.</th>
+                        <th class="py-2 pr-3">Total</th>
+                        <th class="py-2 pr-3">Fornecedor</th>
+                        <th class="py-2"></th>
+                    </tr>
+                    </thead>
+                    <tbody id="materialsTableBody"></tbody>
+                </table>
+                <p id="materialsEmptyMsg" class="text-slate-400 text-sm py-6 text-center hidden">
+                    <i data-lucide="inbox" class="w-5 h-5 mx-auto mb-1 opacity-50"></i>
+                    Nenhum material lançado ainda.
+                </p>
+            </div>
         </div>
 
-        <!-- Resultado da otimização -->
-        <div id="nestingResult" class="hidden bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <h4 class="font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2"><i data-lucide="layout-grid" class="w-5 h-5"></i> Aproveitamento de Chapas</h4>
-            <p class="text-sm mb-4">Total de chapas: <b id="nestSheets">0</b> · Aproveitamento médio: <b id="nestUtil">0%</b> · Perda: <b id="nestWaste">0 m²</b></p>
-            <div id="nestSheetsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </div>
-    </div>
+    </div><!-- /planEditor -->
 </main>
 
-<!-- Modal: Novo Plano -->
+<!-- ──────────── Modal: Novo Plano ──────────── -->
 <div id="newPlanModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-md">
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-md shadow-2xl">
         <h3 class="font-black text-lg mb-4">Novo Plano de Corte</h3>
-        <label class="text-xs font-bold text-slate-500">Título (opcional)</label>
-        <input id="newPlanTitle" class="w-full mb-3 rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700" placeholder="Ex: Plano de Corte 01">
-        <label class="text-xs font-bold text-slate-500">Regra de desconto/folga</label>
-        <select id="newPlanRuleSet" class="w-full mb-4 rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-            <option value="">Nenhuma (informar medida final direto)</option>
+        <label class="text-xs font-bold text-slate-500 block mb-1">Título (opcional)</label>
+        <input id="newPlanTitle" class="w-full mb-3 rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Ex: Plano Box Banheiro">
+        <label class="text-xs font-bold text-slate-500 block mb-1">Regra de desconto/folga</label>
+        <select id="newPlanRuleSet" class="w-full mb-1 rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+            <option value="">Nenhuma — informar medida final diretamente</option>
             <option th:each="rs : ${ruleSets}" th:value="${rs.id}" th:text="${rs.name}"></option>
         </select>
+        <p class="text-xs text-slate-400 mb-4">A regra aplica descontos automáticos sobre o vão informado para calcular a medida final de corte.</p>
         <div class="flex justify-end gap-2">
             <button onclick="closeModal('newPlanModal')" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm">Cancelar</button>
-            <button onclick="submitCreatePlan()" class="px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm">Criar</button>
+            <button onclick="submitCreatePlan()" class="px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm">Criar Plano</button>
         </div>
     </div>
 </div>
 
-<!-- Modal: Item de Vidro -->
+<!-- ──────────── Modal: Peça de Vidro ──────────── -->
 <div id="itemModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4 overflow-y-auto">
-    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-2xl my-8">
-        <h3 class="font-black text-lg mb-4">Peça de Vidro</h3>
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-2xl my-8 shadow-2xl">
+        <div class="flex items-center gap-2 mb-5">
+            <i data-lucide="layers" class="w-5 h-5 text-brand-600 dark:text-cyan-400"></i>
+            <h3 class="font-black text-lg">Peça de Vidro</h3>
+        </div>
         <input type="hidden" id="itemId">
         <div class="grid grid-cols-2 gap-3">
-            <div class="col-span-2"><label class="text-xs font-bold text-slate-500">Descrição</label><input id="itemDescription" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Ambiente</label><input id="itemEnvironment" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Tipo de Vidro</label><input id="itemGlassType" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700" placeholder="Temperado incolor 8mm"></div>
-            <div><label class="text-xs font-bold text-slate-500">Espessura (mm)</label><input id="itemThickness" type="number" step="0.1" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Cor</label><input id="itemColor" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Acabamento</label><input id="itemFinish" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Ângulo</label>
-                <select id="itemAngleType" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                    <option value="90">90°</option><option value="45">45°</option>
-                    <option value="esquadria_reta">Esquadria reta</option><option value="esquadria_especial">Esquadria especial</option>
+            <div class="col-span-2">
+                <label class="text-xs font-bold text-slate-500 block mb-1">Descrição da Peça <span class="text-rose-500">*</span></label>
+                <input id="itemDescription" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Ex: Porta pivotante, Box frente, Janela sala">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Ambiente / Local</label>
+                <input id="itemEnvironment" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Ex: Banheiro 1, Cozinha">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Tipo de Vidro</label>
+                <input id="itemGlassType" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Ex: Temperado incolor, Laminado">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Espessura (mm)</label>
+                <select id="itemThickness" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+                    <option value="">— Selecione —</option>
+                    <option value="4">4 mm</option>
+                    <option value="6">6 mm</option>
+                    <option value="8">8 mm (padrão box)</option>
+                    <option value="10">10 mm (portas / sacadas)</option>
+                    <option value="12">12 mm (pivotante / GC)</option>
+                    <option value="15">15 mm</option>
+                    <option value="19">19 mm</option>
                 </select>
             </div>
-            <div><label class="text-xs font-bold text-slate-500">Largura Bruta (mm)</label><input id="itemGrossWidth" type="number" step="0.1" oninput="previewFinalSize()" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Altura Bruta (mm)</label><input id="itemGrossHeight" type="number" step="0.1" oninput="previewFinalSize()" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Largura Final (mm) <span class="text-slate-400" id="previewW"></span></label><input id="itemFinalWidth" type="number" step="0.1" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Altura Final (mm) <span class="text-slate-400" id="previewH"></span></label><input id="itemFinalHeight" type="number" step="0.1" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Quantidade</label><input id="itemQuantity" type="number" step="1" value="1" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Acabamento de Borda</label>
-                <select id="itemEdgeWork" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                    <option value="">-</option><option value="lapidado">Lapidado</option><option value="bisotado">Bisotado</option>
-                    <option value="boleado">Boleado</option><option value="chanfrado">Chanfrado</option>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Cor</label>
+                <select id="itemColor" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+                    <option value="">— Selecione —</option>
+                    <option>Incolor</option><option>Fumê</option><option>Verde</option>
+                    <option>Bronze</option><option>Jateado</option><option>Acidado</option>
+                    <option>Serigrafado</option><option>Refletivo</option>
                 </select>
             </div>
-            <div><label class="text-xs font-bold text-slate-500">Furos</label><input id="itemDrillingCount" type="number" value="0" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Recortes</label><input id="itemNotchCount" type="number" value="0" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Fornecedor</label>
-                <select id="itemSupplier" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                    <option value="">-</option>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Acabamento de Borda</label>
+                <select id="itemEdgeWork" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+                    <option value="">— Selecione —</option>
+                    <option value="lapidado">Lapidado (reta)</option>
+                    <option value="bisotado">Bisotado (chanfrado decorativo)</option>
+                    <option value="boleado">Boleado (canto arredondado)</option>
+                    <option value="chanfrado">Chanfrado 45°</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Ângulo de Corte</label>
+                <select id="itemAngleType" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+                    <option value="90">90° (reto padrão)</option>
+                    <option value="45">45° (diagonal)</option>
+                    <option value="esquadria_reta">Esquadria reta</option>
+                    <option value="esquadria_especial">Esquadria especial</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Acabamento / Finish</label>
+                <input id="itemFinish" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Ex: Polido, Encerado">
+            </div>
+
+            <!-- Medidas -->
+            <div class="col-span-2 border-t border-slate-100 dark:border-slate-800 pt-3 mt-1">
+                <p class="text-xs font-bold text-slate-500 mb-2">📐 Medidas</p>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Largura do Vão/Bruta (mm)</label>
+                <input id="itemGrossWidth" type="number" step="1" oninput="previewFinalSize()"
+                       class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Ex: 1500">
+                <p class="text-[10px] text-slate-400 mt-0.5">Medida real do vão na obra</p>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Altura do Vão/Bruta (mm)</label>
+                <input id="itemGrossHeight" type="number" step="1" oninput="previewFinalSize()"
+                       class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Ex: 1200">
+                <p class="text-[10px] text-slate-400 mt-0.5">Medida real do vão na obra</p>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">
+                    Largura Final de Corte (mm)
+                    <span class="text-brand-600 dark:text-cyan-400 ml-1" id="previewW"></span>
+                </label>
+                <input id="itemFinalWidth" type="number" step="0.1"
+                       class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm font-bold" placeholder="Calculado ou informe direto">
+                <p class="text-[10px] text-slate-400 mt-0.5">Medida que vai para a têmpera</p>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">
+                    Altura Final de Corte (mm)
+                    <span class="text-brand-600 dark:text-cyan-400 ml-1" id="previewH"></span>
+                </label>
+                <input id="itemFinalHeight" type="number" step="0.1"
+                       class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm font-bold" placeholder="Calculado ou informe direto">
+                <p class="text-[10px] text-slate-400 mt-0.5">Medida que vai para a têmpera</p>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Quantidade</label>
+                <input id="itemQuantity" type="number" step="1" value="1"
+                       class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Fornecedor</label>
+                <select id="itemSupplier" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+                    <option value="">— Selecione —</option>
                     <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
                 </select>
             </div>
-            <div class="col-span-2"><label class="text-xs font-bold text-slate-500">Observações</label><textarea id="itemObservations" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></textarea></div>
+
+            <!-- Detalhamento de furos/recortes -->
+            <div class="col-span-2 border-t border-slate-100 dark:border-slate-800 pt-3 mt-1">
+                <p class="text-xs font-bold text-slate-500 mb-2">🔩 Furos e Recortes (obrigatório antes da têmpera)</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 block mb-1">Qtd. de Furos</label>
+                        <input id="itemDrillingCount" type="number" value="0" min="0"
+                               class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+                        <p class="text-[10px] text-slate-400 mt-0.5">Furos para puxadores, roldanas, dobradiças etc.</p>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 block mb-1">Qtd. de Recortes</label>
+                        <input id="itemNotchCount" type="number" value="0" min="0"
+                               class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+                        <p class="text-[10px] text-slate-400 mt-0.5">Recortes para fechaduras, trilhos etc.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-2">
+                <label class="text-xs font-bold text-slate-500 block mb-1">Observações Técnicas</label>
+                <textarea id="itemObservations" rows="2"
+                          class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm"
+                          placeholder="Ex: furo de roldana a 50mm do topo, lapidação nas 4 bordas, canto arredondado r=10mm..."></textarea>
+            </div>
         </div>
-        <div class="flex justify-end gap-2 mt-4">
+        <div class="flex justify-end gap-2 mt-5">
             <button onclick="closeModal('itemModal')" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm">Cancelar</button>
-            <button onclick="submitItem()" class="px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm">Salvar Peça</button>
+            <button onclick="submitItem()" class="px-5 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm">Salvar Peça</button>
         </div>
     </div>
 </div>
 
-<!-- Modal: Material -->
+<!-- ──────────── Modal: Material ──────────── -->
 <div id="materialModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-md">
-        <h3 class="font-black text-lg mb-4">Item de Material</h3>
-        <input type="hidden" id="materialId">
-        <label class="text-xs font-bold text-slate-500">Categoria</label>
-        <select id="materialCategory" class="w-full mb-3 rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-            <option value="HARDWARE">Ferragem</option><option value="ALUMINUM">Alumínio</option>
-            <option value="SILICONE">Silicone</option><option value="OTHER">Outros</option>
-        </select>
-        <label class="text-xs font-bold text-slate-500">Descrição</label>
-        <input id="materialDescription" class="w-full mb-3 rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-        <div class="grid grid-cols-3 gap-3 mb-3">
-            <div><label class="text-xs font-bold text-slate-500">Qtd</label><input id="materialQuantity" type="number" step="0.01" value="1" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Unidade</label><input id="materialUnit" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700" placeholder="un, m, tubo"></div>
-            <div><label class="text-xs font-bold text-slate-500">Vlr Unit.</label><input id="materialPrice" type="number" step="0.01" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div class="flex items-center gap-2 mb-5">
+            <i data-lucide="package" class="w-5 h-5 text-violet-500"></i>
+            <h3 class="font-black text-lg">Material / Insumo</h3>
         </div>
-        <label class="text-xs font-bold text-slate-500">Fornecedor</label>
-        <input id="materialSupplierName" class="w-full mb-4 rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+        <input type="hidden" id="materialId">
+        <label class="text-xs font-bold text-slate-500 block mb-1">Categoria</label>
+        <select id="materialCategory" class="w-full mb-3 rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+            <option value="HARDWARE">🔩 Ferragem</option>
+            <option value="ALUMINUM">🪟 Alumínio / Perfil</option>
+            <option value="SILICONE">💧 Silicone / Vedante</option>
+            <option value="OTHER">📦 Outros</option>
+        </select>
+        <label class="text-xs font-bold text-slate-500 block mb-1">Descrição</label>
+        <input id="materialDescription" class="w-full mb-3 rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Ex: Dobradiça inox 3530, Perfil AF-48, Silicone Tekaflex 300ml">
+        <div class="grid grid-cols-3 gap-3 mb-3">
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Qtd</label>
+                <input id="materialQuantity" type="number" step="0.01" value="1"
+                       class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Unidade</label>
+                <input id="materialUnit" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="un, m, kg, tb">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Vlr Unit. (R$)</label>
+                <input id="materialPrice" type="number" step="0.01"
+                       class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="0,00">
+            </div>
+        </div>
+        <label class="text-xs font-bold text-slate-500 block mb-1">Fornecedor</label>
+        <input id="materialSupplierName" class="w-full mb-4 rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Nome do fornecedor">
         <div class="flex justify-end gap-2">
             <button onclick="closeModal('materialModal')" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm">Cancelar</button>
-            <button onclick="submitMaterial()" class="px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm">Salvar Item</button>
+            <button onclick="submitMaterial()" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold text-sm">Salvar Material</button>
         </div>
     </div>
 </div>
 
-<!-- Modal: Desenho Técnico (furos, recortes, chanfros) -->
+<!-- ──────────── Modal: Desenho Técnico ──────────── -->
 <div id="drawingModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4 overflow-y-auto">
-    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-4xl my-8">
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-4xl my-8 shadow-2xl">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="font-black text-lg">Desenho Técnico da Peça</h3>
-            <button onclick="closeModal('drawingModal')" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <div>
+                <h3 class="font-black text-lg">Detalhamento Técnico da Peça</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Cadastre os furos, recortes e chanfros — são usados no croqui do PDF e devem ser feitos ANTES da têmpera.</p>
+            </div>
+            <button onclick="closeModal('drawingModal')" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
         </div>
         <input type="hidden" id="drawingItemId">
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Preview -->
-            <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-200 dark:border-slate-700">
-                <img id="drawingPreview" src="" class="w-full h-auto" alt="Desenho técnico da peça">
+            <!-- Preview do croqui -->
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Croqui Técnico (Vista Frontal)</p>
+                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-200 dark:border-slate-700">
+                    <img id="drawingPreview" src="" class="w-full h-auto" alt="Croqui técnico da peça">
+                </div>
+                <p class="text-[10px] text-slate-400 mt-2">Atualizado automaticamente conforme furos/recortes são adicionados.</p>
             </div>
 
             <!-- Formulários -->
             <div class="space-y-5">
-                <div>
-                    <h4 class="font-bold text-sm mb-2 flex items-center gap-2"><i data-lucide="circle-dot" class="w-4 h-4"></i> Furos</h4>
+                <!-- Furos -->
+                <div class="bg-amber-50 dark:bg-amber-500/5 rounded-xl p-4 border border-amber-200 dark:border-amber-500/20">
+                    <h4 class="font-bold text-sm mb-3 flex items-center gap-2 text-amber-800 dark:text-amber-400">
+                        <i data-lucide="circle-dot" class="w-4 h-4"></i> Furos (puxador, roldana, dobradiça...)
+                    </h4>
                     <div class="grid grid-cols-4 gap-2 mb-2">
-                        <input id="drillX" type="number" step="0.1" placeholder="Pos. X (mm)" class="rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                        <input id="drillY" type="number" step="0.1" placeholder="Pos. Y (mm)" class="rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                        <input id="drillDiameter" type="number" step="0.1" placeholder="Ø (mm)" class="rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                        <select id="drillType" class="rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                            <option value="passante">Passante</option><option value="escareado">Escareado</option><option value="rosca">Rosca</option>
-                        </select>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Pos. X (mm)</label>
+                            <input id="drillX" type="number" step="0.1" placeholder="0"
+                                   class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Pos. Y (mm)</label>
+                            <input id="drillY" type="number" step="0.1" placeholder="0"
+                                   class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Ø (mm)</label>
+                            <input id="drillDiameter" type="number" step="0.1" placeholder="12"
+                                   class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Tipo</label>
+                            <select id="drillType" class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                                <option value="passante">Passante</option>
+                                <option value="escareado">Escareado</option>
+                                <option value="rosca">Rosca</option>
+                            </select>
+                        </div>
                     </div>
-                    <button onclick="addDrilling()" class="text-brand-600 dark:text-cyan-400 text-xs font-bold hover:underline">+ Adicionar furo</button>
-                    <ul id="drillingList" class="mt-2 text-xs space-y-1"></ul>
-                    <p class="text-[10px] text-slate-400 mt-1">Posição medida em mm a partir do canto inferior esquerdo da peça.</p>
+                    <p class="text-[10px] text-slate-400 mb-2">Posição medida em mm a partir do canto inferior esquerdo da peça.</p>
+                    <button onclick="addDrilling()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg">+ Adicionar furo</button>
+                    <ul id="drillingList" class="mt-3 text-xs space-y-1"></ul>
                 </div>
 
-                <div>
-                    <h4 class="font-bold text-sm mb-2 flex items-center gap-2"><i data-lucide="scissors" class="w-4 h-4"></i> Recortes</h4>
-                    <div class="grid grid-cols-2 gap-2 mb-1">
-                        <select id="notchCorner" onchange="applyNotchPreset()" class="col-span-2 rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                            <option value="">Posição livre (informar X/Y manualmente)</option>
+                <!-- Recortes -->
+                <div class="bg-violet-50 dark:bg-violet-500/5 rounded-xl p-4 border border-violet-200 dark:border-violet-500/20">
+                    <h4 class="font-bold text-sm mb-3 flex items-center gap-2 text-violet-800 dark:text-violet-400">
+                        <i data-lucide="scissors" class="w-4 h-4"></i> Recortes (fechadura, trilho, nicho...)
+                    </h4>
+                    <div class="mb-2">
+                        <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Posição rápida (canto)</label>
+                        <select id="notchCorner" onchange="applyNotchPreset()"
+                                class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                            <option value="">Posição livre (X/Y manual)</option>
                             <option value="BOTTOM_LEFT">Canto inferior esquerdo</option>
                             <option value="BOTTOM_RIGHT">Canto inferior direito</option>
                             <option value="TOP_LEFT">Canto superior esquerdo</option>
@@ -271,28 +507,54 @@
                         </select>
                     </div>
                     <div class="grid grid-cols-4 gap-2 mb-2">
-                        <input id="notchX" type="number" step="0.1" placeholder="Pos. X (mm)" class="rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                        <input id="notchY" type="number" step="0.1" placeholder="Pos. Y (mm)" class="rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                        <input id="notchW" type="number" step="0.1" placeholder="Largura (mm)" class="rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                        <input id="notchH" type="number" step="0.1" placeholder="Altura (mm)" class="rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Pos. X</label>
+                            <input id="notchX" type="number" step="0.1" placeholder="0"
+                                   class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Pos. Y</label>
+                            <input id="notchY" type="number" step="0.1" placeholder="0"
+                                   class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Larg. (mm)</label>
+                            <input id="notchW" type="number" step="0.1" placeholder="50"
+                                   class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Alt. (mm)</label>
+                            <input id="notchH" type="number" step="0.1" placeholder="50"
+                                   class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                        </div>
                     </div>
-                    <button onclick="addNotch()" class="text-brand-600 dark:text-cyan-400 text-xs font-bold hover:underline">+ Adicionar recorte</button>
-                    <ul id="notchList" class="mt-2 text-xs space-y-1"></ul>
+                    <button onclick="addNotch()" class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg">+ Adicionar recorte</button>
+                    <ul id="notchList" class="mt-3 text-xs space-y-1"></ul>
                 </div>
 
-                <div>
-                    <h4 class="font-bold text-sm mb-2 flex items-center gap-2"><i data-lucide="triangle" class="w-4 h-4"></i> Chanfros de Canto</h4>
+                <!-- Chanfros -->
+                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                    <h4 class="font-bold text-sm mb-3 flex items-center gap-2">
+                        <i data-lucide="triangle" class="w-4 h-4 text-slate-500"></i> Chanfros de Canto
+                    </h4>
                     <div class="grid grid-cols-2 gap-2 mb-2">
-                        <select id="chamferCorner" class="rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-                            <option value="BOTTOM_LEFT">Canto inferior esquerdo</option>
-                            <option value="BOTTOM_RIGHT">Canto inferior direito</option>
-                            <option value="TOP_LEFT">Canto superior esquerdo</option>
-                            <option value="TOP_RIGHT">Canto superior direito</option>
-                        </select>
-                        <input id="chamferSize" type="number" step="0.1" placeholder="Tamanho (mm)" class="rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Posição</label>
+                            <select id="chamferCorner" class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                                <option value="BOTTOM_LEFT">Inferior esquerdo</option>
+                                <option value="BOTTOM_RIGHT">Inferior direito</option>
+                                <option value="TOP_LEFT">Superior esquerdo</option>
+                                <option value="TOP_RIGHT">Superior direito</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Tamanho (mm)</label>
+                            <input id="chamferSize" type="number" step="0.1" placeholder="Ex: 20"
+                                   class="w-full rounded-lg text-xs border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+                        </div>
                     </div>
-                    <button onclick="addChamfer()" class="text-brand-600 dark:text-cyan-400 text-xs font-bold hover:underline">+ Adicionar chanfro</button>
-                    <ul id="chamferList" class="mt-2 text-xs space-y-1"></ul>
+                    <button onclick="addChamfer()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg">+ Adicionar chanfro</button>
+                    <ul id="chamferList" class="mt-3 text-xs space-y-1"></ul>
                 </div>
             </div>
         </div>
@@ -310,7 +572,7 @@
     let currentPlan = null;
 
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+    function openModal(id)  { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
     const brl = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
     async function api(url, method = 'GET', body) {
@@ -327,7 +589,7 @@
     async function submitCreatePlan() {
         const title = document.getElementById('newPlanTitle').value;
         const ruleSetId = document.getElementById('newPlanRuleSet').value;
-        const plan = await api(`/cut-plans/os/${WORK_ORDER_ID}`, 'POST', { title, ruleSetId });
+        await api(`/cut-plans/os/${WORK_ORDER_ID}`, 'POST', { title, ruleSetId });
         closeModal('newPlanModal');
         window.location.reload();
     }
@@ -335,10 +597,17 @@
     async function openPlan(id) {
         currentPlan = await api(`/cut-plans/${id}`);
         renderPlan();
-        document.getElementById('planEditor').classList.remove('hidden');
-        document.getElementById('planEditor').scrollIntoView({ behavior: 'smooth' });
+        const editor = document.getElementById('planEditor');
+        editor.classList.remove('hidden');
+        editor.scrollIntoView({ behavior: 'smooth' });
         lucide.createIcons();
     }
+
+    const catLabel = (c) => ({ HARDWARE: 'Ferragem', ALUMINUM: 'Alumínio', SILICONE: 'Silicone', OTHER: 'Outros' }[c] || c);
+    const catColor = (c) => ({ HARDWARE: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10',
+                                ALUMINUM: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10',
+                                SILICONE: 'text-pink-600 bg-pink-50 dark:text-pink-400 dark:bg-pink-500/10',
+                                OTHER:    'text-slate-600 bg-slate-100 dark:text-slate-400 dark:bg-slate-800' }[c] || '');
 
     function renderPlan() {
         document.getElementById('planTitleLabel').innerText = currentPlan.title;
@@ -349,26 +618,50 @@
         const tbody = document.getElementById('itemsTableBody');
         tbody.innerHTML = '';
         let totalArea = 0, totalWeight = 0, glassCost = 0;
-        items.forEach(it => {
-            const area = (it.finalWidth && it.finalHeight) ? (it.finalWidth * it.finalHeight / 1000000 * (it.quantity || 1)) : 0;
+
+        items.forEach((it, idx) => {
+            const area = (it.finalWidth && it.finalHeight) ? (it.finalWidth * it.finalHeight / 1e6 * (it.quantity || 1)) : 0;
             const cost = area * (it.unitPriceSnapshot || 0);
             totalArea += area; glassCost += cost;
             totalWeight += area * (it.thickness || 0) * 2.5;
-            tbody.innerHTML += `<tr class="border-b border-slate-100 dark:border-slate-800">
-                <td class="py-2 pr-2">${it.description || ''}<br><span class="text-xs text-slate-400">${it.environment || ''}</span></td>
-                <td class="py-2 pr-2">${it.glassType || ''} ${it.thickness || ''}mm ${it.color || ''}</td>
-                <td class="py-2 pr-2">${it.grossWidth || '-'} x ${it.grossHeight || '-'}</td>
-                <td class="py-2 pr-2">${it.finalWidth || '-'} x ${it.finalHeight || '-'}</td>
-                <td class="py-2 pr-2">${it.quantity}</td>
-                <td class="py-2 pr-2">${area.toFixed(3)} m²</td>
-                <td class="py-2 pr-2">${brl(cost)}</td>
-                <td class="py-2 pr-2">
-                    <button onclick="openDrawing('${it.id}')" class="text-violet-500 hover:text-violet-700 mr-1" title="Desenho Técnico"><i data-lucide="ruler" class="w-4 h-4"></i></button>
-                    <button onclick="removeItem('${it.id}')" class="text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+
+            const dCount = it.drillingCount || 0, nCount = it.notchCount || 0;
+            const drillBadge = dCount > 0 ? `<span class="inline-block bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-bold rounded px-1.5 py-0.5">${dCount} furo(s)</span>` : '';
+            const notchBadge = nCount > 0 ? `<span class="inline-block bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-[10px] font-bold rounded px-1.5 py-0.5 ml-1">${nCount} recorte(s)</span>` : '';
+
+            tbody.innerHTML += `<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                <td class="py-2 pr-3 text-xs text-slate-400 font-bold">${idx + 1}</td>
+                <td class="py-2 pr-3">
+                    <div class="font-bold text-sm text-slate-800 dark:text-white">${it.description || '—'}</div>
+                    ${it.environment ? `<div class="text-xs text-slate-400">${it.environment}</div>` : ''}
+                </td>
+                <td class="py-2 pr-3 text-xs">
+                    <div class="font-semibold">${it.glassType || ''} ${it.thickness ? it.thickness + 'mm' : ''}</div>
+                    <div class="text-slate-400">${it.color || ''}${it.finish ? ' · ' + it.finish : ''}</div>
+                </td>
+                <td class="py-2 pr-3 text-xs text-slate-400 font-mono">
+                    ${it.grossWidth && it.grossHeight ? `${it.grossWidth} × ${it.grossHeight}` : '—'}
+                </td>
+                <td class="py-2 pr-3 text-xs font-mono font-bold text-slate-900 dark:text-white bg-amber-50 dark:bg-amber-500/5 rounded px-2">
+                    ${it.finalWidth && it.finalHeight ? `${it.finalWidth} × ${it.finalHeight}` : '—'}
+                </td>
+                <td class="py-2 pr-3 text-xs text-center font-bold">${it.quantity}</td>
+                <td class="py-2 pr-3 text-xs font-mono text-right">${area.toFixed(3)} m²</td>
+                <td class="py-2 pr-3">${drillBadge}${notchBadge}${!drillBadge && !notchBadge ? '<span class="text-xs text-slate-300 dark:text-slate-600">—</span>' : ''}</td>
+                <td class="py-2 flex gap-1">
+                    <button onclick="openDrawing('${it.id}')" class="p-1.5 text-violet-500 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-lg" title="Furos/Recortes/Chanfros">
+                        <i data-lucide="ruler" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="removeItem('${it.id}')" class="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg" title="Remover peça">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
                 </td>
             </tr>`;
         });
-        document.getElementById('itemsEmptyMsg').classList.toggle('hidden', items.length > 0);
+
+        const emptyMsg = document.getElementById('itemsEmptyMsg');
+        emptyMsg.classList.toggle('hidden', items.length > 0);
+        if (items.length === 0) emptyMsg.classList.remove('hidden');
         document.getElementById('totalArea').innerText = totalArea.toFixed(3);
         document.getElementById('totalWeight').innerText = totalWeight.toFixed(1);
 
@@ -376,21 +669,25 @@
         const mtbody = document.getElementById('materialsTableBody');
         mtbody.innerHTML = '';
         const costs = { HARDWARE: 0, ALUMINUM: 0, SILICONE: 0, OTHER: 0 };
+
         materials.forEach(m => {
             const total = (m.quantity || 0) * (m.unitPriceSnapshot || 0);
             costs[m.category] = (costs[m.category] || 0) + total;
-            mtbody.innerHTML += `<tr class="border-b border-slate-100 dark:border-slate-800">
-                <td class="py-2 pr-2">${labelCategory(m.category)}</td>
-                <td class="py-2 pr-2">${m.description}</td>
-                <td class="py-2 pr-2">${m.quantity}</td>
-                <td class="py-2 pr-2">${m.unit || ''}</td>
-                <td class="py-2 pr-2">${brl(m.unitPriceSnapshot)}</td>
-                <td class="py-2 pr-2">${brl(total)}</td>
-                <td class="py-2 pr-2">${m.supplierName || ''}</td>
-                <td class="py-2 pr-2"><button onclick="removeMaterial('${m.id}')" class="text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+            mtbody.innerHTML += `<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                <td class="py-2 pr-3"><span class="inline-block text-[10px] font-bold rounded px-2 py-0.5 ${catColor(m.category)}">${catLabel(m.category)}</span></td>
+                <td class="py-2 pr-3 font-semibold text-sm">${m.description}</td>
+                <td class="py-2 pr-3 text-center text-sm">${m.quantity}</td>
+                <td class="py-2 pr-3 text-sm text-slate-400">${m.unit || '—'}</td>
+                <td class="py-2 pr-3 text-sm text-right font-mono">${brl(m.unitPriceSnapshot)}</td>
+                <td class="py-2 pr-3 text-sm text-right font-mono font-bold">${brl(total)}</td>
+                <td class="py-2 pr-3 text-xs text-slate-400">${m.supplierName || '—'}</td>
+                <td class="py-2"><button onclick="removeMaterial('${m.id}')" class="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
             </tr>`;
         });
-        document.getElementById('materialsEmptyMsg').classList.toggle('hidden', materials.length > 0);
+
+        const matEmpty = document.getElementById('materialsEmptyMsg');
+        matEmpty.classList.toggle('hidden', materials.length > 0);
+        if (materials.length === 0) matEmpty.classList.remove('hidden');
 
         document.getElementById('costGlass').innerText = brl(glassCost);
         document.getElementById('costHardware').innerText = brl(costs.HARDWARE);
@@ -398,12 +695,7 @@
         document.getElementById('costSilicone').innerText = brl(costs.SILICONE);
         document.getElementById('costOther').innerText = brl(costs.OTHER);
         document.getElementById('costTotal').innerText = brl(glassCost + costs.HARDWARE + costs.ALUMINUM + costs.SILICONE + costs.OTHER);
-        document.getElementById('nestingResult').classList.add('hidden');
         lucide.createIcons();
-    }
-
-    function labelCategory(c) {
-        return { HARDWARE: 'Ferragem', ALUMINUM: 'Alumínio', SILICONE: 'Silicone', OTHER: 'Outros' }[c] || c;
     }
 
     async function changeStatus() {
@@ -419,18 +711,23 @@
 
     // ── Peças ──
     function previewFinalSize() {
-        // apenas indicativo visual; o cálculo real com as regras parametrizadas é feito no servidor ao salvar
         document.getElementById('previewW').innerText = '';
         document.getElementById('previewH').innerText = '';
     }
 
     function openItemForm() {
-        ['itemId','itemDescription','itemEnvironment','itemGlassType','itemThickness','itemColor','itemFinish',
-         'itemGrossWidth','itemGrossHeight','itemFinalWidth','itemFinalHeight','itemObservations'].forEach(id => document.getElementById(id).value = '');
+        ['itemId','itemDescription','itemEnvironment','itemGlassType','itemFinish',
+         'itemGrossWidth','itemGrossHeight','itemFinalWidth','itemFinalHeight','itemObservations']
+            .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
         document.getElementById('itemQuantity').value = 1;
         document.getElementById('itemDrillingCount').value = 0;
         document.getElementById('itemNotchCount').value = 0;
+        document.getElementById('itemThickness').value = '';
+        document.getElementById('itemColor').value = '';
+        document.getElementById('itemEdgeWork').value = '';
+        document.getElementById('itemAngleType').value = '90';
         openModal('itemModal');
+        lucide.createIcons();
     }
 
     async function submitItem() {
@@ -454,6 +751,8 @@
             observations: document.getElementById('itemObservations').value,
             supplier: document.getElementById('itemSupplier').value ? { id: document.getElementById('itemSupplier').value } : null
         };
+        if (!payload.description) { alert('Informe a descrição da peça.'); return; }
+        if (!payload.finalWidth && !payload.grossWidth) { alert('Informe pelo menos a medida do vão ou a medida final de corte.'); return; }
         await api(`/cut-plans/${currentPlan.id}/items`, 'POST', payload);
         closeModal('itemModal');
         currentPlan = await api(`/cut-plans/${currentPlan.id}`);
@@ -461,7 +760,7 @@
     }
 
     async function removeItem(id) {
-        if (!confirm('Remover esta peça?')) return;
+        if (!confirm('Remover esta peça do plano?')) return;
         await api(`/cut-plans/${currentPlan.id}/items/${id}`, 'DELETE');
         currentPlan = await api(`/cut-plans/${currentPlan.id}`);
         renderPlan();
@@ -472,6 +771,7 @@
         ['materialId','materialDescription','materialUnit','materialSupplierName'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('materialQuantity').value = 1;
         document.getElementById('materialPrice').value = '';
+        document.getElementById('materialCategory').value = 'HARDWARE';
         openModal('materialModal');
     }
 
@@ -485,6 +785,7 @@
             unitPriceSnapshot: parseFloat(document.getElementById('materialPrice').value) || 0,
             supplierName: document.getElementById('materialSupplierName').value
         };
+        if (!payload.description) { alert('Informe a descrição do material.'); return; }
         await api(`/cut-plans/${currentPlan.id}/materials`, 'POST', payload);
         closeModal('materialModal');
         currentPlan = await api(`/cut-plans/${currentPlan.id}`);
@@ -492,36 +793,14 @@
     }
 
     async function removeMaterial(id) {
-        if (!confirm('Remover este item?')) return;
+        if (!confirm('Remover este material?')) return;
         await api(`/cut-plans/${currentPlan.id}/materials/${id}`, 'DELETE');
         currentPlan = await api(`/cut-plans/${currentPlan.id}`);
         renderPlan();
     }
 
-    // ── Otimização ──
-    async function runOptimize() {
-        const result = await api(`/cut-plans/${currentPlan.id}/optimize`, 'POST');
-        document.getElementById('nestSheets').innerText = result.totalSheets;
-        document.getElementById('nestUtil').innerText = result.utilizationPercent + '%';
-        document.getElementById('nestWaste').innerText = Number(result.totalWasteArea).toFixed(2) + ' m²';
-        const grid = document.getElementById('nestSheetsGrid');
-        grid.innerHTML = '';
-        result.sheets.forEach(s => {
-            grid.innerHTML += `<div class="border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-                <p class="text-xs font-bold mb-2">Chapa #${s.index} — ${s.utilizationPercent}% aproveitamento</p>
-                ${s.svg}
-            </div>`;
-        });
-        document.getElementById('nestingResult').classList.remove('hidden');
-        document.getElementById('nestingResult').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // ── Desenho Técnico (furos, recortes, chanfros) ──
-
-    function findItem(itemId) {
-        return (currentPlan.items || []).find(i => i.id === itemId);
-    }
-
+    // ── Desenho Técnico ──
+    function findItem(itemId) { return (currentPlan.items || []).find(i => i.id === itemId); }
     function refreshDrawingPreview() {
         const itemId = document.getElementById('drawingItemId').value;
         document.getElementById('drawingPreview').src = `/cut-plans/items/${itemId}/drawing?t=${Date.now()}`;
@@ -529,22 +808,25 @@
 
     function renderFeatureLists(item) {
         const dList = document.getElementById('drillingList');
-        dList.innerHTML = (item.drillings || []).map(d => `<li class="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded-lg px-2 py-1">
-            <span>X:${d.posX} Y:${d.posY} Ø${d.diameter}mm (${d.drillType})</span>
-            <button onclick="deleteDrilling('${d.id}')" class="text-rose-500"><i data-lucide="x" class="w-3 h-3"></i></button>
-        </li>`).join('') || '<li class="text-slate-400">Nenhum furo cadastrado.</li>';
+        dList.innerHTML = (item.drillings || []).map(d =>
+            `<li class="flex justify-between items-center bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-amber-200 dark:border-amber-500/20">
+                <span class="text-amber-800 dark:text-amber-300">⬤ X:${d.posX} Y:${d.posY} Ø${d.diameter}mm (${d.drillType})</span>
+                <button onclick="deleteDrilling('${d.id}')" class="text-rose-400 hover:text-rose-600"><i data-lucide="x" class="w-3 h-3"></i></button>
+            </li>`).join('') || '<li class="text-slate-400 text-center py-1">Nenhum furo cadastrado.</li>';
 
         const nList = document.getElementById('notchList');
-        nList.innerHTML = (item.notches || []).map(n => `<li class="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded-lg px-2 py-1">
-            <span>X:${n.posX} Y:${n.posY} ${n.width}x${n.height}mm</span>
-            <button onclick="deleteNotch('${n.id}')" class="text-rose-500"><i data-lucide="x" class="w-3 h-3"></i></button>
-        </li>`).join('') || '<li class="text-slate-400">Nenhum recorte cadastrado.</li>';
+        nList.innerHTML = (item.notches || []).map(n =>
+            `<li class="flex justify-between items-center bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-violet-200 dark:border-violet-500/20">
+                <span class="text-violet-800 dark:text-violet-300">◆ X:${n.posX} Y:${n.posY} — ${n.width}×${n.height}mm</span>
+                <button onclick="deleteNotch('${n.id}')" class="text-rose-400 hover:text-rose-600"><i data-lucide="x" class="w-3 h-3"></i></button>
+            </li>`).join('') || '<li class="text-slate-400 text-center py-1">Nenhum recorte cadastrado.</li>';
 
         const cList = document.getElementById('chamferList');
-        cList.innerHTML = (item.chamfers || []).map(c => `<li class="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded-lg px-2 py-1">
-            <span>${labelCorner(c.corner)} — ${c.size}mm</span>
-            <button onclick="deleteChamfer('${c.id}')" class="text-rose-500"><i data-lucide="x" class="w-3 h-3"></i></button>
-        </li>`).join('') || '<li class="text-slate-400">Nenhum chanfro cadastrado.</li>';
+        cList.innerHTML = (item.chamfers || []).map(c =>
+            `<li class="flex justify-between items-center bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-700">
+                <span>${labelCorner(c.corner)} — ${c.size}mm</span>
+                <button onclick="deleteChamfer('${c.id}')" class="text-rose-400 hover:text-rose-600"><i data-lucide="x" class="w-3 h-3"></i></button>
+            </li>`).join('') || '<li class="text-slate-400 text-center py-1">Nenhum chanfro cadastrado.</li>';
 
         lucide.createIcons();
     }
@@ -575,17 +857,15 @@
     function applyNotchPreset() {
         const corner = document.getElementById('notchCorner').value;
         if (!corner) return;
-        const itemId = document.getElementById('drawingItemId').value;
-        const item = findItem(itemId);
+        const item = findItem(document.getElementById('drawingItemId').value);
         if (!item) return;
         const w = parseFloat(document.getElementById('notchW').value) || 0;
         const h = parseFloat(document.getElementById('notchH').value) || 0;
         const fw = item.finalWidth || 0, fh = item.finalHeight || 0;
         let x = 0, y = 0;
-        if (corner === 'BOTTOM_LEFT') { x = 0; y = 0; }
-        if (corner === 'BOTTOM_RIGHT') { x = fw - w; y = 0; }
-        if (corner === 'TOP_LEFT') { x = 0; y = fh - h; }
-        if (corner === 'TOP_RIGHT') { x = fw - w; y = fh - h; }
+        if (corner === 'BOTTOM_RIGHT') x = fw - w;
+        if (corner === 'TOP_LEFT')    y = fh - h;
+        if (corner === 'TOP_RIGHT')  { x = fw - w; y = fh - h; }
         document.getElementById('notchX').value = x;
         document.getElementById('notchY').value = y;
     }
@@ -605,8 +885,7 @@
     }
 
     async function deleteDrilling(id) {
-        const itemId = document.getElementById('drawingItemId').value;
-        await api(`/cut-plans/items/${itemId}/drillings/${id}`, 'DELETE');
+        await api(`/cut-plans/items/${document.getElementById('drawingItemId').value}/drillings/${id}`, 'DELETE');
         await reloadDrawingModal();
     }
 
@@ -618,7 +897,7 @@
             width: parseFloat(document.getElementById('notchW').value),
             height: parseFloat(document.getElementById('notchH').value)
         };
-        if (Object.values(payload).some(v => isNaN(v))) { alert('Preencha posição, largura e altura do recorte (ou escolha um canto).'); return; }
+        if (Object.values(payload).some(v => isNaN(v))) { alert('Preencha posição, largura e altura do recorte.'); return; }
         await api(`/cut-plans/items/${itemId}/notches`, 'POST', payload);
         ['notchX','notchY','notchW','notchH'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('notchCorner').value = '';
@@ -626,17 +905,13 @@
     }
 
     async function deleteNotch(id) {
-        const itemId = document.getElementById('drawingItemId').value;
-        await api(`/cut-plans/items/${itemId}/notches/${id}`, 'DELETE');
+        await api(`/cut-plans/items/${document.getElementById('drawingItemId').value}/notches/${id}`, 'DELETE');
         await reloadDrawingModal();
     }
 
     async function addChamfer() {
         const itemId = document.getElementById('drawingItemId').value;
-        const payload = {
-            corner: document.getElementById('chamferCorner').value,
-            size: parseFloat(document.getElementById('chamferSize').value)
-        };
+        const payload = { corner: document.getElementById('chamferCorner').value, size: parseFloat(document.getElementById('chamferSize').value) };
         if (isNaN(payload.size) || payload.size <= 0) { alert('Informe o tamanho do chanfro.'); return; }
         await api(`/cut-plans/items/${itemId}/chamfers`, 'POST', payload);
         document.getElementById('chamferSize').value = '';
@@ -644,8 +919,7 @@
     }
 
     async function deleteChamfer(id) {
-        const itemId = document.getElementById('drawingItemId').value;
-        await api(`/cut-plans/items/${itemId}/chamfers/${id}`, 'DELETE');
+        await api(`/cut-plans/items/${document.getElementById('drawingItemId').value}/chamfers/${id}`, 'DELETE');
         await reloadDrawingModal();
     }
 

@@ -10,10 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Plano de Corte. Uma Ordem de Serviço pode possuir 1..N planos de corte.
- * Totalmente integrado a WorkOrder (não é um módulo isolado).
- */
 @Entity
 @Table(name = "cut_plans")
 public class CutPlan {

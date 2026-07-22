@@ -17,11 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Catálogo de Insumos (Tabela de Preços de Compra).
- * Fonte única de valores usada pelo Plano de Corte. Toda alteração de
- * preço gera um registro em MaterialPriceHistory (nunca perde o histórico).
- */
+
 @Service
 public class MaterialPriceService {
 

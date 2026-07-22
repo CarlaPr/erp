@@ -7,24 +7,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 
-/**
- * Otimização de aproveitamento de chapas de vidro (nesting).
- *
- * Implementa um algoritmo de empacotamento em "prateleiras" (Shelf / First-Fit
- * Decreasing Height), técnica clássica e amplamente usada em softwares de corte
- * 2D quando as peças não podem ser rotacionadas livremente (vidro tem sentido/
- * fiação e, em temperados, furos/recortes já fixos). As peças são agrupadas por
- * especificação (tipo + espessura + cor + acabamento), pois só podem ser
- * cortadas juntas na mesma chapa se forem do MESMO vidro.
- *
- * Não é um solver exato (bin packing 2D é NP-difícil); é a mesma abordagem
- * heurística usada na prática por sistemas de otimização de corte, entregando
- * bom aproveitamento com desempenho previsível.
- */
+
 @Service
 public class CuttingOptimizationService {
 
-    /** Folga entre peças para o disco de corte (mm). Ajustável conforme espessura/serra. */
     public static final BigDecimal DEFAULT_SAW_GAP_MM = new BigDecimal("5");
 
     public static class Piece {

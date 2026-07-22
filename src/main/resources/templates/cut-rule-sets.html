@@ -6,84 +6,848 @@
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
 
-<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-12 pt-20 lg:pt-8 w-full min-h-screen">
+
+    <!-- ══ Header ═══════════════════════════════════════════════ -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
             <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Regras de Desconto e Folga Técnica</h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Parametrize os descontos/folgas usados no cálculo automático da medida final de corte no Plano de Corte. Nenhum valor fica fixo no código — edite livremente conforme o fabricante/linha de perfil.</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Parametrize os descontos automáticos para calcular a medida final de corte. Use a tabela de referência abaixo para consultar os descontos padrão por tipo de serviço.
+            </p>
         </div>
-        <button onclick="openForm()" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:text-slate-900 font-bold py-3 px-5 rounded-xl flex items-center gap-2 text-sm">
+        <button onclick="openForm()"
+                class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:text-slate-900 font-bold py-3 px-5 rounded-xl flex items-center gap-2 text-sm shadow-md transition-all shrink-0">
             <i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Conjunto de Regras
         </button>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div th:each="rs : ${ruleSets}" class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <div class="flex justify-between items-start mb-2">
-                <h3 class="font-black text-slate-900 dark:text-white" th:text="${rs.name}"></h3>
-                <div class="flex gap-2">
-                    <button th:data-id="${rs.id}" onclick="deleteRuleSet(this)" class="text-rose-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+    <!-- ══ Conjuntos cadastrados ══════════════════════════════════ -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-10">
+        <div th:each="rs : ${ruleSets}"
+             class="bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+            <div class="flex justify-between items-start mb-1">
+                <h3 class="font-black text-slate-900 dark:text-white text-base" th:text="${rs.name}"></h3>
+                <div class="flex gap-1">
+                    <button th:data-id="${rs.id}" onclick="editRuleSet(this)"
+                            class="p-1.5 text-brand-600 dark:text-cyan-400 hover:bg-brand-50 dark:hover:bg-cyan-500/10 rounded-lg">
+                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button th:data-id="${rs.id}" onclick="deleteRuleSet(this)"
+                            class="p-1.5 text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
                 </div>
             </div>
-            <p class="text-xs text-slate-500 mb-3" th:text="${rs.description}"></p>
+            <p class="text-xs text-slate-400 mb-3" th:text="${rs.description}"></p>
             <table class="w-full text-xs">
-                <thead><tr class="text-left uppercase text-slate-400 border-b border-slate-100 dark:border-slate-800">
-                    <th class="py-1">Parâmetro</th><th class="py-1">Dimensão</th><th class="py-1">Valor (mm)</th>
-                </tr></thead>
+                <thead>
+                <tr class="text-left uppercase text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                    <th class="py-1.5 pr-2">Parâmetro</th>
+                    <th class="py-1.5 pr-2">Dimensão</th>
+                    <th class="py-1.5 text-right">Valor (mm)</th>
+                </tr>
+                </thead>
                 <tbody>
-                    <tr th:each="p : ${rs.parameters}" class="border-b border-slate-50 dark:border-slate-800/50">
-                        <td class="py-1" th:text="${p.label}"></td>
-                        <td class="py-1" th:text="${p.dimension}"></td>
-                        <td class="py-1 font-bold" th:text="${p.valueMm}"></td>
-                    </tr>
+                <tr th:each="p : ${rs.parameters}" class="border-b border-slate-50 dark:border-slate-800/50">
+                    <td class="py-1.5 pr-2 font-medium text-slate-700 dark:text-slate-300" th:text="${p.label}"></td>
+                    <td class="py-1.5 pr-2">
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
+                              th:classappend="${p.dimension.toString() == 'WIDTH'} ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' :
+                                              ${p.dimension.toString() == 'HEIGHT'} ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' :
+                                              'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'"
+                              th:text="${p.dimension.toString() == 'WIDTH' ? 'Largura' : p.dimension.toString() == 'HEIGHT' ? 'Altura' : 'Ambas'}">
+                        </span>
+                    </td>
+                    <td class="py-1.5 font-black text-right font-mono text-slate-900 dark:text-white" th:text="${p.valueMm} + ' mm'"></td>
+                </tr>
                 </tbody>
             </table>
-            <button th:data-id="${rs.id}" onclick="editRuleSet(this)" class="mt-3 text-brand-600 dark:text-cyan-400 font-bold text-xs hover:underline">Editar parâmetros</button>
         </div>
-        <div th:if="${#lists.isEmpty(ruleSets)}" class="md:col-span-2 text-center py-12 text-slate-400">Nenhum conjunto de regras cadastrado.</div>
+        <div th:if="${#lists.isEmpty(ruleSets)}"
+             class="md:col-span-3 text-center py-16 bg-white dark:bg-[#131C2F] rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-slate-400">
+            <i data-lucide="sliders-horizontal" class="w-10 h-10 mx-auto mb-3 opacity-30"></i>
+            <p class="font-semibold">Nenhum conjunto de regras cadastrado.</p>
+            <p class="text-sm mt-1">Clique em "Novo Conjunto de Regras" para criar o primeiro.</p>
+        </div>
     </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         TABELA DE REFERÊNCIA TÉCNICA
+    ════════════════════════════════════════════════════════════ -->
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-1 h-8 bg-brand-600 dark:bg-cyan-400 rounded-full"></div>
+            <div>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white">Tabela de Descontos, Furos e Especificações para Têmpera</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Guia técnico dos serviços realizados pela empresa. Use como referência ao montar os planos de corte.</p>
+            </div>
+        </div>
+
+        <!-- LEGENDA -->
+        <div class="flex flex-wrap gap-3 mb-5">
+            <span class="flex items-center gap-1.5 text-xs text-slate-500"><span class="px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 font-bold text-[10px]">OBRIGATÓRIO</span> Antes da têmpera</span>
+            <span class="flex items-center gap-1.5 text-xs text-slate-500"><span class="px-2 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 font-bold text-[10px]">ATENÇÃO</span> Ponto crítico</span>
+            <span class="flex items-center gap-1.5 text-xs text-slate-500"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold text-[10px]">OK</span> Pode variar por fabricante</span>
+            <span class="flex items-center gap-1.5 text-xs text-slate-500"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 font-bold text-[10px]">INFO</span> Dado de referência</span>
+        </div>
+
+        <!-- ALERTA GERAL -->
+        <div class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-4 mb-6 flex gap-3 items-start">
+            <span class="text-xl">🚫</span>
+            <div class="text-sm text-red-800 dark:text-red-300">
+                <strong>REGRA ABSOLUTA:</strong> Vidro temperado <strong>NÃO pode ser cortado, furado, lapidado ou recortado após o processo de têmpera.</strong>
+                Todos os furos, recortes, abaulamentos e formas devem ser especificados e executados ANTES do envio à têmpera.
+                Se errar, a peça vai para o lixo.
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegação rápida -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <a href="#sec-box" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">01 Box Banheiro</a>
+        <a href="#sec-sacada" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">02 Sacadas</a>
+        <a href="#sec-janelas" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">03 Janelas</a>
+        <a href="#sec-portas" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">04 Portas</a>
+        <a href="#sec-versatik" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">05 Versatik</a>
+        <a href="#sec-guarda" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">06 Guarda-Corpo</a>
+        <a href="#sec-pia" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">07 Pia</a>
+        <a href="#sec-coberturas" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">08 Coberturas</a>
+        <a href="#sec-outros" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">09 Outros Serviços</a>
+        <a href="#sec-alertas" class="px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400">⚠ Alertas</a>
+        <a href="#sec-normas" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">Normas</a>
+        <a href="#sec-glossario" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-brand-50 dark:hover:bg-cyan-500/10 hover:text-brand-600 dark:hover:text-cyan-400 transition-all">Glossário</a>
+    </div>
+
+    <!-- Estilo compartilhado das tabelas técnicas -->
+    <style>
+        .ref-section { margin-bottom: 2rem; }
+        .ref-section-title { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #0ea5e9; padding: 0 0 8px 0; border-bottom: 2px solid #0ea5e9; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .dark .ref-section-title { color: #22d3ee; border-color: #22d3ee; }
+        .ref-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .dark .ref-table-wrap { border-color: #1e293b; }
+        .ref-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .ref-table thead th { background: #1e293b; color: #94a3b8; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 10px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid #334155; }
+        .ref-table tbody tr { border-bottom: 1px solid #f1f5f9; }
+        .dark .ref-table tbody tr { border-bottom-color: #1e293b; }
+        .ref-table tbody tr:hover { background: #f8fafc; }
+        .dark .ref-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+        .ref-table td { padding: 12px; vertical-align: top; color: #374151; }
+        .dark .ref-table td { color: #cbd5e1; }
+        .td-name { font-weight: 700; color: #0f172a; min-width: 160px; }
+        .dark .td-name { color: #f1f5f9; }
+        .td-name .sub { font-weight: 400; color: #94a3b8; font-size: 11px; }
+        .td-mono { font-family: 'Courier New', monospace; font-size: 11px; color: #059669; }
+        .dark .td-mono { color: #34d399; }
+        .td-warn { font-size: 11.5px; }
+        .td-sub { color: #64748b; font-size: 11.5px; }
+        .chip { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 10.5px; font-family: 'Courier New', monospace; margin: 1px 1px 1px 0; }
+        .chip-esp { background: #dcfce7; color: #166534; }
+        .dark .chip-esp { background: rgba(52,211,153,0.15); color: #34d399; }
+        .chip-desc { background: #dbeafe; color: #1e40af; }
+        .dark .chip-desc { background: rgba(96,165,250,0.15); color: #60a5fa; }
+        .chip-furo { background: #fef3c7; color: #92400e; }
+        .dark .chip-furo { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .chip-norm { background: #ede9fe; color: #5b21b6; }
+        .dark .chip-norm { background: rgba(167,139,250,0.15); color: #a78bfa; }
+        .badge-obrig { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 9.5px; font-weight: bold; background: #fee2e2; color: #991b1b; margin-top: 4px; }
+        .dark .badge-obrig { background: rgba(248,113,113,0.15); color: #f87171; }
+        .row-box td:first-child { border-left: 3px solid #0ea5e9; }
+        .row-sacada td:first-child { border-left: 3px solid #10b981; }
+        .row-janela td:first-child { border-left: 3px solid #f59e0b; }
+        .row-porta td:first-child { border-left: 3px solid #8b5cf6; }
+        .row-versatik td:first-child { border-left: 3px solid #ec4899; }
+        .row-guarda td:first-child { border-left: 3px solid #ef4444; }
+        .row-pia td:first-child { border-left: 3px solid #06b6d4; }
+        .row-cobert td:first-child { border-left: 3px solid #f97316; }
+        .row-outros td:first-child { border-left: 3px solid #6366f1; }
+    </style>
+
+    <!-- ══ 01 BOX DE BANHEIRO ═══════════════════════════════════ -->
+    <div class="ref-section" id="sec-box">
+        <div class="ref-section-title"><span class="bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 px-2 py-0.5 rounded text-[10px]">01</span> Box de Banheiro</div>
+        <div class="ref-table-wrap">
+            <table class="ref-table">
+                <thead><tr>
+                    <th>Produto / Modelo</th><th>Espessura</th><th>Desconto Largura</th><th>Desconto Altura</th><th>Furos / Recortes</th><th>Observações</th><th>Norma</th>
+                </tr></thead>
+                <tbody>
+                <tr class="row-box">
+                    <td class="td-name">Box Padrão<br><span class="sub">Frontal / Canto – Correr</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">5 mm cada lateral<br>Folga trilho inf.: 5 mm<br>Sobrepasse folhas: 10–15 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 15 mm</span><br><span class="td-sub">7 mm sup. + 8 mm inf.</span></td>
+                    <td class="td-warn">Furo puxador: ø 12–15 mm<br>Furo dobradiça (se abrir): ø 12 mm<br><span class="badge-obrig">Antes da têmpera</span></td>
+                    <td class="td-sub">Lapidação reta em todas as bordas. Cantos abaulados opcionais. Vidro incolor, fumê, jateado, bronze.</td>
+                    <td><span class="chip chip-norm">NBR 14207</span></td>
+                </tr>
+                <tr class="row-box">
+                    <td class="td-name">Box Até o Teto<br><span class="sub">Piso ao teto – altura variável</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">5 mm por lateral</span></td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span><br><span class="td-sub">10 mm sup. + 10 mm inf.</span></td>
+                    <td class="td-warn">Furo trilho superior (espigão): 1 furo ø 12 mm centrado no topo de cada folha.<br>Furo puxador: conforme ferragem.</td>
+                    <td class="td-sub">Medir altura real após reboco. Larg. máx. por folha: 1.000 mm (8 mm) / 1.200 mm (10 mm).</td>
+                    <td><span class="chip chip-norm">NBR 14207</span></td>
+                </tr>
+                <tr class="row-box">
+                    <td class="td-name">Box Flex / Flex Open<br><span class="sub">Articulado – 2 folhas móveis</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 12 mm</span><br><span class="td-sub">(Vão – 12 mm) ÷ 2 = cada folha<br>Larg. máx. vão: 1.200 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 0 mm</span><br><span class="td-sub">Alt. máx.: 1.900 mm</span></td>
+                    <td class="td-warn">Furo fechadura: recorte ø 30–35 mm (lateral).<br>Furo puxador: ø 12 mm (kit Ideia Glass).<br><span class="badge-obrig">Antes da têmpera</span></td>
+                    <td class="td-sub">Abertura até 90% do vão. Sem trilho superior. Sistemas: Ideia Glass Flex, Marine Vidros Flex.</td>
+                    <td><span class="chip chip-norm">NBR 14207</span></td>
+                </tr>
+                <tr class="row-box">
+                    <td class="td-name">Box Elegance<br><span class="sub">Roldana Aparente – Correr</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">Sobrepasse entre folhas: 20–25 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 80 mm</span><br><span class="td-sub">Roldana sup. + trilho inf.</span></td>
+                    <td class="td-warn">Furo roldana superior: ø 12–14 mm (2 por folha).<br>Furo puxador: ø 12 mm (a 100 mm das bordas).</td>
+                    <td class="td-sub">Roldana cromada/inox aparente. Ideia Glass Elegance, Blindex Vision.</td>
+                    <td><span class="chip chip-norm">NBR 14207</span></td>
+                </tr>
+                <tr class="row-box">
+                    <td class="td-name">Box Camarão<br><span class="sub">Sanfonado / 4 folhas</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span><br><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">÷ nº de folhas. Ex: vão 800 mm ÷ 4 = 197,5 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 15 mm</span></td>
+                    <td class="td-warn">Furo dobradiça articulação: ø 10–12 mm (2 por folha intermediária).<br>Furo trilho inferior (pino): ø 8 mm.</td>
+                    <td class="td-sub">Ideal para banheiros pequenos. Largura mín. cada folha: 150 mm.</td>
+                    <td><span class="chip chip-norm">NBR 14207</span></td>
+                </tr>
+                <tr class="row-box">
+                    <td class="td-name">Box Abrir / Pivotante<br><span class="sub">1 ou 2 portas + painel fixo</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Folha móvel: Vão – 8 mm</span><br><span class="td-sub">Painel fixo: medida exata do nicho</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span></td>
+                    <td class="td-warn">Furos dobradiça: ø 12 mm (2 por porta, a 150 mm do topo e rodapé).<br>Furo fechadura: ø 22–25 mm.<br>Furo puxador: ø 12 mm.</td>
+                    <td class="td-sub">Verificar sentido de abertura. Folha máx. 700 mm em 8 mm. Hinges inox 304/316.</td>
+                    <td><span class="chip chip-norm">NBR 14207</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ 02 SACADAS ════════════════════════════════════════════ -->
+    <div class="ref-section" id="sec-sacada">
+        <div class="ref-section-title"><span class="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded text-[10px]">02</span> Fechamento de Sacada / Envidraçamento</div>
+        <div class="ref-table-wrap">
+            <table class="ref-table">
+                <thead><tr>
+                    <th>Tipo / Sistema</th><th>Espessura</th><th>Desconto Largura</th><th>Desconto Altura</th><th>Furos / Recortes</th><th>Observações</th><th>Norma</th>
+                </tr></thead>
+                <tbody>
+                <tr class="row-sacada">
+                    <td class="td-name">Cortina de Vidro<br><span class="sub">Painéis pivotantes/deslizantes</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span> ≤ 4° andar<br><span class="chip chip-esp">10 mm</span> recomendado</td>
+                    <td><span class="chip chip-desc">5 mm por lateral</span><br><span class="td-sub">Folga para escova adesiva<br>Larg. máx. painel: 1.200 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span><br><span class="td-sub">Folga trilho inf. + sup.</span></td>
+                    <td class="td-warn">Sem furos (pivo no perfil inferior). Lapidação reta obrigatória em todas as bordas.</td>
+                    <td class="td-sub">Abertura total por empilhamento. Vidro temperado ou laminado conforme NBR 16.259.</td>
+                    <td><span class="chip chip-norm">NBR 16259</span></td>
+                </tr>
+                <tr class="row-sacada">
+                    <td class="td-name">Envidraçamento Sacada<br><span class="sub">Sistema deslizante com roldana</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">10 mm</span> padrão<br><span class="chip chip-esp">8 mm</span> até 4° andar</td>
+                    <td><span class="chip chip-desc">Vão ÷ nº folhas – 5 mm</span><br><span class="td-sub">Sobrepasse entre folhas: 25 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 80 mm</span><br><span class="td-sub">Trilho sup. 40 mm + inf. 40 mm</span></td>
+                    <td class="td-warn">Furo roldana superior: ø 12–14 mm (2 por folha, a 50 mm do topo e 60 mm das laterais).</td>
+                    <td class="td-sub">Análise de pressão de vento por andar obrigatória. Verificar regulamentação do condomínio.</td>
+                    <td><span class="chip chip-norm">NBR 16259</span></td>
+                </tr>
+                <tr class="row-sacada">
+                    <td class="td-name">Varanda Europeia<br><span class="sub">Painéis deslizantes e articulados</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Vão ÷ nº módulos – 8 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 30 mm</span></td>
+                    <td class="td-warn">Furo dobradiça articulação (topo): ø 12 mm por folha.<br>Furos puxador lateral: ø 10 mm.</td>
+                    <td class="td-sub">Painéis dobram e empilham na extremidade. Abertura total do vão. Lapidação reta obrigatória.</td>
+                    <td><span class="chip chip-norm">NBR 16259</span></td>
+                </tr>
+                <tr class="row-sacada">
+                    <td class="td-name">Sacada Fixa<br><span class="sub">Painel sem abertura – estrutural</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8–10 mm</span><br><span class="chip chip-esp">Laminado 6+6</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">Encaixe em perfil U</span></td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span></td>
+                    <td class="td-warn">Furos de fixação (clamps/cantoneiras): ø 12–14 mm conforme projeto estrutural.</td>
+                    <td class="td-sub">Silicone estrutural na montagem. Lapidação reta ou bisotê nas bordas expostas.</td>
+                    <td><span class="chip chip-norm">NBR 16259</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ 03 JANELAS ════════════════════════════════════════════ -->
+    <div class="ref-section" id="sec-janelas">
+        <div class="ref-section-title"><span class="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded text-[10px]">03</span> Janelas de Vidro Temperado</div>
+        <div class="ref-table-wrap">
+            <table class="ref-table">
+                <thead><tr>
+                    <th>Tipo de Janela</th><th>Espessura</th><th>Desconto Largura</th><th>Desconto Altura</th><th>Furos / Recortes</th><th>Observações</th>
+                </tr></thead>
+                <tbody>
+                <tr class="row-janela">
+                    <td class="td-name">Janela de Correr<br><span class="sub">2, 3 ou 4 folhas</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span><br><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">Vão ÷ nº folhas – 5 mm</span><br><span class="td-sub">Sobrepasse: 10 mm. Largura máx. folha: 1.000 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 15 mm</span><br><span class="td-sub">Trilho sup. + inf.</span></td>
+                    <td class="td-warn">Furo puxador embutido (se previsto): ø 12 mm.<br>Furos fechadura: ø 22–25 mm.</td>
+                    <td class="td-sub">Medida final: (Vão ÷ nº folhas) – desconto. Verificar trilho utilizado. Lapidação reta obrigatória.</td>
+                </tr>
+                <tr class="row-janela">
+                    <td class="td-name">Janela Basculante<br><span class="sub">Eixo horizontal</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">5 mm por lateral</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">5 mm sup. + 5 mm inf.</span></td>
+                    <td class="td-warn">Furos dobradiça eixo: ø 8–10 mm (2 pontos no centro das laterais).<br>Furo vareta trava: ø 6 mm.</td>
+                    <td class="td-sub">Peça gira em torno do eixo horizontal central. Cuidado com folgas para vedação.</td>
+                </tr>
+                <tr class="row-janela">
+                    <td class="td-name">Janela de Abrir<br><span class="sub">1 ou 2 folhas / batente</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span><br><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">5 mm por lado (folga no batente)</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span></td>
+                    <td class="td-warn">Furos dobradiça: ø 10–12 mm (2 por folha).<br>Furo fechadura/espagnolette: ø 22 mm.</td>
+                    <td class="td-sub">Verificar espessura do batente. Se batente de alumínio, consultar fabricante para encaixe.</td>
+                </tr>
+                <tr class="row-janela">
+                    <td class="td-name">Maxar / Projetante<br><span class="sub">Eixo superior</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span><br><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 12 mm</span><br><span class="td-sub">6 mm sup. (eixo) + 6 mm inf.</span></td>
+                    <td class="td-warn">Furos eixo braço: ø 8–10 mm (2 pontos no topo da folha).<br>Furo puxador: ø 10 mm.</td>
+                    <td class="td-sub">Abre projetando a parte inferior. Altura máx. de folha: 800 mm.</td>
+                </tr>
+                <tr class="row-janela">
+                    <td class="td-name">Janela Fixa<br><span class="sub">Painel sem abertura</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span><br><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span><br><span class="td-sub">10 mm por lado (encaixe perfil U)</span></td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span></td>
+                    <td class="td-warn">Sem furos (fixo). Lapidação reta obrigatória nas bordas encaixadas no perfil.</td>
+                    <td class="td-sub">Usar calços de borracha para encaixe. Silicone estrutural na vedação perimetral.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ 04 PORTAS ═════════════════════════════════════════════ -->
+    <div class="ref-section" id="sec-portas">
+        <div class="ref-section-title"><span class="bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 px-2 py-0.5 rounded text-[10px]">04</span> Portas de Vidro Temperado</div>
+        <div class="ref-table-wrap">
+            <table class="ref-table">
+                <thead><tr>
+                    <th>Tipo de Porta</th><th>Espessura</th><th>Desconto Largura</th><th>Desconto Altura</th><th>Furos / Recortes</th><th>Observações</th><th>Norma</th>
+                </tr></thead>
+                <tbody>
+                <tr class="row-porta">
+                    <td class="td-name">Porta Pivotante<br><span class="sub">Eixo deslocado – sem trilho</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">10 mm</span><br><span class="chip chip-esp">12 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">5 mm por lado</span></td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span><br><span class="td-sub">Folga piso (10 mm) + dobradiça topo (10 mm)</span></td>
+                    <td class="td-warn">Furos pivot (topo e base): ø 12–14 mm (posição definida pela ferragem).<br>Furo fechadura: ø 25–30 mm.<br>Furo puxador tubular: ø 12–15 mm (par alinhado).<br><span class="badge-obrig">Antes da têmpera</span></td>
+                    <td class="td-sub">Largura máx.: 1.200 mm em 10 mm; 1.500 mm em 12 mm. Peso: calcular conforme espessura × área × 2,5. Pivot deve suportar o peso total + 30%.</td>
+                    <td><span class="chip chip-norm">NBR 7400</span></td>
+                </tr>
+                <tr class="row-porta">
+                    <td class="td-name">Porta de Correr<br><span class="sub">1 ou 2 folhas em trilho</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">Sobrepasse folhas: 25 mm. Larg. máx.: 1.000 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 85 mm</span><br><span class="td-sub">Trilho sup. 40 mm + caixilho inf. 45 mm</span></td>
+                    <td class="td-warn">Furo roldana superior: ø 12–14 mm (2 por folha).<br>Furo puxador: ø 12 mm (posição padrão: 1.000 mm do piso).<br>Furo fechadura (se houver): ø 22 mm.</td>
+                    <td class="td-sub">Vidro desliza pela frente da parede. Perfil caixilho inferior ou meia-cana. Sistemas Versatik, Aragon, Dorma.</td>
+                    <td><span class="chip chip-norm">NBR 7400</span></td>
+                </tr>
+                <tr class="row-porta">
+                    <td class="td-name">Porta de Abrir<br><span class="sub">Dobradiças laterais</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 12 mm</span><br><span class="td-sub">6 mm por lado</span></td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span><br><span class="td-sub">Folga piso + dobradiça topo</span></td>
+                    <td class="td-warn">Furos dobradiça: ø 12 mm (3 dobradiças, a 200 mm das extremidades e 1 central).<br>Furo fechadura: ø 22–25 mm.<br>Furos puxador: ø 12 mm.</td>
+                    <td class="td-sub">Verificar sentido de abertura. Peso máx. recomendado por dobradiça: 80 kg. Mola tensora ou fechador hidráulico: prever recorte de fixação.</td>
+                    <td><span class="chip chip-norm">NBR 7400</span></td>
+                </tr>
+                <tr class="row-porta">
+                    <td class="td-name">Porta Sanfonada<br><span class="sub">Articulada / Dobra para o lado</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span><br><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">Total ÷ nº folhas = larg. de cada folha</span></td>
+                    <td><span class="chip chip-desc">Vão – 15 mm</span></td>
+                    <td class="td-warn">Furos dobradiça articulação: ø 10–12 mm (2 por junção).<br>Furo pivot piso: ø 12 mm.<br>Furo puxador: ø 10 mm.</td>
+                    <td class="td-sub">Dobra lateral ao abrir, recolhe no lado. Larg. mín. por folha: 200 mm. Ideal para vãos estreitos.</td>
+                    <td><span class="chip chip-norm">NBR 7400</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ 05 VERSATIK ══════════════════════════════════════════ -->
+    <div class="ref-section" id="sec-versatik">
+        <div class="ref-section-title"><span class="bg-pink-100 dark:bg-pink-500/20 text-pink-700 dark:text-pink-400 px-2 py-0.5 rounded text-[10px]">05</span> Kit Versatik (Tec-Vidro) – Todos os Tipos</div>
+        <div class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-3 mb-3 text-xs text-amber-800 dark:text-amber-300 flex gap-2 items-start">
+            <span>⚠</span>
+            <span><strong>Atenção Versatik:</strong> Use sempre o gabarito oficial da Tec-Vidro. A posição errada de um furo torna o vidro inutilizável. Baixe em tec-vidro.com.br antes de fazer o pedido.</span>
+        </div>
+        <div class="ref-table-wrap">
+            <table class="ref-table">
+                <thead><tr>
+                    <th>Linha / Modelo</th><th>Espessura</th><th>Desconto Largura</th><th>Desconto Altura</th><th>Furos / Recortes</th><th>Observações</th>
+                </tr></thead>
+                <tbody>
+                <tr class="row-versatik">
+                    <td class="td-name">Versatik Classic<br><span class="sub">Correr 2 ou 4 folhas – 1 trilho</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">(Vão ÷ 2) – 5 mm</span><br><span class="td-sub">5 mm lateral de cada folha. Sobrepasse: 25 mm. Largura máx. folha: 1.000 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 85 mm</span><br><span class="td-sub">Trilho sup. 40 mm + perfil inf. 45 mm</span></td>
+                    <td class="td-warn">Furo roldana superior: ø 12 mm — 2 furos por folha<br>Posição: a 60 mm das bordas laterais, a 35 mm da borda superior<br>Furo puxador: ø 12 mm — posição padrão 950 mm do piso<br><span class="badge-obrig">Usar gabarito Tec-Vidro</span></td>
+                    <td class="td-sub">Sistema mais vendido. Alumínio com anodização ou pintura eletrostática. Cores: natural, preto, branco, grafite, bronze. 5 anos de garantia.</td>
+                </tr>
+                <tr class="row-versatik">
+                    <td class="td-name">Versatik Plus<br><span class="sub">Correr 4 folhas – 2 trilhos</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">(Vão ÷ 4) – 5 mm</span><br><span class="td-sub">Para vãos entre 2.400 mm e 4.800 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 85 mm</span></td>
+                    <td class="td-warn">Furo roldana superior: ø 12 mm (2 por folha, posição conforme gabarito).<br>Furo puxador: ø 12 mm.<br>Vidros maiores (>40 kg): verificar com a Tec-Vidro furos adicionais para roldanas extras.</td>
+                    <td class="td-sub">4 folhas em 2 trilhos: 2 fixas + 2 móveis (ou todas móveis). Para vãos largos. Folhas se recolhem nos extremos.</td>
+                </tr>
+                <tr class="row-versatik">
+                    <td class="td-name">Versatik Division<br><span class="sub">Divisória interna</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Painel: Vão ÷ nº painéis – 5 mm</span><br><span class="td-sub">Transpasse lateral entre painéis: 20 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 80 mm</span><br><span class="td-sub">Perfil superior 40 mm + inferior 40 mm</span></td>
+                    <td class="td-warn">Furo roldana superior: ø 12 mm (2 por painel).<br>Furos passantes para puxador de vidro: ø 12 mm (par alinhado).</td>
+                    <td class="td-sub">Para divisão de ambientes internos. Painéis fixos ou com alguns móveis. Vedação por gaxeta de borracha.</td>
+                </tr>
+                <tr class="row-versatik">
+                    <td class="td-name">Versatik VT3<br><span class="sub">3 folhas – vão central livre</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">(Vão ÷ 3) – 5 mm</span><br><span class="td-sub">Para vãos entre 1.800 mm e 3.600 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 85 mm</span></td>
+                    <td class="td-warn">Furo roldana: ø 12 mm (2 por folha conforme gabarito VT3).<br>Furo puxador: ø 12 mm.</td>
+                    <td class="td-sub">1 folha fixa + 2 móveis, ou 3 móveis. Folhas se recolhem para um lado apenas. Vão central fica livre após abertura.</td>
+                </tr>
+                <tr class="row-versatik">
+                    <td class="td-name">Versatik VT6<br><span class="sub">6 folhas – sacadas grandes</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">(Vão ÷ 6) – 5 mm</span><br><span class="td-sub">Para vãos > 4.800 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 85 mm</span></td>
+                    <td class="td-warn">Atenção: vidros > 40 kg — solicitar furações adicionais para roldanas reforçadas (2+2 por folha).<br>Gabarito VT6 obrigatório.</td>
+                    <td class="td-sub">6 folhas em 2 trilhos. Folhas empilham nos extremos. Instalação exige alinhamento laser dos trilhos. Piso nivelado obrigatório.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ 06 GUARDA-CORPO ══════════════════════════════════════ -->
+    <div class="ref-section" id="sec-guarda">
+        <div class="ref-section-title"><span class="bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 px-2 py-0.5 rounded text-[10px]">06</span> Guarda-Corpo de Vidro</div>
+        <div class="ref-table-wrap">
+            <table class="ref-table">
+                <thead><tr>
+                    <th>Tipo</th><th>Espessura</th><th>Desconto Largura</th><th>Desconto Altura</th><th>Furos / Recortes</th><th>Observações</th><th>Norma</th>
+                </tr></thead>
+                <tbody>
+                <tr class="row-guarda">
+                    <td class="td-name">GC com Clamp (Ponteira)<br><span class="sub">Fixação lateral por pressão</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">10 mm</span><br><span class="chip chip-esp">12 mm</span></td>
+                    <td><span class="chip chip-desc">Medida exata entre clamps</span><br><span class="td-sub">Sem desconto — clamp abraça a borda</span></td>
+                    <td><span class="chip chip-desc">Altura calculada = altura útil + encaixe</span><br><span class="td-sub">Alt. mín. útil: 1.100 mm (NBR 14718)</span></td>
+                    <td class="td-warn">Sem furos — fixação por pressão lateral do clamp.<br>Lapidação reta ou bisotê nas bordas visíveis.<br>Canto superior: chanfro ou boleado (segurança).</td>
+                    <td class="td-sub">Mais rápido de instalar. Clamp em inox 304/316. Usar silicone neutro entre vidro e clamp para amortecimento. NBR 14718 exige resistência a 960 N.</td>
+                    <td><span class="chip chip-norm">NBR 14718</span></td>
+                </tr>
+                <tr class="row-guarda">
+                    <td class="td-name">GC com Furo Passante<br><span class="sub">Parafuso passante inox</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">10 mm</span><br><span class="chip chip-esp">12 mm</span></td>
+                    <td><span class="chip chip-desc">Medida exata do painel</span></td>
+                    <td><span class="chip chip-desc">Alt. mín.: 1.100 mm útil</span></td>
+                    <td class="td-warn">Furos passantes fixação: ø 14–16 mm (1 por suporte, posição conforme projeto).<br>Furos corrimão (se parafusado): ø 10–12 mm.<br><span class="badge-obrig">Antes da têmpera</span></td>
+                    <td class="td-sub">Fixação mais rígida. Usar buchas de borracha neoprene entre parafuso e vidro. Não apertar excessivamente (risco de quebra).</td>
+                    <td><span class="chip chip-norm">NBR 14718</span></td>
+                </tr>
+                <tr class="row-guarda">
+                    <td class="td-name">GC Embutido em Perfil U<br><span class="sub">Caixilho de alumínio no piso</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">10 mm</span><br><span class="chip chip-esp">12 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span><br><span class="td-sub">5 mm por lado (encaixe no perfil U)</span></td>
+                    <td><span class="chip chip-desc">Altura total = útil + 120 mm</span><br><span class="td-sub">120 mm de encaixe no perfil U no piso</span></td>
+                    <td class="td-warn">Sem furos — vidro embutido no perfil U preenchido com silicone estrutural ou resina.<br>Lapidação reta nas bordas encaixadas.</td>
+                    <td class="td-sub">Resultado limpo sem clamp visível. Perfil U ancorado no piso com parafusos estruturais (não colar com silicone apenas). Calços de nivelamento obrigatórios.</td>
+                    <td><span class="chip chip-norm">NBR 14718</span></td>
+                </tr>
+                <tr class="row-guarda">
+                    <td class="td-name">GC Laminado<br><span class="sub">Coberturas e áreas críticas</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">Lam. 10+10</span><br><span class="chip chip-esp">Lam. 12+12</span></td>
+                    <td><span class="chip chip-desc">Conforme fixação</span></td>
+                    <td><span class="chip chip-desc">Alt. mín.: 1.100 mm útil</span></td>
+                    <td class="td-warn">Furos conforme tipo de fixação (clamp ou passante). PVB mantém fragmentos unidos após ruptura.</td>
+                    <td class="td-sub">Obrigatório em áreas com risco de queda de cacos (cobertura, locais com pessoas abaixo). Dois vidros + película PVB. NBR 7199.</td>
+                    <td><span class="chip chip-norm">NBR 7199</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ 07 ABRIGO DE PIA ══════════════════════════════════════ -->
+    <div class="ref-section" id="sec-pia">
+        <div class="ref-section-title"><span class="bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 px-2 py-0.5 rounded text-[10px]">07</span> Abrigo de Pia / Fechamento Embaixo da Pia</div>
+        <div class="ref-table-wrap">
+            <table class="ref-table">
+                <thead><tr>
+                    <th>Tipo</th><th>Espessura</th><th>Desconto Largura</th><th>Desconto Altura</th><th>Furos / Recortes</th><th>Observações</th>
+                </tr></thead>
+                <tbody>
+                <tr class="row-pia">
+                    <td class="td-name">Gabinete de Pia<br><span class="sub">Painel frontal + laterais</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span><br><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 5 mm</span><br><span class="td-sub">Para encaixe em perfil U lateral</span></td>
+                    <td><span class="chip chip-desc">Vão – 15 mm</span><br><span class="td-sub">5 mm topo + 10 mm base</span></td>
+                    <td class="td-warn">Furo puxador: ø 10–12 mm (posição padrão: 50 mm das laterais).<br>Recorte para sifão (se aplicável): conforme medição in-loco.</td>
+                    <td class="td-sub">Medir vão real após instalação da pia. Prever recorte para sifão. Lapidação reta. Incolor ou jateado para efeito privacidade.</td>
+                </tr>
+                <tr class="row-pia">
+                    <td class="td-name">Porta de Abrir (Gabinete)<br><span class="sub">Dobradiça lateral</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 8 mm</span><br><span class="td-sub">4 mm por lado</span></td>
+                    <td><span class="chip chip-desc">Vão – 10 mm</span></td>
+                    <td class="td-warn">Furos dobradiça: ø 10 mm (2 por folha).<br>Furo puxador: ø 10 mm.<br>Recorte para sifão: medição precisa.</td>
+                    <td class="td-sub">Ideal para uso com suporte no piso ou preso ao gabinete. Prever folga no entorno da tubulação do sifão.</td>
+                </tr>
+                <tr class="row-pia">
+                    <td class="td-name">Correr (Gabinete)<br><span class="sub">2 folhas deslizantes</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span></td>
+                    <td><span class="chip chip-desc">(Vão ÷ 2) – 5 mm</span><br><span class="td-sub">Sobrepasse: 10 mm por folha</span></td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span><br><span class="td-sub">Trilho superior + inferior</span></td>
+                    <td class="td-warn">Furo puxador: ø 10 mm (posição central em cada folha).</td>
+                    <td class="td-sub">Mais prático para acesso a tubulações. Medir altura real do vão após nivelar o piso sob a pia.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ 08 COBERTURAS ════════════════════════════════════════ -->
+    <div class="ref-section" id="sec-coberturas">
+        <div class="ref-section-title"><span class="bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded text-[10px]">08</span> Coberturas de Vidro</div>
+        <div class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-3 mb-3 text-xs text-red-800 dark:text-red-300 flex gap-2 items-start">
+            <span>🏗️</span>
+            <span><strong>COBERTURA:</strong> Vidro laminado é OBRIGATÓRIO para coberturas (ABNT NBR 7199). Vidro temperado sozinho não é aceito — fragmenta-se completamente, gerando risco de acidente com cacos caindo.</span>
+        </div>
+        <div class="ref-table-wrap">
+            <table class="ref-table">
+                <thead><tr>
+                    <th>Tipo</th><th>Espessura / Tipo</th><th>Desconto Largura</th><th>Desconto Altura</th><th>Furos / Fixação</th><th>Observações</th><th>Norma</th>
+                </tr></thead>
+                <tbody>
+                <tr class="row-cobert">
+                    <td class="td-name">Cobertura Laminada<br><span class="sub">Painel inclinado fixo</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">Lam. 8+8 mm</span><br><span class="chip chip-esp">Lam. 10+10 mm</span></td>
+                    <td><span class="chip chip-desc">Medida exata do vão</span><br><span class="td-sub">–15 mm para encaixe em calha/perfil</span></td>
+                    <td><span class="chip chip-desc">Comprimento exato do rampante</span><br><span class="td-sub">–20 mm (encaixe cumeeira + beiral)</span></td>
+                    <td class="td-warn">Furos de fixação (clamp top): ø 12–14 mm conforme projeto estrutural.<br>Posição: mín. 50 mm das bordas.<br><span class="badge-obrig">Projeto estrutural obrigatório</span></td>
+                    <td class="td-sub">Inclinação mínima: 3° para escoamento. Calha de vedação em alumínio ou inox. Silicone neutro MS na vedação. Considerar dilatação térmica (8 mm a cada 1 m).</td>
+                    <td><span class="chip chip-norm">NBR 7199</span></td>
+                </tr>
+                <tr class="row-cobert">
+                    <td class="td-name">Cobertura com Estrutura Metálica<br><span class="sub">Painéis em perfis de aço/alumínio</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">Lam. 8+8 mm</span><br><span class="chip chip-esp">Lam. 6+6 mm</span> (beiral)</td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span><br><span class="td-sub">10 mm por lado (encaixe perfil)</span></td>
+                    <td><span class="chip chip-desc">Comprimento – 20 mm</span></td>
+                    <td class="td-warn">Furos conforme projeto: ø 12 mm (pontual) ou sem furos (clamp por pressão).<br>Furo de drenagem: ø 6 mm (1 por painel, no ponto mais baixo).</td>
+                    <td class="td-sub">Estrutura metálica recebe os painéis com gaxetas de EPDM. Carga de neve/vento calculada em projeto. CVCO do engenheiro responsável.</td>
+                    <td><span class="chip chip-norm">NBR 7199</span></td>
+                </tr>
+                <tr class="row-cobert">
+                    <td class="td-name">Claraboia / Shed<br><span class="sub">Abertura zenital no telhado</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">Lam. 8+8 mm</span><br><span class="chip chip-esp">Policarb. 10 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span></td>
+                    <td><span class="chip chip-desc">Vão – 20 mm</span></td>
+                    <td class="td-warn">Sem furos na maioria dos sistemas (perfil de encaixe).<br>Furo de fixação do eixo (basculante): ø 10 mm no centro de cada lado.</td>
+                    <td class="td-sub">Policarbonato compacto: leveza e isolamento térmico. Vidro laminado: elegância e durabilidade. Evitar policarbonato na luz solar direta por anos — amarela com o tempo.</td>
+                    <td><span class="chip chip-norm">NBR 7199</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ 09 OUTROS SERVIÇOS ════════════════════════════════════ -->
+    <div class="ref-section" id="sec-outros">
+        <div class="ref-section-title"><span class="bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px]">09</span> Outros Serviços Comuns de Vidraçaria</div>
+        <div class="ref-table-wrap">
+            <table class="ref-table">
+                <thead><tr>
+                    <th>Serviço / Produto</th><th>Espessura</th><th>Desconto</th><th>Furos / Recortes</th><th>Observações</th>
+                </tr></thead>
+                <tbody>
+                <tr class="row-outros">
+                    <td class="td-name">Espelhos<br><span class="sub">Lapidado / Bisotado</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">4 mm</span><br><span class="chip chip-esp">6 mm</span></td>
+                    <td><span class="chip chip-desc">Medida exata do nicho</span><br><span class="td-sub">Sem desconto (colar diretamente)</span></td>
+                    <td class="td-warn">Furos para apoio/iluminação: ø 10–12 mm (posição conforme projeto).<br>Sem têmpera — espelhos NÃO são temperados.</td>
+                    <td class="td-sub">Colar com fita dupla face 3M ou silicone neutro (NÃO usar silicone ácido — corrói a prata). Bisotê nas bordas visíveis. Não usar clamp — pode manchar o espelho.</td>
+                </tr>
+                <tr class="row-outros">
+                    <td class="td-name">Prateleiras de Vidro<br><span class="sub">Vidro temperado plano</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Medida exata do suporte</span><br><span class="td-sub">–5 mm por lado para encaixe</span></td>
+                    <td class="td-warn">Furos para fixação na parede (se sem suporte): ø 10–12 mm (2 pontos de fixação por prateleira).<br><span class="badge-obrig">Furos antes da têmpera</span></td>
+                    <td class="td-sub">Borda frontal: lapidação reta + boleado ou bisotê. Peso máx.: 25 kg/m² (8 mm) / 40 kg/m² (10 mm). Usar suportes de neoprene para amortecer.</td>
+                </tr>
+                <tr class="row-outros">
+                    <td class="td-name">Divisória de Escritório<br><span class="sub">Painel fixo ou com porta</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Conforme perfil utilizado</span><br><span class="td-sub">Típico: –10 mm por lado</span></td>
+                    <td class="td-warn">Furos para conexão entre painéis: ø 12 mm (parafuso spider).<br>Furos porta: conforme tipo (abrir ou pivotante).<br>Furos tomada/interruptor embutido: recorte retangular.</td>
+                    <td class="td-sub">Vidro incolor comum em ambientes com iluminação natural. Jateado ou serigrafado para privacidade. Película fumê aplicada após instalação — sem custo de têmpera.</td>
+                </tr>
+                <tr class="row-outros">
+                    <td class="td-name">Sinalização / Letreiro<br><span class="sub">Vidro com impressão ou recorte</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span><br><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">Medida exata</span></td>
+                    <td class="td-warn">Furos de fixação (spider ou parafuso): ø 10–14 mm.<br>Posição: mín. 50 mm das bordas.<br>Serigrafia: arte aprovada ANTES da têmpera.</td>
+                    <td class="td-sub">Serigrafia cerâmica funde com o vidro no processo de têmpera — não pode alterar depois. Impressão digital (película): pode alterar após instalação.</td>
+                </tr>
+                <tr class="row-outros">
+                    <td class="td-name">Tampo de Mesa<br><span class="sub">Vidro plano sobre base</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Medida exata da base + 50 mm</span><br><span class="td-sub">Tampo maior que a base = bordas aparentes</span></td>
+                    <td class="td-warn">Furos para pés rosqueados (se aplicável): ø 10–12 mm.<br>Borda: lapidação + boleado ou bisotê (segurança).</td>
+                    <td class="td-sub">Cantos: opções reto 90°, chanfrado, boleado (r=5, r=10, r=20 mm). Boleado exige maior prazo. Cor: incolor, fumê, verde, bronze. Não usar sobre base sem calços de neoprene.</td>
+                </tr>
+                <tr class="row-outros">
+                    <td class="td-name">Vitrine / Fachada<br><span class="sub">Painel externo</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">8 mm</span><br><span class="chip chip-esp">10 mm</span></td>
+                    <td><span class="chip chip-desc">Conforme caixilho</span><br><span class="td-sub">Mín. 15 mm de encaixe por lado</span></td>
+                    <td class="td-warn">Furos para fechadura embutida / espagnolette: ø 22 mm.<br>Furos para travessa de reforço: ø 12 mm (a cada 1.500 mm de altura).</td>
+                    <td class="td-sub">Vidro duplo (insulado) para eficiência energética. Vidro refletivo ou serigrafado para fachada comercial. Cálculo de pressão de vento obrigatório para fachadas altas.</td>
+                </tr>
+                <tr class="row-outros">
+                    <td class="td-name">Domus / Cúpula<br><span class="sub">Vidro curvado / termoformado</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">6 mm</span><br><span class="chip chip-esp">8 mm</span></td>
+                    <td><span class="chip chip-desc">Conforme projeto do raio de curvatura</span></td>
+                    <td class="td-warn">Furos antes da curvatura. Posição deve considerar a deformação do vidro no processo.</td>
+                    <td class="td-sub">Prazo de fabricação: 15–30 dias úteis. Preco 3–5× superior ao plano. Confirmar raio mínimo possível com o fornecedor de vidro curvado.</td>
+                </tr>
+                <tr class="row-outros">
+                    <td class="td-name">Spider / Frameless<br><span class="sub">Fachada sem caixilho</span></td>
+                    <td class="td-mono"><span class="chip chip-esp">10 mm</span><br><span class="chip chip-esp">12 mm</span><br><span class="chip chip-esp">Lam. 8+8</span></td>
+                    <td><span class="chip chip-desc">Medida exata por painel</span></td>
+                    <td class="td-warn">Furos spider: ø 38–50 mm (sistema com bucha expansiva interna).<br>Posição: mín. 100 mm das bordas.<br><span class="badge-obrig">Projeto estrutural + ART</span></td>
+                    <td class="td-sub">Sistema de alta tecnologia. ART de engenheiro obrigatória. Buchas de inox 316 (ambiente marinho: inox L316). Considera dilatação térmica nos espaçadores.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ ALERTAS CRÍTICOS ══════════════════════════════════════ -->
+    <div class="ref-section" id="sec-alertas">
+        <div class="ref-section-title"><span class="text-amber-500">⚠</span> Alertas Críticos – Regras de Ouro para Envio à Têmpera</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-4 text-sm text-red-800 dark:text-red-300 flex gap-3">
+                <span class="text-xl flex-shrink-0">🚫</span>
+                <div><strong>REGRA ABSOLUTA:</strong> Vidro temperado NÃO pode ser cortado, furado, lapidado ou recortado após o processo de têmpera. Todos os furos, recortes, abaulamentos e formas devem ser especificados e executados ANTES do envio. Se errar, a peça vai para o lixo.</div>
+            </div>
+            <div class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-4 text-sm text-red-800 dark:text-red-300 flex gap-3">
+                <span class="text-xl flex-shrink-0">📐</span>
+                <div><strong>CONFIRME AS MEDIDAS NO VÃO REAL:</strong> Nunca confie em planta — meça o vão real após o reboco/acabamento. Diferenças de 5–20 mm são comuns entre projeto e obra. Vão ≠ medida do vidro (aplicar sempre os descontos desta tabela).</div>
+            </div>
+            <div class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-300 flex gap-3">
+                <span class="text-xl flex-shrink-0">🔩</span>
+                <div><strong>GABARITO DE FUROS:</strong> Para kits como Versatik, Flex e Elegance, use o gabarito oficial do fabricante. A posição errada de um furo torna o vidro inutilizável. Baixe os gabaritos nos sites da Tec-Vidro e Ideia Glass antes do pedido.</div>
+            </div>
+            <div class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-300 flex gap-3">
+                <span class="text-xl flex-shrink-0">⚖️</span>
+                <div><strong>VIDROS &gt; 40 KG (Versatik):</strong> Solicite furações adicionais para roldanas extras ao fabricante. Se o vidro chegar apenas com os furos padrão, não haverá como adicionar roldanas — o vidro terá que ser refeito.</div>
+            </div>
+            <div class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-300 flex gap-3">
+                <span class="text-xl flex-shrink-0">🏗️</span>
+                <div><strong>COBERTURA:</strong> Vidro laminado é OBRIGATÓRIO para coberturas (ABNT). Vidro temperado sozinho não é aceito — fragmenta-se completamente ao quebrar, gerando risco de acidente com cacos caindo de cima.</div>
+            </div>
+            <div class="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl p-4 text-sm text-blue-800 dark:text-blue-300 flex gap-3">
+                <span class="text-xl flex-shrink-0">🎨</span>
+                <div><strong>SERIGRAFIA E JATEAMENTO:</strong> Arte serigrafada e jateamento no vidro são definidos ANTES da têmpera. Qualquer alteração deve ser aprovada antes do processo. A tinta cerâmica é fundida junto com o vidro — não tem alteração pós-têmpera.</div>
+            </div>
+            <div class="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl p-4 text-sm text-blue-800 dark:text-blue-300 flex gap-3">
+                <span class="text-xl flex-shrink-0">💧</span>
+                <div><strong>USO EXTERNO (Versatik):</strong> Em instalações externas (sacadas, fachadas), fazer furo de drenagem nos perfis inferiores para evitar acúmulo de água e corrosão dos trilhos.</div>
+            </div>
+            <div class="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl p-4 text-sm text-blue-800 dark:text-blue-300 flex gap-3">
+                <span class="text-xl flex-shrink-0">📋</span>
+                <div><strong>LAPIDAÇÃO:</strong> Toda borda cortada de vidro temperado deve ter lapidação reta antes da têmpera (bordas cortantes são perigosas e podem causar quebra espontânea). Bisotê e cantos arredondados também devem ser especificados antes.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ NORMAS TÉCNICAS ════════════════════════════════════════ -->
+    <div class="ref-section" id="sec-normas">
+        <div class="ref-section-title">Normas Técnicas Aplicáveis</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-4">
+                <div class="text-xs font-black text-brand-600 dark:text-cyan-400 font-mono mb-1">ABNT NBR 14207</div>
+                <div class="font-bold text-sm text-slate-900 dark:text-white mb-1">Boxes de Banheiro com Vidros de Segurança</div>
+                <div class="text-xs text-slate-500">Define espessuras mínimas de vidro para boxes conforme dimensões. Vigente desde 1998, atualizada em 2009.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-4">
+                <div class="text-xs font-black text-brand-600 dark:text-cyan-400 font-mono mb-1">ABNT NBR 16259</div>
+                <div class="font-bold text-sm text-slate-900 dark:text-white mb-1">Envidraçamento de Sacadas</div>
+                <div class="text-xs text-slate-500">Requisitos e métodos de ensaio para sistemas de envidraçamento de sacadas. Define pressão de vento por andar/região.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-4">
+                <div class="text-xs font-black text-brand-600 dark:text-cyan-400 font-mono mb-1">ABNT NBR 14718</div>
+                <div class="font-bold text-sm text-slate-900 dark:text-white mb-1">Guarda-Corpos para Edificação</div>
+                <div class="text-xs text-slate-500">Altura mínima, resistência estrutural e requisitos de segurança para guarda-corpos residenciais e comerciais.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-4">
+                <div class="text-xs font-black text-brand-600 dark:text-cyan-400 font-mono mb-1">ABNT NBR 7199</div>
+                <div class="font-bold text-sm text-slate-900 dark:text-white mb-1">Vidros na Construção Civil</div>
+                <div class="text-xs text-slate-500">Norma geral para aplicação de vidros. Define uso obrigatório de vidro laminado em coberturas e vidros de segurança.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-4">
+                <div class="text-xs font-black text-brand-600 dark:text-cyan-400 font-mono mb-1">ABNT NBR 7400</div>
+                <div class="font-bold text-sm text-slate-900 dark:text-white mb-1">Vidro Temperado Plano</div>
+                <div class="text-xs text-slate-500">Especificações e métodos de ensaio para o vidro temperado plano. Classifica como vidro de segurança.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-4">
+                <div class="text-xs font-black text-brand-600 dark:text-cyan-400 font-mono mb-1">INMETRO</div>
+                <div class="font-bold text-sm text-slate-900 dark:text-white mb-1">Certificação de Vidros de Segurança</div>
+                <div class="text-xs text-slate-500">Vidros temperados para box e uso estrutural devem ter certificado INMETRO. Exigir certificado ao fornecedor.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ GLOSSÁRIO ══════════════════════════════════════════════ -->
+    <div class="ref-section" id="sec-glossario">
+        <div class="ref-section-title">Glossário Técnico Rápido</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">DESCONTO</div>
+                <div class="text-xs text-slate-500">Medida a ser subtraída do vão bruto para obter a medida final do vidro, considerando folgas, trilhos e perfis.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">VÃO</div>
+                <div class="text-xs text-slate-500">Abertura real do batente/parede, medida após reboco e acabamento final. É a referência para aplicar os descontos.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">LAPIDAÇÃO RETA</div>
+                <div class="text-xs text-slate-500">Polimento das bordas cortadas do vidro, removendo arestas vivas. Obrigatório em todos os vidros temperados.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">BISOTÊ</div>
+                <div class="text-xs text-slate-500">Acabamento chanfrado polido na borda do vidro/espelho. Decorativo, feito em ângulo de ~45°.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">FURAÇÃO</div>
+                <div class="text-xs text-slate-500">Perfuração circular no vidro para passagem de parafusos, puxadores, dobradiças ou roldanas. Obrigatório antes da têmpera.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">RECORTE</div>
+                <div class="text-xs text-slate-500">Abertura em formato não-circular (oval, retangular) para fechaduras e encaixes especiais. Deve ser feito antes da têmpera.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">SOBREPASSE</div>
+                <div class="text-xs text-slate-500">Área de sobreposição entre duas folhas de vidro de correr. Garante vedação e evita que o vidro caia do trilho.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">TRANSPASSE</div>
+                <div class="text-xs text-slate-500">No sistema Versatik Division: sobreposição lateral entre painéis adjacentes para vedação da divisória.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">VIDRO LAMINADO</div>
+                <div class="text-xs text-slate-500">Dois vidros unidos por película PVB. Fragmenta retendo os cacos na película. Obrigatório em coberturas.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">VIDRO TEMPERADO</div>
+                <div class="text-xs text-slate-500">Aquecido a 700–750°C e resfriado bruscamente. Até 5× mais resistente; fragmenta em pedaços pequenos sem cortes.</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">CLAMP / PONTEIRA</div>
+                <div class="text-xs text-slate-500">Ferragem de fixação do guarda-corpo. Pode ser por pressão (sem furo) ou parafusada (com furo passante).</div>
+            </div>
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mb-1">SILICONE ESTRUTURAL</div>
+                <div class="text-xs text-slate-500">Selante de alta performance para colagem de vidros em estruturas. Diferente do silicone doméstico — não substitua.</div>
+            </div>
+        </div>
+    </div>
+
 </main>
 
+<!-- ══ Modal: Novo / Editar Conjunto de Regras ════════════════ -->
 <div id="formModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4 overflow-y-auto">
-    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-2xl my-8">
-        <h3 class="font-black text-lg mb-4" id="formModalTitle">Conjunto de Regras</h3>
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl p-6 w-full max-w-2xl my-8 shadow-2xl">
+        <h3 class="font-black text-lg mb-5" id="formModalTitle">Conjunto de Regras</h3>
         <input type="hidden" id="rsId">
-        <div class="grid grid-cols-2 gap-3 mb-3">
-            <div><label class="text-xs font-bold text-slate-500">Nome</label><input id="rsName" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div><label class="text-xs font-bold text-slate-500">Tipo de vidro (opcional)</label><input id="rsGlassType" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
-            <div class="col-span-2"><label class="text-xs font-bold text-slate-500">Descrição</label><input id="rsDescription" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700"></div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Nome do Conjunto <span class="text-rose-500">*</span></label>
+                <input id="rsName" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Ex: Box Padrão 8mm, Versatik Classic">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-500 block mb-1">Tipo de Vidro (opcional)</label>
+                <input id="rsGlassType" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Ex: Temperado 8mm, Laminado 10+10">
+            </div>
+            <div class="col-span-2">
+                <label class="text-xs font-bold text-slate-500 block mb-1">Descrição</label>
+                <input id="rsDescription" class="w-full rounded-xl border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-sm" placeholder="Descreva quando usar este conjunto de regras...">
+            </div>
         </div>
 
-        <div class="flex justify-between items-center mb-2">
-            <h4 class="font-bold text-sm">Parâmetros</h4>
-            <button onclick="addParamRow()" class="text-brand-600 dark:text-cyan-400 text-xs font-bold hover:underline flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar parâmetro</button>
+        <div class="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl p-3 mb-4 text-xs text-blue-800 dark:text-blue-300">
+            <strong>Como funciona:</strong> Cada parâmetro define um valor (mm) a ser subtraído do vão bruto. Você pode ter múltiplos parâmetros (ex: desconto lateral + folga trilho). A soma de todos os descontos é aplicada automaticamente ao calcular a medida final de corte no Plano de Corte.
+        </div>
+
+        <div class="flex justify-between items-center mb-3">
+            <h4 class="font-bold text-sm text-slate-900 dark:text-white">Parâmetros de Desconto</h4>
+            <button onclick="addParamRow()" class="text-brand-600 dark:text-cyan-400 text-xs font-bold hover:underline flex items-center gap-1 bg-brand-50 dark:bg-cyan-500/10 px-3 py-1.5 rounded-lg">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Adicionar Parâmetro
+            </button>
+        </div>
+        <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider grid grid-cols-12 gap-2">
+            <span class="col-span-3">Chave interna</span>
+            <span class="col-span-4">Rótulo (exibido)</span>
+            <span class="col-span-2">Dimensão</span>
+            <span class="col-span-2">Valor (mm)</span>
+            <span class="col-span-1"></span>
         </div>
         <div id="paramRows" class="space-y-2"></div>
 
         <div class="flex justify-end gap-2 mt-6">
             <button onclick="closeModal('formModal')" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm">Cancelar</button>
-            <button onclick="submitRuleSet()" class="px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm">Salvar</button>
+            <button onclick="submitRuleSet()" class="px-5 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm">Salvar Conjunto</button>
         </div>
     </div>
 </div>
 
 <script>
-    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+    function openModal(id)  { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
 
     function paramRowHtml(key = '', label = '', dimension = 'BOTH', value = 0) {
-        return `<div class="grid grid-cols-12 gap-2 items-center param-row">
-            <input class="col-span-3 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-xs param-key" placeholder="chave (ex: LATERAL_DISCOUNT)" value="${key}">
-            <input class="col-span-4 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-xs param-label" placeholder="Rótulo (ex: Desconto lateral)" value="${label}">
-            <select class="col-span-2 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-xs param-dimension">
-                <option value="WIDTH" ${dimension==='WIDTH'?'selected':''}>Largura</option>
-                <option value="HEIGHT" ${dimension==='HEIGHT'?'selected':''}>Altura</option>
-                <option value="BOTH" ${dimension==='BOTH'?'selected':''}>Ambas</option>
+        return `<div class="grid grid-cols-12 gap-2 items-center param-row bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-2">
+            <input class="col-span-3 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-600 text-xs param-key font-mono"
+                   placeholder="CHAVE_INTERNA" value="${key}">
+            <input class="col-span-4 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-600 text-xs param-label"
+                   placeholder="Ex: Desconto lateral" value="${label}">
+            <select class="col-span-2 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-600 text-xs param-dimension">
+                <option value="WIDTH"  ${dimension === 'WIDTH'  ? 'selected' : ''}>Largura</option>
+                <option value="HEIGHT" ${dimension === 'HEIGHT' ? 'selected' : ''}>Altura</option>
+                <option value="BOTH"   ${dimension === 'BOTH'   ? 'selected' : ''}>Ambas</option>
             </select>
-            <input type="number" step="0.1" class="col-span-2 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-xs param-value" value="${value}">
-            <button onclick="this.closest('.param-row').remove()" class="col-span-1 text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <input type="number" step="0.1" min="0"
+                   class="col-span-2 rounded-lg border-slate-300 dark:bg-slate-800 dark:border-slate-600 text-xs param-value text-right font-mono font-bold" value="${value}">
+            <button onclick="this.closest('.param-row').remove()" class="col-span-1 flex items-center justify-center text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg p-1.5">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
         </div>`;
     }
 
@@ -114,7 +878,7 @@
         document.getElementById('rsName').value = rs.name || '';
         document.getElementById('rsGlassType').value = rs.glassType || '';
         document.getElementById('rsDescription').value = rs.description || '';
-        document.getElementById('formModalTitle').innerText = 'Editar Conjunto de Regras — ' + rs.name;
+        document.getElementById('formModalTitle').innerText = 'Editar — ' + rs.name;
 
         const rows = document.getElementById('paramRows');
         rows.innerHTML = '';
@@ -127,21 +891,24 @@
 
     async function submitRuleSet() {
         const parameters = Array.from(document.querySelectorAll('.param-row')).map(row => ({
-            paramKey: row.querySelector('.param-key').value,
-            label: row.querySelector('.param-label').value,
+            paramKey:  row.querySelector('.param-key').value,
+            label:     row.querySelector('.param-label').value,
             dimension: row.querySelector('.param-dimension').value,
-            valueMm: parseFloat(row.querySelector('.param-value').value) || 0
+            valueMm:   parseFloat(row.querySelector('.param-value').value) || 0
         }));
         const payload = {
-            id: document.getElementById('rsId').value || null,
-            name: document.getElementById('rsName').value,
-            glassType: document.getElementById('rsGlassType').value,
+            id:          document.getElementById('rsId').value || null,
+            name:        document.getElementById('rsName').value,
+            glassType:   document.getElementById('rsGlassType').value,
             description: document.getElementById('rsDescription').value,
-            active: true,
+            active:      true,
             parameters
         };
+        if (!payload.name) { alert('Informe o nome do conjunto de regras.'); return; }
         const res = await fetch('/cut-rule-sets/save-ajax', {
-            method: 'POST', headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken }, body: JSON.stringify(payload)
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+            body: JSON.stringify(payload)
         });
         if (!res.ok) { alert('Erro ao salvar: ' + await res.text()); return; }
         closeModal('formModal');
@@ -149,8 +916,11 @@
     }
 
     async function deleteRuleSet(btn) {
-        if (!confirm('Excluir este conjunto de regras?')) return;
-        await fetch('/cut-rule-sets/' + btn.getAttribute('data-id'), { method: 'DELETE', headers: { [csrfHeader]: csrfToken } });
+        if (!confirm('Excluir este conjunto de regras? Os planos de corte que usam esta regra perderão a referência (mas as medidas calculadas permanecem).')) return;
+        const res = await fetch('/cut-rule-sets/' + btn.getAttribute('data-id'), {
+            method: 'DELETE', headers: { [csrfHeader]: csrfToken }
+        });
+        if (!res.ok) { alert('Erro ao excluir.'); return; }
         window.location.reload();
     }
 

@@ -2,137 +2,378 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head>
     <meta charset="UTF-8"/>
-    <title>Plano de Corte</title>
+    <title>Pedido para Têmpera</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        @page { size: A4; margin: 12mm 10mm 18mm 10mm;
-            @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 8px; color: #6b7280; }
+        @page {
+            size: A4;
+            margin: 10mm 10mm 16mm 10mm;
+            @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 7.5px; color: #6b7280; }
         }
-        body { font-family: 'Inter', sans-serif; font-size: 10px; color: #1e293b; }
-        .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #111827; padding-bottom: 10px; margin-bottom: 12px; }
-        .company-name { font-size: 14px; font-weight: 900; text-transform: uppercase; }
-        .badge { background: #111827; color: #fff; padding: 8px 14px; border-radius: 8px; text-align: right; }
-        .badge-title { font-size: 8px; text-transform: uppercase; letter-spacing: 1.5px; color: #9ca3af; }
-        .badge-value { font-size: 16px; font-weight: 900; }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 9px; color: #111827; background: #fff; }
 
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
-        .info-table td { font-size: 9.5px; padding: 3px 6px; vertical-align: top; }
-        .info-label { color: #64748b; font-weight: bold; text-transform: uppercase; font-size: 7.5px; }
+        /* ─── HEADER ─────────────────────────────── */
+        .header-wrap { width: 100%; margin-bottom: 8px; }
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #111827; padding-bottom: 7px; margin-bottom: 5px; }
+        .company-block .company-name { font-size: 17px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+        .company-block .company-sub  { font-size: 8px; color: #6b7280; margin-top: 2px; }
 
-        .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; margin: 14px 0 6px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; }
+        .doc-badge { text-align: right; }
+        .doc-badge .doc-label { font-size: 7px; text-transform: uppercase; letter-spacing: 1.5px; color: #6b7280; font-weight: bold; }
+        .doc-badge .doc-num   { font-size: 22px; font-weight: 900; color: #111827; line-height: 1.1; }
+        .doc-badge .doc-date  { font-size: 8px; color: #6b7280; }
 
-        table.data-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 8px; }
-        table.data-table th { background: #111827; color: #fff; text-transform: uppercase; font-size: 7.8px; padding: 5px 6px; text-align: left; }
-        table.data-table td { padding: 4px 6px; border-bottom: 1px solid #eef2f7; }
-        table.data-table tbody tr:nth-child(even) { background: #f8fafc; }
-        .num { text-align: right; font-family: 'Courier New', monospace; }
+        .header-info-row { display: flex; gap: 0; border: 1px solid #d1d5db; border-radius: 4px; overflow: hidden; margin-bottom: 5px; }
+        .info-cell { flex: 1; padding: 4px 7px; border-right: 1px solid #d1d5db; }
+        .info-cell:last-child { border-right: none; }
+        .info-cell .lbl { font-size: 6.5px; text-transform: uppercase; font-weight: bold; color: #9ca3af; letter-spacing: 0.8px; margin-bottom: 1px; }
+        .info-cell .val { font-size: 9px; font-weight: 700; color: #111827; }
 
-        .cost-table { width: 60%; margin-top: 6px; border-collapse: collapse; }
-        .cost-table td { padding: 4px 8px; font-size: 9.5px; }
-        .cost-table .total-row td { border-top: 2px solid #111827; font-weight: 900; }
+        /* STATUS BADGE */
+        .status-badge { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 7px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; }
+        .status-draft       { background: #fef3c7; color: #92400e; }
+        .status-in_production { background: #dbeafe; color: #1e40af; }
+        .status-sent_to_supplier { background: #ede9fe; color: #5b21b6; }
+        .status-done        { background: #d1fae5; color: #065f46; }
+        .status-cancelled   { background: #fee2e2; color: #991b1b; }
 
-        .footer-box { margin-top: 20px; border-top: 1px solid #cbd5e1; padding-top: 8px; font-size: 8.5px; color: #64748b; }
-        .signature-line { margin-top: 34px; width: 220px; border-top: 1px solid #334155; text-align: center; font-size: 8.5px; padding-top: 4px; }
+        /* ─── ALERT BOX ─────────────────────────── */
+        .alert-box { background: #fffbeb; border: 1px solid #f59e0b; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 5px 8px; margin-bottom: 8px; font-size: 8px; color: #78350f; }
+        .alert-box strong { font-size: 8.5px; }
 
-        .drawing-box { border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; page-break-inside: avoid; }
-        .drawing-box svg { width: 100%; height: auto; }
+        /* ─── SECTION TITLE ─────────────────────── */
+        .section-title { font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; color: #374151; border-bottom: 2px solid #111827; padding-bottom: 3px; margin: 10px 0 6px 0; }
+
+        /* ─── GLASS TABLE ────────────────────────── */
+        table.glass-table { width: 100%; border-collapse: collapse; font-size: 8.5px; margin-bottom: 6px; }
+        table.glass-table thead tr { background: #111827; color: #fff; }
+        table.glass-table thead th { padding: 4px 5px; text-align: left; font-size: 7px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: bold; white-space: nowrap; }
+        table.glass-table thead th.c { text-align: center; }
+        table.glass-table thead th.r { text-align: right; }
+        table.glass-table tbody tr { border-bottom: 1px solid #e5e7eb; }
+        table.glass-table tbody tr:nth-child(even) { background: #f9fafb; }
+        table.glass-table tbody tr:last-child { border-bottom: 2px solid #374151; }
+        table.glass-table td { padding: 4px 5px; vertical-align: middle; }
+        table.glass-table td.c { text-align: center; }
+        table.glass-table td.r { text-align: right; font-family: 'Courier New', monospace; }
+        table.glass-table td.bold { font-weight: 700; }
+        table.glass-table td.mono { font-family: 'Courier New', monospace; font-size: 8px; }
+        table.glass-table td.item-num { width: 22px; font-weight: 900; color: #374151; background: #f3f4f6; text-align: center; border-right: 1px solid #e5e7eb; }
+
+        /* row with attention */
+        .flag-drill { color: #b45309; font-size: 7.5px; }
+        .flag-notch { color: #6d28d9; font-size: 7.5px; }
+
+        /* TOTALS row */
+        .totals-row td { background: #f3f4f6 !important; font-weight: 900; border-top: 2px solid #374151 !important; }
+
+        /* ─── DRAWINGS SECTION ───────────────────── */
+        .drawings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+        .drawing-card { border: 1px solid #d1d5db; border-radius: 5px; padding: 6px; page-break-inside: avoid; }
+        .drawing-card-header { font-size: 7.5px; font-weight: 900; color: #111827; margin-bottom: 3px; border-bottom: 1px solid #e5e7eb; padding-bottom: 2px; display: flex; justify-content: space-between; align-items: center; }
+        .drawing-card-header .item-label { background: #111827; color: #fff; border-radius: 2px; padding: 1px 4px; font-size: 6.5px; }
+        .drawing-card-meta { font-size: 7px; color: #6b7280; margin-bottom: 4px; }
+        .drawing-card svg { width: 100%; height: auto; display: block; }
+
+        /* ─── MATERIALS TABLE ───────────────────── */
+        table.mat-table { width: 100%; border-collapse: collapse; font-size: 8.5px; margin-bottom: 8px; }
+        table.mat-table thead tr { background: #374151; color: #fff; }
+        table.mat-table thead th { padding: 4px 5px; text-align: left; font-size: 7px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: bold; }
+        table.mat-table thead th.c { text-align: center; }
+        table.mat-table tbody tr { border-bottom: 1px solid #e5e7eb; }
+        table.mat-table tbody tr:nth-child(even) { background: #f9fafb; }
+        table.mat-table td { padding: 4px 5px; vertical-align: middle; }
+        table.mat-table td.c { text-align: center; }
+        .cat-badge { display: inline-block; padding: 1px 5px; border-radius: 2px; font-size: 6.5px; font-weight: bold; text-transform: uppercase; }
+        .cat-HARDWARE { background: #dbeafe; color: #1e40af; }
+        .cat-ALUMINUM { background: #d1fae5; color: #065f46; }
+        .cat-SILICONE { background: #fce7f3; color: #9d174d; }
+        .cat-OTHER    { background: #f3f4f6; color: #374151; }
+
+        /* ─── SUMMARY BOX ────────────────────────── */
+        .summary-area { display: flex; gap: 8px; margin-bottom: 8px; }
+        .summary-table { flex: 1; border-collapse: collapse; font-size: 8.5px; }
+        .summary-table td { padding: 3px 6px; border-bottom: 1px solid #f3f4f6; }
+        .summary-table td:last-child { text-align: right; font-family: 'Courier New', monospace; font-weight: bold; }
+        .summary-table tr.total-row td { border-top: 2px solid #111827; border-bottom: none; font-weight: 900; font-size: 9.5px; padding-top: 5px; }
+        .summary-table tr.sub-row td { color: #6b7280; font-size: 8px; }
+
+        .obs-box { flex: 1; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 7px 9px; font-size: 8px; color: #374151; min-height: 60px; }
+        .obs-box .obs-title { font-weight: 900; font-size: 7.5px; text-transform: uppercase; letter-spacing: 1px; color: #111827; margin-bottom: 4px; }
+
+        /* ─── SIGNATURES ─────────────────────────── */
+        .sig-area { display: flex; gap: 30px; margin-top: 14px; }
+        .sig-line { flex: 1; border-top: 1px solid #374151; padding-top: 4px; text-align: center; font-size: 7.5px; color: #374151; }
+
+        /* ─── FOOTER ─────────────────────────────── */
+        .doc-footer { border-top: 1px solid #e5e7eb; margin-top: 10px; padding-top: 5px; font-size: 7px; color: #9ca3af; display: flex; justify-content: space-between; }
+
+        /* ─── CRITICAL RULES BOX ─────────────────── */
+        .rules-box { border: 1px solid #111827; border-radius: 4px; padding: 6px 8px; margin-bottom: 8px; }
+        .rules-box-title { font-size: 7.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+        .rules-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
+        .rule-item { font-size: 7px; color: #374151; padding: 1px 0; }
+        .rule-item::before { content: "✓ "; color: #111827; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<table class="header-table">
-    <tr>
-        <td>
-            <div class="company-name" th:text="${workOrder.client != null ? '' : ''}"></div>
-            <div class="company-name">TAHI GLASS</div>
-            <div style="font-size:9px;color:#475569;margin-top:2px;">Plano de Corte enviado para fornecedor de vidros / têmpera</div>
-        </td>
-        <td style="text-align:right;">
-            <div class="badge">
-                <div class="badge-title">Plano de Corte</div>
-                <div class="badge-value" th:text="${plan.title}">Plano de Corte 01</div>
+<!-- ═══════════════════════════════════════ HEADER ═══ -->
+<div class="header-wrap">
+    <div class="header-top">
+        <div class="company-block">
+            <div class="company-name">SUA VIDRAÇARIA E SERRALHERIA</div>
+            <div class="company-sub">Prestadores de Serviços em Vidros e Fechamentos</div>
+        </div>
+        <div class="doc-badge">
+            <div class="doc-label">Pedido para Têmpera</div>
+            <div class="doc-num">Nº <span th:text="${workOrder.number}">OS-0001</span></div>
+            <div class="doc-date">Data: <span th:text="${#temporals.format(generatedAt, 'dd/MM/yyyy')}"></span> &nbsp;|&nbsp; <span th:text="${#temporals.format(generatedAt, 'HH:mm')}"></span></div>
+        </div>
+    </div>
+
+    <div class="header-info-row">
+        <div class="info-cell">
+            <div class="lbl">Nro. Pedido / Item</div>
+            <div class="val"><span th:text="${workOrder.number}"></span> / <span th:text="${plan.planNumber}"></span></div>
+        </div>
+        <div class="info-cell">
+            <div class="lbl">Situação</div>
+            <div class="val">
+                <span class="status-badge"
+                      th:classappend="'status-' + ${plan.status}"
+                      th:text="${plan.status == 'draft' ? 'RASCUNHO' :
+                                plan.status == 'in_production' ? 'EM PRODUÇÃO' :
+                                plan.status == 'sent_to_supplier' ? 'ENVIADO À TÊMPERA' :
+                                plan.status == 'done' ? 'CONCLUÍDO' : 'CANCELADO'}">
+                    PEDIDO
+                </span>
             </div>
-        </td>
-    </tr>
-</table>
+        </div>
+        <div class="info-cell">
+            <div class="lbl">Categoria</div>
+            <div class="val" th:text="${workOrder.category != null ? workOrder.category.name : 'Medida Final'}">MEDIDA FINAL</div>
+        </div>
+        <div class="info-cell">
+            <div class="lbl">Plano</div>
+            <div class="val" th:text="${plan.title}">Plano de Corte 01</div>
+        </div>
+    </div>
 
-<table class="info-table">
-    <tr>
-        <td style="width:25%;"><div class="info-label">Ordem de Serviço</div><div th:text="${workOrder.number}"></div></td>
-        <td style="width:25%;"><div class="info-label">Cliente</div><div th:text="${workOrder.client != null ? workOrder.client.name : '-'}"></div></td>
-        <td style="width:25%;"><div class="info-label">Cidade</div><div th:text="${workOrder.client != null ? workOrder.client.city : '-'}"></div></td>
-        <td style="width:25%;"><div class="info-label">Telefone</div><div th:text="${workOrder.client != null ? workOrder.client.phone : '-'}"></div></td>
-    </tr>
-    <tr>
-        <td><div class="info-label">Serviço</div><div th:text="${workOrder.category != null ? workOrder.category.name : '-'}"></div></td>
-        <td><div class="info-label">Status</div><div th:text="${plan.status}"></div></td>
-        <td><div class="info-label">Origem</div><div th:text="${workOrder.quote != null ? ('Orçamento ' + workOrder.quote.number) : 'Manual'}"></div></td>
-        <td><div class="info-label">Responsável</div><div th:text="${plan.responsible ?: '-'}"></div></td>
-    </tr>
-</table>
+    <div class="header-info-row">
+        <div class="info-cell" style="flex:2">
+            <div class="lbl">Descrição / Obra</div>
+            <div class="val" th:text="${workOrder.description ?: (workOrder.category != null ? workOrder.category.name : '-')}">JANELA DE CORRER 04 FOLHAS COM BATE FECHA</div>
+        </div>
+        <div class="info-cell">
+            <div class="lbl">Cliente</div>
+            <div class="val" th:text="${workOrder.client != null ? workOrder.client.name : 'Avulso'}">Cliente</div>
+        </div>
+        <div class="info-cell">
+            <div class="lbl">Telefone</div>
+            <div class="val" th:text="${workOrder.client != null ? workOrder.client.phone : '-'}">—</div>
+        </div>
+        <div class="info-cell">
+            <div class="lbl">Cidade</div>
+            <div class="val" th:text="${workOrder.client != null ? workOrder.client.city : '-'}">—</div>
+        </div>
+    </div>
+</div>
 
-<div class="section-title">Lista de Vidros / Croqui Técnico</div>
-<table class="data-table">
+<!-- ═══════════════════════════════════════ ALERT ═══ -->
+<div class="alert-box">
+    <strong>⚠ ATENÇÃO — MEDIDAS FINAIS DAS PEÇAS ABAIXO:</strong>
+    Todos os furos, recortes e chanfros devem ser executados <strong>ANTES</strong> do processo de têmpera.
+    Vidro temperado <strong>NÃO</strong> pode ser cortado, furado ou lapidado após o processo.
+    Conferir todas as medidas com o vão real antes de iniciar o corte.
+</div>
+
+<!-- ═══════════════════════════════════════ LISTA DE VIDROS ═══ -->
+<div class="section-title">Lista de Vidros — Peças para Têmpera</div>
+
+<table class="glass-table">
     <thead>
     <tr>
-        <th>#</th><th>Descrição / Ambiente</th><th>Vidro</th><th>Bruta (mm)</th><th>Final (mm)</th>
-        <th>Qtd</th><th>Área (m²)</th><th>Ângulo / Borda</th><th>Furos/Recortes</th>
+        <th style="width:22px">#</th>
+        <th>Descrição / Ambiente</th>
+        <th>Tipo / Cor / Espessura</th>
+        <th class="c">Vão Bruto<br>L × A (mm)</th>
+        <th class="c">Medida Final<br>L × A (mm)</th>
+        <th class="c" style="width:30px">Qtd</th>
+        <th class="r" style="width:52px">Área M²</th>
+        <th class="c">Ângulo /<br>Borda</th>
+        <th>Furos /<br>Recortes</th>
+        <th>Observações</th>
     </tr>
     </thead>
     <tbody>
     <tr th:each="it, iter : ${plan.items}">
-        <td th:text="${iter.count}"></td>
-        <td th:text="${it.description} + ' / ' + ${it.environment ?: '-'}"></td>
-        <td th:text="${it.glassType} + ' ' + ${it.thickness} + 'mm ' + ${it.color} + ' ' + ${it.finish}"></td>
-        <td th:text="${it.grossWidth} + ' x ' + ${it.grossHeight}"></td>
-        <td th:text="${it.finalWidth} + ' x ' + ${it.finalHeight}"></td>
-        <td class="num" th:text="${it.quantity}"></td>
-        <td class="num" th:text="${#numbers.formatDecimal(it.area, 1, 'POINT', 3, 'COMMA')}"></td>
-        <td th:text="${it.angleType ?: '-'} + ' / ' + ${it.edgeWork ?: '-'}"></td>
-        <td th:text="${it.drillingCount ?: 0} + ' furo(s) / ' + ${it.notchCount ?: 0} + ' recorte(s)'"></td>
+        <td class="item-num" th:text="${iter.count}">1</td>
+        <td class="bold">
+            <span th:text="${it.description}">Porta Principal</span>
+            <br th:if="${it.environment != null and !it.environment.isEmpty()}"/>
+            <span style="font-weight:400;color:#6b7280;font-size:7.5px;" th:text="${it.environment}"></span>
+        </td>
+        <td class="mono">
+            <span th:text="${it.glassType ?: '—'}"></span>
+            <th:block th:if="${it.color != null and !it.color.isEmpty()}"> <span th:text="${it.color}"></span></th:block>
+            <th:block th:if="${it.thickness != null}"><br/><strong th:text="${it.thickness + ' mm'}"></strong></th:block>
+            <th:block th:if="${it.finish != null and !it.finish.isEmpty()}"><br/><span style="color:#6b7280;font-size:7px;" th:text="${it.finish}"></span></th:block>
+        </td>
+        <td class="c">
+            <th:block th:if="${it.grossWidth != null and it.grossHeight != null}">
+                <span class="mono" th:text="${#numbers.formatInteger(it.grossWidth, 1, 'NONE')} + ' × ' + ${#numbers.formatInteger(it.grossHeight, 1, 'NONE')}" style="color:#6b7280"></span>
+            </th:block>
+            <th:block th:if="${it.grossWidth == null or it.grossHeight == null}"><span style="color:#9ca3af">—</span></th:block>
+        </td>
+        <td class="c bold" style="background:#fffbeb;">
+            <span class="mono" style="font-size:9.5px;color:#111827;"
+                  th:text="${#numbers.formatInteger(it.finalWidth, 1, 'NONE')} + ' × ' + ${#numbers.formatInteger(it.finalHeight, 1, 'NONE')}">
+            </span>
+        </td>
+        <td class="c bold" th:text="${it.quantity}">1</td>
+        <td class="r mono" th:text="${#numbers.formatDecimal(it.area, 1, 'POINT', 3, 'COMMA')} + ' m²'">0,000</td>
+        <td class="c" style="font-size:7.5px;">
+            <span th:text="${it.angleType ?: '90°'}"></span>
+            <br th:if="${it.edgeWork != null and !it.edgeWork.isEmpty()}"/>
+            <span style="color:#6b7280;" th:text="${it.edgeWork}"></span>
+        </td>
+        <td style="font-size:7.5px;">
+            <th:block th:if="${(it.drillingCount ?: 0) > 0}">
+                <span class="flag-drill">⬤ <span th:text="${it.drillingCount}">0</span> furo(s)</span><br/>
+            </th:block>
+            <th:block th:if="${(it.notchCount ?: 0) > 0}">
+                <span class="flag-notch">◆ <span th:text="${it.notchCount}">0</span> recorte(s)</span>
+            </th:block>
+            <th:block th:if="${(it.drillingCount ?: 0) == 0 and (it.notchCount ?: 0) == 0}">
+                <span style="color:#9ca3af">—</span>
+            </th:block>
+        </td>
+        <td style="font-size:7.5px;color:#374151;" th:text="${it.observations ?: '—'}">—</td>
+    </tr>
+    <!-- TOTALS ROW -->
+    <tr class="totals-row">
+        <td colspan="5" style="font-size:8px;text-align:right;padding-right:8px;">TOTAL M²:</td>
+        <td class="c mono" th:text="${#numbers.formatDecimal(plan.glassArea, 1, 'POINT', 0, 'NONE')} + ' pç'"></td>
+        <td class="r mono" th:text="${#numbers.formatDecimal(plan.glassArea, 1, 'POINT', 3, 'COMMA')} + ' m²'"></td>
+        <td colspan="3"></td>
     </tr>
     </tbody>
 </table>
 
-<div class="section-title">Croqui Técnico (Vista Frontal das Peças)</div>
-<div th:each="it : ${plan.items}" class="drawing-box">
-    <th:block th:utext="${itemDrawings.get(it.id)}"></th:block>
+<!-- ═══════════════════════════════════════ CROQUI TÉCNICO ═══ -->
+<div th:if="${!plan.items.isEmpty()}">
+    <div class="section-title">Croqui Técnico — Vista Frontal (furos, recortes e chanfros)</div>
+    <div class="drawings-grid">
+        <div th:each="it, iter : ${plan.items}" class="drawing-card">
+            <div class="drawing-card-header">
+                <span>
+                    <span class="item-label" th:text="${iter.count}">1</span>
+                    &nbsp;<span th:text="${it.description}">Peça</span>
+                </span>
+                <span style="font-size:7px;color:#6b7280;" th:text="${it.finalWidth != null ? it.finalWidth + ' × ' + it.finalHeight + ' mm' : ''}"></span>
+            </div>
+            <div class="drawing-card-meta">
+                <span th:text="${it.glassType ?: ''}"></span>
+                <th:block th:if="${it.thickness != null}"> <strong th:text="${it.thickness + 'mm'}"></strong></th:block>
+                <th:block th:if="${it.color != null and !it.color.isEmpty()}"> · <span th:text="${it.color}"></span></th:block>
+                · Qtd: <strong th:text="${it.quantity}">1</strong>
+            </div>
+            <th:block th:utext="${itemDrawings.get(it.id)}"></th:block>
+        </div>
+    </div>
 </div>
 
-<div class="section-title">Lista de Materiais (Ferragens / Alumínio / Silicone / Outros)</div>
-<table class="data-table">
-    <thead><tr><th>Categoria</th><th>Descrição</th><th>Qtd</th><th>Unidade</th><th>Fornecedor</th></tr></thead>
-    <tbody>
-    <tr th:each="m : ${plan.materials}">
-        <td th:text="${m.category}"></td>
-        <td th:text="${m.description}"></td>
-        <td class="num" th:text="${m.quantity}"></td>
-        <td th:text="${m.unit ?: '-'}"></td>
-        <td th:text="${m.supplierName ?: '-'}"></td>
-    </tr>
-    </tbody>
-</table>
-
-<div class="section-title">Resumo de Custos Previstos</div>
-<table class="cost-table">
-    <tr><td>Área total de vidro</td><td class="num" th:text="${#numbers.formatDecimal(plan.glassArea, 1, 'POINT', 3, 'COMMA')} + ' m²'"></td></tr>
-    <tr><td>Peso estimado</td><td class="num" th:text="${#numbers.formatDecimal(plan.estimatedWeight, 1, 'POINT', 2, 'COMMA')} + ' kg'"></td></tr>
-    <tr><td>Custo dos vidros</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.glassCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
-    <tr><td>Ferragens</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.hardwareCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
-    <tr><td>Alumínio</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.aluminumCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
-    <tr><td>Silicone</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.siliconeCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
-    <tr><td>Outros materiais</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.otherMaterialsCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
-    <tr class="total-row"><td>Custo Previsto Total da Produção</td><td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(plan.totalCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
-</table>
-
-<div th:if="${plan.notes != null and !plan.notes.isEmpty()}">
-    <div class="section-title">Observações</div>
-    <p style="font-size:9.5px;" th:text="${plan.notes}"></p>
+<!-- ═══════════════════════════════════════ MATERIAIS ═══ -->
+<div th:if="${!plan.materials.isEmpty()}">
+    <div class="section-title">Listagem de Material para Produção da Obra</div>
+    <table class="mat-table">
+        <thead>
+        <tr>
+            <th>Figura</th>
+            <th>Categoria</th>
+            <th>Descrição do Material</th>
+            <th class="c">Qtd</th>
+            <th class="c">Un.</th>
+            <th>Fornecedor / Observações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="m, mi : ${plan.materials}">
+            <td class="c" style="width:28px;color:#9ca3af;font-size:7.5px;" th:text="${mi.count}">1</td>
+            <td style="width:70px;">
+                <span class="cat-badge" th:classappend="'cat-' + ${m.category}"
+                      th:text="${m.category == 'HARDWARE' ? 'Ferragem' :
+                                m.category == 'ALUMINUM' ? 'Alumínio' :
+                                m.category == 'SILICONE' ? 'Silicone' : 'Outros'}">
+                    Categoria
+                </span>
+            </td>
+            <td class="bold" th:text="${m.description}">Item</td>
+            <td class="c bold" th:text="${m.quantity}">1</td>
+            <td class="c" style="font-size:7.5px;" th:text="${m.unit ?: 'un'}">un</td>
+            <td style="font-size:7.5px;color:#374151;" th:text="${m.supplierName ?: (m.notes ?: '—')}">—</td>
+        </tr>
+        </tbody>
+    </table>
 </div>
 
-<div class="footer-box">
-    <p>Documento gerado automaticamente pelo ERP Tahi Glass em <span th:text="${#temporals.format(generatedAt, 'dd/MM/yyyy HH:mm')}"></span>. Os valores de custo são uma previsão técnica de compra, calculada a partir da tabela de preços vigente no momento da geração deste plano.</p>
-    <div class="signature-line">Responsável Técnico</div>
+<!-- ═══════════════════════════════════════ RESUMO + OBS ═══ -->
+<div class="summary-area">
+    <!-- Custos Previstos -->
+    <div style="flex:1">
+        <div class="section-title" style="margin-top:0">Resumo de Custos Previstos</div>
+        <table class="summary-table">
+            <tr class="sub-row"><td>Área total de vidro</td><td th:text="${#numbers.formatDecimal(plan.glassArea, 1, 'POINT', 3, 'COMMA')} + ' m²'"></td></tr>
+            <tr class="sub-row"><td>Peso estimado</td><td th:text="${#numbers.formatDecimal(plan.estimatedWeight, 1, 'POINT', 2, 'COMMA')} + ' kg'"></td></tr>
+            <tr><td>Custo dos vidros</td><td th:text="'R$ ' + ${#numbers.formatDecimal(plan.glassCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+            <tr><td>Ferragens</td><td th:text="'R$ ' + ${#numbers.formatDecimal(plan.hardwareCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+            <tr><td>Alumínio</td><td th:text="'R$ ' + ${#numbers.formatDecimal(plan.aluminumCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+            <tr><td>Silicone</td><td th:text="'R$ ' + ${#numbers.formatDecimal(plan.siliconeCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+            <tr><td>Outros materiais</td><td th:text="'R$ ' + ${#numbers.formatDecimal(plan.otherMaterialsCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+            <tr class="total-row"><td>CUSTO TOTAL PREVISTO</td><td th:text="'R$ ' + ${#numbers.formatDecimal(plan.totalCost, 1, 'POINT', 2, 'COMMA')}"></td></tr>
+        </table>
+    </div>
+
+    <!-- Regras críticas -->
+    <div style="flex:1">
+        <div class="section-title" style="margin-top:0">Regras de Ouro para Têmpera</div>
+        <div class="rules-box" style="border-color:#d97706">
+            <div class="rules-grid">
+                <div class="rule-item">Todos os furos ANTES da têmpera</div>
+                <div class="rule-item">Confirmar medidas no vão real</div>
+                <div class="rule-item">Lapidação reta em todas as bordas</div>
+                <div class="rule-item">Cantos: especificar raio ou chanfro</div>
+                <div class="rule-item">Vidro > 40 kg: roldanas extras</div>
+                <div class="rule-item">Recortes especiais conforme gabarito</div>
+                <div class="rule-item">Cobertura: laminado obrigatório</div>
+                <div class="rule-item">Serigrafia: arte aprovada antes</div>
+            </div>
+        </div>
+
+        <!-- Observações do plano -->
+        <div class="obs-box" style="margin-top:5px;" th:if="${plan.notes != null and !plan.notes.isEmpty()}">
+            <div class="obs-title">Observações</div>
+            <span th:text="${plan.notes}"></span>
+        </div>
+        <div class="obs-box" style="margin-top:5px;" th:if="${plan.notes == null or plan.notes.isEmpty()}">
+            <div class="obs-title">Observações</div>
+            <span style="color:#9ca3af">Nenhuma observação adicional.</span>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ ASSINATURAS ═══ -->
+<div class="sig-area">
+    <div class="sig-line">Responsável Técnico / Vidraçaria</div>
+    <div class="sig-line">Recebido pela Têmpera</div>
+    <div class="sig-line">Conferência na Entrega</div>
+</div>
+
+<!-- ═══════════════════════════════════════ FOOTER ═══ -->
+<div class="doc-footer">
+    <span>Gerado automaticamente em <span th:text="${#temporals.format(generatedAt, 'dd/MM/yyyy HH:mm')}"></span> — OS <span th:text="${workOrder.number}"></span> · <span th:text="${plan.title}"></span></span>
+    <span>Os valores de custo são previstos — calculados com base na tabela de insumos vigente na data de emissão.</span>
 </div>
 
 </body>

@@ -6,18 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Serviço central do módulo Plano de Corte.
- * Totalmente integrado à Ordem de Serviço (WorkOrder) já existente:
- * não duplica cadastro de cliente/serviço/categoria, apenas referencia
- * a WorkOrder e reaproveita ServiceCategory, Supplier, MaterialCategory.
- */
+
 @Service
 public class CutPlanService {
 
@@ -28,7 +21,6 @@ public class CutPlanService {
     private final CutRuleSetRepository ruleSetRepository;
     private final WorkOrderRepository workOrderRepository;
     private final MaterialPriceService materialPriceService;
-    private final CuttingOptimizationService optimizationService;
     private final CutPlanItemDrillingRepository drillingRepository;
     private final CutPlanItemNotchRepository notchRepository;
     private final CutPlanItemChamferRepository chamferRepository;
@@ -37,7 +29,7 @@ public class CutPlanService {
     public CutPlanService(CutPlanRepository cutPlanRepository, CutPlanItemRepository itemRepository,
                            CutPlanMaterialRepository materialRepository, CutPlanHistoryRepository historyRepository,
                            CutRuleSetRepository ruleSetRepository, WorkOrderRepository workOrderRepository,
-                           MaterialPriceService materialPriceService, CuttingOptimizationService optimizationService,
+                           MaterialPriceService materialPriceService,
                            CutPlanItemDrillingRepository drillingRepository, CutPlanItemNotchRepository notchRepository,
                            CutPlanItemChamferRepository chamferRepository, GlassDrawingService glassDrawingService) {
         this.cutPlanRepository = cutPlanRepository;
@@ -47,7 +39,6 @@ public class CutPlanService {
         this.ruleSetRepository = ruleSetRepository;
         this.workOrderRepository = workOrderRepository;
         this.materialPriceService = materialPriceService;
-        this.optimizationService = optimizationService;
         this.drillingRepository = drillingRepository;
         this.notchRepository = notchRepository;
         this.chamferRepository = chamferRepository;
@@ -62,12 +53,6 @@ public class CutPlanService {
         return cutPlanRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Plano de Corte não encontrado"));
     }
 
-    /**
-     * Cria um novo Plano de Corte a partir de uma Ordem de Serviço já existente
-     * (botão "Gerar Plano de Corte"). Funciona igual independentemente da OS ter
-     * vindo de um orçamento aprovado ou ter sido criada manualmente — o fluxo é
-     * o mesmo porque em ambos os casos já existe uma WorkOrder persistida.
-     */
     @Transactional
     public CutPlan createForWorkOrder(UUID workOrderId, String title, UUID ruleSetId, String userLogin) {
         WorkOrder wo = workOrderRepository.findById(workOrderId)
@@ -94,7 +79,6 @@ public class CutPlanService {
         return saved;
     }
 
-    /** Adiciona/atualiza uma peça, aplicando os descontos técnicos parametrizados e buscando o preço vigente. */
     @Transactional
     public CutPlanItem saveItem(UUID cutPlanId, CutPlanItem incoming, String userLogin) {
         CutPlan plan = findById(cutPlanId);
@@ -123,7 +107,6 @@ public class CutPlanService {
 
         applyDiscountRules(target, plan.getRuleSet());
 
-        // Preço vigente na tabela do catálogo (snapshot: fica gravado mesmo que o preço mude depois)
         materialPriceService.findCurrentGlassPrice(target.getGlassType(), target.getColor(), target.getFinish(), target.getThickness())
                 .ifPresentOrElse(price -> {
                     target.setPriceItem(price);
@@ -149,15 +132,9 @@ public class CutPlanService {
         logHistory(plan, "item_removed", "Peça removida (id " + itemId + ")", userLogin);
     }
 
-    /**
-     * Calcula largura/altura FINAIS de corte a partir da medida BRUTA (vão),
-     * aplicando os parâmetros configuráveis do CutRuleSet vinculado ao plano.
-     * Se não houver rule set (ou o item já tiver medida final informada manualmente
-     * e o usuário não passar bruta), os valores informados são respeitados.
-     */
     public void applyDiscountRules(CutPlanItem item, CutRuleSet ruleSet) {
         if (item.getGrossWidth() == null || item.getGrossHeight() == null) {
-            return; // usuário está lançando a medida final diretamente
+            return;
         }
         BigDecimal widthDiscount = BigDecimal.ZERO;
         BigDecimal heightDiscount = BigDecimal.ZERO;
@@ -195,7 +172,6 @@ public class CutPlanService {
         target.setNotes(incoming.getNotes());
 
         if (incoming.getPriceItem() != null && incoming.getPriceItem().getId() != null) {
-            // preço puxado do catálogo (snapshot fixado no momento do lançamento)
             target.setPriceItem(incoming.getPriceItem());
             target.setUnitPriceSnapshot(incoming.getUnitPriceSnapshot());
         } else {
@@ -213,15 +189,6 @@ public class CutPlanService {
         CutPlan plan = findById(cutPlanId);
         materialRepository.deleteById(materialId);
         logHistory(plan, "material_removed", "Material removido (id " + materialId + ")", userLogin);
-    }
-
-    @Transactional
-    public CuttingOptimizationService.NestingResult optimize(UUID cutPlanId, BigDecimal sheetWidthMm, BigDecimal sheetHeightMm, String userLogin) {
-        CutPlan plan = findById(cutPlanId);
-        CuttingOptimizationService.NestingResult result = optimizationService.optimize(plan.getItems(), sheetWidthMm, sheetHeightMm);
-        logHistory(plan, "optimized", "Otimização gerada: " + result.totalSheets + " chapa(s), "
-                + result.utilizationPercent + "% de aproveitamento", userLogin);
-        return result;
     }
 
     @Transactional
@@ -252,15 +219,12 @@ public class CutPlanService {
         historyRepository.save(h);
     }
 
-    /** Usado pela seção "Estimativa de Custos" da tela de Ordem de Serviço. */
     public BigDecimal getTotalEstimatedCostForWorkOrder(UUID workOrderId) {
         return listByWorkOrder(workOrderId).stream()
                 .filter(p -> p.getStatus() != CutPlan.Status.cancelled)
                 .map(CutPlan::getTotalCost)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
-
-    // ── Detalhamento técnico da peça: furos, recortes, chanfros ──
 
     private CutPlanItem findItem(UUID itemId) {
         return itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("Peça não encontrada"));
@@ -336,7 +300,6 @@ public class CutPlanService {
         logHistory(item.getCutPlan(), "chamfer_removed", "Chanfro removido em " + item.getDescription(), userLogin);
     }
 
-    /** Gera o desenho técnico (SVG) da peça, considerando furos/recortes/chanfros já cadastrados. */
     @Transactional(readOnly = true)
     public String renderDrawing(UUID itemId) {
         CutPlanItem item = findItem(itemId);

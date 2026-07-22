@@ -3,7 +3,6 @@ package com.alfatahi.erp.controller;
 import com.alfatahi.erp.entity.*;
 import com.alfatahi.erp.repository.*;
 import com.alfatahi.erp.service.CutPlanService;
-import com.alfatahi.erp.service.CuttingOptimizationService;
 import com.alfatahi.erp.service.report.PdfReportService;
 import org.hibernate.Hibernate;
 import org.springframework.http.HttpHeaders;
@@ -17,33 +16,27 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.context.Context;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Módulo Plano de Corte — totalmente integrado à Ordem de Serviço.
- * Não substitui nem duplica WorkOrderController: aqui só existe o que é
- * específico do plano de corte (peças, materiais, otimização, PDF).
- */
 @Controller
 @RequestMapping("/cut-plans")
 public class CutPlanController {
 
     private final CutPlanService cutPlanService;
     private final WorkOrderRepository workOrderRepository;
-    private final ServiceCategoryRepository serviceCategoryRepository;
     private final CutRuleSetRepository ruleSetRepository;
     private final SupplierRepository supplierRepository;
     private final PdfReportService pdfReportService;
 
-    public CutPlanController(CutPlanService cutPlanService, WorkOrderRepository workOrderRepository,
-                              ServiceCategoryRepository serviceCategoryRepository, CutRuleSetRepository ruleSetRepository,
-                              SupplierRepository supplierRepository, PdfReportService pdfReportService) {
+    public CutPlanController(CutPlanService cutPlanService,
+                              WorkOrderRepository workOrderRepository,
+                              CutRuleSetRepository ruleSetRepository,
+                              SupplierRepository supplierRepository,
+                              PdfReportService pdfReportService) {
         this.cutPlanService = cutPlanService;
         this.workOrderRepository = workOrderRepository;
-        this.serviceCategoryRepository = serviceCategoryRepository;
         this.ruleSetRepository = ruleSetRepository;
         this.supplierRepository = supplierRepository;
         this.pdfReportService = pdfReportService;
@@ -54,7 +47,6 @@ public class CutPlanController {
         return auth != null ? auth.getName() : "sistema";
     }
 
-    /** Tela do módulo, aberta a partir do botão "Gerar Plano de Corte" da Ordem de Serviço. */
     @GetMapping("/os/{workOrderId}")
     @Transactional(readOnly = true)
     public String screen(@PathVariable UUID workOrderId, Model model) {
@@ -111,8 +103,6 @@ public class CutPlanController {
         return ResponseEntity.ok(cutPlanService.updateStatus(id, CutPlan.Status.valueOf(body.get("status")), currentUser()));
     }
 
-    // ── Peças (vidros) ──
-
     @PostMapping("/{id}/items")
     @ResponseBody
     @Transactional
@@ -127,8 +117,6 @@ public class CutPlanController {
         return ResponseEntity.ok().build();
     }
 
-    // ── Materiais (ferragens, alumínio, silicone, outros) ──
-
     @PostMapping("/{id}/materials")
     @ResponseBody
     @Transactional
@@ -142,17 +130,6 @@ public class CutPlanController {
         cutPlanService.deleteMaterial(id, materialId, currentUser());
         return ResponseEntity.ok().build();
     }
-
-    // ── Otimização de chapas ──
-
-    @PostMapping("/{id}/optimize")
-    @ResponseBody
-    public ResponseEntity<CuttingOptimizationService.NestingResult> optimize(@PathVariable UUID id,
-            @RequestParam(required = false) BigDecimal sheetWidth, @RequestParam(required = false) BigDecimal sheetHeight) {
-        return ResponseEntity.ok(cutPlanService.optimize(id, sheetWidth, sheetHeight, currentUser()));
-    }
-
-    // ── Detalhamento técnico: furos, recortes, chanfros ──
 
     @PostMapping("/items/{itemId}/drillings")
     @ResponseBody
@@ -196,22 +173,17 @@ public class CutPlanController {
         return ResponseEntity.ok().build();
     }
 
-    /** Desenho técnico (vista frontal, SVG) da peça — usado na tela e embutido no PDF. */
     @GetMapping(value = "/items/{itemId}/drawing", produces = "image/svg+xml")
     @ResponseBody
     public ResponseEntity<String> drawing(@PathVariable UUID itemId) {
         return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store").body(cutPlanService.renderDrawing(itemId));
     }
 
-    // ── Histórico ──
-
     @GetMapping("/{id}/history")
     @ResponseBody
     public ResponseEntity<List<CutPlanHistory>> history(@PathVariable UUID id) {
         return ResponseEntity.ok(cutPlanService.history(id));
     }
-
-    // ── PDF para o fornecedor de vidros ──
 
     @GetMapping("/{id}/pdf")
     @Transactional(readOnly = true)
@@ -236,7 +208,7 @@ public class CutPlanController {
 
         byte[] pdf = pdfReportService.render("cut-plan-pdf", ctx);
 
-        String fileName = "plano-corte-" + plan.getWorkOrder().getNumber() + "-" + plan.getPlanNumber() + ".pdf";
+        String fileName = "pedido-tempera-" + plan.getWorkOrder().getNumber() + "-" + plan.getPlanNumber() + ".pdf";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
                 .contentType(MediaType.APPLICATION_PDF)

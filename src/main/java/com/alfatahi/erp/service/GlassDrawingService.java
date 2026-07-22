@@ -9,12 +9,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.*;
 
-/**
- * Gera o Desenho Técnico (vista frontal, em SVG) de uma peça de vidro do
- * Plano de Corte: contorno da peça (com chanfros de canto), furos e
- * recortes posicionados, linhas de cota e um cabeçalho de identificação —
- * o documento que normalmente acompanha o pedido enviado à têmpera.
- */
+
 @Service
 public class GlassDrawingService {
 

@@ -19,7 +19,6 @@ public class PaymentTermsService {
     public static final String STAGE_ENTREGA = "entrega";
     public static final String STAGE_UNICO = "unico";
 
-    /** Uma parcela planejada: valor, vencimento e a etapa que ela representa. */
     public static class PlannedInstallment {
         private final BigDecimal amount;
         private final LocalDate dueDate;
