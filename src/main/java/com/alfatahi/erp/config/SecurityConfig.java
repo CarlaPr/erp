@@ -30,7 +30,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin/users/**").hasAuthority("GESTAO")
 
                         .requestMatchers("/dashboard", "/payables/**", "/receivables/**",
-                                "/losses/**", "/dre/**", "/conciliation/**", "/suppliers/**",
+                                "/losses/**", "/dre/**", "/suppliers/**",
                                 "/settings/**", "/settings/users/**",
                                 "/price-catalog/**", "/cut-rule-sets/**").hasAuthority("GESTAO")
 

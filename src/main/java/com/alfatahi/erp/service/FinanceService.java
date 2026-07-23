@@ -18,40 +18,23 @@ public class FinanceService {
 
     private final AccountsPayableRepository payableRepository;
     private final AccountsReceivableRepository receivableRepository;
-    private final BankAccountRepository bankAccountRepository;
     private final WorkOrderRepository workOrderRepository;
 
     public FinanceService(AccountsPayableRepository payableRepository,
                           AccountsReceivableRepository receivableRepository,
-                          BankAccountRepository bankAccountRepository,
                           WorkOrderRepository workOrderRepository) {
         this.payableRepository = payableRepository;
         this.receivableRepository = receivableRepository;
-        this.bankAccountRepository = bankAccountRepository;
         this.workOrderRepository = workOrderRepository;
     }
 
     public List<AccountsPayable> listAllPayables()       { return payableRepository.findAllByOrderByDueDateAsc(); }
     public List<AccountsReceivable> listAllReceivables() { return receivableRepository.findAllByOrderByDueDateAsc(); }
-    public List<BankAccount> listAllAccounts()           { return bankAccountRepository.findAll(); }
     public AccountsPayable savePayable(AccountsPayable p)     { return payableRepository.save(p); }
     public AccountsReceivable saveReceivable(AccountsReceivable r) { return receivableRepository.save(r); }
-    public BankAccount saveAccount(BankAccount a)        { return bankAccountRepository.save(a); }
 
     public BigDecimal getTotalReceivables() { return receivableRepository.sumTotalReceivables(); }
     public BigDecimal getTotalPayables()    { return payableRepository.sumTotalPayables(); }
-
-    @Transactional
-    public void createDefaultAccountIfEmpty() {
-        if (bankAccountRepository.count() == 0) {
-            BankAccount defaultAcc = new BankAccount();
-            defaultAcc.setName("Caixa Interno Geral");
-            defaultAcc.setBankName("Dinheiro / Caixa");
-            defaultAcc.setType("cash");
-            defaultAcc.setCurrentBalance(new BigDecimal("5000.00"));
-            bankAccountRepository.save(defaultAcc);
-        }
-    }
 
     @Transactional
     public void processPayablePayment(UUID payableId, BigDecimal amountPaid,
