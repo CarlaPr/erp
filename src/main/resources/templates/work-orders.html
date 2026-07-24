@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head(title='Ordens de Serviço - Tahi Glass')}"></head>
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
@@ -20,8 +20,7 @@
         </button>
     </header>
 
-    <!-- BLOCO DE KPIS GLOBAIS - OCULTO PARA A ROLE TECNICO -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8" sec:authorize="!hasAuthority('TECNICO')">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
             <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Receita Total</p>
             <p class="text-2xl font-black text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(totalRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
@@ -37,11 +36,6 @@
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-brand-600 dark:border-l-cyan-500">
             <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Margem Média</p>
             <p class="text-2xl font-black text-brand-700 dark:text-cyan-400" th:text="${#numbers.formatDecimal(averageMargin, 1, 'POINT', 2, 'COMMA')} + '%'">0.00%</p>
-        </div>
-        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-amber-500">
-            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Custo Previsto de Produção</p>
-            <p class="text-2xl font-black text-amber-600 dark:text-amber-400" th:text="'R$ ' + ${#numbers.formatDecimal(totalPredictedProductionCost, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
-            <p class="text-[11px] text-slate-400 mt-1">Soma dos Planos de Corte das OS em andamento</p>
         </div>
     </div>
 
@@ -122,10 +116,6 @@
                         </div>
 
                         <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                            <a th:href="@{'/cut-plans/os/' + ${wo.id}}"
-                               class="p-2 hover:bg-amber-100 dark:hover:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg transition-colors" title="Gerar Plano de Corte">
-                                <i data-lucide="scissors" class="w-5 h-5"></i>
-                            </a>
                             <button type="button" th:data-id="${wo.id}" onclick="editOs(this.getAttribute('data-id'))"
                                     class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar">
                                 <i data-lucide="edit" class="w-5 h-5"></i>
@@ -154,9 +144,8 @@
                         </div>
                     </div>
 
-                    <!-- BLOCO DE KPIS INDIVIDUAL - OCULTO PARA A ROLE TECNICO -->
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-6" sec:authorize="!hasAuthority('TECNICO')"
-                         th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, custoPrevisto=${cutPlanCosts.get(wo.id) != null ? cutPlanCosts.get(wo.id) : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}, saldoAtual=${receita - custo - custoPrevisto}">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6"
+                         th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}">
 
                         <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
                             <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Receita</p>
@@ -166,13 +155,9 @@
                             <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Custos</p>
                             <p class="text-sm font-black text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(custo, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
                         </div>
-                        <div class="bg-amber-50 dark:bg-amber-500/10 p-4 rounded-xl" title="Estimativa de Custos vinda do(s) Plano(s) de Corte">
-                            <p class="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase mb-1">Custo Previsto (Produção)</p>
-                            <p class="text-sm font-black text-amber-700 dark:text-amber-400" th:text="'R$ ' + ${#numbers.formatDecimal(custoPrevisto, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
-                        </div>
                         <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
                             <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Lucro</p>
-                            <p class="text-sm font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(saldoAtual, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+                            <p class="text-sm font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(lucro, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
                         </div>
                         <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl">
                             <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Margem</p>
@@ -348,8 +333,7 @@
                             </div>
                         </div>
 
-                        <!-- BLOCO RESUMO FINANCEIRO - OCULTO PARA A ROLE TECNICO -->
-                        <div class="bg-brand-50 dark:bg-cyan-900/20 border border-brand-200 dark:border-cyan-800/40 rounded-2xl p-6 shadow-sm" sec:authorize="!hasAuthority('TECNICO')">
+                        <div class="bg-brand-50 dark:bg-cyan-900/20 border border-brand-200 dark:border-cyan-800/40 rounded-2xl p-6 shadow-sm">
                             <h5 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6 border-b border-brand-200 dark:border-cyan-800/40 pb-4">
                                 <i data-lucide="dollar-sign" class="w-6 h-6 text-brand-600 dark:text-cyan-400"></i> Resumo Financeiro
                             </h5>
@@ -525,7 +509,7 @@
     let soldItems        = [];
     let materialItems    = [];
     let operationalItems = [];
-    let osIdToDelete     = null;
+    let osIdToDelete     = null; // Alterado de osIdToCancel para osIdToDelete
     let originalTotalValue = 0;
     let originalNotes = "";
 
@@ -994,8 +978,7 @@
             </div>
         </div>`;
         });
-        const elTotalMat = document.getElementById('totalMaterials');
-        if (elTotalMat) elTotalMat.innerText = `R$ ${formatBRL(totalMatCost)}`;
+        document.getElementById('totalMaterials').innerText = `R$ ${formatBRL(totalMatCost)}`;
 
         const opCont = document.getElementById('operationalsContainer');
         opCont.innerHTML = '';
@@ -1041,11 +1024,9 @@
             </div>
         </div>`;
         });
+        document.getElementById('totalOperationals').innerText = `R$ ${formatBRL(totalOpCost)}`;
 
-        const elTotalOp = document.getElementById('totalOperationals');
-        if (elTotalOp) elTotalOp.innerText = `R$ ${formatBRL(totalOpCost)}`;
-
-        // --- KPIs DO EDITOR (Adicionado check de nulidade por causa do sec:authorize) ---
+        // --- KPIs DO EDITOR ---
         const receitaStr = document.getElementById('osTotalValue').value;
         const receita = parseBRL(receitaStr);
 
@@ -1053,17 +1034,10 @@
         const lucro = receita - custoGlobal;
         const margem = receita > 0 ? (lucro / receita) * 100 : 0;
 
-        const elResumoReceita = document.getElementById('resumoReceita');
-        if (elResumoReceita) elResumoReceita.innerText = `R$ ${formatBRL(receita)}`;
-
-        const elResumoCusto = document.getElementById('resumoCusto');
-        if (elResumoCusto) elResumoCusto.innerText   = `R$ ${formatBRL(custoGlobal)}`;
-
-        const elResumoLucro = document.getElementById('resumoLucro');
-        if (elResumoLucro) elResumoLucro.innerText   = `R$ ${formatBRL(lucro)}`;
-
-        const elResumoMargem = document.getElementById('resumoMargem');
-        if (elResumoMargem) elResumoMargem.innerText  = `${margem.toFixed(1)}%`;
+        document.getElementById('resumoReceita').innerText = `R$ ${formatBRL(receita)}`;
+        document.getElementById('resumoCusto').innerText   = `R$ ${formatBRL(custoGlobal)}`;
+        document.getElementById('resumoLucro').innerText   = `R$ ${formatBRL(lucro)}`;
+        document.getElementById('resumoMargem').innerText  = `${margem.toFixed(1)}%`;
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
@@ -1077,6 +1051,7 @@
         const currentTotalValue = parseBRL(document.getElementById('osTotalValue').value);
         let finalNotes = originalNotes || "";
 
+        // VERIFICADOR DE ALTERAÇÃO E JUSTIFICATIVA
         if (originalTotalValue > 0 && currentTotalValue !== originalTotalValue) {
             const motivo = prompt(`O valor global da O.S. foi alterado de R$ ${formatBRL(originalTotalValue)} para R$ ${formatBRL(currentTotalValue)}.\n\nPor favor, justifique o motivo da alteração:` );
 
@@ -1104,7 +1079,7 @@
             allItems.push({
                 description: mi.description,
                 quantity: mi.quantity,
-                unitCost: mi.unitCost,
+                unitCost: mi.unitCost, // se estiver formatando BRL nos materiais precisa usar parseBRL() aqui
                 unitPrice: mi.unitPrice
             });
         });
@@ -1124,7 +1099,7 @@
             status: document.getElementById('osStatus').value,
             installDate: document.getElementById('osDate').value || null,
             totalValue: currentTotalValue,
-            notes: finalNotes,
+            notes: finalNotes, // <--- Enviando a justificativa
             quoteId: document.getElementById('osQuote').value || null,
             client: clientVal ? { id: clientVal } : null,
             items: allItems

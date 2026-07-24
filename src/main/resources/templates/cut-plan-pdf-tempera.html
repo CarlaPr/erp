@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Pedido para Têmpera</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #222; background: #fff; }
+        .page { max-width: 800px; margin: 0 auto; padding: 15px; }
+        .header-box { border: 2px solid #222; padding: 8px 12px; margin-bottom: 8px; }
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .company-name { font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+        .company-sub { font-size: 9px; color: #555; margin-top: 1px; }
+        .doc-info { text-align: right; }
+        .doc-info .label { font-size: 9px; color: #777; text-transform: uppercase; }
+        .doc-info .value { font-size: 20px; font-weight: 900; color: #1a1a8c; line-height: 1; }
+        .doc-info .date { font-size: 10px; color: #333; }
+        .badge-tempera { display: inline-block; background: #1a1a8c; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 3px; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+        .info-row { display: flex; gap: 8px; margin-bottom: 6px; }
+        .info-cell { border: 1px solid #ccc; padding: 5px 8px; flex: 1; }
+        .info-cell .lbl { font-size: 8px; color: #888; text-transform: uppercase; font-weight: 700; }
+        .info-cell .val { font-size: 11px; font-weight: 700; color: #111; margin-top: 1px; }
+        .section-title { background: #1a1a8c; color: #fff; font-size: 10px; font-weight: 900; padding: 4px 10px; text-transform: uppercase; letter-spacing: 1px; margin: 10px 0 0 0; }
+        .item-header { display: flex; justify-content: space-between; align-items: center; border: 1px solid #ccc; border-top: none; padding: 6px 10px; background: #f4f4f4; }
+        .item-header .item-title { font-size: 12px; font-weight: 700; }
+        .item-header .item-category { font-size: 10px; color: #555; }
+        .item-header .qty-badge { font-size: 20px; font-weight: 900; color: #1a1a8c; text-align: right; line-height: 1; }
+        .item-header .qty-label { font-size: 8px; color: #777; text-transform: uppercase; }
+        .diagram-row { display: flex; border: 1px solid #ccc; border-top: none; }
+        .diagram-cell { width: 180px; min-width: 180px; border-right: 1px solid #ccc; padding: 8px; display: flex; align-items: center; justify-content: center; background: #fafafa; }
+        .glass-diagram { position: relative; border: 2px solid #444; background: #e8f4fd; display: flex; align-items: center; justify-content: center; }
+        .dim-label { font-size: 9px; font-weight: 700; color: #1a1a8c; }
+        .dim-width { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+        .dim-height { position: absolute; right: -35px; top: 50%; transform: translateY(-50%) rotate(90deg); white-space: nowrap; }
+        .sizes-cell { flex: 1; padding: 8px 12px; }
+        .size-warning { color: #c00; font-size: 9px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+        .sizes-table { width: 100%; border-collapse: collapse; }
+        .sizes-table td, .sizes-table th { border: 1px solid #ddd; padding: 3px 6px; font-size: 10px; }
+        .sizes-table th { background: #f0f0f0; font-size: 9px; text-transform: uppercase; color: #555; }
+        .sizes-table .glass-type { font-weight: 700; }
+        .sizes-table .dim-col { text-align: center; font-weight: 700; font-family: monospace; font-size: 11px; }
+        .sizes-table .final-row td { background: #fffae8; }
+        .summary-box { border: 2px solid #1a1a8c; margin-top: 12px; padding: 8px 12px; }
+        .summary-title { font-size: 9px; color: #1a1a8c; text-transform: uppercase; font-weight: 900; margin-bottom: 6px; letter-spacing: 1px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .summary-item { text-align: center; }
+        .summary-item .sv { font-size: 20px; font-weight: 900; color: #1a1a8c; line-height: 1; }
+        .summary-item .sl { font-size: 8px; color: #777; text-transform: uppercase; }
+        .footer-note { margin-top: 10px; border: 1px solid #e00; background: #fff8f8; padding: 6px 10px; font-size: 9px; color: #c00; font-weight: 700; }
+        .footer-sig { margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 8px; display: flex; justify-content: space-between; font-size: 9px; color: #888; }
+        .page-num { text-align: right; font-size: 8px; color: #aaa; margin-top: 4px; }
+        @media print {
+            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .page { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Print button (hidden on print) -->
+<div class="no-print" style="background:#1a1a8c;padding:10px 15px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+    <span style="color:white;font-family:Arial;font-size:13px;font-weight:700;">📄 Pedido para Têmpera — Pré-visualização</span>
+    <div style="display:flex;gap:10px;">
+        <button onclick="window.print()" style="background:#fff;color:#1a1a8c;border:none;padding:6px 18px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;">🖨️ Imprimir / Salvar PDF</button>
+        <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:6px 18px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;">✕ Fechar</button>
+    </div>
+</div>
+
+<div class="page">
+    <!-- HEADER -->
+    <div class="header-box">
+        <div class="header-top">
+            <div>
+                <div class="company-name" th:text="${"'Sua Vidraçaria e Serralheria'}">Vidraçaria</div>
+                <div class="company-sub" th:text="${''}">Endereço</div>
+                <div class="badge-tempera">⚠️ ATENÇÃO — MEDIDAS FINAIS DAS PEÇAS ABAIXO</div>
+            </div>
+            <div class="doc-info">
+                <div class="label">Nro.Pedido</div>
+                <div class="value" th:text="${workOrder?.number ?: plan.id.toString().substring(0,6).toUpperCase()}">0000</div>
+                <div class="date">Dt.Pedido: <span th:text="${plan.createdAt != null ? #temporals.format(plan.createdAt, 'dd/MM/yyyy') : #temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">—</span></div>
+                <div class="date">Têmpera: <span th:text="${workOrder?.title ?: '—'}">—</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OS Info -->
+    <div class="info-row">
+        <div class="info-cell">
+            <div class="lbl">Nro.Pedido / Item Nro</div>
+            <div class="val" th:text="${(workOrder?.number ?: '—') + ' / 1'}">—</div>
+        </div>
+        <div class="info-cell">
+            <div class="lbl">Situação</div>
+            <div class="val" th:text="${plan.status == 'APPROVED' ? 'APROVADO' : plan.status == 'SENT_TO_SUPPLIER' ? 'ENVIADO AO FORNECEDOR' : 'PEDIDO'}">PEDIDO</div>
+        </div>
+        <div class="info-cell">
+            <div class="lbl">Categoria</div>
+            <div class="val" th:text="${workOrder?.category?.name ?: 'MEDIDA FINAL'}">MEDIDA FINAL</div>
+        </div>
+    </div>
+
+    <div class="info-row">
+        <div class="info-cell" style="flex:3;">
+            <div class="lbl">Projeto / OS</div>
+            <div class="val" th:text="${workOrder?.title ?: workOrder?.description ?: 'Sem título'}">—</div>
+        </div>
+        <div class="info-cell" style="flex:2;">
+            <div class="lbl">Cliente</div>
+            <div class="val" th:text="${workOrder?.client?.name ?: '—'}">—</div>
+        </div>
+    </div>
+
+    <!-- ITENS -->
+    <div class="section-title">Peças para Temperar</div>
+
+    <th:block th:each="item, iStat : ${plan.items}">
+        <!-- Item header -->
+        <div class="item-header">
+            <div>
+                <div class="item-title" th:text="${iStat.count + '. ' + item.description}">Item</div>
+                <div class="item-category">
+                    <span th:text="${(item.color ?: 'INCOLOR') + ' ' + (item.glassType ?: 'TEMPERADO') + ' ' + (item.thickness ?: '8') + 'mm'}">Vidro</span>
+                    <span th:if="${item.environment != null}"> — <span th:text="${item.environment}">Ambiente</span></span>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div class="qty-label">Quantidade</div>
+                <div class="qty-badge" th:text="${item.quantity ?: 1}">1</div>
+            </div>
+        </div>
+
+        <!-- Diagram + sizes -->
+        <div class="diagram-row">
+            <!-- Visual diagram -->
+            <div class="diagram-cell">
+                <div style="position:relative;padding:20px 35px 25px 10px;">
+                    <div class="glass-diagram" th:style="'width:' + (item.finalWidth != null and item.finalWidth > 0 ? T(java.lang.Math).min(120, T(java.lang.Math).max(60, item.finalWidth.intValue() / 15)) : 80) + 'px;height:' + (item.finalHeight != null and item.finalHeight > 0 ? T(java.lang.Math).min(100, T(java.lang.Math).max(50, item.finalHeight.intValue() / 20)) : 70) + 'px;'">
+                        <span style="font-size:18px;opacity:0.3;">◻</span>
+                        <div class="dim-label dim-width" th:text="${item.finalWidth != null ? #numbers.formatDecimal(item.finalWidth, 1, 0) : '—'}">L</div>
+                        <div class="dim-label dim-height" th:text="${item.finalHeight != null ? #numbers.formatDecimal(item.finalHeight, 1, 0) : '—'}">A</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sizes table -->
+            <div class="sizes-cell">
+                <div class="size-warning">⚠️ ATENÇÃO: MEDIDAS FINAIS DAS PEÇAS ABAIXO ⚠️</div>
+                <table class="sizes-table">
+                    <thead>
+                    <tr>
+                        <th>Pc</th>
+                        <th>Vidro</th>
+                        <th>Qtde</th>
+                        <th>Largura</th>
+                        <th>Altura</th>
+                        <th>M²</th>
+                        <th>M² Arr.</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Gross (if different from final) -->
+                    <tr th:if="${item.grossWidth != null and item.grossHeight != null and (item.grossWidth != item.finalWidth or item.grossHeight != item.finalHeight)}"
+                        style="color:#888;font-style:italic;">
+                        <td th:text="${iStat.count}">1</td>
+                        <td class="glass-type" th:text="${(item.color ?: 'INCOLOR') + ' ' + (item.thickness ?: '8') + 'MM'}">VIDRO</td>
+                        <td class="dim-col" th:text="${item.quantity ?: 1}">1</td>
+                        <td class="dim-col" th:text="${#numbers.formatDecimal(item.grossWidth ?: 0, 1, 0)}">0</td>
+                        <td class="dim-col" th:text="${#numbers.formatDecimal(item.grossHeight ?: 0, 1, 0)}">0</td>
+                        <td class="dim-col" th:text="${item.grossWidth != null and item.grossHeight != null ? #numbers.formatDecimal(item.grossWidth.multiply(item.grossHeight).divide(new java.math.BigDecimal('1000000'), 4, T(java.math.RoundingMode).HALF_UP), 1, 4) : '—'}">—</td>
+                        <td class="dim-col">—</td>
+                    </tr>
+                    <!-- Final (bold) -->
+                    <tr class="final-row">
+                        <td style="font-weight:700;" th:text="${iStat.count}">1</td>
+                        <td class="glass-type" th:text="${(item.color ?: 'INCOLOR') + ' ' + (item.glassType ?: 'TEMPERADO') + ' ' + (item.thickness ?: '8') + 'MM'}">VIDRO</td>
+                        <td class="dim-col" th:text="${item.quantity ?: 1}">1</td>
+                        <td class="dim-col" style="color:#1a1a8c;font-weight:900;" th:text="${#numbers.formatDecimal(item.finalWidth ?: 0, 1, 0)}">0</td>
+                        <td class="dim-col" style="color:#1a1a8c;font-weight:900;" th:text="${#numbers.formatDecimal(item.finalHeight ?: 0, 1, 0)}">0</td>
+                        <td class="dim-col"
+                            th:text="${item.finalWidth != null and item.finalHeight != null ? #numbers.formatDecimal(item.finalWidth.multiply(item.finalHeight).divide(new java.math.BigDecimal('1000000'), 4, T(java.math.RoundingMode).HALF_UP), 1, 4) : '—'}">—</td>
+                        <td class="dim-col"
+                            th:text="${item.calculatedArea != null ? #numbers.formatDecimal(item.calculatedArea.divide(new java.math.BigDecimal('1000000'), 4, T(java.math.RoundingMode).HALF_UP), 1, 4) : '—'}">—</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div th:if="${item.drillingDiameter != null}" style="margin-top:5px;font-size:9px;color:#555;">
+                    🔧 <strong>Furos:</strong>
+                    <span th:text="${(item.drillingQuantity ?: 1) + 'x ø' + item.drillingDiameter + 'mm'}">—</span>
+                    — temperar ANTES de furar
+                </div>
+                <div th:if="${item.notchDescription != null}" style="margin-top:3px;font-size:9px;color:#555;">
+                    ✂️ <strong>Recortes:</strong> <span th:text="${item.notchDescription}">—</span>
+                </div>
+                <div th:if="${item.notes != null}" style="margin-top:3px;font-size:9px;color:#777;">
+                    📝 <span th:text="${item.notes}">—</span>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- SUMMARY -->
+    <div class="summary-box">
+        <div class="summary-title">Resumo do Pedido</div>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="sv" th:text="${plan.items?.size() ?: 0}">0</div>
+                <div class="sl">Tipos de Peça</div>
+            </div>
+            <div class="summary-item">
+                <div class="sv" th:text="${totalQty}">0</div>
+                <div class="sl">Qtde Total</div>
+            </div>
+            <div class="summary-item">
+                <div class="sv" th:text="${#numbers.formatDecimal(totalAreaM2, 1, 4)}">0</div>
+                <div class="sl">Total M²</div>
+            </div>
+            <div class="summary-item">
+                <div class="sv" th:text="${plan.version ?: 1}">1</div>
+                <div class="sl">Versão</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning -->
+    <div class="footer-note">
+        ⚠️ PEDIDO PARA A TÊMPERA SEM ERROS — As medidas acima são FINAIS, após aplicação de todos os descontos técnicos. Verifique as medidas antes de processar. Vidro temperado NÃO pode ser recortado após o processo.
+    </div>
+
+    <!-- Signature -->
+    <div class="footer-sig">
+        <span>Gerado em: <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}">—</span></span>
+        <span>Plano: <span th:text="${plan.id}">—</span></span>
+        <span>Status: <span th:text="${plan.status}">—</span></span>
+    </div>
+    <div class="page-num">Página 1 de 1</div>
+</div>
+
+</body>
+</html>
