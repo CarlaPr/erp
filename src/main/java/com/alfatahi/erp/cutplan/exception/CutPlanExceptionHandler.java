@@ -1,6 +1,7 @@
 package com.alfatahi.erp.cutplan.exception;
 
 import com.alfatahi.erp.cutplan.exception.ErrorResponse;
+import org.springframework.http.HttpStatusCode;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -19,20 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * CutPlanExceptionHandler - Tratamento global de exceções
- *
- * Intercepta exceções lançadas nos controllers e retorna
- * respostas HTTP formatadas com mensagens claras
- *
- * HTTP Status Codes:
- * - 400 Bad Request: Dados inválidos
- * - 401 Unauthorized: Não autenticado
- * - 403 Forbidden: Sem permissão
- * - 404 Not Found: Recurso não encontrado
- * - 409 Conflict: Operação em conflito (status inválido, duplicata, etc)
- * - 500 Internal Server Error: Erro genérico do servidor
- */
 @Slf4j
 @RestControllerAdvice
 public class CutPlanExceptionHandler extends ResponseEntityExceptionHandler {
@@ -40,9 +27,6 @@ public class CutPlanExceptionHandler extends ResponseEntityExceptionHandler {
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    /**
-     * Tratamento para CutPlanNotFoundException
-     */
     @ExceptionHandler(CutPlanNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleCutPlanNotFound(
             CutPlanNotFoundException ex,
@@ -320,7 +304,7 @@ public class CutPlanExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
             HttpHeaders headers,
-            HttpStatus status,
+            HttpStatusCode status, // <-- MUDE DE HttpStatus PARA HttpStatusCode AQUI
             WebRequest request) {
 
         log.warn("Validação falhou: {}", ex.getMessage());
@@ -335,7 +319,7 @@ public class CutPlanExceptionHandler extends ResponseEntityExceptionHandler {
 
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now().format(FORMATTER))
-                .status(HttpStatus.BAD_REQUEST.value())
+                .status(status.value())
                 .error("Validação falhou")
                 .message("Um ou mais campos possuem valores inválidos")
                 .path(request.getDescription(false).replace("uri=", ""))
@@ -343,7 +327,7 @@ public class CutPlanExceptionHandler extends ResponseEntityExceptionHandler {
                 .validationErrors(errors)
                 .build();
 
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(error, status);
     }
 
     /**

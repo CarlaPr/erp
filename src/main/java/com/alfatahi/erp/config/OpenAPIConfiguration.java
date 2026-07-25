@@ -4,10 +4,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * Configuração CORS para a API REST.
- * Swagger/OpenAPI removido pois springdoc não está no pom.xml.
- */
 @Configuration
 public class OpenAPIConfiguration implements WebMvcConfigurer {
 
@@ -18,7 +14,7 @@ public class OpenAPIConfiguration implements WebMvcConfigurer {
                 .allowedOrigins(
                         "http://localhost:3000",
                         "http://localhost:4200",
-                        "https://alfatahi.com.br"
+                        "https://tahiglass.onrender.com/"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")

@@ -26,31 +26,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * CostTableService - Serviço de gerenciamento de tabelas de preço
- *
- * Responsabilidade:
- * - CRUD de tabelas de preço
- * - Gerenciar versionamento de preços
- * - Manter histórico de mudanças
- * - Buscar preços vigentes
- * - Análise de variação de preços
- * - Auditoria de alterações
- *
- * Fluxo de Atualização de Preço:
- * 1. Buscar preço atual
- * 2. Registrar novo preço com data de vigência
- * 3. Marcar preço antigo como expirado (effectiveTo)
- * 4. Registrar entrada em CostTableHistory
- * 5. Notificar (futuro) mudança de preço importante
- *
- * Exemplo:
- * - 01/01/2024: Preço vidro 8mm = R$ 150 (effectiveFrom: 01/01, effectiveTo: null)
- * - 15/03/2024: Preço aumenta para R$ 165
- *   → Atualizar preço antigo: effectiveTo = 14/03
- *   → Criar novo registro: R$ 165, effectiveFrom = 15/03, effectiveTo = null
- *   → Registrar em histórico: motivo, usuário, data
- */
 @Slf4j
 @Service
 @Transactional

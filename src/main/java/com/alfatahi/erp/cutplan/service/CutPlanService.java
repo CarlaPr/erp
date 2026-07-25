@@ -150,8 +150,9 @@ public class CutPlanService {
         return toResponse(plan);
     }
 
+    // CORREÇÃO: Renomeado de getDetailedById para getByIdWithHistory para alinhar com o Controller
     @Transactional(readOnly = true)
-    public CutPlanDetailedResponse getDetailedById(UUID id) {
+    public CutPlanDetailedResponse getByIdWithHistory(UUID id) {
         CutPlan plan = findPlan(id);
         CutPlanDetailedResponse resp = new CutPlanDetailedResponse();
         resp.setId(plan.getId());
@@ -173,8 +174,29 @@ public class CutPlanService {
     }
 
     // ──────────────────────────────────────────────────
-    // ITENS
+    // ATUALIZAÇÃO / ITENS
     // ──────────────────────────────────────────────────
+
+    // CORREÇÃO: Método update implementado
+    public CutPlanResponse update(UUID planId, CutPlanUpdateRequest request, UUID userId) {
+        CutPlan plan = findPlan(planId);
+        assertDraft(plan);
+        AppUser user = appUserRepository.findById(userId).orElse(null);
+
+        // Atualizando propriedades básicas - você pode expandir de acordo com o seu CutPlanUpdateRequest
+        if (request != null && request.getDescription() != null) {
+            plan.setDescription(request.getDescription());
+        }
+
+        plan.setUpdatedAt(LocalDateTime.now());
+        plan.setUpdatedBy(user);
+        cutPlanRepository.save(plan);
+
+        cutPlanHistoryService.recordChange(plan, user, "UPDATED",
+                "Informações do plano atualizadas", null, null);
+
+        return toResponse(plan);
+    }
 
     public CutPlanResponse addItem(UUID planId, CutPlanItemRequest request, UUID userId) {
         CutPlan plan = findPlan(planId);

@@ -9,9 +9,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * CostTableHistoryResponse - Histórico de mudanças de preço
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -18,28 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * CutPlanController - API REST para Planos de Corte
- *
- * Base URL: /api/v1/cut-plans
- *
- * Endpoints:
- * - POST   /work-orders/{woId}/generate     → Criar plano de WorkOrder
- * - GET    /                                 → Listar planos (paginado)
- * - GET    /{id}                             → Obter plano por ID
- * - GET    /{id}/detailed                    → Obter plano com histórico
- * - GET    /work-orders/{woId}               → Obter plano de uma WorkOrder
- * - GET    /{id}/statistics                  → Obter estatísticas
- * - GET    /{id}/history                     → Obter histórico
- * - POST   /{id}/items                       → Adicionar item
- * - DELETE /{id}/items/{itemId}              → Remover item
- * - PUT    /{id}                             → Atualizar plano
- * - POST   /{id}/approve                     → Aprovar plano
- * - POST   /{id}/send-to-supplier            → Enviar para fornecedor
- * - POST   /{id}/cancel                      → Cancelar plano
- * - POST   /{id}/recalculate-costs           → Recalcular custos
- * - DELETE /{id}                             → Deletar plano
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/cut-plans")
@@ -63,10 +41,8 @@ public class CutPlanController {
      * POST /api/v1/cut-plans/work-orders/{woId}/generate
      */
     @PostMapping("/work-orders/{woId}/generate")
-                    public ResponseEntity<CutPlanResponse> generateFromWorkOrder(
-            @PathVariable
-                        UUID woId,
-
+    public ResponseEntity<CutPlanResponse> generateFromWorkOrder(
+            @PathVariable UUID woId,
             @AuthenticationPrincipal User user) {
 
         log.info("Requisição: Gerar plano de corte para WorkOrder: {}", woId);
@@ -87,7 +63,7 @@ public class CutPlanController {
      * GET /api/v1/cut-plans
      */
     @GetMapping
-            public ResponseEntity<Page<CutPlanListResponse>> listAll(
+    public ResponseEntity<Page<CutPlanListResponse>> listAll(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
 
@@ -105,9 +81,8 @@ public class CutPlanController {
      * GET /api/v1/cut-plans?status=DRAFT
      */
     @GetMapping(params = "status")
-        public ResponseEntity<Page<CutPlanListResponse>> listByStatus(
-                        @RequestParam String status,
-
+    public ResponseEntity<Page<CutPlanListResponse>> listByStatus(
+            @RequestParam String status,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
 
@@ -124,9 +99,8 @@ public class CutPlanController {
      * GET /api/v1/cut-plans/{id}
      */
     @GetMapping("/{id}")
-                public ResponseEntity<CutPlanResponse> getById(
-            @PathVariable
-                        UUID id) {
+    public ResponseEntity<CutPlanResponse> getById(
+            @PathVariable UUID id) {
 
         log.info("Requisição: Obter plano: {}", id);
 
@@ -141,7 +115,7 @@ public class CutPlanController {
      * GET /api/v1/cut-plans/{id}/detailed
      */
     @GetMapping("/{id}/detailed")
-        public ResponseEntity<CutPlanDetailedResponse> getByIdDetailed(
+    public ResponseEntity<CutPlanDetailedResponse> getByIdDetailed(
             @PathVariable UUID id) {
 
         log.info("Requisição: Obter plano detalhado: {}", id);
@@ -157,7 +131,7 @@ public class CutPlanController {
      * GET /api/v1/cut-plans/work-orders/{woId}
      */
     @GetMapping("/work-orders/{woId}")
-        public ResponseEntity<CutPlanResponse> getByWorkOrderId(
+    public ResponseEntity<CutPlanResponse> getByWorkOrderId(
             @PathVariable UUID woId) {
 
         log.info("Requisição: Obter plano para WorkOrder: {}", woId);
@@ -173,7 +147,7 @@ public class CutPlanController {
      * GET /api/v1/cut-plans/{id}/statistics
      */
     @GetMapping("/{id}/statistics")
-        public ResponseEntity<CutPlanStatisticsResponse> getStatistics(
+    public ResponseEntity<CutPlanStatisticsResponse> getStatistics(
             @PathVariable UUID id) {
 
         log.info("Requisição: Obter estatísticas do plano: {}", id);
@@ -189,24 +163,14 @@ public class CutPlanController {
      * GET /api/v1/cut-plans/{id}/history
      */
     @GetMapping("/{id}/history")
-        public ResponseEntity<List<CutPlanHistoryResponse>> getHistory(
+    public ResponseEntity<List<CutPlanHistoryResponse>> getHistory(
             @PathVariable UUID id) {
 
         log.info("Requisição: Obter histórico do plano: {}", id);
 
-        List<CutPlanHistoryResponse> history = cutPlanService.getHistory(id).stream()
-                .map(h -> CutPlanHistoryResponse.builder()
-                        .id(h.getId())
-                        .changeType(h.getChangeType())
-                        .changeTypeLabel(h.getChangeTypeLabel())
-                        .description(h.getDescription())
-                        .version(h.getVersion())
-                        .changedAt(h.getChangedAt())
-                        .changedBy(h.getChangedBy().getName())
-                        .affectedItemId(h.getAffectedItemId())
-                        .affectedItemDescription(h.getAffectedItemDescription())
-                        .build())
-                .toList();
+        // CORREÇÃO: O serviço já retorna a lista tipada corretamente (List<CutPlanHistoryResponse>)
+        // Portanto, o stream e map anterior eram redundantes e causavam erros.
+        List<CutPlanHistoryResponse> history = cutPlanService.getHistory(id);
 
         return ResponseEntity.ok(history);
     }
@@ -217,13 +181,9 @@ public class CutPlanController {
      * PUT /api/v1/cut-plans/{id}
      */
     @PutMapping("/{id}")
-                    public ResponseEntity<CutPlanResponse> update(
+    public ResponseEntity<CutPlanResponse> update(
             @PathVariable UUID id,
-
-            @Valid
-            @RequestBody
-            CutPlanUpdateRequest request,
-
+            @Valid @RequestBody CutPlanUpdateRequest request,
             @AuthenticationPrincipal User user) {
 
         log.info("Requisição: Atualizar plano: {}", id);
@@ -243,13 +203,9 @@ public class CutPlanController {
      * POST /api/v1/cut-plans/{id}/items
      */
     @PostMapping("/{id}/items")
-                public ResponseEntity<CutPlanResponse> addItem(
+    public ResponseEntity<CutPlanResponse> addItem(
             @PathVariable UUID id,
-
-            @Valid
-            @RequestBody
-            CutPlanItemRequest itemRequest,
-
+            @Valid @RequestBody CutPlanItemRequest itemRequest,
             @AuthenticationPrincipal User user) {
 
         log.info("Requisição: Adicionar item ao plano: {}", id);
@@ -271,7 +227,7 @@ public class CutPlanController {
      * DELETE /api/v1/cut-plans/{id}/items/{itemId}
      */
     @DeleteMapping("/{id}/items/{itemId}")
-        public ResponseEntity<CutPlanResponse> removeItem(
+    public ResponseEntity<CutPlanResponse> removeItem(
             @PathVariable UUID id,
             @PathVariable UUID itemId,
             @AuthenticationPrincipal User user) {
@@ -293,7 +249,7 @@ public class CutPlanController {
      * POST /api/v1/cut-plans/{id}/approve
      */
     @PostMapping("/{id}/approve")
-                public ResponseEntity<CutPlanResponse> approve(
+    public ResponseEntity<CutPlanResponse> approve(
             @PathVariable UUID id,
             @AuthenticationPrincipal User user) {
 
@@ -313,7 +269,7 @@ public class CutPlanController {
      * POST /api/v1/cut-plans/{id}/send-to-supplier
      */
     @PostMapping("/{id}/send-to-supplier")
-                public ResponseEntity<CutPlanResponse> sendToSupplier(
+    public ResponseEntity<CutPlanResponse> sendToSupplier(
             @PathVariable UUID id,
             @AuthenticationPrincipal User user) {
 
@@ -333,11 +289,9 @@ public class CutPlanController {
      * POST /api/v1/cut-plans/{id}/cancel
      */
     @PostMapping("/{id}/cancel")
-        public ResponseEntity<CutPlanResponse> cancel(
+    public ResponseEntity<CutPlanResponse> cancel(
             @PathVariable UUID id,
-
-                        @RequestParam String reason,
-
+            @RequestParam String reason,
             @AuthenticationPrincipal User user) {
 
         log.info("Requisição: Cancelar plano: {}, Motivo: {}", id, reason);
@@ -351,14 +305,13 @@ public class CutPlanController {
         return ResponseEntity.ok(response);
     }
 
-
     /**
      * Recalcular custos
      *
      * POST /api/v1/cut-plans/{id}/recalculate-costs
      */
     @PostMapping("/{id}/recalculate-costs")
-        public ResponseEntity<CutPlanResponse> recalculateCosts(
+    public ResponseEntity<CutPlanResponse> recalculateCosts(
             @PathVariable UUID id,
             @AuthenticationPrincipal User user) {
 
@@ -378,7 +331,7 @@ public class CutPlanController {
      * DELETE /api/v1/cut-plans/{id}
      */
     @DeleteMapping("/{id}")
-                public ResponseEntity<Void> delete(
+    public ResponseEntity<Void> delete(
             @PathVariable UUID id,
             @AuthenticationPrincipal User user) {
 

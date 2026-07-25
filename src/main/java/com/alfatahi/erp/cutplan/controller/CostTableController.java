@@ -1,6 +1,7 @@
 package com.alfatahi.erp.cutplan.controller;
 
 import com.alfatahi.erp.cutplan.dto.*;
+import com.alfatahi.erp.cutplan.entity.CostTableHistory;
 import com.alfatahi.erp.cutplan.service.CostTableService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -15,32 +16,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-/**
- * CostTableController - API REST para Tabelas de Preço
- *
- * Base URL: /api/v1/cost-tables
- *
- * Endpoints:
- * - GET    /                           → Listar preços (paginado)
- * - GET    /category/{category}        → Listar por categoria
- * - POST   /                            → Criar novo preço
- * - GET    /{id}                        → Obter preço
- * - PUT    /{id}                        → Atualizar preço (cria versão)
- * - DELETE /{id}                        → Deletar preço (soft delete)
- * - POST   /{id}/reactivate             → Reativar preço deletado
- * - GET    /current/{category}/{type}   → Buscar preço vigente
- * - GET    /at-date/{category}/{type}   → Buscar preço em data
- * - GET    /{id}/history                → Histórico de preço
- * - GET    /{id}/analysis               → Análise de variação
- * - GET    /supplier/{supplierId}       → Preços de fornecedor
- * - GET    /expiring-soon               → Preços vencendo em breve
- * - POST   /import-csv                  → Importar de CSV
- * - GET    /export-csv/{category}       → Exportar para CSV
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/cost-tables")
@@ -55,7 +36,7 @@ public class CostTableController {
      * GET /api/v1/cost-tables
      */
     @GetMapping
-        public ResponseEntity<Page<CostTableResponse>> listAll(
+    public ResponseEntity<Page<CostTableResponse>> listAll(
             @PageableDefault(size = 20, sort = "effectiveFrom", direction = Sort.Direction.DESC)
             Pageable pageable) {
 
@@ -73,9 +54,8 @@ public class CostTableController {
      * GET /api/v1/cost-tables?category=GLASS
      */
     @GetMapping(params = "category")
-        public ResponseEntity<Page<CostTableResponse>> listByCategory(
-                        @RequestParam String category,
-
+    public ResponseEntity<Page<CostTableResponse>> listByCategory(
+            @RequestParam String category,
             @PageableDefault(size = 20, sort = "itemType")
             Pageable pageable) {
 
@@ -92,9 +72,8 @@ public class CostTableController {
      * GET /api/v1/cost-tables/{id}
      */
     @GetMapping("/{id}")
-        public ResponseEntity<CostTableResponse> getById(
-            @PathVariable
-                        UUID id) {
+    public ResponseEntity<CostTableResponse> getById(
+            @PathVariable UUID id) {
 
         log.info("Requisição: Obter preço: {}", id);
 
@@ -109,10 +88,9 @@ public class CostTableController {
      * GET /api/v1/cost-tables/current/GLASS/GLASS_8MM_TRANSPARENTE
      */
     @GetMapping("/current/{category}/{itemType}")
-        public ResponseEntity<CostTableResponse> getCurrentPrice(
-                        @PathVariable String category,
-
-                        @PathVariable String itemType) {
+    public ResponseEntity<CostTableResponse> getCurrentPrice(
+            @PathVariable String category,
+            @PathVariable String itemType) {
 
         log.info("Requisição: Obter preço vigente: {} - {}", category, itemType);
 
@@ -127,11 +105,10 @@ public class CostTableController {
      * GET /api/v1/cost-tables/at-date/GLASS/GLASS_8MM_TRANSPARENTE?date=2024-03-15
      */
     @GetMapping("/at-date/{category}/{itemType}")
-        public ResponseEntity<CostTableResponse> getPriceAtDate(
+    public ResponseEntity<CostTableResponse> getPriceAtDate(
             @PathVariable String category,
             @PathVariable String itemType,
-
-                        @RequestParam LocalDate date) {
+            @RequestParam LocalDate date) {
 
         log.info("Requisição: Obter preço para {}: {} - {} em {}",
                 date, category, itemType);
@@ -147,11 +124,8 @@ public class CostTableController {
      * POST /api/v1/cost-tables
      */
     @PostMapping
-        public ResponseEntity<CostTableResponse> create(
-            @Valid
-            @RequestBody
-            CostTableCreateRequest request,
-
+    public ResponseEntity<CostTableResponse> create(
+            @Valid @RequestBody CostTableCreateRequest request,
             @AuthenticationPrincipal User user) {
 
         log.info("Requisição: Criar novo preço: {} - {}",
@@ -173,13 +147,9 @@ public class CostTableController {
      * PUT /api/v1/cost-tables/{id}
      */
     @PutMapping("/{id}")
-        public ResponseEntity<CostTableResponse> updatePrice(
+    public ResponseEntity<CostTableResponse> updatePrice(
             @PathVariable UUID id,
-
-            @Valid
-            @RequestBody
-            CostTableUpdateRequest request,
-
+            @Valid @RequestBody CostTableUpdateRequest request,
             @AuthenticationPrincipal User user) {
 
         log.info("Requisição: Atualizar preço: {}", id);
@@ -199,7 +169,7 @@ public class CostTableController {
      * DELETE /api/v1/cost-tables/{id}
      */
     @DeleteMapping("/{id}")
-        public ResponseEntity<Void> deletePrice(
+    public ResponseEntity<Void> deletePrice(
             @PathVariable UUID id) {
 
         log.info("Requisição: Deletar preço: {}", id);
@@ -217,7 +187,7 @@ public class CostTableController {
      * POST /api/v1/cost-tables/{id}/reactivate
      */
     @PostMapping("/{id}/reactivate")
-        public ResponseEntity<CostTableResponse> reactivatePrice(
+    public ResponseEntity<CostTableResponse> reactivatePrice(
             @PathVariable UUID id) {
 
         log.info("Requisição: Reativar preço: {}", id);
@@ -235,7 +205,7 @@ public class CostTableController {
      * GET /api/v1/cost-tables/{id}/history
      */
     @GetMapping("/{id}/history")
-        public ResponseEntity<List<CostTableHistoryResponse>> getPriceHistory(
+    public ResponseEntity<List<CostTableHistoryResponse>> getPriceHistory(
             @PathVariable UUID id) {
 
         log.info("Requisição: Obter histórico do preço: {}", id);
@@ -256,9 +226,9 @@ public class CostTableController {
                         .reason(h.getReason())
                         .reference(h.getReference())
                         .changedAt(h.getChangedAt())
-                        .changedBy(h.getChangedBy().getName())
+                        .changedBy(h.getChangedBy().getUsername())
                         .build())
-                .toList();
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
     }
@@ -269,7 +239,7 @@ public class CostTableController {
      * GET /api/v1/cost-tables/{id}/analysis
      */
     @GetMapping("/{id}/analysis")
-        public ResponseEntity<CostTableAnalysisResponse> getAnalysis(
+    public ResponseEntity<CostTableAnalysisResponse> getAnalysis(
             @PathVariable UUID id) {
 
         log.info("Requisição: Análise de preço: {}", id);
@@ -284,10 +254,7 @@ public class CostTableController {
                 .category(price.getCategory())
                 .itemType(price.getDescription())
                 .currentPrice(price.getUnitPrice())
-                .changeCount((int) costTableService.getPriceChangeHistory(id).size())
-                .averageVariationPercent(avgVariation)
-                .maxIncreasePercent(maxIncrease)
-                .maxDecreasePercent(maxDecrease)
+                .changeCount(costTableService.getPriceChangeHistory(id).size())
                 .build();
 
         return ResponseEntity.ok(response);
@@ -299,8 +266,8 @@ public class CostTableController {
      * GET /api/v1/cost-tables/supplier/{supplierId}
      */
     @GetMapping("/supplier/{supplierId}")
-        public ResponseEntity<List<CostTableResponse>> getPricesBySupplier(
-                        @PathVariable UUID supplierId) {
+    public ResponseEntity<List<CostTableResponse>> getPricesBySupplier(
+            @PathVariable UUID supplierId) {
 
         log.info("Requisição: Obter preços do fornecedor: {}", supplierId);
 
@@ -315,7 +282,7 @@ public class CostTableController {
      * GET /api/v1/cost-tables/expiring-soon
      */
     @GetMapping("/expiring-soon")
-        public ResponseEntity<List<CostTableResponse>> getSoonToExpire() {
+    public ResponseEntity<List<CostTableResponse>> getSoonToExpire() {
 
         log.info("Requisição: Preços vencendo em breve");
 
@@ -324,14 +291,9 @@ public class CostTableController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Importar preços de CSV
-     *
-     * POST /api/v1/cost-tables/import-csv
-     * Content-Type: text/csv ou application/octet-stream
-     */
+
     @PostMapping("/import-csv")
-        public ResponseEntity<Void> importPricesFromCSV(
+    public ResponseEntity<Void> importPricesFromCSV(
             @RequestBody String csvData,
             @AuthenticationPrincipal User user) {
 
@@ -344,14 +306,9 @@ public class CostTableController {
                 .build();
     }
 
-    /**
-     * Exportar preços para CSV
-     *
-     * GET /api/v1/cost-tables/export-csv/GLASS
-     */
     @GetMapping("/export-csv/{category}")
-        public ResponseEntity<String> exportPricesAsCSV(
-                        @PathVariable String category) {
+    public ResponseEntity<String> exportPricesAsCSV(
+            @PathVariable String category) {
 
         log.info("Requisição: Exportar preços da categoria: {}", category);
 

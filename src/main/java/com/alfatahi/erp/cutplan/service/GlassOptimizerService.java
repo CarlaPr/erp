@@ -207,8 +207,8 @@ public class GlassOptimizerService {
                 )
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return Math.ceil(totalArea.divide(STANDARD_SHEET_AREA, 4, RoundingMode.HALF_UP).doubleValue())
-                .intValue();
+        // CORREÇÃO: Utilizando cast para (int) ao invés do método .intValue()
+        return (int) Math.ceil(totalArea.divide(STANDARD_SHEET_AREA, 4, RoundingMode.HALF_UP).doubleValue());
     }
 
     /**
