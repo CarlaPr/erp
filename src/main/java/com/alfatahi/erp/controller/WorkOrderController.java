@@ -33,13 +33,12 @@ public class WorkOrderController {
     private final ClientRepository clientRepository;
     private final AccountsReceivableRepository receivableRepo;
     private final AccountsPayableRepository payableRepo;
-    private final CutPlanService cutPlanService;
 
     public WorkOrderController(WorkOrderService workOrderService, ClientService clientService,
                                ServiceCategoryRepository categoryRepository, ProfileRepository profileRepository,
                                QuoteRepository quoteRepository, WorkOrderRepository workOrderRepo,
                                ClientRepository clientRepository, AccountsReceivableRepository receivableRepo,
-                               AccountsPayableRepository payableRepo, CutPlanService cutPlanService) {
+                               AccountsPayableRepository payableRepo) {
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
@@ -49,7 +48,6 @@ public class WorkOrderController {
         this.clientRepository = clientRepository;
         this.receivableRepo = receivableRepo;
         this.payableRepo = payableRepo;
-        this.cutPlanService = cutPlanService;
     }
 
     @GetMapping
@@ -94,21 +92,6 @@ public class WorkOrderController {
         }
 
         model.addAttribute("orders", orders);
-
-        // Custo previsto de produção (Plano de Corte) por OS — "Estimativa de Custos"
-        Map<UUID, BigDecimal> cutPlanCosts = new HashMap<>();
-        BigDecimal totalPredictedProductionCost = BigDecimal.ZERO;
-        if (!isTecnico) {
-            for (WorkOrder wo : orders) {
-                BigDecimal predicted = cutPlanService.getTotalEstimatedCostForWorkOrder(wo.getId());
-                cutPlanCosts.put(wo.getId(), predicted);
-                if (!"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus())) {
-                    totalPredictedProductionCost = totalPredictedProductionCost.add(predicted);
-                }
-            }
-        }
-        model.addAttribute("cutPlanCosts", cutPlanCosts);
-        model.addAttribute("totalPredictedProductionCost", totalPredictedProductionCost);
 
         model.addAttribute("totalRevenue", totalRevenue);
         model.addAttribute("totalCost", totalCost);
