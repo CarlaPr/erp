@@ -177,12 +177,7 @@
                     <span th:if="${p.status == 'pending'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:border-transparent uppercase block w-fit mx-auto">Pendente</span>
                     <span th:if="${p.status == 'cancelled'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-500/20 dark:text-slate-400 dark:border-transparent uppercase block w-fit mx-auto">Cancelado</span>
 
-                    <div th:if="${p.reconciliationStatus == 'CONCILIADO'}" class="text-[10px] text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest mt-2 flex items-center justify-center gap-1">
-                        <i data-lucide="check-check" class="w-3.5 h-3.5"></i> Conciliado
-                    </div>
-                    <div th:if="${p.reconciliationStatus == 'DIVERGENTE'}" class="text-[10px] text-rose-600 dark:text-rose-400 font-black uppercase tracking-widest mt-2 flex items-center justify-center gap-1">
-                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Divergente
-                    </div>
+
                 </td>
 
                 <td class="p-5 text-center">

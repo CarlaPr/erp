@@ -186,9 +186,381 @@
     </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SEÇÃO: PARAMETRIZAÇÃO DE FOLGAS E DESCONTOS            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="max-w-5xl mb-6 flex justify-between items-center mt-10">
+    <div>
+        <h3 class="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="scissors" class="w-6 h-6 text-blue-600 dark:text-cyan-400"></i>
+            Parametrização de Folgas e Descontos
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Configure as regras técnicas de desconto e folga por categoria de serviço. Selecione uma categoria para ver ou editar seus parâmetros.</p>
+    </div>
+</div>
+
+<!-- Kit selector -->
+<div class="max-w-5xl mb-4 flex flex-wrap gap-2" id="kitTabs">
+    <button th:each="cat : ${categories}"
+            th:id="${'tab-' + cat.id}"
+            th:onclick="'loadCategoryRules(\'' + ${cat.id} + '\', \'' + ${cat.name} + '\', this)'"
+            th:text="${cat.name}"
+            class="px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 bg-white dark:bg-[#131C2F] hover:border-blue-400 hover:text-blue-600 dark:hover:text-cyan-400 transition-all kit-tab">
+    </button>
+</div>
+
+<!-- Rules panel -->
+<div id="rulesPanel" class="max-w-5xl bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm mb-12 hidden">
+    <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <div>
+            <h4 id="rulesPanelTitle" class="font-black text-slate-900 dark:text-white text-lg">—</h4>
+            <p class="text-xs text-slate-500 mt-0.5">Parâmetros técnicos aplicados automaticamente ao gerar o plano de corte</p>
+        </div>
+        <button onclick="openAddRuleModal()"
+                class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i> Nova Regra
+        </button>
+    </div>
+
+    <!-- Info panel with standard reference -->
+    <div id="rulesInfoBanner" class="m-5 p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-xl text-xs text-blue-700 dark:text-blue-400 hidden">
+        <strong>ℹ️ Referência técnica:</strong> <span id="rulesBannerText"></span>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm" id="rulesTable">
+            <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <tr>
+                <th class="px-5 py-3">Parâmetro</th>
+                <th class="px-5 py-3">Tipo</th>
+                <th class="px-5 py-3 text-center">Valor</th>
+                <th class="px-5 py-3">Descrição</th>
+                <th class="px-5 py-3 text-center">Status</th>
+                <th class="px-5 py-3 text-right">Ações</th>
+            </tr>
+            </thead>
+            <tbody id="rulesBody" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tr id="rulesEmpty">
+                <td colspan="6" class="px-5 py-10 text-center text-slate-400 text-sm">
+                    <div class="flex flex-col items-center gap-2">
+                        <i data-lucide="settings" class="w-8 h-8 opacity-30"></i>
+                        <p>Nenhuma regra cadastrada. Clique em "Nova Regra" para adicionar.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Placeholder when no kit selected -->
+<div id="rulesPlaceholder" class="max-w-5xl mb-12 p-8 bg-white dark:bg-[#131C2F] rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-slate-400 dark:text-slate-500">
+    <i data-lucide="mouse-pointer-click" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>
+    <p class="font-semibold text-sm">Selecione uma categoria acima para ver e configurar as regras de folga e desconto.</p>
+    <p class="text-xs mt-1">Ex: Box de Banheiro, Fechamento de Sacada, Janelas, Guarda-corpo...</p>
+</div>
+
+<!-- Modal: Add/Edit Rule -->
+<div id="ruleModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-lg mx-4">
+        <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <h3 id="ruleModalTitle" class="text-lg font-black text-slate-900 dark:text-white">Nova Regra Técnica</h3>
+            <button onclick="toggleModal('ruleModal', false)" class="text-slate-400 hover:text-slate-600 p-1">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4">
+            <input type="hidden" id="ruleId"/>
+            <input type="hidden" id="ruleCategoryId"/>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Parâmetro <span class="text-rose-500">*</span></label>
+                <input id="ruleParameterName" type="text" placeholder="Ex: DESCONTO_LATERAL, FOLGA_SUPERIOR..."
+                       class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"/>
+                <p class="text-xs text-slate-400 mt-1">Use letras maiúsculas e underscores. Ex: LATERAL_DISCOUNT, SUPERIOR_GAP</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Tipo de Regra</label>
+                    <select id="ruleType"
+                            class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="DISCOUNT">Desconto (subtrai da dimensão)</option>
+                        <option value="GAP">Folga (informativo)</option>
+                        <option value="ADJUSTMENT">Ajuste percentual</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Unidade</label>
+                    <select id="ruleUnit"
+                            class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="MM">mm (milímetros)</option>
+                        <option value="PERCENT">% (percentual)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Valor <span class="text-rose-500">*</span></label>
+                <input id="ruleValue" type="number" step="0.5" min="0" placeholder="Ex: 5.00"
+                       class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold"/>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Descrição / Observação</label>
+                <input id="ruleDescription" type="text" placeholder="Ex: Folga de instalação lateral (ambos os lados)"
+                       class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Ordem de Aplicação</label>
+                <input id="ruleOrder" type="number" min="0" value="0"
+                       class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                <p class="text-xs text-slate-400 mt-1">0 = primeira regra a ser aplicada</p>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button onclick="toggleModal('ruleModal', false)"
+                        class="px-5 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded-xl text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                    Cancelar
+                </button>
+                <button onclick="saveRule()"
+                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all">
+                    <i data-lucide="save" class="w-4 h-4 inline mr-1"></i> Salvar Regra
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 
 <script>
+    // ── Kit descriptions for info banner ──────────────────
+    const KIT_INFO = {
+        'Box': 'Box padrão: Desconto lateral 10mm (5mm cada lado), Desconto superior 15mm, inferior 15mm, Folga ferragem 2mm, silicone 3mm, instalação 2mm.',
+        'Espelho': 'Folga lapidação 3mm, bisotê 2mm, espaço LED (largura) 5mm.',
+        'Guarda-corpo': 'Folga suporte 5mm, botão 4mm, perfil 4mm.',
+        'Janela': 'Desconto perfil alumínio 10mm, folga trilho (largura) 3mm, roldana (altura) 3mm, vedação 2mm.',
+        'Cobertura': 'Folga dilatação 5mm, sobreposição entre chapas (altura) 50mm.',
+        'Sacada': 'Desconto lateral 5mm por folha, desconto superior+inferior 85mm (trilho sup. 40mm + caixilho inf. 45mm).',
+        'Porta': 'Porta pivotante: desconto 10mm cada lado, 20mm vertical (10 piso + 10 dobradiça topo).',
+        'Versatik': 'Sistema Tec-Vidro: furo roldana ø12mm a 60mm das bordas laterais e 35mm do topo. Usar gabarito oficial.',
+    };
+
+    let currentCategoryId = null;
+    let currentCategoryName = null;
+    let allRules = [];
+
+    function loadCategoryRules(categoryId, categoryName, tabEl) {
+        currentCategoryId = categoryId;
+        currentCategoryName = categoryName;
+
+        // Update tabs
+        document.querySelectorAll('.kit-tab').forEach(t => {
+            t.classList.remove('bg-blue-600', 'text-white', 'dark:bg-cyan-500', 'dark:text-slate-900', 'border-blue-600');
+            t.classList.add('bg-white', 'dark:bg-[#131C2F]', 'text-slate-600', 'dark:text-slate-400', 'border-slate-200', 'dark:border-slate-700');
+        });
+        tabEl.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+        tabEl.classList.remove('bg-white', 'dark:bg-[#131C2F]', 'text-slate-600', 'dark:text-slate-400');
+
+        document.getElementById('rulesPanelTitle').textContent = categoryName + ' — Regras Técnicas';
+        document.getElementById('rulesPanel').classList.remove('hidden');
+        document.getElementById('rulesPlaceholder').classList.add('hidden');
+
+        // Show info banner if we have reference
+        const infoKey = Object.keys(KIT_INFO).find(k => categoryName.toLowerCase().includes(k.toLowerCase()));
+        if (infoKey) {
+            document.getElementById('rulesBannerText').textContent = KIT_INFO[infoKey];
+            document.getElementById('rulesInfoBanner').classList.remove('hidden');
+        } else {
+            document.getElementById('rulesInfoBanner').classList.add('hidden');
+        }
+
+        fetchRules(categoryId);
+    }
+
+    function fetchRules(categoryId) {
+        fetch('/settings/cut-rules/' + categoryId)
+            .then(r => r.json())
+            .then(rules => {
+                allRules = rules;
+                renderRules(rules);
+                // Re-init lucide icons
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            })
+            .catch(err => console.error('Erro ao carregar regras:', err));
+    }
+
+    const RULE_TYPE_LABELS = { DISCOUNT: 'Desconto', GAP: 'Folga', ADJUSTMENT: 'Ajuste' };
+    const PARAM_LABELS = {
+        LATERAL_DISCOUNT: 'Desconto Lateral',
+        SUPERIOR_DISCOUNT: 'Desconto Superior',
+        INFERIOR_DISCOUNT: 'Desconto Inferior',
+        HARDWARE_GAP: 'Folga Ferragem',
+        SILICONE_GAP: 'Folga Silicone',
+        INSTALL_GAP: 'Folga Instalação',
+        PROFILE_DISCOUNT: 'Desconto Perfil',
+        TRACK_GAP: 'Folga Trilho',
+        ROLLER_GAP: 'Folga Roldana',
+        SEAL_GAP: 'Folga Vedação',
+        POLISH_GAP: 'Folga Polimento',
+        BEVEL_GAP: 'Folga Bisotê',
+        LED_SPACE: 'Espaço LED',
+        SUPPORT_GAP: 'Folga Suporte',
+        BUTTON_GAP: 'Folga Botão',
+        EXPANSION_GAP: 'Folga Dilatação',
+        OVERLAP: 'Sobreposição',
+        CLAMP_GAP: 'Folga Clamp',
+        ROLLER_HOLE: 'Furo Roldana',
+        UPPER_DISCOUNT: 'Desconto Superior',
+        LOWER_DISCOUNT: 'Desconto Inferior',
+    };
+
+    function renderRules(rules) {
+        const tbody = document.getElementById('rulesBody');
+        const empty = document.getElementById('rulesEmpty');
+        if (!rules || rules.length === 0) {
+            tbody.innerHTML = '';
+            tbody.appendChild(empty);
+            empty.style.display = '';
+            return;
+        }
+        empty.style.display = 'none';
+        const rows = rules.map((r, idx) => {
+            const paramLabel = PARAM_LABELS[r.parameterName] || r.parameterName;
+            const typeLabel = RULE_TYPE_LABELS[r.ruleType] || r.ruleType;
+            const typeColor = r.ruleType === 'DISCOUNT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400'
+                : r.ruleType === 'GAP' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400';
+            const activeClass = r.active ? '' : 'opacity-40';
+            return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors ${activeClass}" data-rule-id="${r.id}">
+                <td class="px-5 py-3">
+                    <div class="font-bold text-slate-900 dark:text-white text-sm">${paramLabel}</div>
+                    <div class="text-xs text-slate-400 font-mono">${r.parameterName}</div>
+                </td>
+                <td class="px-5 py-3">
+                    <span class="text-xs font-bold px-2.5 py-1 rounded-full ${typeColor}">${typeLabel}</span>
+                </td>
+                <td class="px-5 py-3 text-center">
+                    <span class="font-black text-slate-900 dark:text-white font-mono">${parseFloat(r.value).toFixed(2)}</span>
+                    <span class="text-xs text-slate-400 ml-1">${r.unit === 'MM' ? 'mm' : '%'}</span>
+                </td>
+                <td class="px-5 py-3 text-sm text-slate-500 dark:text-slate-400 max-w-[250px]">${r.description || '—'}</td>
+                <td class="px-5 py-3 text-center">
+                    <button onclick="toggleRule('${r.id}')" class="text-xs font-bold px-2.5 py-1 rounded-full ${r.active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-slate-100 text-slate-500'}">
+                        ${r.active ? '✓ Ativo' : '✗ Inativo'}
+                    </button>
+                </td>
+                <td class="px-5 py-3 text-right flex items-center justify-end gap-2">
+                    <button onclick="editRule(${JSON.stringify(r).replace(/"/g, '&quot;')})"
+                            class="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors" title="Editar">
+                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="deleteRule('${r.id}')"
+                            class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors" title="Excluir">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+        tbody.innerHTML = rows;
+        tbody.appendChild(empty);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function openAddRuleModal() {
+        document.getElementById('ruleId').value = '';
+        document.getElementById('ruleParameterName').value = '';
+        document.getElementById('ruleType').value = 'DISCOUNT';
+        document.getElementById('ruleUnit').value = 'MM';
+        document.getElementById('ruleValue').value = '';
+        document.getElementById('ruleDescription').value = '';
+        document.getElementById('ruleOrder').value = '0';
+        document.getElementById('ruleModalTitle').textContent = 'Nova Regra Técnica';
+        document.getElementById('ruleCategoryId').value = currentCategoryId;
+        toggleModal('ruleModal', true);
+    }
+
+    function editRule(rule) {
+        document.getElementById('ruleId').value = rule.id;
+        document.getElementById('ruleParameterName').value = rule.parameterName;
+        document.getElementById('ruleType').value = rule.ruleType;
+        document.getElementById('ruleUnit').value = rule.unit;
+        document.getElementById('ruleValue').value = parseFloat(rule.value).toFixed(2);
+        document.getElementById('ruleDescription').value = rule.description || '';
+        document.getElementById('ruleOrder').value = rule.applicationOrder || 0;
+        document.getElementById('ruleModalTitle').textContent = 'Editar Regra Técnica';
+        document.getElementById('ruleCategoryId').value = currentCategoryId;
+        toggleModal('ruleModal', true);
+    }
+
+    async function saveRule() {
+        const paramName = document.getElementById('ruleParameterName').value.trim().toUpperCase().replace(/\s+/g, '_');
+        const value = document.getElementById('ruleValue').value;
+
+        if (!paramName) { alert('Informe o nome do parâmetro.'); return; }
+        if (!value) { alert('Informe o valor da regra.'); return; }
+
+        const params = new URLSearchParams({
+            categoryId: document.getElementById('ruleCategoryId').value,
+            parameterName: paramName,
+            ruleType: document.getElementById('ruleType').value,
+            value: value,
+            unit: document.getElementById('ruleUnit').value,
+            description: document.getElementById('ruleDescription').value,
+            applicationOrder: document.getElementById('ruleOrder').value,
+        });
+
+        const ruleId = document.getElementById('ruleId').value;
+        if (ruleId) params.append('ruleId', ruleId);
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+        try {
+            const resp = await fetch('/settings/cut-rules/save', { method: 'POST', headers, body: params });
+            const data = await resp.json();
+            if (data.success) {
+                toggleModal('ruleModal', false);
+                fetchRules(currentCategoryId);
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        } catch (e) {
+            alert('Erro ao salvar regra.');
+        }
+    }
+
+    async function deleteRule(ruleId) {
+        if (!confirm('Excluir esta regra?')) return;
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const headers = {};
+        if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+        try {
+            await fetch('/settings/cut-rules/delete/' + ruleId, { method: 'POST', headers });
+            fetchRules(currentCategoryId);
+        } catch (e) {
+            alert('Erro ao excluir.');
+        }
+    }
+
+    async function toggleRule(ruleId) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const headers = {};
+        if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+        try {
+            await fetch('/settings/cut-rules/toggle/' + ruleId, { method: 'POST', headers });
+            fetchRules(currentCategoryId);
+        } catch (e) {
+            alert('Erro ao alterar status.');
+        }
+    }
+
     function toggleModal(id, show) {
         const el = document.getElementById(id);
         if(show) {

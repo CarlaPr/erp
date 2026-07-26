@@ -93,6 +93,7 @@ public class WorkOrderController {
 
         model.addAttribute("orders", orders);
 
+
         model.addAttribute("totalRevenue", totalRevenue);
         model.addAttribute("totalCost", totalCost);
         model.addAttribute("globalProfit", globalProfit);

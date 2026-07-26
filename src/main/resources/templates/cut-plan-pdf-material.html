@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Listagem de Material para Produção</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #222; background: #fff; }
+        .page { max-width: 820px; margin: 0 auto; padding: 15px; }
+        .header-top { border: 2px solid #222; padding: 8px 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .company-name { font-size: 15px; font-weight: 900; text-transform: uppercase; }
+        .doc-block { text-align: right; }
+        .doc-block .num { font-size: 20px; font-weight: 900; color: #006622; }
+        .doc-block .sub { font-size: 9px; color: #555; }
+        .badge-mat { display: inline-block; background: #006622; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+        .os-bar { border: 1px solid #ccc; padding: 5px 10px; margin-bottom: 6px; display: flex; gap: 20px; background: #f9f9f9; }
+        .os-bar .field { }
+        .os-bar .lbl { font-size: 8px; color: #888; text-transform: uppercase; font-weight: 700; }
+        .os-bar .val { font-size: 11px; font-weight: 700; color: #111; }
+        .diagram-info-row { display: flex; gap: 8px; margin-bottom: 8px; border: 1px solid #ddd; }
+        .diagram-mini { width: 90px; min-width: 90px; background: #f0f7ff; border-right: 1px solid #ddd; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; }
+        .diagram-mini .mini-glass { border: 2px solid #333; background: #d0e8f8; width: 55px; height: 45px; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 4px; }
+        .diagram-mini .mini-label { font-size: 8px; color: #006622; font-weight: 700; text-align: center; }
+        .os-item-info { flex: 1; padding: 6px 10px; }
+        .os-item-info .item-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+        .os-item-info .item-meta { font-size: 9px; color: #555; }
+        .section-bar { background: #006622; color: #fff; font-size: 9px; font-weight: 900; padding: 3px 10px; text-transform: uppercase; letter-spacing: 1px; margin: 6px 0 0 0; display: flex; justify-content: space-between; }
+        .material-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+        .material-table th { background: #eaeaea; font-size: 8px; text-transform: uppercase; color: #444; padding: 3px 6px; border: 1px solid #ddd; font-weight: 700; }
+        .material-table td { padding: 3px 6px; border: 1px solid #ddd; font-size: 10px; vertical-align: middle; }
+        .material-table tr:nth-child(even) td { background: #fafafa; }
+        .col-fig { text-align: center; width: 36px; }
+        .col-code { font-family: monospace; font-size: 9px; }
+        .col-dim { text-align: center; font-family: monospace; font-weight: 700; }
+        .col-qty { text-align: center; font-weight: 700; font-size: 12px; color: #006622; }
+        .col-m2 { text-align: center; font-family: monospace; }
+        .col-m2arr { text-align: center; font-family: monospace; font-weight: 700; }
+        .col-peso { text-align: center; font-size: 10px; }
+        .glass-mini-icon { width: 28px; height: 22px; border: 2px solid #333; background: #d0e8f8; display: inline-block; }
+        .total-row td { background: #006622 !important; color: #fff; font-weight: 900; }
+        .obs-box { background: #fffae8; border: 1px solid #e0c840; padding: 5px 10px; font-size: 9px; color: #555; margin-bottom: 6px; }
+        .final-summary { border: 2px solid #006622; padding: 8px 12px; margin-top: 8px; }
+        .final-summary .fs-title { font-size: 9px; color: #006622; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .final-summary .fs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .final-summary .fs-item { text-align: center; }
+        .final-summary .fs-v { font-size: 18px; font-weight: 900; color: #006622; }
+        .final-summary .fs-l { font-size: 8px; color: #888; text-transform: uppercase; }
+        .sign-row { margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 6px; display: flex; justify-content: space-between; font-size: 9px; color: #888; }
+        @media print {
+            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="no-print" style="background:#006622;padding:10px 15px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+    <span style="color:white;font-family:Arial;font-size:13px;font-weight:700;">📋 Listagem de Material para Produção — Pré-visualização</span>
+    <div style="display:flex;gap:10px;">
+        <button onclick="window.print()" style="background:#fff;color:#006622;border:none;padding:6px 18px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;">🖨️ Imprimir / Salvar PDF</button>
+        <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:6px 18px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;">✕ Fechar</button>
+    </div>
+</div>
+
+<div class="page">
+    <!-- Header -->
+    <div class="header-top">
+        <div>
+            <div class="company-name" th:text="${'Sua Vidraçaria e Serralheria'}">Empresa</div>
+            <div style="font-size:9px;color:#555;" th:text="${''}">Endereço</div>
+            <div class="badge-mat">📋 Listagem de Material para Produção da Obra</div>
+        </div>
+        <div class="doc-block">
+            <div class="sub">Nro.Pedido</div>
+            <div class="num" th:text="${workOrder?.number ?: plan.id.toString().substring(0,6).toUpperCase()}">0000</div>
+            <div class="sub">Data: <span th:text="${plan.createdAt != null ? #temporals.format(plan.createdAt, 'dd/MM/yyyy') : #temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">—</span></div>
+        </div>
+    </div>
+
+    <!-- OS Summary -->
+    <div class="os-bar">
+        <div class="field">
+            <div class="lbl">OS / Projeto</div>
+            <div class="val" th:text="${(workOrder?.number ?: '—') + ' — ' + (workOrder?.title ?: 'Sem título')}">—</div>
+        </div>
+        <div class="field">
+            <div class="lbl">Cliente</div>
+            <div class="val" th:text="${workOrder?.client?.name ?: '—'}">—</div>
+        </div>
+        <div class="field">
+            <div class="lbl">Categoria</div>
+            <div class="val" th:text="${workOrder?.category?.name ?: '—'}">—</div>
+        </div>
+        <div class="field">
+            <div class="lbl">Status</div>
+            <div class="val" th:text="${plan.status}">—</div>
+        </div>
+    </div>
+
+    <!-- For each item: diagram + material table -->
+    <th:block th:each="item, iStat : ${plan.items}">
+        <!-- Item block -->
+        <div class="diagram-info-row">
+            <div class="diagram-mini">
+                <div class="mini-glass">
+                    <span style="font-size:9px;opacity:0.5;">◻</span>
+                </div>
+                <div class="mini-label">
+                    Qtde <span th:text="${item.quantity ?: 1}">1</span><br/>
+                    Largura <span th:text="${item.finalWidth != null ? #numbers.formatDecimal(item.finalWidth, 1, 0) : '—'}">—</span><br/>
+                    Altura <span th:text="${item.finalHeight != null ? #numbers.formatDecimal(item.finalHeight, 1, 0) : '—'}">—</span>
+                </div>
+            </div>
+            <div class="os-item-info">
+                <div class="item-name">
+                    <span th:text="${iStat.count + '. ' + item.description}">Item</span>
+                </div>
+                <div class="item-meta">
+                    <span th:text="${(item.glassType ?: 'TEMPERADO') + ' | ' + (item.color ?: 'INCOLOR') + ' ' + (item.thickness ?: '8') + 'mm'}">—</span>
+                    <span th:if="${item.finishing != null and item.finishing != 'SEM_ACABAMENTO'}"> | <span th:text="${item.finishing}">—</span></span>
+                    <span th:if="${item.environment != null}"> | Ambiente: <span th:text="${item.environment}">—</span></span>
+                </div>
+                <!-- Furos e Recortes -->
+                <div th:if="${item.drillingDiameter != null}" style="margin-top:3px;font-size:9px;color:#333;">
+                    🔧 Furos: <strong><span th:text="${(item.drillingQuantity ?: 1) + 'x ø' + item.drillingDiameter + 'mm'}">—</span></strong> (antes da têmpera)
+                </div>
+                <div th:if="${item.notchDescription != null}" style="margin-top:2px;font-size:9px;color:#333;">
+                    ✂️ Recortes: <strong><span th:text="${item.notchDescription}">—</span></strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Perfil Section (glass) -->
+        <div class="section-bar">
+            <span>Vidro</span>
+            <span>Cor: <span th:text="${item.color ?: 'INCOLOR'}">—</span> | Tipo: <span th:text="${item.glassType ?: 'TEMPERADO'}">—</span></span>
+        </div>
+        <table class="material-table">
+            <thead>
+            <tr>
+                <th class="col-fig">Fig</th>
+                <th>Vidro / Código</th>
+                <th>Cor</th>
+                <th>Posição</th>
+                <th>Fechado</th>
+                <th class="col-qty">Qtde</th>
+                <th class="col-dim">Largura</th>
+                <th class="col-dim">Altura</th>
+                <th class="col-m2">M²</th>
+                <th class="col-m2arr">M² Arr.</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- If gross ≠ final show the original -->
+            <tr th:if="${item.grossWidth != null and item.grossHeight != null and (item.grossWidth.compareTo(item.finalWidth) != 0 or item.grossHeight.compareTo(item.finalHeight) != 0)}"
+                style="color:#999;font-size:9px;">
+                <td class="col-fig"><div class="glass-mini-icon" style="opacity:0.4;"></div></td>
+                <td><span th:text="${'INCOLOR ' + (item.thickness ?: '8') + 'MM — BRUTO'}">—</span></td>
+                <td th:text="${item.color ?: 'INCOLOR'}">—</td>
+                <td>Medida Original</td>
+                <td>—</td>
+                <td class="col-qty" style="color:#999;" th:text="${item.quantity ?: 1}">1</td>
+                <td class="col-dim" th:text="${#numbers.formatDecimal(item.grossWidth ?: 0, 1, 0)}">0</td>
+                <td class="col-dim" th:text="${#numbers.formatDecimal(item.grossHeight ?: 0, 1, 0)}">0</td>
+                <td class="col-m2" th:text="${item.grossWidth != null and item.grossHeight != null ? #numbers.formatDecimal(item.grossWidth.multiply(item.grossHeight).divide(new java.math.BigDecimal('1000000'), 4, T(java.math.RoundingMode).HALF_UP), 1, 4) : '—'}">—</td>
+                <td class="col-m2arr">—</td>
+            </tr>
+            <!-- Final row -->
+            <tr>
+                <td class="col-fig"><div class="glass-mini-icon"></div></td>
+                <td><strong th:text="${(item.color ?: 'INCOLOR') + ' ' + (item.glassType ?: 'TEMPERADO') + ' ' + (item.thickness ?: '8') + 'MM'}">—</strong></td>
+                <td th:text="${item.color ?: 'INCOLOR'}">—</td>
+                <td th:text="${item.finishing != null and item.finishing != 'SEM_ACABAMENTO' ? item.finishing : 'Medida Final'}">—</td>
+                <td>M</td>
+                <td class="col-qty" th:text="${item.quantity ?: 1}">1</td>
+                <td class="col-dim" style="color:#006622;" th:text="${#numbers.formatDecimal(item.finalWidth ?: 0, 1, 0)}">0</td>
+                <td class="col-dim" style="color:#006622;" th:text="${#numbers.formatDecimal(item.finalHeight ?: 0, 1, 0)}">0</td>
+                <td class="col-m2"
+                    th:text="${item.finalWidth != null and item.finalHeight != null ? #numbers.formatDecimal(item.finalWidth.multiply(item.finalHeight).divide(new java.math.BigDecimal('1000000'), 4, T(java.math.RoundingMode).HALF_UP), 1, 4) : '—'}">—</td>
+                <td class="col-m2arr"
+                    th:text="${item.calculatedArea != null ? #numbers.formatDecimal(item.calculatedArea.divide(new java.math.BigDecimal('1000000'), 4, T(java.math.RoundingMode).HALF_UP), 1, 4) : '—'}">—</td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="5" style="text-align:right;">Total M² <span th:text="${item.description}">—</span>:</td>
+                <td class="col-qty" th:text="${item.quantity ?: 1}">1</td>
+                <td colspan="2"></td>
+                <td class="col-m2" colspan="2"
+                    th:text="${item.calculatedArea != null ? #numbers.formatDecimal(item.calculatedArea.divide(new java.math.BigDecimal('1000000'), 4, T(java.math.RoundingMode).HALF_UP), 1, 4) : '—'}">—</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Notes for item -->
+        <div class="obs-box" th:if="${item.notes != null}">
+            <strong>📝 Obs:</strong> <span th:text="${item.notes}">—</span>
+        </div>
+    </th:block>
+
+    <!-- FINAL SUMMARY -->
+    <div class="final-summary">
+        <div class="fs-title">Resumo Total da Obra</div>
+        <div class="fs-grid">
+            <div class="fs-item">
+                <div class="fs-v" th:text="${plan.items?.size() ?: 0}">0</div>
+                <div class="fs-l">Tipos de Vidro</div>
+            </div>
+            <div class="fs-item">
+                <div class="fs-v" th:text="${totalQty}">0</div>
+                <div class="fs-l">Peças Total</div>
+            </div>
+            <div class="fs-item">
+                <div class="fs-v" th:text="${#numbers.formatDecimal(totalAreaM2, 1, 4)}">0</div>
+                <div class="fs-l">Total M²</div>
+            </div>
+            <div class="fs-item">
+                <div class="fs-v" th:text="${plan.version ?: 1}">1</div>
+                <div class="fs-l">Versão</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sign-row">
+        <span>Gerado em: <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}">—</span></span>
+        <span>OS: <span th:text="${workOrder?.number ?: '—'}">—</span></span>
+        <span>Plano ID: <span th:text="${plan.id}">—</span></span>
+    </div>
+</div>
+</body>
+</html>

@@ -42,9 +42,6 @@ public class AccountsReceivable {
     @Column(nullable = false)
     private String status = "pending";
 
-    @Column(name = "reconciliation_status")
-    private String reconciliationStatus = "NAO_CONCILIADO";
-
     @Column(name = "payment_method")
     private String paymentMethod;
 
@@ -94,8 +91,6 @@ public class AccountsReceivable {
     public void setPaymentDate(LocalDate paymentDate) { this.paymentDate = paymentDate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    public String getReconciliationStatus() { return reconciliationStatus != null ? reconciliationStatus : "NAO_CONCILIADO"; }
-    public void setReconciliationStatus(String reconciliationStatus) { this.reconciliationStatus = reconciliationStatus; }
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     public Integer getInstallments() { return installments; }
