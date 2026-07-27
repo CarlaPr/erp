@@ -1,6 +1,7 @@
 package com.alfatahi.erp.repository;
 
 import com.alfatahi.erp.entity.Quote;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface QuoteRepository extends JpaRepository<Quote, UUID> {
@@ -31,5 +33,6 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
     @Query("SELECT q.status, COUNT(q) FROM Quote q GROUP BY q.status")
     List<Object[]> countByStatus();
 
-    java.util.Optional<Quote> findByPublicToken(String publicToken);
+    @EntityGraph(attributePaths = {"items", "client"})
+    Optional<Quote> findByPublicToken(String token);
 }

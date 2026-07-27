@@ -161,7 +161,6 @@ public class QuoteController {
             ctx.setVariable("sigCompanyBase64",  sigCoB64);
             ctx.setVariable("sigClientBase64",   sigCliB64);
 
-            // ── Renderiza o template e gera o PDF ──
             String html = templateEngine.process("quote-pdf", ctx);
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -173,7 +172,6 @@ public class QuoteController {
             builder.run();
             byte[] pdfBytes = out.toByteArray();
 
-            // ── Nome do arquivo (mesmo padrão do JS) ──
             String rawName = nvlStr(quote.getNumber(), "ORC-0000")
                     + " - " + clientName
                     + " - " + (companyName.isEmpty() ? "Empresa" : companyName);
@@ -340,6 +338,7 @@ public class QuoteController {
 
     @PostMapping(value = "/save-ajax", consumes = "application/json")
     @ResponseBody
+    @Transactional
     public ResponseEntity<?> saveAjax(@RequestBody Quote quote, java.security.Principal principal) {
 
         ensureItemDescriptions(quote.getItems());
@@ -356,11 +355,16 @@ public class QuoteController {
             existing.setObservations(quote.getObservations());
             existing.setWarranty(quote.getWarranty());
             existing.setTotalValue(quote.getTotalValue());
-            existing.setItems(quote.getItems());
             existing.setDiscountPercent(quote.getDiscountPercent());
-            for (QuoteItem item : existing.getItems()) {
-                item.setQuote(existing);
+
+            existing.getItems().clear();
+            if (quote.getItems() != null) {
+                for (QuoteItem item : quote.getItems()) {
+                    item.setQuote(existing);
+                    existing.getItems().add(item);
+                }
             }
+
             quoteRepo.save(existing);
             return ResponseEntity.ok().build();
         }

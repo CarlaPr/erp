@@ -4,6 +4,7 @@ import com.alfatahi.erp.entity.Quote;
 import com.alfatahi.erp.repository.QuoteRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -19,6 +20,7 @@ public class PublicQuoteController {
     }
 
     @GetMapping("/{token}")
+    @Transactional(readOnly = true)
     public String viewPublicQuote(@PathVariable String token, Model model) {
         Quote quote = quoteRepo.findByPublicToken(token)
                 .orElseThrow(() -> new RuntimeException("Orçamento não encontrado ou link inválido."));
