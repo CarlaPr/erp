@@ -20,6 +20,32 @@
         </button>
     </header>
 
+    <!-- ── ABAS ── -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <a th:href="@{/payables(aba='todas')}"
+           th:classappend="${filterAba == null or filterAba == 'todas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
+           class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Todas</a>
+        <a th:href="@{/payables(aba='fixas')}"
+           th:classappend="${filterAba == 'fixas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
+           class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Fixas</a>
+        <a th:href="@{/payables(aba='recorrentes')}"
+           th:classappend="${filterAba == 'recorrentes'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
+           class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Recorrentes</a>
+        <a th:href="@{/payables(aba='vencidas')}"
+           th:classappend="${filterAba == 'vencidas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
+           class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Vencidas</a>
+        <a th:href="@{/payables(aba='pagas')}"
+           th:classappend="${filterAba == 'pagas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
+           class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Pagas</a>
+        <a th:href="@{/payables(aba='provisionamentos')}"
+           th:classappend="${filterAba == 'provisionamentos'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
+           class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Provisionamentos</a>
+        <a href="/payables/fixed"
+           class="px-4 py-2 rounded-xl text-sm font-bold transition-all bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-transparent flex items-center gap-2">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Painel de Contas Fixas
+        </a>
+    </div>
+
     <!-- ── KPIs ── -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-indigo-600 dark:bg-indigo-900 p-6 rounded-2xl shadow-md border-none">
@@ -67,12 +93,29 @@
 
             <div>
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Categoria</label>
-                <select name="category" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 transition-all text-sm font-semibold">
+                <select name="category" id="filterCategorySelect" onchange="updateSubcategories(this,'filterSubcategorySelect', '')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 transition-all text-sm font-semibold">
                     <option value="">Todas</option>
-                    <option value="variable" th:selected="${filterCategory == 'variable'}">Variável (CMV)</option>
-                    <option value="fixed" th:selected="${filterCategory == 'fixed'}">Custo Fixo</option>
-                    <option value="provision" th:selected="${filterCategory == 'provision'}">Provisão</option>
+                    <option th:each="c : ${categories}" th:value="${c.code}" th:text="${c.name}" th:selected="${filterCategory == c.code}"></option>
                 </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Subcategoria</label>
+                <select name="subcategory" id="filterSubcategorySelect" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 transition-all text-sm font-semibold">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Centro de Custo</label>
+                <input type="text" name="costCenter" th:value="${filterCostCenter}" placeholder="Ex: Administrativo"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 transition-all text-sm"/>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Competência</label>
+                <input type="month" name="competencia" th:value="${filterCompetencia}"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 transition-all text-sm"/>
             </div>
         </div>
 
@@ -86,6 +129,7 @@
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 outline-none focus:border-rose-500 transition-all text-sm"/>
                 </div>
             </div>
+            <input type="hidden" name="aba" th:value="${filterAba}"/>
 
             <div class="flex flex-wrap gap-2 w-full lg:w-auto">
                 <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl px-6 py-3 text-sm transition-all shadow-md shadow-rose-500/20 flex items-center gap-2">
@@ -149,14 +193,17 @@
                     <div class="font-bold text-slate-900 dark:text-white text-base" th:text="${p.supplier != null ? p.supplier.name : 'Avulso'}">Fornecedor</div>
                     <div class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5" th:text="${p.description}">Desc</div>
                     <div th:if="${p.documentNumber != null and !p.documentNumber.isEmpty()}"
-                         class="text-xs text-slate-400 dark:text-slate-500 font-mono mt-1 font-bold" th:text="'Doc: ' + ${p.documentNumber}"></div>
+                         class=" hidden text-xs text-slate-400 dark:text-slate-500 font-mono mt-1 font-bold" th:text="'Doc: ' + ${p.documentNumber}"></div>
                 </td>
 
                 <td class="p-5">
-                    <span th:if="${p.category == 'variable'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent uppercase tracking-wide">CMV</span>
-                    <span th:if="${p.category == 'fixed'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-transparent uppercase tracking-wide">Fixo</span>
-                    <span th:if="${p.category == 'provision'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-transparent uppercase tracking-wide">Provisão</span>
+                    <span th:if="${p.category == 'FIXA'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-transparent uppercase tracking-wide">Fixa</span>
+                    <span th:if="${p.category == 'VARIAVEL'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent uppercase tracking-wide">Variável</span>
+                    <span th:if="${p.category == 'PROVISIONAMENTO'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-transparent uppercase tracking-wide">Provisão</span>
+                    <span th:if="${p.category != null and p.category != 'FIXA' and p.category != 'VARIAVEL' and p.category != 'PROVISIONAMENTO'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-700/40 dark:text-slate-300 dark:border-transparent uppercase tracking-wide" th:text="${p.category}"></span>
+                    <span th:if="${p.recurring}" title="Despesa recorrente" class="ml-1.5 inline-flex items-center text-brand-500 dark:text-cyan-400"><i data-lucide="repeat" class="w-3.5 h-3.5"></i></span>
                     <div th:if="${p.subcategory != null and !p.subcategory.isEmpty()}" class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1.5" th:text="${p.subcategory}"></div>
+                    <div th:if="${p.costCenter != null and !p.costCenter.isEmpty()}" class="text-xs text-slate-400 dark:text-slate-500 mt-0.5" th:text="'CC: ' + ${p.costCenter}"></div>
                 </td>
 
                 <td class="p-5 text-brand-600 dark:text-cyan-400 font-mono font-bold text-base" th:text="${p.workOrder != null ? p.workOrder.number : '-'}">-</td>
@@ -205,29 +252,32 @@
                                 th:data-notes="${p.notes}"
                                 th:data-supplier="${p.supplier != null ? p.supplier.id : ''}"
                                 th:data-workorder="${p.workOrder != null ? p.workOrder.id : ''}"
-                                onclick="openEditModal(
-                                    this.dataset.id,
-                                    this.dataset.description,
-                                    this.dataset.category,
-                                    this.dataset.subcategory,
-                                    this.dataset.total,
-                                    this.dataset.duedate,
-                                    this.dataset.payment,
-                                    this.dataset.document,
-                                    this.dataset.recurring==='true',
-                                    this.dataset.notes,
-                                    this.dataset.supplier,
-                                    this.dataset.workorder
-                                    )"
+                                th:data-paidamount="${p.paidAmount}"
+                                th:data-expensetype="${p.expenseType}"
+                                th:data-expensenature="${p.expenseNature}"
+                                th:data-costcenter="${p.costCenter}"
+                                th:data-competencia="${p.competencia}"
+                                th:data-recurrenceid="${p.recurrenceId}"
+                                onclick="openEditModal(this.dataset)"
                                 class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors" title="Editar">
                             <i data-lucide="edit" class="w-5 h-5"></i>
                         </button>
 
                         <button
-                                th:if="${p.status != 'cancelled'}"
+                                th:if="${p.status != 'cancelled' and p.recurrenceId == null}"
                                 th:data-id="${p.id}"
                                 onclick="confirmCancel(this.dataset.id)"
                                 title="Cancelar Conta"
+                                class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+
+                        <button
+                                th:if="${p.status != 'cancelled' and p.recurrenceId != null}"
+                                th:data-id="${p.id}"
+                                th:data-recurrenceid="${p.recurrenceId}"
+                                onclick="confirmCancelRecurrence(this.dataset.id, this.dataset.recurrenceid)"
+                                title="Excluir/Cancelar (série recorrente)"
                                 class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
@@ -251,6 +301,15 @@
 
             <form th:action="@{/payables/save}" th:object="${newPayable}" method="POST" class="p-8 space-y-6">
 
+                <datalist id="costCenterOptions">
+                    <option value="Administrativo"></option>
+                    <option value="Comercial"></option>
+                    <option value="Produção"></option>
+                    <option value="Financeiro"></option>
+                    <option value="Obra/O.S."></option>
+                    <option value="Loja"></option>
+                </datalist>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2">
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Descrição *</label>
@@ -260,9 +319,7 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Categoria *</label>
                         <select id="categorySelect" th:field="*{category}" onchange="updateSubcategories(this,'subcategorySelect')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
-                            <option value="variable">Variável (CMV)</option>
-                            <option value="fixed">Fixa</option>
-                            <option value="provision">Provisão</option>
+                            <option th:each="c : ${categories}" th:value="${c.code}" th:text="${c.name}"></option>
                         </select>
                     </div>
 
@@ -313,11 +370,80 @@
                         </select>
                     </div>
 
-                    <div class="flex items-center pt-8">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Tipo da Despesa</label>
+                        <select th:field="*{expenseType}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
+                            <option value="">Automático (pela categoria)</option>
+                            <option value="FIXA">Fixa</option>
+                            <option value="VARIAVEL">Variável</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Natureza da Despesa</label>
+                        <select th:field="*{expenseNature}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
+                            <option value="">Selecione...</option>
+                            <option value="OPERACIONAL">Operacional</option>
+                            <option value="ADMINISTRATIVA">Administrativa</option>
+                            <option value="FINANCEIRA">Financeira</option>
+                            <option value="TRIBUTARIA">Tributária</option>
+                            <option value="PESSOAL">Pessoal</option>
+                            <option value="INVESTIMENTO">Investimento</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Centro de Custo</label>
+                        <input type="text" th:field="*{costCenter}" list="costCenterOptions" placeholder="Ex: Administrativo, Produção, O.S. 123" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Competência</label>
+                        <input type="month" id="competenciaMonth" onchange="syncCompetencia('competenciaMonth','competenciaHidden')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
+                        <input type="hidden" id="competenciaHidden" th:field="*{competencia}">
+                    </div>
+
+                    <div class="lg:col-span-3 flex items-center gap-3 border-t border-slate-100 dark:border-slate-800 pt-6">
                         <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" th:field="*{recurring}" class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 accent-rose-600">
-                            <span class="text-base font-bold text-slate-700 dark:text-slate-300">Despesa Recorrente</span>
+                            <input type="checkbox" id="recurrenceEnabled" name="recurrenceEnabled" value="true" onchange="toggleRecurrencePanel('recurrencePanel', this.checked)" class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 accent-rose-600">
+                            <span class="text-base font-bold text-slate-700 dark:text-slate-300">Conta Recorrente</span>
                         </label>
+                    </div>
+
+                    <div id="recurrencePanel" class="hidden lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Frequência</label>
+                            <select name="recurrenceFrequency" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none text-base">
+                                <option value="DAILY">Diária</option>
+                                <option value="WEEKLY">Semanal</option>
+                                <option value="BIWEEKLY">Quinzenal</option>
+                                <option value="MONTHLY" selected>Mensal</option>
+                                <option value="BIMONTHLY">Bimestral</option>
+                                <option value="QUARTERLY">Trimestral</option>
+                                <option value="SEMIANNUAL">Semestral</option>
+                                <option value="ANNUAL">Anual</option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Duração</label>
+                            <div class="flex flex-wrap items-center gap-5">
+                                <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                    <input type="radio" name="recurrenceEndType" value="COUNT" checked onchange="toggleRecurrenceEndType(this.value)" class="accent-rose-600"> Quantidade de repetições
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                    <input type="radio" name="recurrenceEndType" value="DATE" onchange="toggleRecurrenceEndType(this.value)" class="accent-rose-600"> Até uma data
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                    <input type="radio" name="recurrenceEndType" value="INFINITE" onchange="toggleRecurrenceEndType(this.value)" class="accent-rose-600"> Infinita (até cancelamento)
+                                </label>
+                            </div>
+                            <div class="flex gap-4 mt-3">
+                                <input type="number" min="1" name="recurrenceCount" id="recurrenceCount" value="12" placeholder="Nº de vezes" class="w-40 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none text-sm">
+                                <input type="date" name="recurrenceEndDate" id="recurrenceEndDate" disabled class="w-48 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none text-sm">
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2">As parcelas geradas são registros independentes, vinculados por uma série. Você pode editar ou excluir cada uma isoladamente, ou em lote, depois de criadas.</p>
+                        </div>
                     </div>
 
                     <div class="lg:col-span-3">
@@ -408,9 +534,7 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Categoria *</label>
                         <select name="category" id="editCategory" onchange="updateSubcategories(this,'editSubcategory')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
-                            <option value="variable">Variável (CMV)</option>
-                            <option value="fixed">Fixa</option>
-                            <option value="provision">Provisão</option>
+                            <option th:each="c : ${categories}" th:value="${c.code}" th:text="${c.name}"></option>
                         </select>
                     </div>
 
@@ -465,16 +589,61 @@
                         </select>
                     </div>
 
-                    <div class="flex items-center pt-8">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Tipo da Despesa</label>
+                        <select name="expenseType" id="editExpenseType" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
+                            <option value="">Automático (pela categoria)</option>
+                            <option value="FIXA">Fixa</option>
+                            <option value="VARIAVEL">Variável</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Natureza da Despesa</label>
+                        <select name="expenseNature" id="editExpenseNature" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
+                            <option value="">Selecione...</option>
+                            <option value="OPERACIONAL">Operacional</option>
+                            <option value="ADMINISTRATIVA">Administrativa</option>
+                            <option value="FINANCEIRA">Financeira</option>
+                            <option value="TRIBUTARIA">Tributária</option>
+                            <option value="PESSOAL">Pessoal</option>
+                            <option value="INVESTIMENTO">Investimento</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Centro de Custo</label>
+                        <input type="text" name="costCenter" id="editCostCenter" list="costCenterOptions" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Competência</label>
+                        <input type="month" id="editCompetenciaMonth" onchange="syncCompetencia('editCompetenciaMonth','editCompetenciaHidden')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
+                        <input type="hidden" name="competencia" id="editCompetenciaHidden">
+                    </div>
+
+                    <div class="hidden flex items-center pt-8">
                         <label class="flex items-center gap-3 cursor-pointer">
                             <input type="checkbox" name="recurring" id="editRecurring" class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 accent-brand-600">
-                            <span class="text-base font-bold text-slate-700 dark:text-slate-300">Despesa Recorrente</span>
+                            <span class="text-base font-bold text-slate-700 dark:text-slate-300">Marcar como Recorrente</span>
                         </label>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">Valor Já Pago (R$)</label>
                         <input type="number" step="0.01" name="paidAmount" id="editPaidAmount" class="w-full bg-slate-50 dark:bg-slate-900 border border-emerald-300 rounded-xl px-4 py-3 text-emerald-700 font-black outline-none">
+                    </div>
+
+                    <div id="editScopePanel" class="hidden lg:col-span-3 bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 rounded-xl p-5">
+                        <p class="text-sm font-bold text-amber-800 dark:text-amber-400 mb-3 flex items-center gap-2"><i data-lucide="repeat" class="w-4 h-4"></i> Esta conta faz parte de uma série recorrente</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                <input type="radio" name="editScope" value="single" checked class="accent-brand-600"> Aplicar somente a este registro
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                <input type="radio" name="editScope" value="series" class="accent-brand-600"> Aplicar a todos os registros da série (não pagos)
+                            </label>
+                        </div>
                     </div>
 
                     <div class="lg:col-span-3">
@@ -516,6 +685,65 @@
         </div>
     </div>
 
+    <!-- ── MODAL EXCLUIR CONTA RECORRENTE ── -->
+    <div id="recurrenceDeleteModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
+
+            <button type="button" onclick="closeModal('recurrenceDeleteModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-12 h-12 bg-rose-100 dark:bg-rose-500/10 rounded-full flex items-center justify-center text-rose-600 dark:text-rose-400 flex-shrink-0">
+                    <i data-lucide="repeat" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white">Conta Recorrente</h3>
+            </div>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">Esta conta pertence a uma série recorrente. Escolha como deseja proceder:</p>
+
+            <form id="recurrenceDeleteForm" method="POST" class="space-y-3">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <label class="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors">
+                    <input type="radio" name="recurrenceScope" value="single" checked class="mt-1 accent-rose-600">
+                    <span>
+                        <span class="block font-bold text-slate-800 dark:text-slate-200 text-sm">Excluir apenas este lançamento</span>
+                        <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">As demais parcelas da série permanecem intactas.</span>
+                    </span>
+                </label>
+
+                <label class="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors">
+                    <input type="radio" name="recurrenceScope" value="future" class="mt-1 accent-rose-600">
+                    <span>
+                        <span class="block font-bold text-slate-800 dark:text-slate-200 text-sm">Excluir este lançamento e os futuros</span>
+                        <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">A série é encerrada a partir desta data.</span>
+                    </span>
+                </label>
+
+                <label class="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors">
+                    <input type="radio" name="recurrenceScope" value="series" class="mt-1 accent-rose-600">
+                    <span>
+                        <span class="block font-bold text-slate-800 dark:text-slate-200 text-sm">Excluir toda a série de recorrências</span>
+                        <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Remove todos os lançamentos vinculados, passados e futuros.</span>
+                    </span>
+                </label>
+
+                <label class="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors">
+                    <input type="radio" name="recurrenceScope" value="stop" class="mt-1 accent-rose-600">
+                    <span>
+                        <span class="block font-bold text-slate-800 dark:text-slate-200 text-sm">Parar a recorrência (não gerar mais futuras)</span>
+                        <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Mantém os lançamentos já existentes; apenas interrompe novas gerações.</span>
+                    </span>
+                </label>
+
+                <div class="flex gap-4 justify-center pt-4">
+                    <button type="button" onclick="closeModal('recurrenceDeleteModal')" class="w-1/2 px-6 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">Cancelar</button>
+                    <button type="submit" class="w-1/2 px-6 py-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-base">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="exportModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -544,7 +772,7 @@
     </div>
 </main>
 
-<script>
+<script th:inline="javascript">
     const TODAY = new Date().toISOString().split('T')[0];
 
     function openModal(id)  { const m = document.getElementById(id); m.classList.remove('hidden'); m.classList.add('flex'); }
@@ -566,64 +794,105 @@
         openModal('cancelModal');
     }
 
-    function openEditModal(id, description, category, subcategory, totalAmount, dueDate, paymentMethod, documentNumber, recurring, notes, supplierId, workOrderId, paidAmount) {
-        document.getElementById('editForm').action = '/payables/edit/' + id;
-        document.getElementById('editId').value = id;
-        document.getElementById('editDescription').value = description;
-        document.getElementById('editCategory').value = category;
-        document.getElementById('editTotalAmount').value = totalAmount;
-        document.getElementById('editDueDate').value = dueDate;
-        document.getElementById('editPaymentMethod').value = paymentMethod || 'PIX';
-        document.getElementById('editDocumentNumber').value = documentNumber;
-        document.getElementById('editRecurring').checked = recurring;
-        document.getElementById('editNotes').value = notes;
-        document.getElementById('editPaidAmount').value = paidAmount || 0;
-
-        updateSubcategories(document.getElementById('editCategory'), 'editSubcategory', subcategory);
-
-        const supSel = document.getElementById('editSupplier');
-        supSel.value = supplierId || '';
-
-        const woSel = document.getElementById('editWorkOrder');
-        woSel.value = workOrderId || '';
-
-        openModal('editModal');
+    function confirmCancelRecurrence(id, recurrenceId) {
+        const form = document.getElementById('recurrenceDeleteForm');
+        form.dataset.payableId = id;
+        form.dataset.recurrenceId = recurrenceId;
+        form.querySelector('input[name="recurrenceScope"][value="single"]').checked = true;
+        openModal('recurrenceDeleteModal');
     }
 
-    const subcategories = {
-        variable: [
-            { value: "vidro", text: "Vidro" }, { value: "aluminio", text: "Alumínio" },
-            { value: "ferragens", text: "Ferragens" }, { value: "silicone", text: "Silicone" },
-            { value: "ferramentas", text: "Ferramentas" }, { value: "insumos de serviços", text: "Insumos de Serviços" },
-            { value: "frete", text: "Frete" }, { value: "combustivel", text: "Combustível" }, { value: "outros", text: "Outros" }
-        ],
-        fixed: [
-            { value: "aluguel", text: "Aluguel" }, { value: "energia", text: "Energia" },
-            { value: "agua", text: "Água" }, { value: "internet", text: "Internet" },
-            { value: "salarios", text: "Salários" }, { value: "pro-labore", text: "Pró-labore" },
-            { value: "marketing", text: "Marketing" }, { value: "software", text: "Software" }, { value: "outros", text: "Outros" }
-        ],
-        provision: [
-            { value: "provisionamento", text: "Provisionamento" }, { value: "outros", text: "Outros" }
-        ]
-    };
+    document.getElementById('recurrenceDeleteForm').addEventListener('submit', function (e) {
+        const scope = this.querySelector('input[name="recurrenceScope"]:checked').value;
+        const payableId = this.dataset.payableId;
+        const recurrenceId = this.dataset.recurrenceId;
+        let action;
+        if (scope === 'single') action = '/payables/recurrence/delete-single/' + payableId;
+        else if (scope === 'future') action = '/payables/recurrence/delete-future/' + payableId;
+        else if (scope === 'series') action = '/payables/recurrence/delete-series/' + recurrenceId;
+        else action = '/payables/recurrence/cancel-future/' + recurrenceId;
+        this.action = action;
+    });
+
+    function openEditModal(ds) {
+        document.getElementById('editForm').action = '/payables/edit/' + ds.id;
+        document.getElementById('editId').value = ds.id;
+        document.getElementById('editDescription').value = ds.description;
+        document.getElementById('editCategory').value = ds.category;
+        document.getElementById('editTotalAmount').value = ds.total;
+        document.getElementById('editDueDate').value = ds.duedate;
+        document.getElementById('editPaymentMethod').value = ds.payment || 'PIX';
+        document.getElementById('editDocumentNumber').value = ds.document;
+        document.getElementById('editRecurring').checked = ds.recurring === 'true';
+        document.getElementById('editNotes').value = ds.notes || '';
+        document.getElementById('editPaidAmount').value = ds.paidamount || 0;
+        document.getElementById('editExpenseType').value = ds.expensetype || '';
+        document.getElementById('editExpenseNature').value = ds.expensenature || '';
+        document.getElementById('editCostCenter').value = ds.costcenter || '';
+        document.getElementById('editCompetenciaMonth').value = (ds.competencia || '').substring(0, 7);
+        document.getElementById('editCompetenciaHidden').value = ds.competencia || '';
+
+        updateSubcategories(document.getElementById('editCategory'), 'editSubcategory', ds.subcategory);
+
+        document.getElementById('editSupplier').value = ds.supplier || '';
+        document.getElementById('editWorkOrder').value = ds.workorder || '';
+
+        const scopePanel = document.getElementById('editScopePanel');
+        if (ds.recurrenceid) {
+            scopePanel.classList.remove('hidden');
+        } else {
+            scopePanel.classList.add('hidden');
+        }
+
+        openModal('editModal');
+        if (window.lucide) lucide.createIcons();
+    }
+
+    // ── Categorias/Subcategorias (carregadas do banco via /payables/categories-data) ──
+    let subcategoryTree = {};
 
     function updateSubcategories(selectEl, targetId, currentValue) {
         const cat = selectEl.value;
         const target = document.getElementById(targetId);
+        if (!target) return;
         target.innerHTML = '<option value="">Selecione...</option>';
-        (subcategories[cat] || []).forEach(sub => {
+        (subcategoryTree[cat] || []).forEach(sub => {
             const o = document.createElement('option');
             o.value = sub.value;
-            o.textContent = sub.text;
+            o.textContent = sub.group ? (sub.group + ' — ' + sub.text) : sub.text;
             if (currentValue && sub.value === currentValue) o.selected = true;
             target.appendChild(o);
         });
     }
 
+    function syncCompetencia(monthId, hiddenId) {
+        const monthVal = document.getElementById(monthId).value;
+        document.getElementById(hiddenId).value = monthVal ? (monthVal + '-01') : '';
+    }
+
+    function toggleRecurrencePanel(panelId, show) {
+        const panel = document.getElementById(panelId);
+        if (show) panel.classList.remove('hidden'); else panel.classList.add('hidden');
+    }
+
+    function toggleRecurrenceEndType(value) {
+        document.getElementById('recurrenceCount').disabled = (value !== 'COUNT');
+        document.getElementById('recurrenceEndDate').disabled = (value !== 'DATE');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-        const catSel = document.getElementById('categorySelect');
-        if (catSel) updateSubcategories(catSel, 'subcategorySelect', '');
+        fetch('/payables/categories-data')
+            .then(r => r.json())
+            .then(data => { subcategoryTree = data.subcategoryTree || {}; })
+            .catch(() => { subcategoryTree = {}; })
+            .finally(() => {
+                const catSel = document.getElementById('categorySelect');
+                if (catSel) updateSubcategories(catSel, 'subcategorySelect', '');
+                const filterCatSel = document.getElementById('filterCategorySelect');
+                if (filterCatSel && filterCatSel.value) {
+                    updateSubcategories(filterCatSel, 'filterSubcategorySelect', /*[[${filterSubcategory}]]*/ '');
+                }
+            });
     });
 
     function generateExcel() {

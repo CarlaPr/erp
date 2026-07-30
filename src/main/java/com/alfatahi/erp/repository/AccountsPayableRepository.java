@@ -15,6 +15,10 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
 
     List<AccountsPayable> findByStatusNotOrderByDueDateAsc(String status);
 
+    List<AccountsPayable> findByRecurrenceIdOrderByDueDateAsc(UUID recurrenceId);
+
+    List<AccountsPayable> findByRecurrenceIdAndDueDateGreaterThanEqualOrderByDueDateAsc(UUID recurrenceId, LocalDate fromDueDate);
+
     @Query("SELECT SUM(a.totalAmount) FROM AccountsPayable a "
             + "WHERE a.category = :category "
             + "AND a.dueDate >= :inicio AND a.dueDate < :fim")
@@ -23,17 +27,23 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
             @Param("inicio") LocalDate inicio,
             @Param("fim") LocalDate fim);
 
-    /** CMV = despesas de categoria 'variable' que NÃO são despesa financeira */
+    /**
+     * CMV = despesas do tipo 'VARIAVEL' que NÃO são despesa financeira.
+     * Antes da reestruturação, esta regra usava a.category = 'variable'; a partir da
+     * reestruturação de Contas a Pagar, o critério de negócio passou a ser o campo
+     * dedicado expenseType (independente da categoria/subcategoria detalhada),
+     * preservando o mesmo resultado para dados já existentes (migrados na V15).
+     */
     @Query("SELECT SUM(a.totalAmount) FROM AccountsPayable a " +
-            "WHERE LOWER(a.category) = 'variable' " +
+            "WHERE UPPER(a.expenseType) = 'VARIAVEL' " +
             "AND a.financialExpense = false " +
             "AND a.status != 'cancelled' " +
             "AND a.dueDate >= :inicio AND a.dueDate < :fim")
     BigDecimal sumCmvByMonthAndYear(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
-    /** Despesas Fixas = tudo que NÃO é variable e NÃO é despesa financeira */
+    /** Despesas Fixas = tudo que NÃO é do tipo VARIAVEL e NÃO é despesa financeira. */
     @Query("SELECT SUM(a.totalAmount) FROM AccountsPayable a " +
-            "WHERE LOWER(a.category) != 'variable' " +
+            "WHERE UPPER(a.expenseType) != 'VARIAVEL' " +
             "AND a.financialExpense = false " +
             "AND a.status != 'cancelled' " +
             "AND a.dueDate >= :inicio AND a.dueDate < :fim")
@@ -57,4 +67,28 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
             "WHERE p.status IN ('paid', 'partial') " +
             "AND p.paymentDate >= :inicio AND p.paymentDate < :fim")
     BigDecimal sumSaidasRealByPeriod(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+
+    // ─── Contas Fixas (dashboard e tela dedicada) ────────────────────────────
+
+    @Query("SELECT COALESCE(SUM(p.totalAmount), 0) FROM AccountsPayable p " +
+            "WHERE UPPER(p.category) = 'FIXA' AND p.status != 'cancelled' " +
+            "AND p.dueDate >= :inicio AND p.dueDate < :fim")
+    BigDecimal sumFixedTotalByMonth(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+
+    @Query("SELECT COALESCE(SUM(p.paidAmount), 0) FROM AccountsPayable p " +
+            "WHERE UPPER(p.category) = 'FIXA' AND p.status IN ('paid', 'partial') " +
+            "AND p.dueDate >= :inicio AND p.dueDate < :fim")
+    BigDecimal sumFixedPaidByMonth(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+
+    @Query("SELECT COALESCE(SUM(p.totalAmount - p.paidAmount), 0) FROM AccountsPayable p " +
+            "WHERE UPPER(p.category) = 'FIXA' AND p.status IN ('pending', 'partial') " +
+            "AND p.dueDate >= :inicio AND p.dueDate < :fim")
+    BigDecimal sumFixedPendingByMonth(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+
+    @Query("SELECT p FROM AccountsPayable p WHERE UPPER(p.category) = 'FIXA' " +
+            "AND p.status IN ('pending', 'partial') AND p.dueDate >= :hoje " +
+            "ORDER BY p.dueDate ASC")
+    List<AccountsPayable> findUpcomingFixedDue(@Param("hoje") LocalDate hoje);
+
+    List<AccountsPayable> findByCategoryIgnoreCaseOrderByDueDateAsc(String category);
 }

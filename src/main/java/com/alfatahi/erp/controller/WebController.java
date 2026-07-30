@@ -291,6 +291,16 @@ public class WebController {
 
         List<Schedule> agendaHoje = scheduleService.findByDate(hoje);
 
+        // ═══════════════════════════════════════════════════════════════════════
+        // CONTAS FIXAS (indicadores do painel dedicado, resumidos no dashboard)
+        // ═══════════════════════════════════════════════════════════════════════
+        BigDecimal fixedTotalMes = nvl(payableRepo.sumFixedTotalByMonth(inicioMes, fimMes));
+        BigDecimal fixedPagoMes = nvl(payableRepo.sumFixedPaidByMonth(inicioMes, fimMes));
+        BigDecimal fixedPendenteMes = nvl(payableRepo.sumFixedPendingByMonth(inicioMes, fimMes));
+        List<AccountsPayable> proximasContasFixas = payableRepo.findUpcomingFixedDue(hoje).stream()
+                .limit(5)
+                .collect(Collectors.toList());
+
         // Adicionar informações do mês selecionado
         String nomeMes = java.time.Month.of(mes).toString();
 
@@ -347,6 +357,12 @@ public class WebController {
         model.addAttribute("taxaConversao",       taxaConversao);
 
         model.addAttribute("agendaHoje", agendaHoje);
+
+        // Contas Fixas (resumo)
+        model.addAttribute("fixedTotalMes", fixedTotalMes);
+        model.addAttribute("fixedPagoMes", fixedPagoMes);
+        model.addAttribute("fixedPendenteMes", fixedPendenteMes);
+        model.addAttribute("proximasContasFixas", proximasContasFixas);
 
         return "dashboard";
     }

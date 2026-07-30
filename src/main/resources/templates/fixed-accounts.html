@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Contas Fixas - Alfa Tahi')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+
+    <!-- ── HEADER ── -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <a href="/payables" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 -ml-2 rounded-lg transition-colors" title="Voltar para Contas a Pagar">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Painel de Contas Fixas</h2>
+            </div>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1 ml-9">Aluguel, salários, sistemas, seguros e demais despesas fixas mensais.</p>
+        </div>
+        <a href="/payables?aba=fixas"
+           class="hidden bg-rose-600 hover:bg-rose-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-rose-500/20 text-base">
+            <i data-lucide="plus" class=" hidden w-5 h-5"></i> Nova Conta Fixa
+        </a>
+    </header>
+
+    <!-- ── INDICADORES ── -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-indigo-600 dark:bg-indigo-900 p-6 rounded-2xl shadow-md border-none">
+            <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1" th:text="'Total Fixo — ' + ${mesAtualLabel}">Total Fixo</span>
+            <p class="text-2xl font-black text-white" th:text="'R$ ' + ${#numbers.formatDecimal(totalMes, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-emerald-500">
+            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Pago no Mês</span>
+            <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(totalPagoMes, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-amber-500">
+            <span class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-1">Pendente no Mês</span>
+            <p class="text-2xl font-black text-amber-600 dark:text-amber-400" th:text="'R$ ' + ${#numbers.formatDecimal(totalPendenteMes, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-rose-500">
+            <span class="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider block mb-1">Vencidas</span>
+            <p class="text-2xl font-black text-rose-600 dark:text-rose-400" th:text="${#lists.size(vencidas)}">0</p>
+        </div>
+    </div>
+
+    <!-- ── PRÓXIMOS VENCIMENTOS ── -->
+    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 mb-8 shadow-sm" th:if="${!#lists.isEmpty(proximosVencimentos)}">
+        <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <i data-lucide="calendar-clock" class="w-4 h-4"></i> Próximos Vencimentos
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div th:each="p : ${proximosVencimentos}" class="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                <p class="text-xs font-bold text-slate-400 uppercase" th:text="${#temporals.format(p.dueDate, 'dd/MM/yyyy')}">--/--/----</p>
+                <p class="text-sm font-bold text-slate-800 dark:text-white mt-1 truncate" th:text="${p.description}">Descrição</p>
+                <p class="text-base font-black text-rose-600 dark:text-rose-400 mt-1" th:text="'R$ ' + ${#numbers.formatDecimal(p.totalAmount, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ABAS ── -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <button onclick="showTab('doMesAtual')" data-tab-btn="doMesAtual" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold transition-all bg-rose-600 text-white shadow-md shadow-rose-500/20">Mês Atual</button>
+        <button onclick="showTab('vencidas')" data-tab-btn="vencidas" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold transition-all bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Vencidas</button>
+        <button onclick="showTab('pagas')" data-tab-btn="pagas" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold transition-all bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Pagas</button>
+        <button onclick="showTab('futuras')" data-tab-btn="futuras" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold transition-all bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Próximos Meses</button>
+    </div>
+
+    <!-- ── TABELAS POR ABA ── -->
+    <div id="tab-doMesAtual" class="tab-panel bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[820px]">
+            <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
+                <th class="p-5">Vencimento</th><th class="p-5">Descrição</th><th class="p-5">Subcategoria</th>
+                <th class="p-5 text-right">Total</th><th class="p-5 text-center">Status</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+            <tr th:if="${#lists.isEmpty(doMesAtual)}"><td colspan="5" class="p-10 text-center text-slate-500">Nenhuma conta fixa no mês atual.</td></tr>
+            <tr th:each="p : ${doMesAtual}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                <td class="p-5 font-bold" th:text="${#temporals.format(p.dueDate, 'dd/MM/yyyy')}">--</td>
+                <td class="p-5" th:text="${p.description}">--</td>
+                <td class="p-5 text-slate-500" th:text="${p.subcategory}">--</td>
+                <td class="p-5 text-right font-mono font-bold" th:text="'R$ ' + ${#numbers.formatDecimal(p.totalAmount, 1, 'POINT', 2, 'COMMA')}">--</td>
+                <td class="p-5 text-center">
+                    <span th:if="${p.status == 'paid'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 uppercase">Pago</span>
+                    <span th:if="${p.status == 'partial'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 uppercase">Parcial</span>
+                    <span th:if="${p.status == 'pending'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 uppercase">Pendente</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tab-vencidas" class="tab-panel hidden bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[820px]">
+            <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
+                <th class="p-5">Vencimento</th><th class="p-5">Descrição</th><th class="p-5">Subcategoria</th>
+                <th class="p-5 text-right">Saldo</th><th class="p-5 text-center">Dias em atraso</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+            <tr th:if="${#lists.isEmpty(vencidas)}"><td colspan="5" class="p-10 text-center text-slate-500">Nenhuma conta fixa vencida. 🎉</td></tr>
+            <tr th:each="p : ${vencidas}" class="hover:bg-rose-50/40 dark:hover:bg-rose-500/5">
+                <td class="p-5 font-black text-rose-600 dark:text-rose-400" th:text="${#temporals.format(p.dueDate, 'dd/MM/yyyy')}">--</td>
+                <td class="p-5" th:text="${p.description}">--</td>
+                <td class="p-5 text-slate-500" th:text="${p.subcategory}">--</td>
+                <td class="p-5 text-right font-mono font-bold text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(p.balance, 1, 'POINT', 2, 'COMMA')}">--</td>
+                <td class="p-5 text-center font-bold" th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(p.dueDate, T(java.time.LocalDate).now())}">0</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tab-pagas" class="tab-panel hidden bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[820px]">
+            <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
+                <th class="p-5">Pagamento</th><th class="p-5">Descrição</th><th class="p-5">Subcategoria</th>
+                <th class="p-5 text-right">Valor Pago</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+            <tr th:if="${#lists.isEmpty(pagas)}"><td colspan="4" class="p-10 text-center text-slate-500">Nenhuma conta fixa paga recentemente.</td></tr>
+            <tr th:each="p : ${pagas}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                <td class="p-5 font-bold text-emerald-600 dark:text-emerald-400" th:text="${p.paymentDate != null ? #temporals.format(p.paymentDate, 'dd/MM/yyyy') : '-'}">--</td>
+                <td class="p-5" th:text="${p.description}">--</td>
+                <td class="p-5 text-slate-500" th:text="${p.subcategory}">--</td>
+                <td class="p-5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(p.paidAmount, 1, 'POINT', 2, 'COMMA')}">--</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tab-futuras" class="tab-panel hidden bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[820px]">
+            <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
+                <th class="p-5">Vencimento</th><th class="p-5">Descrição</th><th class="p-5">Subcategoria</th>
+                <th class="p-5 text-right">Total</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+            <tr th:if="${#lists.isEmpty(futuras)}"><td colspan="4" class="p-10 text-center text-slate-500">Nenhuma conta fixa prevista para os próximos meses.</td></tr>
+            <tr th:each="p : ${futuras}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                <td class="p-5 font-bold" th:text="${#temporals.format(p.dueDate, 'dd/MM/yyyy')}">--</td>
+                <td class="p-5" th:text="${p.description}">--</td>
+                <td class="p-5 text-slate-500" th:text="${p.subcategory}">--</td>
+                <td class="p-5 text-right font-mono font-bold" th:text="'R$ ' + ${#numbers.formatDecimal(p.totalAmount, 1, 'POINT', 2, 'COMMA')}">--</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p class="text-xs text-slate-400 mt-6 text-center">Para editar, pagar ou excluir uma conta fixa individualmente, utilize a tela completa de <a href="/payables?aba=fixas" class="text-brand-600 dark:text-cyan-400 font-bold hover:underline">Contas a Pagar</a>.</p>
+
+</main>
+
+<script>
+    function showTab(name) {
+        document.querySelectorAll('.tab-panel').forEach(el => el.classList.add('hidden'));
+        document.getElementById('tab-' + name).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            const active = btn.dataset.tabBtn === name;
+            btn.classList.toggle('bg-rose-600', active);
+            btn.classList.toggle('text-white', active);
+            btn.classList.toggle('shadow-md', active);
+            btn.classList.toggle('shadow-rose-500/20', active);
+            btn.classList.toggle('bg-white', !active);
+            btn.classList.toggle('dark:bg-slate-800', !active);
+            btn.classList.toggle('text-slate-600', !active);
+            btn.classList.toggle('dark:text-slate-300', !active);
+            btn.classList.toggle('border', !active);
+            btn.classList.toggle('border-slate-200', !active);
+            btn.classList.toggle('dark:border-slate-700', !active);
+        });
+    }
+</script>
+
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>
