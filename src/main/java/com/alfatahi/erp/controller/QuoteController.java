@@ -410,6 +410,18 @@ public class QuoteController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{id}/reset-signature")
+    @ResponseBody
+    public ResponseEntity<?> resetSignature(@PathVariable UUID id) {
+        try {
+            quoteService.resetClientSignature(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Erro ao reverter assinatura: " + e.getMessage());
+        }
+    }
+
     @PostMapping(value = "/add-client-ajax", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<com.alfatahi.erp.entity.Client> addClientAjax(@RequestBody com.alfatahi.erp.entity.Client client) {

@@ -128,6 +128,15 @@ public class QuoteService {
     }
 
     @Transactional
+    public void resetClientSignature(UUID quoteId) {
+        Quote quote = quoteRepo.findById(quoteId)
+                .orElseThrow(() -> new RuntimeException("Orçamento não encontrado"));
+
+        quote.setClientSignature(null);
+        quoteRepo.save(quote);
+    }
+
+    @Transactional
     public void deleteQuote(UUID quoteId) {
         Quote quote = quoteRepo.findById(quoteId).orElse(null);
         if (quote != null) {
