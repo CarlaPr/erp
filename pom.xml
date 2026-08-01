@@ -69,7 +69,6 @@
 			<version>1.0.10</version>
 		</dependency>
 
-		<!-- Geração de relatórios em Excel (.xlsx) -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>

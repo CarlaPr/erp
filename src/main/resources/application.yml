@@ -1,7 +1,7 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/erp_db}
-    username: ${DB_USER:postgres}
+    url: ${DB_URL:jdbc:postgresql://postgresql-17:5432/postgre-icp-erp}
+    username: ${DB_USER:postgre-icp-erp}
     password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
 
