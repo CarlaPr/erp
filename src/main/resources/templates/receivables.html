@@ -419,6 +419,7 @@
             </div>
         </div>
     </div>
+
     <div id="receiveModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -498,6 +499,7 @@
             </form>
         </div>
     </div>
+
     <div id="editModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -608,6 +610,7 @@
             </form>
         </div>
     </div>
+
     <div id="cancelModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200 text-center">
 
@@ -631,6 +634,7 @@
             </form>
         </div>
     </div>
+
     <div id="exportModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -657,9 +661,11 @@
             </div>
         </div>
     </div>
+
     <select id="hiddenClientsData" class="hidden">
         <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
     </select>
+
     <select id="hiddenOsData" class="hidden">
         <option th:each="wo : ${workOrders}"
                 th:value="${wo.id}"

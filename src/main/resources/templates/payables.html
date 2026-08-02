@@ -8,7 +8,6 @@
 
 <main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen">
 
-    <!-- ── HEADER ── -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Contas a Pagar</h2>
@@ -20,7 +19,6 @@
         </button>
     </header>
 
-    <!-- ── ABAS ── -->
     <div class="flex flex-wrap gap-2 mb-6">
         <a th:href="@{/payables(aba='todas')}"
            th:classappend="${filterAba == null or filterAba == 'todas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
@@ -46,7 +44,6 @@
         </a>
     </div>
 
-    <!-- ── KPIs ── -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-indigo-600 dark:bg-indigo-900 p-6 rounded-2xl shadow-md border-none">
             <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1">Saldo Real (Atual)</span>
@@ -66,7 +63,6 @@
         </div>
     </div>
 
-    <!-- ── FILTROS ── -->
     <form method="GET" action="/payables" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 mb-8 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end mb-5">
             <div class="lg:col-span-2">
@@ -148,7 +144,6 @@
         </div>
     </form>
 
-    <!-- ── TABELA ── -->
     <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[980px]" id="payablesTable">
             <thead>
@@ -301,7 +296,19 @@
         </table>
     </div>
 
-    <!-- ── MODAL NOVA CONTA A PAGAR ── -->
+    <select id="hiddenClientsData" class="hidden">
+        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+    </select>
+
+    <select id="hiddenOsData" class="hidden">
+        <option th:each="wo : ${workOrders}"
+                th:value="${wo.id}"
+                th:data-number="${wo.number}"
+                th:data-title="${wo.title}"
+                th:data-client="${wo.client != null ? wo.client.name : ''}">
+        </option>
+    </select>
+
     <div id="payableModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -350,10 +357,16 @@
 
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">O.S. Relacionada</label>
-                        <select th:field="*{workOrder}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
-                            <option value="">Nenhuma</option>
-                            <option th:each="wo : ${workOrders}" th:value="${wo.id}" th:text="${wo.number}"></option>
-                        </select>
+                        <input type="hidden" th:field="*{workOrder}" id="newWorkOrderId">
+                        <div class="relative">
+                            <input type="text" id="newWorkOrderDisplay" readonly placeholder="Selecionar O.S..." onclick="openOsSearchModal()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-4 pr-10 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+
+                            <button type="button" id="clearWorkOrderBtn" onclick="clearWorkOrderSelection()" class="hidden absolute right-3 top-3 text-slate-400 hover:text-rose-500 transition-colors p-1 z-10 bg-slate-50 dark:bg-slate-900">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+
+                            <i data-lucide="search" class="absolute right-4 top-3.5 w-5 h-5 text-slate-400 pointer-events-none" id="searchOsIcon"></i>
+                        </div>
                     </div>
 
                     <div>
@@ -472,7 +485,35 @@
         </div>
     </div>
 
-    <!-- ── MODAL REGISTRAR PAGAMENTO ── -->
+    <div id="osSearchModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+
+            <button type="button" onclick="closeModal('osSearchModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-4 border-b border-slate-200 dark:border-slate-700 pb-4 flex items-center gap-2">
+                <i data-lucide="clipboard-list" class="text-brand-600 dark:text-cyan-400 w-6 h-6"></i> Selecionar O.S.
+            </h3>
+
+            <div class="flex gap-2 mb-4">
+                <div class="relative flex-1">
+                    <input type="text" id="searchOsInput" oninput="filterOsInModal()" placeholder="Buscar por número, título ou cliente..." autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-sm transition-colors" />
+                    <i data-lucide="search" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400"></i>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar border border-slate-200 dark:border-slate-700 rounded-xl min-h-[300px] h-[300px]">
+                <ul id="osSearchList" class="divide-y divide-slate-100 dark:divide-slate-800">
+                </ul>
+                <div id="emptyOsSearch" class="hidden flex flex-col items-center justify-center py-8 text-slate-500 dark:text-slate-400 h-full">
+                    <i data-lucide="inbox" class="w-10 h-10 opacity-50 mb-2"></i>
+                    <p class="text-sm">Nenhuma O.S. encontrada.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="payModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -521,7 +562,6 @@
         </div>
     </div>
 
-    <!-- ── MODAL EDITAR CONTA ── -->
     <div id="editModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -672,7 +712,6 @@
         </div>
     </div>
 
-    <!-- ── MODAL CANCELAR / DELETAR ── -->
     <div id="cancelModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200 text-center">
 
@@ -697,7 +736,6 @@
         </div>
     </div>
 
-    <!-- ── MODAL EXCLUIR CONTA RECORRENTE ── -->
     <div id="recurrenceDeleteModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
 
@@ -793,6 +831,85 @@
     const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
+    function openOsSearchModal() {
+        openModal('osSearchModal');
+        document.getElementById('searchOsInput').value = '';
+        renderOsList('');
+    }
+
+    function filterOsInModal() {
+        const val = document.getElementById('searchOsInput').value;
+        renderOsList(val);
+    }
+
+    function renderOsList(filter = '') {
+        const list = document.getElementById('osSearchList');
+        const emptyState = document.getElementById('emptyOsSearch');
+        const options = Array.from(document.getElementById('hiddenOsData').options);
+
+        list.innerHTML = '';
+        const lowerFilter = filter.toLowerCase();
+        let count = 0;
+
+        options.forEach(opt => {
+            const val = opt.value;
+            if (!val) return;
+
+            const num = opt.getAttribute('data-number') || '';
+            const title = opt.getAttribute('data-title') || '';
+            const client = opt.getAttribute('data-client') || '';
+
+            const searchStr = `${num} ${title} ${client}`.toLowerCase();
+
+            if (searchStr.includes(lowerFilter)) {
+                count++;
+                const li = document.createElement('li');
+                li.className = "p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors flex items-center justify-between group";
+                const displayText = `${num} - ${title}`;
+                li.onclick = () => selectOs(val, displayText);
+
+                li.innerHTML = `
+                    <div>
+                        <p class="font-bold text-slate-900 dark:text-white text-sm group-hover:text-brand-600 dark:group-hover:text-cyan-400 transition-colors">${num}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate max-w-[280px] sm:max-w-md">${title}</p>
+                        ${client ? `<p class="text-xs text-slate-400 mt-1 flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i>${client}</p>` : ''}
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-brand-500 transition-colors"></i>
+                `;
+                list.appendChild(li);
+            }
+        });
+
+        if (count === 0) {
+            emptyState.classList.remove('hidden');
+            emptyState.classList.add('flex');
+        } else {
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+        }
+
+        if (window.lucide) lucide.createIcons();
+    }
+
+    function selectOs(id, text) {
+        document.getElementById('newWorkOrderId').value = id;
+        document.getElementById('newWorkOrderDisplay').value = text;
+
+        document.getElementById('clearWorkOrderBtn').classList.remove('hidden');
+        document.getElementById('searchOsIcon').classList.add('hidden');
+
+        closeModal('osSearchModal');
+    }
+
+    function clearWorkOrderSelection() {
+        document.getElementById('newWorkOrderId').value = '';
+        document.getElementById('newWorkOrderDisplay').value = '';
+
+        document.getElementById('clearWorkOrderBtn').classList.add('hidden');
+        document.getElementById('searchOsIcon').classList.remove('hidden');
+    }
+
+    // ── Lógicas Originais Mantidas ──
     function openPayModal(id, balance) {
         document.getElementById('payForm').action = '/payables/pay/' + id;
         document.getElementById('payBalance').textContent = 'R$ ' + balance;
@@ -860,7 +977,6 @@
         if (window.lucide) lucide.createIcons();
     }
 
-    // ── Categorias/Subcategorias (carregadas do banco via /payables/categories-data) ──
     let subcategoryTree = {};
 
     function updateSubcategories(selectEl, targetId, currentValue) {
