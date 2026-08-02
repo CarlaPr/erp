@@ -27,13 +27,7 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
             @Param("inicio") LocalDate inicio,
             @Param("fim") LocalDate fim);
 
-    /**
-     * CMV = despesas do tipo 'VARIAVEL' que NÃO são despesa financeira.
-     * Antes da reestruturação, esta regra usava a.category = 'variable'; a partir da
-     * reestruturação de Contas a Pagar, o critério de negócio passou a ser o campo
-     * dedicado expenseType (independente da categoria/subcategoria detalhada),
-     * preservando o mesmo resultado para dados já existentes (migrados na V15).
-     */
+
     @Query("SELECT SUM(a.totalAmount) FROM AccountsPayable a " +
             "WHERE UPPER(a.expenseType) = 'VARIAVEL' " +
             "AND a.financialExpense = false " +
@@ -41,7 +35,7 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
             "AND a.dueDate >= :inicio AND a.dueDate < :fim")
     BigDecimal sumCmvByMonthAndYear(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
-    /** Despesas Fixas = tudo que NÃO é do tipo VARIAVEL e NÃO é despesa financeira. */
+
     @Query("SELECT SUM(a.totalAmount) FROM AccountsPayable a " +
             "WHERE UPPER(a.expenseType) != 'VARIAVEL' " +
             "AND a.financialExpense = false " +
@@ -68,7 +62,6 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
             "AND p.paymentDate >= :inicio AND p.paymentDate < :fim")
     BigDecimal sumSaidasRealByPeriod(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
-    // ─── Contas Fixas (dashboard e tela dedicada) ────────────────────────────
 
     @Query("SELECT COALESCE(SUM(p.totalAmount), 0) FROM AccountsPayable p " +
             "WHERE UPPER(p.category) = 'FIXA' AND p.status != 'cancelled' " +

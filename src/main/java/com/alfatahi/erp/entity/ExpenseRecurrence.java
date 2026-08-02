@@ -7,11 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Representa a "regra" de uma série de Contas a Pagar recorrentes.
- * Cada execução (parcela) é persistida como um registro independente em
- * {@link AccountsPayable}, vinculado por {@code recurrenceId}.
- */
+
 @Entity
 @Table(name = "expense_recurrences")
 public class ExpenseRecurrence {
@@ -66,11 +62,11 @@ public class ExpenseRecurrence {
     @Column(name = "end_type", nullable = false, length = 20)
     private RecurrenceEndType endType;
 
-    /** Quantidade total de repetições, quando endType = COUNT. */
+
     @Column(name = "occurrence_count")
     private Integer occurrenceCount;
 
-    /** Data final da recorrência, quando endType = DATE. */
+
     @Column(name = "end_date")
     private LocalDate endDate;
 
@@ -78,18 +74,17 @@ public class ExpenseRecurrence {
     @Column(nullable = false, length = 20)
     private RecurrenceStatus status = RecurrenceStatus.ACTIVE;
 
-    /** Quantidade de parcelas já geradas até o momento. */
+
     @Column(name = "total_generated")
     private Integer totalGenerated = 0;
 
-    /** Data de vencimento da última parcela já gerada (usado para "abastecer" recorrências infinitas). */
+
     @Column(name = "last_generated_due_date")
     private LocalDate lastGeneratedDueDate;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // ─── Getters & Setters ───────────────────────────────────────────────────
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }

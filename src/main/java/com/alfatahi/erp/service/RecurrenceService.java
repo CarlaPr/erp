@@ -12,26 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Motor de recorrência do módulo de Contas a Pagar.
- *
- * <p>Cada série de recorrência é representada por um {@link ExpenseRecurrence} e
- * gera parcelas independentes em {@link AccountsPayable}, vinculadas pelo campo
- * {@code recurrenceId}. As parcelas são sempre registros normais e independentes
- * (podem ser pagas, editadas ou excluídas isoladamente); o vínculo com a série
- * só é usado para as operações em lote (editar/excluir todos, cancelar futuras).</p>
- *
- * <p>Para recorrências longas ou infinitas, apenas um lote inicial é gerado na
- * criação; o {@code RecurringPayableGenerationJob} chama {@link #topUpAllActiveRecurrences()}
- * diariamente para manter um horizonte de parcelas futuras sempre disponível.</p>
- */
+
 @Service
 public class RecurrenceService {
 
-    /** Quantidade máxima de parcelas geradas de uma só vez (criação ou "top-up"). */
+
     private static final int BATCH_SIZE = 60;
 
-    /** Horizonte mínimo (em meses) de parcelas futuras que uma recorrência INFINITE deve manter geradas. */
+
     private static final int INFINITE_HORIZON_MONTHS = 6;
 
     private final ExpenseRecurrenceRepository recurrenceRepository;
@@ -43,12 +31,8 @@ public class RecurrenceService {
         this.payableRepository = payableRepository;
     }
 
-    // ─── Criação ──────────────────────────────────────────────────────────────
 
-    /**
-     * Cria uma nova série de recorrência a partir de um lançamento-modelo e gera
-     * o lote inicial de parcelas.
-     */
+
     @Transactional
     public List<AccountsPayable> createRecurrence(AccountsPayable template,
                                                    RecurrenceFrequency frequency,
@@ -83,7 +67,7 @@ public class RecurrenceService {
         return created;
     }
 
-    /** Gera até {@code maxToGenerate} novas parcelas a partir do ponto onde a série parou. */
+
     private List<AccountsPayable> generateNextBatch(ExpenseRecurrence rec, int maxToGenerate) {
         List<AccountsPayable> created = new ArrayList<>();
         if (rec.getStatus() != RecurrenceStatus.ACTIVE) return created;
@@ -142,14 +126,8 @@ public class RecurrenceService {
         return ap;
     }
 
-    // ─── Top-up automático (job diário) ───────────────────────────────────────
 
-    /**
-     * Percorre todas as recorrências ativas e gera novas parcelas quando necessário:
-     * séries com quantidade/data definidas continuam até completar; séries infinitas
-     * são mantidas com um horizonte mínimo de {@value #INFINITE_HORIZON_MONTHS} meses
-     * de parcelas futuras já geradas.
-     */
+
     @Transactional
     public int topUpAllActiveRecurrences() {
         int totalCreated = 0;
@@ -160,7 +138,7 @@ public class RecurrenceService {
             if (rec.getEndType() == RecurrenceEndType.INFINITE) {
                 needsMore = rec.getLastGeneratedDueDate() == null || rec.getLastGeneratedDueDate().isBefore(horizonLimit);
             } else {
-                needsMore = true; // ainda não atingiu COUNT/DATE (senão já estaria COMPLETED)
+                needsMore = true;
             }
             if (!needsMore) continue;
 
@@ -171,13 +149,8 @@ public class RecurrenceService {
         return totalCreated;
     }
 
-    // ─── Exclusão em massa ─────────────────────────────────────────────────────
 
-    /**
-     * Remove (ou cancela, se já houver pagamento) apenas o lançamento informado.
-     * Regra: pendente sem pagamento é excluído de fato; caso contrário é apenas
-     * marcado como cancelado, preservando o histórico financeiro.
-     */
+
     @Transactional
     public void deleteSingleInstallment(UUID payableId) {
         AccountsPayable ap = payableRepository.findById(payableId)
@@ -185,11 +158,7 @@ public class RecurrenceService {
         removeOrCancel(ap);
     }
 
-    /**
-     * Remove o lançamento informado e todos os futuros da mesma série (por data de
-     * vencimento). A série é encerrada (CANCELLED) para não gerar novas parcelas
-     * além do ponto de corte.
-     */
+
     @Transactional
     public int deleteCurrentAndFuture(UUID payableId) {
         AccountsPayable current = payableRepository.findById(payableId)
@@ -209,7 +178,7 @@ public class RecurrenceService {
         return toRemove.size();
     }
 
-    /** Remove (ou cancela) todos os lançamentos da série e encerra a recorrência. */
+
     @Transactional
     public int deleteEntireSeries(UUID recurrenceId) {
         List<AccountsPayable> all = payableRepository.findByRecurrenceIdOrderByDueDateAsc(recurrenceId);
@@ -231,13 +200,8 @@ public class RecurrenceService {
         }
     }
 
-    // ─── Edição em lote ─────────────────────────────────────────────────────────
 
-    /**
-     * Aplica alterações a todos os lançamentos não totalmente pagos da série (o histórico
-     * de contas já pagas é preservado) e atualiza o modelo da recorrência, para que as
-     * próximas parcelas geradas também reflitam a alteração.
-     */
+
     @Transactional
     public int editEntireSeries(UUID recurrenceId, AccountsPayable changes) {
         ExpenseRecurrence rec = recurrenceRepository.findById(recurrenceId)
@@ -273,7 +237,7 @@ public class RecurrenceService {
         return updated;
     }
 
-    /** Encerra a série sem excluir/alterar as parcelas já geradas: apenas para de gerar novas. */
+
     @Transactional
     public void cancelFutureOccurrences(UUID recurrenceId) {
         ExpenseRecurrence rec = recurrenceRepository.findById(recurrenceId)

@@ -74,27 +74,27 @@ public class AccountsPayable {
     @Column(name = "source_receivable_id")
     private UUID sourceReceivableId;
 
-    /** Tipo da despesa: FIXA ou VARIAVEL — usado para relatórios de CMV/custo fixo. */
+
     @Column(name = "expense_type", length = 20)
     private String expenseType;
 
-    /** Natureza da despesa: OPERACIONAL, ADMINISTRATIVA, FINANCEIRA, TRIBUTARIA, PESSOAL, INVESTIMENTO. */
+
     @Column(name = "expense_nature", length = 30)
     private String expenseNature;
 
-    /** Centro de custo (texto livre, ex.: Administrativo, Produção, Comercial, ou nº da O.S.). */
+
     @Column(name = "cost_center", length = 120)
     private String costCenter;
 
-    /** Competência contábil (mês/ano de referência da despesa, independente do vencimento). */
+
     @Column(name = "competencia")
     private LocalDate competencia;
 
-    /** Identificador da série de recorrência (nulo para lançamentos avulsos). */
+
     @Column(name = "recurrence_id")
     private UUID recurrenceId;
 
-    /** Posição desta parcela dentro da série de recorrência (1, 2, 3...). */
+
     @Column(name = "recurrence_seq")
     private Integer recurrenceSeq;
 
@@ -115,7 +115,6 @@ public class AccountsPayable {
     public Integer getRecurrenceSeq() { return recurrenceSeq; }
     public void setRecurrenceSeq(Integer recurrenceSeq) { this.recurrenceSeq = recurrenceSeq; }
 
-    // ─── Getters & Setters ───────────────────────────────────────────────────
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -153,7 +152,7 @@ public class AccountsPayable {
         return totalAmount.subtract(getPaidAmount());
     }
 
-    /** Verdadeiro quando a conta está pendente/parcial e o vencimento já passou. */
+
     public boolean isOverdue() {
         return dueDate != null
                 && ("pending".equals(status) || "partial".equals(status))

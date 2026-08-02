@@ -14,7 +14,7 @@ public class QuoteItem {
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Quote quote;
 
-    private String category; // Box, Sacada, Janela, Espelho
+    private String category;
 
     @Column(columnDefinition = "TEXT")
     private String product;
@@ -27,7 +27,6 @@ public class QuoteItem {
     @Column(precision = 10, scale = 2) private BigDecimal quantity = BigDecimal.ONE;
     @Column(precision = 12, scale = 2) private BigDecimal unitPrice = BigDecimal.ZERO;
 
-    // Gere os Getters e Setters padrão
     public UUID getId() { return id; } public void setId(UUID id) { this.id = id; }
     public Quote getQuote() { return quote; } public void setQuote(Quote quote) { this.quote = quote; }
     public String getCategory() { return category; } public void setCategory(String category) { this.category = category; }

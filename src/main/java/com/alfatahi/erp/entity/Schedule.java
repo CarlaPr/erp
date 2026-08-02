@@ -79,7 +79,6 @@ public class Schedule {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // Getters e Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 

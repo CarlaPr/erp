@@ -6,12 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/**
- * Mantém as séries de Contas Recorrentes "abastecidas": gera as próximas parcelas
- * de recorrências com quantidade/data definidas até completá-las, e mantém um
- * horizonte mínimo de parcelas futuras para recorrências infinitas.
- * Segue o mesmo padrão dos demais jobs noturnos do sistema (ex.: {@link ScheduleOverdueJob}).
- */
+
 @Component
 public class RecurringPayableGenerationJob {
 

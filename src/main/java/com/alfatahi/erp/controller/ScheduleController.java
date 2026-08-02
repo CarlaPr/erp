@@ -17,11 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Módulo AGENDA COMERCIAL (Portal de Vendas).
- * Não é uma tela operacional nova: apenas organiza data/prazo/status de execução
- * dos serviços já aprovados, sempre em torno da OS (WorkOrder) já existente.
- */
+
 @Controller
 @RequestMapping("/agenda")
 public class ScheduleController {

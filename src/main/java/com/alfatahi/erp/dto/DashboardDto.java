@@ -23,7 +23,6 @@ public class DashboardDto {
     private BigDecimal perdas = BigDecimal.ZERO;
     private BigDecimal perdasPercentual = BigDecimal.ZERO;
 
-    // Getters e Setters
     public BigDecimal getSaldoAtual() { return saldoAtual; }
     public void setSaldoAtual(BigDecimal saldoAtual) { this.saldoAtual = saldoAtual; }
     public BigDecimal getSaldoProjetado() { return saldoProjetado; }

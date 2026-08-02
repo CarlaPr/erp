@@ -3,10 +3,7 @@ package com.alfatahi.erp.dto;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/**
- * Representa uma linha (item/material/serviço) dentro do relatório de uma Ordem de Serviço,
- * já com o custo de produção/material, o preço de venda e a margem calculados.
- */
+
 public class WorkOrderItemReportDto {
 
     private String description;

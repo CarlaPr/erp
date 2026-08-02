@@ -16,8 +16,6 @@
             <i data-lucide="alert-triangle" class="w-5 h-5"></i> Registar Perda
         </button>
     </header>
-
-    <!-- Indicadores Principais (Com as variáveis corretas) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div class="bg-white dark:bg-amber-500/10 p-6 rounded-2xl border border-slate-200 dark:border-amber-500/30 shadow-sm relative overflow-hidden group">
             <span class="text-slate-500 dark:text-amber-400 text-xs font-bold uppercase tracking-wider">Impacto Financeiro Global</span>
@@ -35,8 +33,6 @@
             <p class="text-xs font-medium text-slate-500 mt-2">Parcela de custos gerada por ineficiência.</p>
         </div>
     </div>
-
-    <!-- Indicadores Secundários (Com as variáveis corretas) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-white dark:bg-[#131C2F] p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
             <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Vidro Quebrado</span>
@@ -55,8 +51,6 @@
             <p class="text-xl font-bold text-slate-900 dark:text-white mt-1.5" th:text="'R$ ' + ${valTransporte}">R$ 0,00</p>
         </div>
     </div>
-
-    <!-- Tabela Principal (Com as variáveis corretas do array l : ${losses}) -->
     <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[760px]">
             <thead>
@@ -96,8 +90,6 @@
             </tbody>
         </table>
     </div>
-
-    <!-- Modal Registo (Com variáveis corretas de formulário) -->
     <div id="lossModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <button type="button" onclick="toggleModal('lossModal', false)" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">

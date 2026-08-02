@@ -45,7 +45,6 @@ public class CommercialController {
 
         long totalReceipts = approved;
 
-        // Injeção de atributos na view
         model.addAttribute("currentPage", "commercial");
         model.addAttribute("totalQuotes", totalQuotes);
         model.addAttribute("totalClients", totalClients);

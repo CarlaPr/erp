@@ -6,11 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/**
- * Atualiza automaticamente o status/semáforo dos agendamentos da Agenda Comercial
- * cujo prazo (Data Aprovação + 15 dias corridos) foi ultrapassado sem conclusão.
- * Segue o mesmo padrão do {@link QuoteExpirationJob} já existente.
- */
+
 @Component
 public class ScheduleOverdueJob {
 

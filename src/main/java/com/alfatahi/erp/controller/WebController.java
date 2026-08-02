@@ -56,41 +56,33 @@ public class WebController {
             Model model) {
         LocalDate hoje      = LocalDate.now();
 
-        // Se não foi selecionado mês/ano, usa o atual
         if (mes == null) mes = hoje.getMonthValue();
         if (ano == null) ano = hoje.getYear();
 
-        // Validar valores
         if (mes < 1 || mes > 12) mes = hoje.getMonthValue();
         if (ano < 2000 || ano > 2100) ano = hoje.getYear();
 
-        // Calcula período do mês selecionado
         YearMonth ym = YearMonth.of(ano, mes);
         LocalDate inicioMes = ym.atDay(1);
-        LocalDate fimMes    = ym.atEndOfMonth().plusDays(1);  // exclusive para queries
+        LocalDate fimMes    = ym.atEndOfMonth().plusDays(1);
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // CAIXA REAL — Global (Independente do mês selecionado)
-        // ═══════════════════════════════════════════════════════════════════════
 
-        // Total recebido de todos os tempos (saldo real global)
+
+
         BigDecimal totalRecebidoReal = receivableRepo.findAll().stream()
                 .filter(r -> ("received".equals(r.getStatus()) || "partial".equals(r.getStatus()))
                         && r.getPaymentDate() != null)
                 .map(AccountsReceivable::getReceivedAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Total pago de todos os tempos (saldo real global)
         BigDecimal totalPagoReal = payableRepo.findAll().stream()
                 .filter(p -> ("paid".equals(p.getStatus()) || "partial".equals(p.getStatus()))
                         && p.getPaymentDate() != null)
                 .map(AccountsPayable::getPaidAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Saldo Real = Todo dinheiro que já entrou – todo dinheiro que já saiu (Saldo Global)
         BigDecimal saldoReal = totalRecebidoReal.subtract(totalPagoReal);
 
-        // Entradas de hoje (se for o mês atual)
         BigDecimal entradasHoje = BigDecimal.ZERO;
         BigDecimal saidasHoje = BigDecimal.ZERO;
         if (mes == hoje.getMonthValue() && ano == hoje.getYear()) {
@@ -101,14 +93,11 @@ public class WebController {
             if (saidasHoje == null) saidasHoje = BigDecimal.ZERO;
         }
 
-        // Taxas de cartão do mês selecionado
         BigDecimal taxasCartaoMes = nvl(receivableRepo.sumTaxasCartaoByPeriod(inicioMes, fimMes));
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // CAIXA PREVISTO — valores que ainda vão entrar ou sair no mês selecionado
-        // ═══════════════════════════════════════════════════════════════════════
 
-        // Contas a receber do mês: pendentes ou parcialmente pagas com vencimento no mês
+
+
         BigDecimal totalAReceber = receivableRepo.findAll().stream()
                 .filter(r -> ("pending".equals(r.getStatus()) || "partial".equals(r.getStatus()))
                         && r.getDueDate() != null
@@ -117,7 +106,6 @@ public class WebController {
                 .map(r -> r.getBalance() != null ? r.getBalance() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Contas a pagar do mês: pendentes ou parcialmente pagas com vencimento no mês
         BigDecimal totalAPagar = payableRepo.findAll().stream()
                 .filter(p -> ("pending".equals(p.getStatus()) || "partial".equals(p.getStatus()))
                         && p.getDueDate() != null
@@ -126,19 +114,14 @@ public class WebController {
                 .map(p -> p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Entradas previstas no mês: pendentes com vencimento no mês
         BigDecimal entradasPrevistasMes = totalAReceber;
 
-        // Receitas antecipadas: pagas hoje mas competência futura
         BigDecimal receitasAntecipadas = nvl(receivableRepo.sumReceitasAntecipadas(inicioMes, fimMes));
 
-        // Receitas futuras: pendentes com competência no mês
         BigDecimal receitasFuturas = nvl(receivableRepo.sumReceitasFuturas(inicioMes, fimMes));
 
-        // Saldo projetado = Saldo Real + A Receber - A Pagar (projeção, não fato)
         BigDecimal saldoProjetado = saldoReal.add(totalAReceber).subtract(totalAPagar);
 
-        // Recebimentos em atraso até o final do mês selecionado
         BigDecimal aReceberAtrasado = receivableRepo.findAll().stream()
                 .filter(r -> ("pending".equals(r.getStatus()) || "partial".equals(r.getStatus()))
                         && r.getDueDate() != null
@@ -153,19 +136,14 @@ public class WebController {
                 .map(p -> p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // RECEITA DO MÊS PARA O GRÁFICO DE BARRAS
-        // ═══════════════════════════════════════════════════════════════════════
 
-        // Receita bruta recebida no mês (para DRE / barra)
+
+
         BigDecimal receitaBrutaMes = nvl(receivableRepo.sumReceivedByMonthAndYear(inicioMes, fimMes));
-
-        // Despesas totais do mês (pagas)
+        
         BigDecimal totalDespesasMes = nvl(payableRepo.sumSaidasRealByPeriod(inicioMes, fimMes));
 
-        BigDecimal totalPerdas = lossRepo.findAll().stream()
-                .map(l -> l.getFinancialImpact() != null ? l.getFinancialImpact() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalPerdas = nvl(lossRepo.sumFinancialImpactByPeriod(inicioMes, fimMes));
 
         BigDecimal maxBar = receitaBrutaMes.max(totalDespesasMes).max(totalPerdas);
         int barReceitas = 0, barDespesas = 0, barPerdas = 0;
@@ -182,9 +160,7 @@ public class WebController {
                     .divide(receitaBrutaMes, 2, RoundingMode.HALF_UP);
         }
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // ORDENS DE SERVIÇO (filtradas pelo mês selecionado)
-        // ═══════════════════════════════════════════════════════════════════════
+
 
         long osEmAndamento = workOrderRepo.findAll().stream()
                 .filter(wo -> ("in_progress".equalsIgnoreCase(wo.getStatus())
@@ -204,6 +180,13 @@ public class WebController {
                         && !wo.getInstallDate().isBefore(inicioMes)
                         && wo.getInstallDate().isBefore(fimMes))
                 .count();
+
+        BigDecimal receitaOsMes = nvl(workOrderRepo.sumRevenueConcludedByPeriod(inicioMes, fimMes));
+
+        BigDecimal ticketMedioOsMes = BigDecimal.ZERO;
+        if (osConcluidasMes > 0) {
+            ticketMedioOsMes = receitaOsMes.divide(BigDecimal.valueOf(osConcluidasMes), 2, RoundingMode.HALF_UP);
+        }
 
         long osAbertas = workOrderRepo.findAll().stream()
                 .filter(w -> ("aberta".equalsIgnoreCase(w.getStatus()) || "em_producao".equalsIgnoreCase(w.getStatus()))
@@ -252,9 +235,8 @@ public class WebController {
                 .limit(5)
                 .collect(Collectors.toList());
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // ORÇAMENTOS (filtrados pelo mês selecionado)
-        // ═══════════════════════════════════════════════════════════════════════
+
+
 
         long orcamentosPendentes = quoteRepo.findAll().stream()
                 .filter(q -> "pending".equalsIgnoreCase(q.getStatus())
@@ -291,9 +273,8 @@ public class WebController {
 
         List<Schedule> agendaHoje = scheduleService.findByDate(hoje);
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // CONTAS FIXAS (indicadores do painel dedicado, resumidos no dashboard)
-        // ═══════════════════════════════════════════════════════════════════════
+
+
         BigDecimal fixedTotalMes = nvl(payableRepo.sumFixedTotalByMonth(inicioMes, fimMes));
         BigDecimal fixedPagoMes = nvl(payableRepo.sumFixedPaidByMonth(inicioMes, fimMes));
         BigDecimal fixedPendenteMes = nvl(payableRepo.sumFixedPendingByMonth(inicioMes, fimMes));
@@ -301,23 +282,19 @@ public class WebController {
                 .limit(5)
                 .collect(Collectors.toList());
 
-        // Adicionar informações do mês selecionado
         String nomeMes = java.time.Month.of(mes).toString();
 
-        // ── Monta o model ──────────────────────────────────────────────────────
         model.addAttribute("currentPage", "dashboard");
         model.addAttribute("mesSelecionado", mes);
         model.addAttribute("anoSelecionado", ano);
         model.addAttribute("nomeMes", nomeMes);
         model.addAttribute("periodoExibicao", String.format("%s/%d", mes < 10 ? "0" + mes : mes, ano));
 
-        // Caixa REAL
-        model.addAttribute("saldoAtual",        saldoReal);        // dinheiro disponível de fato
+        model.addAttribute("saldoAtual",        saldoReal);
         model.addAttribute("entradasHoje",       entradasHoje);
         model.addAttribute("saidasHoje",         saidasHoje);
         model.addAttribute("taxasCartaoMes",     taxasCartaoMes);
 
-        // Caixa PREVISTO (nunca misturar com saldoAtual)
         model.addAttribute("totalAReceber",      totalAReceber);
         model.addAttribute("totalAPagar",        totalAPagar);
         model.addAttribute("entradasPrevistasMes", entradasPrevistasMes);
@@ -325,7 +302,6 @@ public class WebController {
         model.addAttribute("receitasFuturas",      receitasFuturas);
         model.addAttribute("saldoProjetado",     saldoProjetado);
 
-        // Mês corrente
         model.addAttribute("receitaBrutaMes",   receitaBrutaMes);
         model.addAttribute("totalDespesasMes",  totalDespesasMes);
         model.addAttribute("aReceberAtrasado",  aReceberAtrasado);
@@ -333,14 +309,12 @@ public class WebController {
         model.addAttribute("totalPerdas",       totalPerdas);
         model.addAttribute("margemPerdas",      margemPerdas);
 
-        // Gráfico de barras
         model.addAttribute("totalReceitas",  receitaBrutaMes);
         model.addAttribute("totalDespesas",  totalDespesasMes);
         model.addAttribute("barReceitas",    barReceitas);
         model.addAttribute("barDespesas",    barDespesas);
         model.addAttribute("barPerdas",      barPerdas);
 
-        // OS
         model.addAttribute("osEmAndamento",  osEmAndamento);
         model.addAttribute("osConcluidasMes",osConcluidasMes);
         model.addAttribute("osAbertas",      osAbertas);
@@ -350,7 +324,6 @@ public class WebController {
         model.addAttribute("osConcluidas",   osConcluidas);
         model.addAttribute("ultimasOs",      ultimasOs);
 
-        // Orçamentos
         model.addAttribute("orcamentosPendentes", orcamentosPendentes);
         model.addAttribute("orcamentosAprovados", orcamentosAprovados);
         model.addAttribute("orcamentosValor",     orcamentosValor);
@@ -358,7 +331,6 @@ public class WebController {
 
         model.addAttribute("agendaHoje", agendaHoje);
 
-        // Contas Fixas (resumo)
         model.addAttribute("fixedTotalMes", fixedTotalMes);
         model.addAttribute("fixedPagoMes", fixedPagoMes);
         model.addAttribute("fixedPendenteMes", fixedPendenteMes);

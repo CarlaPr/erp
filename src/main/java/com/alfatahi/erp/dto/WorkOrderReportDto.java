@@ -8,10 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * DTO de relatório de Ordem de Serviço (individual ou como linha de um relatório consolidado).
- * Reúne: item(ns) vendido(s), custo de produção/materiais, receita, custo total e lucro da O.S.
- */
 public class WorkOrderReportDto {
 
     private UUID id;
@@ -90,7 +86,6 @@ public class WorkOrderReportDto {
     public List<WorkOrderItemReportDto> getItems() { return items; }
     public void setItems(List<WorkOrderItemReportDto> items) { this.items = items; }
 
-    // ── Totais calculados ──────────────────────────────────────────────
     public BigDecimal getTotalRevenue() {
         return items.stream().map(WorkOrderItemReportDto::getTotalPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
     }

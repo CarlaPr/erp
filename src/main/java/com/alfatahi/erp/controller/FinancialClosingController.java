@@ -26,7 +26,6 @@ public class FinancialClosingController {
         model.addAttribute("currentPage", "financial-closing");
         model.addAttribute("closings",    closings);
 
-        // Próximo período (dia 6 até dia 5 do mês seguinte) ainda não fechado, em ordem cronológica.
         java.time.LocalDate proximoPeriodo    = closingService.proximoPeriodoParaFechar();
         boolean liberado                      = closingService.periodoLiberadoParaFechamento(proximoPeriodo);
         java.time.LocalDate dataLiberacao     = closingService.dataLiberacaoFechamento(proximoPeriodo);

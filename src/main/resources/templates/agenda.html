@@ -14,8 +14,6 @@
             <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Agende, acompanhe o prazo e reagende os serviços aprovados.</p>
         </div>
     </header>
-
-    <!-- KPIs -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
             <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Aprovados</span>
@@ -42,8 +40,6 @@
             <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1" th:text="${kpis.semana}">0</p>
         </div>
     </div>
-
-    <!-- FILTROS -->
     <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm mb-6">
         <div class="flex flex-wrap items-center gap-3">
             <div class="relative flex-1 min-w-[220px]">
@@ -104,8 +100,6 @@
         </button>
     </div>
     <br>
-
-    <!-- VISÃO CALENDÁRIO -->
     <div id="calendarView">
 
         <div id="unscheduledPanel" class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-5 mb-6 hidden">
@@ -142,8 +136,6 @@
             <div id="calendarGrid" class="grid grid-cols-7"></div>
         </div>
     </div>
-
-    <!-- VISÃO LISTA -->
     <div id="listView" class="hidden bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
@@ -164,8 +156,6 @@
             <p id="listEmpty" class="p-8 text-center text-slate-500 font-medium hidden">Nenhum agendamento encontrado para os filtros selecionados.</p>
         </div>
     </div>
-
-    <!-- MODAL DO DIA -->
     <div id="dayModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative my-10">
             <button type="button" onclick="closeModal('dayModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -189,8 +179,6 @@
             <div id="dayModalList" class="space-y-3 max-h-[65vh] overflow-y-auto pr-1"></div>
         </div>
     </div>
-
-    <!-- MODAL AGENDAR / EDITAR / REAGENDAR -->
     <div id="editModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-[60] overflow-y-auto py-10 px-4">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative my-auto">
             <button type="button" onclick="closeModal('editModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -302,8 +290,6 @@
             </div>
         </div>
     </div>
-
-    <!-- MODAL CANCELAR AGENDAMENTO -->
     <div id="cancelScheduleModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative">
             <button type="button" onclick="closeModal('cancelScheduleModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -335,7 +321,7 @@
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 
 <script th:inline="javascript">
-    const SCHEDULES = /*[[${schedules}]]*/ [];
+    const SCHEDULES = [];
 
     const STATUS_META = {
         AGUARDANDO_AGENDAMENTO: { label: 'Aguardando Agendamento', badge: 'bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300', dot: 'bg-slate-400' },
@@ -673,7 +659,7 @@
         html += `
             <script>
             window.onload = function() {
-                // Desenha os ícones antes de imprimir
+
                 lucide.createIcons();
 
                 setTimeout(() => {

@@ -112,14 +112,13 @@ public class PayableController {
         if (dateTo != null) { final LocalDate dt = dateTo; list = list.stream().filter(p -> !p.getDueDate().isAfter(dt)).collect(Collectors.toList()); }
         if (workOrderId != null) list = list.stream().filter(p -> p.getWorkOrder() != null && workOrderId.equals(p.getWorkOrder().getId())).collect(Collectors.toList());
 
-        // ── Abas (Todas / Fixas / Recorrentes / Vencidas / Pagas / Provisionamentos) ──
         switch (aba == null ? "todas" : aba) {
             case "fixas" -> list = list.stream().filter(p -> "FIXA".equalsIgnoreCase(p.getCategory())).collect(Collectors.toList());
             case "recorrentes" -> list = list.stream().filter(p -> Boolean.TRUE.equals(p.getRecurring())).collect(Collectors.toList());
             case "vencidas" -> list = list.stream().filter(AccountsPayable::isOverdue).collect(Collectors.toList());
             case "pagas" -> list = list.stream().filter(p -> "paid".equals(p.getStatus())).collect(Collectors.toList());
             case "provisionamentos" -> list = list.stream().filter(p -> "PROVISIONAMENTO".equalsIgnoreCase(p.getCategory())).collect(Collectors.toList());
-            default -> { /* todas: sem filtro adicional */ }
+            default -> {  }
         }
 
         BigDecimal totalEntradasGeral = financeService.listAllReceivables().stream().filter(r -> "received".equals(r.getStatus()) || "partial".equals(r.getStatus())).map(AccountsReceivable::getNetReceivedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -159,7 +158,7 @@ public class PayableController {
         return "payables";
     }
 
-    /** Árvore de categorias/subcategorias em JSON, consumida via fetch() pelos formulários. */
+
     @Transactional(readOnly = true)
     @GetMapping("/categories-data")
     @ResponseBody
@@ -170,7 +169,6 @@ public class PayableController {
         return result;
     }
 
-    // ─── Tela dedicada de Contas Fixas ─────────────────────────────────────────
 
     @Transactional(readOnly = true)
     @GetMapping("/fixed")
@@ -227,7 +225,6 @@ public class PayableController {
         return "fixed-accounts";
     }
 
-    // ─── CRUD ────────────────────────────────────────────────────────────────
 
     @PostMapping("/edit/{id}")
     public String edit(@PathVariable UUID id, @ModelAttribute AccountsPayable form,
@@ -338,7 +335,6 @@ public class PayableController {
         return cancel(id);
     }
 
-    // ─── Operações em massa para Contas Recorrentes ────────────────────────────
 
     @PostMapping("/recurrence/delete-single/{id}")
     public String deleteRecurrenceSingle(@PathVariable UUID id) {
@@ -423,9 +419,8 @@ public class PayableController {
         writer.flush();
     }
 
-    // ─── Helpers ────────────────────────────────────────────────────────────
 
-    /** Preenche campos derivados quando não informados explicitamente pelo formulário. */
+
     private void applyDerivedFields(AccountsPayable p) {
         if (p.getExpenseType() == null || p.getExpenseType().isBlank()) {
             p.setExpenseType("VARIAVEL".equalsIgnoreCase(p.getCategory()) ? "VARIAVEL" : "FIXA");

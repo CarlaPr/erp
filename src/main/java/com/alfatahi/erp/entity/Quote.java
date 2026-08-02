@@ -78,7 +78,6 @@ public class Quote {
     @Column(name = "client_signature", columnDefinition = "text")
     private String clientSignature;
 
-    // Getters e Setters
     public String getSellerName() { return sellerName; }
     public void setSellerName(String sellerName) { this.sellerName = sellerName; }
 

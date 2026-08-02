@@ -1153,7 +1153,7 @@
                 if(instInput) instInput.value = q.installments || 1;
 
                 const discInput = document.getElementById('quoteDiscount');
-                if(discInput) discInput.value = q.discountPercent || 0; // CARREGA O DESCONTO
+                if(discInput) discInput.value = q.discountPercent || 0;
 
                 document.getElementById('quoteObs').value = q.observations || '';
                 document.getElementById('quoteWarranty').value = q.warranty || '';
@@ -1638,11 +1638,11 @@
         fetch(`/quotes/view-data/${id}`)
             .then(res => res.json())
             .then(q => {
-                currentActiveQuoteIdForPdf    = id;   // salva ID para geração server-side do PDF
+                currentActiveQuoteIdForPdf    = id;
                 currentActiveNumberForPdf     = q.number || 'ORC-0000';
                 currentActiveClientForPdf     = q.client ? q.client.name : 'Consumidor Final';
                 currentActiveClientPhoneForPdf = q.client && q.client.phone ? q.client.phone : '';
-                // ==========================================
+
 
                 const setSafeText = (id, text) => {
                     const el = document.getElementById(id);
@@ -1898,7 +1898,6 @@
                     option.selected = true;
                     select.appendChild(option);
 
-                    // Atualiza o input visual também
                     document.getElementById('quoteClientName').value = savedClient.name;
                 }
 

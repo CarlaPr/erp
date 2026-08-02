@@ -10,11 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Fornece o catálogo de Categorias/Subcategorias de despesa (Contas a Pagar)
- * para as telas, incluindo a árvore em JSON usada pelos formulários para
- * popular a subcategoria dinamicamente a partir da categoria escolhida.
- */
+
 @Service
 public class CategoryCatalogService {
 
@@ -32,10 +28,7 @@ public class CategoryCatalogService {
         return categoryRepository.findByActiveTrueOrderByDisplayOrderAsc();
     }
 
-    /**
-     * Monta { "FIXA": [ {value,text,group}, ... ], "VARIAVEL": [...] }, usado tanto pelo
-     * endpoint JSON consumido via fetch() nas telas quanto internamente.
-     */
+
     public Map<String, List<Map<String, String>>> buildCategoryTree() {
         List<ExpenseSubcategory> subs = subcategoryRepository.findAllByOrderByDisplayOrderAsc();
         Map<String, List<Map<String, String>>> tree = new LinkedHashMap<>();
@@ -57,7 +50,7 @@ public class CategoryCatalogService {
         return tree;
     }
 
-    /** Mesma árvore de {@link #buildCategoryTree()}, já serializada em JSON. */
+
     public String buildCategoryTreeJson() {
         try {
             return objectMapper.writeValueAsString(buildCategoryTree());

@@ -90,7 +90,6 @@ public class FinanceService {
             netAmount = amountReceived;
         }
 
-        // Acumula valores (suporte a múltiplos recebimentos parciais)
         BigDecimal newNetTotal   = ar.getReceivedAmount().add(netAmount);
         BigDecimal newGrossTotal = ar.getGrossReceivedAmount().add(amountReceived);
         BigDecimal newFeeTotal   = ar.getFeeAmount().add(feeForThisPayment);
@@ -104,12 +103,10 @@ public class FinanceService {
         if (cardFeePercent != null && cardFeePercent.compareTo(BigDecimal.ZERO) > 0)
             ar.setCardFeePercentage(cardFeePercent);
 
-        // Atualiza a visualização do desconto atrelado na própria conta
         if (discountAmount != null) {
             ar.setDiscount(discountAmount);
         }
 
-        // Observação de auditoria no campo notes da conta a receber
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String dateStr = (paymentDate != null ? paymentDate : LocalDate.now()).format(fmt);
         String autoNote;
@@ -128,7 +125,6 @@ public class FinanceService {
         String existingNotes = ar.getNotes();
         ar.setNotes((existingNotes != null && !existingNotes.isBlank() ? existingNotes + "\n" : "") + autoNote);
 
-        // ── REGISTRA TAXA/DESCONTO COMO CUSTO OPERACIONAL NA O.S. (NÃO NO CONTAS A PAGAR) ──────
         if (ar.getWorkOrder() != null) {
             WorkOrder wo = ar.getWorkOrder();
             boolean hasOsChanges = false;
@@ -138,11 +134,10 @@ public class FinanceService {
                 wo.setItems(new ArrayList<>());
             }
 
-            // 1. Taxa da maquininha
             if (feeForThisPayment.compareTo(BigDecimal.ZERO) > 0) {
                 WorkOrderItem opFee = new WorkOrderItem();
                 opFee.setWorkOrder(wo);
-                // Utilizando a formatação oficial do javascript [OP] Categoria | Data | Obs ||| Descrição
+
                 opFee.setDescription("[OP] Outros | " + opDateStr + " | Taxa " + fee + "% ||| Taxa de Maquininha — " + (paymentMethod != null ? paymentMethod : "Automática"));
                 opFee.setQuantity(BigDecimal.ONE);
                 opFee.setUnitCost(feeForThisPayment);
@@ -151,7 +146,6 @@ public class FinanceService {
                 hasOsChanges = true;
             }
 
-            // 2. Desconto
             if (discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0) {
                 WorkOrderItem opDiscount = new WorkOrderItem();
                 opDiscount.setWorkOrder(wo);
@@ -168,7 +162,6 @@ public class FinanceService {
             }
         }
 
-        // ── Atualiza status da Conta a Receber ───────────────────────────────
         if (newGrossTotal.compareTo(BigDecimal.ZERO) > 0
                 && newGrossTotal.compareTo(ar.getTotalAmount()) < 0) {
             ar.setStatus("partial");

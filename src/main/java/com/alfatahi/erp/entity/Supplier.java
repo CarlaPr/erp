@@ -20,7 +20,7 @@ public class Supplier {
     private String address;
     private String city;
     private String document;
-    private String category; // Categoria textual direta do fornecedor
+    private String category;
 
     @Column(columnDefinition = "text")
     private String notes;
@@ -31,7 +31,6 @@ public class Supplier {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // Getters and Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getName() { return name; }

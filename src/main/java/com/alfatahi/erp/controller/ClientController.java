@@ -19,22 +19,21 @@ public class ClientController {
         this.clientService = clientService;
     }
 
-    // Método unificado para listar e pesquisar
     @GetMapping
     public String listClients(@RequestParam(value = "search", required = false) String search, Model model) {
         model.addAttribute("currentPage", "clients");
 
         List<Client> clients;
-        // Verifica se há um termo de pesquisa
+
         if (search != null && !search.trim().isEmpty()) {
-            clients = clientService.getAllClients(search); // Método de busca que você criou no service
+            clients = clientService.getAllClients(search);
         } else {
-            clients = clientService.listAllActive(); // Comportamento padrão: lista todos os ativos
+            clients = clientService.listAllActive();
         }
 
         model.addAttribute("clients", clients);
-        model.addAttribute("search", search); // Mantém o termo na tela
-        model.addAttribute("newClient", new Client()); // Objeto vazio para o modal de cadastro
+        model.addAttribute("search", search);
+        model.addAttribute("newClient", new Client());
 
         return "clients";
     }
@@ -49,7 +48,7 @@ public class ClientController {
     public String editClientForm(@PathVariable("id") UUID id, Model model) {
         model.addAttribute("currentPage", "clients");
         model.addAttribute("clients", clientService.listAllActive());
-        model.addAttribute("newClient", clientService.findById(id)); // Carrega os dados para o formulário
+        model.addAttribute("newClient", clientService.findById(id));
         model.addAttribute("isEditing", true);
         return "clients";
     }

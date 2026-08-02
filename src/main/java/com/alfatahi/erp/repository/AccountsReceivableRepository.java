@@ -19,7 +19,7 @@ public interface AccountsReceivableRepository extends JpaRepository<AccountsRece
             "WHERE a.paymentDate >= :inicio AND a.paymentDate < :fim")
     BigDecimal sumReceivedByMonthAndYear(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
-    /** Entradas reais (líquidas) no período — para o Livro Caixa */
+
     @Query("SELECT COALESCE(SUM(r.receivedAmount), 0) FROM AccountsReceivable r " +
             "WHERE r.status IN ('received', 'partial') " +
             "AND r.paymentDate >= :inicio AND r.paymentDate < :fim")

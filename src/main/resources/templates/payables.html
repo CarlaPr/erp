@@ -154,7 +154,7 @@
             <thead>
             <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
                 <th class="p-5">Vencimento</th>
-                <th class="p-5">Descrição / Fornecedor</th>
+                <th class="p-5">Descrição / Subcategoria</th>
                 <th class="p-5">Categoria</th>
                 <th class="p-5">O.S.</th>
                 <th class="p-5 text-right">Total</th>
@@ -190,18 +190,30 @@
                 </td>
 
                 <td class="p-5">
-                    <div class="font-bold text-slate-900 dark:text-white text-base" th:text="${p.supplier != null ? p.supplier.name : 'Avulso'}">Fornecedor</div>
+                    <div class="font-bold text-slate-900 dark:text-white text-base" th:text="${p.subcategory != null and !p.subcategory.isEmpty() ? p.subcategory : '-'}">Subcategoria</div>
                     <div class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5" th:text="${p.description}">Desc</div>
                     <div th:if="${p.documentNumber != null and !p.documentNumber.isEmpty()}"
                          class=" hidden text-xs text-slate-400 dark:text-slate-500 font-mono mt-1 font-bold" th:text="'Doc: ' + ${p.documentNumber}"></div>
                 </td>
 
                 <td class="p-5">
-                    <span th:if="${p.category == 'FIXA'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-transparent uppercase tracking-wide">Fixa</span>
-                    <span th:if="${p.category == 'VARIAVEL'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent uppercase tracking-wide">Variável</span>
-                    <span th:if="${p.category == 'PROVISIONAMENTO'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-transparent uppercase tracking-wide">Provisão</span>
-                    <span th:if="${p.category != null and p.category != 'FIXA' and p.category != 'VARIAVEL' and p.category != 'PROVISIONAMENTO'}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-700/40 dark:text-slate-300 dark:border-transparent uppercase tracking-wide" th:text="${p.category}"></span>
-                    <span th:if="${p.recurring}" title="Despesa recorrente" class="ml-1.5 inline-flex items-center text-brand-500 dark:text-cyan-400"><i data-lucide="repeat" class="w-3.5 h-3.5"></i></span>
+                    <th:block th:switch="${p.category}">
+                        <span th:case="'FIXA'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-transparent uppercase tracking-wide">Fixa</span>
+                        <span th:case="'VARIAVEL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent uppercase tracking-wide">Variável</span>
+                        <span th:case="'PROVISIONAMENTO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-transparent uppercase tracking-wide">Provisão</span>
+                        <span th:case="'IMPOSTOS'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-transparent uppercase tracking-wide">Impostos</span>
+                        <span th:case="'INVESTIMENTOS'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent uppercase tracking-wide">Investimentos</span>
+                        <span th:case="'MANUTENCAO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-transparent uppercase tracking-wide">Manutenção</span>
+                        <span th:case="'FINANCEIRO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-transparent uppercase tracking-wide">Financeiro</span>
+                        <span th:case="'PESSOAL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200 dark:bg-fuchsia-500/10 dark:text-fuchsia-400 dark:border-transparent uppercase tracking-wide">Pessoal</span>
+                        <span th:case="'OPERACIONAL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-500/10 dark:text-teal-400 dark:border-transparent uppercase tracking-wide">Operacional</span>
+                        <span th:case="'ADMINISTRATIVO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-transparent uppercase tracking-wide">Administrativo</span>
+                        <span th:case="*" th:if="${p.category != null}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-700/40 dark:text-slate-300 dark:border-transparent uppercase tracking-wide" th:text="${p.category}"></span>
+                    </th:block>
+
+                    <span th:if="${p.recurring}" title="Despesa recorrente" class="ml-1.5 inline-flex items-center text-brand-500 dark:text-cyan-400">
+                        <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
+                    </span>
                     <div th:if="${p.subcategory != null and !p.subcategory.isEmpty()}" class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1.5" th:text="${p.subcategory}"></div>
                     <div th:if="${p.costCenter != null and !p.costCenter.isEmpty()}" class="text-xs text-slate-400 dark:text-slate-500 mt-0.5" th:text="'CC: ' + ${p.costCenter}"></div>
                 </td>

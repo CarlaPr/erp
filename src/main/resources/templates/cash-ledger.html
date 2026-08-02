@@ -17,8 +17,6 @@
             <i data-lucide="calendar-check" class="w-4 h-4"></i> Fechamentos Mensais
         </a>
     </header>
-
-    <!-- Filtro de período -->
     <form th:action="@{/cash-ledger}" method="GET"
           class="flex flex-wrap gap-4 mb-6 bg-white dark:bg-[#131C2F] p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm items-end w-fit">
         <div>
@@ -35,8 +33,6 @@
             <i data-lucide="filter" class="w-4 h-4"></i> Filtrar
         </button>
     </form>
-
-    <!-- KPI bar -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 p-4 shadow-sm">
             <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Saldo Abertura</p>
@@ -61,8 +57,6 @@
                th:text="|R$ ${#numbers.formatDecimal(saldoFinal, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
         </div>
     </div>
-
-    <!-- Tabela do Livro Caixa -->
     <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden overflow-x-auto">
         <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[900px]">
             <thead>
@@ -79,8 +73,6 @@
             </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
-
-            <!-- Linha de saldo inicial -->
             <tr class="bg-slate-50 dark:bg-slate-800/30 italic">
                 <td class="p-3 pl-4 text-xs text-slate-500" th:text="${#temporals.format(from, 'dd/MM/yyyy')}">01/07/2026</td>
                 <td class="p-3 pl-4" colspan="5"><span class="text-xs text-slate-400">Saldo de Abertura</span></td>

@@ -201,12 +201,10 @@ public class ReceivableController {
         if (receivable.getDiscount() == null) receivable.setDiscount(BigDecimal.ZERO);
         if (receivable.getCardFeePercentage() == null) receivable.setCardFeePercentage(BigDecimal.ZERO);
 
-        // Processar paymentStage
         if (receivable.getPaymentStage() == null || receivable.getPaymentStage().isBlank()) {
             receivable.setPaymentStage("unico");
         }
 
-        // Definir referenceMonth se não estiver definido
         if (receivable.getReferenceMonth() == null) {
             receivable.setReferenceMonth(receivable.getDueDate().withDayOfMonth(1));
         }
@@ -227,7 +225,6 @@ public class ReceivableController {
         ar.setDueDate(form.getDueDate());
         ar.setReferenceMonth(form.getReferenceMonth());
 
-        // Atualizar paymentStage
         if (form.getPaymentStage() != null && !form.getPaymentStage().isBlank()) {
             ar.setPaymentStage(form.getPaymentStage());
         }

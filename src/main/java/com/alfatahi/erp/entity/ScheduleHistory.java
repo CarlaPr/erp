@@ -6,10 +6,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Timeline / histórico de um registro da Agenda Comercial.
- * Ex.: Criado -> Agendado -> Reagendado -> Concluído.
- */
+
 @Entity
 @Table(name = "commercial_schedule_history")
 public class ScheduleHistory {

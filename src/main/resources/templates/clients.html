@@ -7,8 +7,6 @@
 <div th:replace="~{fragments/layout :: topbar}"></div>
 
 <main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
-
-    <!-- Cabeçalho -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Clientes</h2>
@@ -18,8 +16,6 @@
             <i data-lucide="user-plus" class="w-5 h-5"></i> Novo Cliente
         </button>
     </header>
-
-    <!-- Barra de Pesquisa (Refatorada para Tailwind) -->
     <div class="mb-6 max-w-3xl">
         <form th:action="@{/clients}" method="get" class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-grow">
@@ -38,8 +34,6 @@
             </div>
         </form>
     </div>
-
-    <!-- Tabela de Clientes -->
     <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[720px]">
             <thead>
@@ -77,8 +71,6 @@
                     </form>
                 </td>
             </tr>
-
-            <!-- Empty State Melhorado -->
             <tr th:if="${#lists.isEmpty(clients)}">
                 <td colspan="6" class="p-12 text-center">
                     <div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400">
@@ -93,8 +85,6 @@
             </tbody>
         </table>
     </div>
-
-    <!-- Modal de Cadastro/Edição -->
     <div id="clientModal" th:class="${isEditing} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">

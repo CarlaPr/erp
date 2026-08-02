@@ -7,11 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Categoria principal de despesa do módulo de Contas a Pagar.
- * Ex.: FIXA, VARIAVEL, PROVISIONAMENTO, IMPOSTOS, INVESTIMENTOS,
- * MANUTENCAO, FINANCEIRO, PESSOAL, OPERACIONAL, ADMINISTRATIVO.
- */
+
 @Entity
 @Table(name = "expense_categories")
 public class ExpenseCategory {
@@ -20,11 +16,11 @@ public class ExpenseCategory {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    /** Código estável usado como valor persistido em accounts_payable.category (ex.: "FIXA"). */
+
     @Column(nullable = false, unique = true, length = 40)
     private String code;
 
-    /** Nome de exibição (ex.: "Fixa"). */
+
     @Column(nullable = false, length = 120)
     private String name;
 

@@ -791,7 +791,7 @@
                 } catch (e) { console.error('Erro ao carregar orçamento', e); }
             }
         } else {
-            // Configurações para OS Avulsa
+
             clientSelect.disabled = false;
             clientSelect.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-100', 'dark:bg-slate-800');
 
@@ -1026,7 +1026,6 @@
         });
         document.getElementById('totalOperationals').innerText = `R$ ${formatBRL(totalOpCost)}`;
 
-        // --- KPIs DO EDITOR ---
         const receitaStr = document.getElementById('osTotalValue').value;
         const receita = parseBRL(receitaStr);
 
@@ -1051,7 +1050,6 @@
         const currentTotalValue = parseBRL(document.getElementById('osTotalValue').value);
         let finalNotes = originalNotes || "";
 
-        // VERIFICADOR DE ALTERAÇÃO E JUSTIFICATIVA
         if (originalTotalValue > 0 && currentTotalValue !== originalTotalValue) {
             const motivo = prompt(`O valor global da O.S. foi alterado de R$ ${formatBRL(originalTotalValue)} para R$ ${formatBRL(currentTotalValue)}.\n\nPor favor, justifique o motivo da alteração:` );
 
@@ -1099,7 +1097,7 @@
             status: document.getElementById('osStatus').value,
             installDate: document.getElementById('osDate').value || null,
             totalValue: currentTotalValue,
-            notes: finalNotes, // <--- Enviando a justificativa
+            notes: finalNotes,
             quoteId: document.getElementById('osQuote').value || null,
             client: clientVal ? { id: clientVal } : null,
             items: allItems

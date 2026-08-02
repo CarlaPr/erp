@@ -22,7 +22,7 @@ public class Loss {
 
 
     @Column(nullable = false)
-    private String material = "N/A"; // Valor default seguro
+    private String material = "N/A";
 
     @Column(nullable = false)
     private String description;
@@ -33,7 +33,6 @@ public class Loss {
     @Column(name = "occurrence_date", nullable = false)
     private LocalDate occurrenceDate = LocalDate.now();
 
-    // Getters and Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public WorkOrder getWorkOrder() { return workOrder; }

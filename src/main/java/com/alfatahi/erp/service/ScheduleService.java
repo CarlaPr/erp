@@ -192,7 +192,6 @@ public class ScheduleService {
         scheduleRepo.findByWorkOrderId(workOrderId).ifPresent(this::deleteScheduleAndHistory);
     }
 
-    // --- NOVO MÉTODO: Limpa o histórico antes de excluir a agenda para evitar DataIntegrityViolation ---
     private void deleteScheduleAndHistory(Schedule schedule) {
         List<ScheduleHistory> historyList = historyRepo.findByScheduleIdOrderByEventDateAsc(schedule.getId());
         if (historyList != null && !historyList.isEmpty()) {

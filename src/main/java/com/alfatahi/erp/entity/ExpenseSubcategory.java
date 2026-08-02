@@ -5,12 +5,7 @@ import jakarta.persistence.*;
 
 import java.util.UUID;
 
-/**
- * Subcategoria vinculada a uma categoria principal de despesa.
- * Suporta um agrupamento opcional ({@code groupLabel}) e um segmento opcional
- * ({@code segment}), usados para as regras específicas de vidraçaria
- * (ex.: Insumos, Ferragens, Alumínio, Serviços).
- */
+
 @Entity
 @Table(name = "expense_subcategories")
 public class ExpenseSubcategory {
@@ -24,18 +19,18 @@ public class ExpenseSubcategory {
     @JsonIgnoreProperties({"subcategories"})
     private ExpenseCategory category;
 
-    /** Código estável usado como valor persistido em accounts_payable.subcategory. */
+
     @Column(nullable = false, length = 120)
     private String code;
 
     @Column(nullable = false, length = 150)
     private String name;
 
-    /** Agrupamento visual opcional (ex.: "Insumos", "Ferragens", "Alumínio", "Serviços"). */
+
     @Column(name = "group_label", length = 60)
     private String groupLabel;
 
-    /** Segmento de negócio opcional (ex.: "VIDRACARIA") para regras específicas de nicho. */
+
     @Column(name = "segment", length = 40)
     private String segment;
 

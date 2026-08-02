@@ -208,7 +208,7 @@ public class QuoteController {
 
     private String toBase64Uri(String url) {
         if (url == null || url.isBlank()) return null;
-        if (url.startsWith("data:"))       return url;  // já é data URI
+        if (url.startsWith("data:"))       return url;
         try {
             HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setConnectTimeout(6000);
@@ -259,7 +259,6 @@ public class QuoteController {
             month = DateTimeFormatter.ofPattern("yyyy-MM").format(LocalDateTime.now());
         }
 
-        // 4. Filtro por Stream
         final String finalMonth = month;
         List<Quote> filteredList = todosOrcamentos.stream().filter(q -> {
             if (status != null && !status.isEmpty() && !q.getStatus().equals(status)) return false;
@@ -275,7 +274,7 @@ public class QuoteController {
         }).collect(java.util.stream.Collectors.toList());
 
         List<Map<String, String>> disponiveis = new ArrayList<>();
-        LocalDateTime dataLoop = LocalDateTime.now(); // Alterado para LocalDateTime
+        LocalDateTime dataLoop = LocalDateTime.now();
 
         for (int i = 0; i < 12; i++) {
             LocalDateTime target = dataLoop.minusMonths(i);

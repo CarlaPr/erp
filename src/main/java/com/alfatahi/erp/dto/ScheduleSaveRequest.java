@@ -4,11 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
-/**
- * Corpo esperado por POST /agenda/save-ajax.
- * Usado tanto para o primeiro agendamento quanto para edição/reagendamento
- * (a UI é a mesma modal em ambos os casos).
- */
+
 public class ScheduleSaveRequest {
 
     private UUID id;

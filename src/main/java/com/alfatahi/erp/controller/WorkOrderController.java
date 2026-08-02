@@ -61,18 +61,15 @@ public class WorkOrderController {
             return profileRepository.save(p);
         });
 
-        // Valores padrão zerados
         BigDecimal totalRevenue = BigDecimal.ZERO;
         BigDecimal totalCost = BigDecimal.ZERO;
         BigDecimal globalProfit = BigDecimal.ZERO;
         BigDecimal averageMargin = BigDecimal.ZERO;
 
-        // Verifica a role do usuário logado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isTecnico = auth != null && auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("TECNICO") || a.getAuthority().equals("ROLE_TECNICO"));
 
-        // Calcula os KPIs globais apenas se o usuário NÃO for técnico
         if (!isTecnico) {
             totalRevenue = orders.stream()
                     .filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus()))

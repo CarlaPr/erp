@@ -247,22 +247,18 @@
 
 <div class="totals-wrapper avoid-break">
     <table class="totals-table">
-        <!-- Subtotal (só aparece quando há desconto) -->
         <tr th:if="${hasDiscount}" style="background:#f8fafc;">
             <td class="subtotal-label">Subtotal:</td>
             <td class="subtotal-val" th:text="${gross}">R$ 0,00</td>
         </tr>
-        <!-- Desconto -->
         <tr th:if="${hasDiscount}" style="background:#fff1f2;">
             <td class="discount-label">Desconto:</td>
             <td class="discount-val" th:text="${discountPct + '%'}">0%</td>
         </tr>
-        <!-- Total -->
         <tr class="total-bg">
             <td class="total-label-cell">Valor Total do Orçamento</td>
             <td class="total-val-cell" th:text="${net}">R$ 0,00</td>
         </tr>
-        <!-- Parcelamento -->
         <tr th:if="${showInstallments}" class="install-bg">
             <td class="install-label">Parcelado em:</td>
             <td class="install-val" th:text="${installmentsText}">10x</td>
@@ -313,7 +309,6 @@
 <div class="sig-section">
     <table class="sig-table">
         <tr>
-            <!-- Assinatura da empresa -->
             <td class="sig-cell">
                 <div class="sig-image-box">
                     <img th:if="${sigCompanyBase64 != null}" th:src="${sigCompanyBase64}"
@@ -324,7 +319,6 @@
                     <div class="sig-label" th:text="${'CNPJ/CPF: ' + companyDoc}">CNPJ/CPF: --</div>
                 </div>
             </td>
-            <!-- Assinatura do cliente -->
             <td class="sig-cell">
                 <div class="sig-image-box">
                     <img th:if="${sigClientBase64 != null}" th:src="${sigClientBase64}"

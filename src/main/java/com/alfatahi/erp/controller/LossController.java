@@ -37,9 +37,6 @@ public class LossController {
     public String index(Model model) {
         List<Loss> losses = lossRepo.findAllByOrderByOccurrenceDateDesc();
 
-        // ==========================================
-        // CÁLCULOS DE INDICADORES GERENCIAIS
-        // ==========================================
         BigDecimal totalLoss = losses.stream().map(Loss::getFinancialImpact).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalRevenue = recRepo.findAll().stream().map(AccountsReceivable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -51,7 +48,6 @@ public class LossController {
         BigDecimal pctCosts = totalCosts.compareTo(BigDecimal.ZERO) > 0 ?
                 totalLoss.multiply(new BigDecimal("100")).divide(totalCosts, 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
 
-        // Sub-categorias
         BigDecimal quebra = sumByType(losses, "Quebra de Vidro");
         BigDecimal corte = sumByType(losses, "Erro de Corte");
         BigDecimal retrabalho = sumByType(losses, "Retrabalho");

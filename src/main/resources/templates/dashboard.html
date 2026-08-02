@@ -28,8 +28,6 @@
     .card-hover  { transition: transform .18s ease, box-shadow .18s ease; }
     .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.15); }
     .dark .card-hover:hover { box-shadow: 0 8px 32px rgba(0,0,0,.35); }
-
-    /* Gradient accent line on KPI card top */
     .kpi-accent::before {
         content: '';
         position: absolute;
@@ -58,8 +56,6 @@
                         </span>
             </p>
         </div>
-
-        <!-- Filtro de Período -->
         <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
             <div class="flex gap-2 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2 shadow-sm dark:shadow-none">
                 <select id="mesSelecionado" onchange="atualizarDashboard()"
@@ -193,8 +189,6 @@
         </div>
 
     </section>
-
-    <!-- KPIs secundários: Projeção e Taxas -->
     <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 kpi-card card-hover shadow-sm" style="animation-delay:.3s">
             <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Saldo Projetado</p>
@@ -311,7 +305,6 @@
                         </span>
                         <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Em Andamento</span>
                     </div>
-                    <!-- Corrigido para variável osEmAndamento -->
                     <span class="text-lg font-black text-amber-500 dark:text-amber-400" th:text="${osEmAndamento != null ? osEmAndamento : 0}">0</span>
                 </div>
 
@@ -332,7 +325,6 @@
                         </span>
                         <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Concluídas (mês)</span>
                     </div>
-                    <!-- Corrigido para variável osConcluidasMes -->
                     <span class="text-lg font-black text-emerald-500 dark:text-emerald-400" th:text="${osConcluidasMes != null ? osConcluidasMes : 0}">0</span>
                 </div>
 

@@ -2,9 +2,7 @@ package com.alfatahi.erp.entity;
 
 import java.time.LocalDate;
 
-/**
- * Tipos de recorrência suportados para Contas a Pagar (Contas Recorrentes).
- */
+
 public enum RecurrenceFrequency {
 
     DAILY("Diária"),
@@ -26,7 +24,7 @@ public enum RecurrenceFrequency {
         return label;
     }
 
-    /** Calcula a próxima data a partir de uma data base, de acordo com a frequência. */
+
     public LocalDate next(LocalDate from) {
         return switch (this) {
             case DAILY -> from.plusDays(1);

@@ -104,8 +104,6 @@
             </div>
         </div>
     </form>
-
-    <!-- ── TABELA ── -->
     <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[980px]">
             <thead>
@@ -261,8 +259,6 @@
             </tbody>
         </table>
     </div>
-
-    <!-- MODAL NOVA RECEITA -->
     <div id="receivableModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -276,19 +272,14 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Descrição -->
                     <div class="lg:col-span-2">
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Descrição *</label>
                         <input type="text" th:field="*{description}" required placeholder="Ex: Serviço de vidro temperado" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
                     </div>
-
-                    <!-- Valor Total -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Valor Total (R$) *</label>
                         <input type="number" step="0.01" min="0" th:field="*{totalAmount}" id="newReceivableGross" onkeyup="calculateDiscountPreview()" onchange="calculateDiscountPreview()" required placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-emerald-700 dark:text-emerald-400 font-black focus:border-emerald-500 outline-none transition-all text-lg font-mono">
                     </div>
-
-                    <!-- Cliente -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Cliente</label>
                         <input type="hidden" th:field="*{client.id}" id="newClientId">
@@ -302,8 +293,6 @@
                             </button>
                         </div>
                     </div>
-
-                    <!-- OS Relacionada -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">O.S. Relacionada</label>
                         <input type="hidden" th:field="*{workOrder.id}" id="newWorkOrderId">
@@ -317,26 +306,18 @@
                             </button>
                         </div>
                     </div>
-
-                    <!-- Vencimento -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Vencimento *</label>
                         <input type="date" th:field="*{dueDate}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
                     </div>
-
-                    <!-- Parcelas -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Parcelas</label>
                         <input type="number" th:field="*{installments}" min="1" value="1" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
                     </div>
-
-                    <!-- Taxa Cartão -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Taxa Cartão (%)</label>
                         <input type="number" step="0.01" min="0" th:field="*{cardFeePercentage}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
                     </div>
-
-                    <!-- Desconto -->
                     <div class="lg:col-span-2">
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto</label>
                         <div class="grid grid-cols-2 gap-2">
@@ -354,8 +335,6 @@
                             <i data-lucide="info" class="w-5 h-5 mr-2"></i> <span id="discountPreviewText"></span>
                         </div>
                     </div>
-
-                    <!-- Estágio de Pagamento -->
                     <div class="lg:col-span-3">
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Estágio de Pagamento *</label>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -373,8 +352,6 @@
                             </label>
                         </div>
                     </div>
-
-                    <!-- Observações -->
                     <div class="lg:col-span-3">
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Observações</label>
                         <textarea th:field="*{notes}" rows="2" placeholder="Detalhes adicionais..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base resize-none"></textarea>
@@ -388,8 +365,6 @@
             </form>
         </div>
     </div>
-
-    <!-- MODAL BUSCA DE CLIENTE -->
     <div id="clientSearchModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
 
@@ -417,8 +392,6 @@
             </div>
         </div>
     </div>
-
-    <!-- MODAL BUSCA DE O.S. -->
     <div id="osSearchModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
 
@@ -446,8 +419,6 @@
             </div>
         </div>
     </div>
-
-    <!-- MODAL RECEBIMENTO PARCIAL / INTEGRAL -->
     <div id="receiveModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -527,8 +498,6 @@
             </form>
         </div>
     </div>
-
-    <!-- MODAL EDITAR -->
     <div id="editModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -544,19 +513,14 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Descrição -->
                     <div class="lg:col-span-2">
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Descrição *</label>
                         <input type="text" name="description" id="editDescription" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
                     </div>
-
-                    <!-- Valor Total -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Valor Total (R$) *</label>
                         <input type="number" step="0.01" name="totalAmount" id="editTotalAmount" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-emerald-700 dark:text-emerald-400 font-black focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-lg font-mono">
                     </div>
-
-                    <!-- Cliente -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Cliente</label>
                         <input type="hidden" name="client" id="editClientId">
@@ -570,8 +534,6 @@
                             </button>
                         </div>
                     </div>
-
-                    <!-- OS Relacionada -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">O.S. Relacionada</label>
                         <input type="hidden" name="workOrder" id="editWorkOrderId">
@@ -585,34 +547,24 @@
                             </button>
                         </div>
                     </div>
-
-                    <!-- Vencimento -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Vencimento *</label>
                         <input type="date" name="dueDate" id="editDueDate" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
                     </div>
-
-                    <!-- Mês de Competência -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Competência (Mês/Ano)</label>
                         <input type="month" name="referenceMonth" id="editReferenceMonth"
                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
                         <p class="text-[11px] text-slate-400 mt-1">Preencha apenas quando o recebimento for antecipado.</p>
                     </div>
-
-                    <!-- Parcelas -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Parcelas</label>
                         <input type="number" name="installments" id="editInstallments" value="1" min="1" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
                     </div>
-
-                    <!-- Taxa Cartão -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Taxa Cartão (%)</label>
                         <input type="number" step="0.01" name="cardFeePercentage" id="editCardFee" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
                     </div>
-
-                    <!-- Desconto -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto (R$)</label>
                         <input type="number" step="0.01" name="discount" id="editDiscount" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
@@ -622,8 +574,6 @@
                         <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">Valor Já Recebido (R$)</label>
                         <input type="number" step="0.01" name="receivedAmount" id="editReceivedAmount" class="w-full bg-slate-50 dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700/50 rounded-xl px-4 py-3 text-emerald-700 dark:text-emerald-400 font-black focus:border-emerald-500 outline-none transition-all text-base">
                     </div>
-
-                    <!-- Estágio de Pagamento -->
                     <div class="lg:col-span-3">
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Estágio de Pagamento *</label>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -645,8 +595,6 @@
                             </label>
                         </div>
                     </div>
-
-                    <!-- Observações -->
                     <div class="lg:col-span-3">
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Observações</label>
                         <textarea name="notes" id="editNotes" rows="2" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base resize-none"></textarea>
@@ -660,8 +608,6 @@
             </form>
         </div>
     </div>
-
-    <!-- MODAL CANCELAR -->
     <div id="cancelModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200 text-center">
 
@@ -685,8 +631,6 @@
             </form>
         </div>
     </div>
-
-    <!-- MODAL EXPORTAR EXCEL -->
     <div id="exportModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
@@ -713,8 +657,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ARMAZENAMENTO OCULTO PARA OS SCRIPTS DOS MODAIS DE BUSCA -->
     <select id="hiddenClientsData" class="hidden">
         <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
     </select>
@@ -778,18 +720,16 @@
     function openModal(id)  { const m = document.getElementById(id); m.classList.remove('hidden'); m.classList.add('flex'); }
     function closeModal(id) { const m = document.getElementById(id); m.classList.remove('flex'); m.classList.add('hidden'); }
 
-    // --- LÓGICA DE BUSCA DE CLIENTES E O.S. ---
     let clientsList = [];
     let osList = [];
     let currentTargetType = ''; // 'new' ou 'edit'
 
     document.addEventListener("DOMContentLoaded", () => {
-        // Carrega dados para pesquisa de Clientes
+
         document.querySelectorAll('#hiddenClientsData option').forEach(opt => {
             clientsList.push({ id: opt.value, name: opt.text });
         });
 
-        // Carrega dados para pesquisa de O.S.
         document.querySelectorAll('#hiddenOsData option').forEach(opt => {
             osList.push({
                 id: opt.value,
@@ -800,7 +740,6 @@
         });
     });
 
-    /* -- Funções para Cliente -- */
     function openClientSearch(target) {
         currentTargetType = target;
         document.getElementById('searchClientInput').value = '';
@@ -856,7 +795,6 @@
         }
     }
 
-    /* -- Funções para O.S. -- */
     function openOsSearch(target) {
         currentTargetType = target;
         document.getElementById('searchOsInput').value = '';
@@ -927,7 +865,6 @@
         }
     }
 
-    // --- CÁLCULOS E OUTROS MODAIS ---
     function calculateDiscountPreview() {
         const grossStr = document.getElementById('newReceivableGross').value;
         const gross = parseFloat(grossStr) || 0;
@@ -1028,7 +965,6 @@
         document.getElementById("editNotes").value = notes || "";
         document.getElementById("editReceivedAmount").value = receivedAmount || 0;
 
-        // Assinalar o cliente visualmente
         document.getElementById("editClientId").value = client || "";
         if(client) {
             const cObj = clientsList.find(c => c.id === client);
@@ -1037,7 +973,6 @@
             document.getElementById("editClientDisplay").value = "";
         }
 
-        // Assinalar a O.S. visualmente
         document.getElementById("editWorkOrderId").value = workOrder || "";
         if(workOrder) {
             const wObj = osList.find(wo => wo.id === workOrder);

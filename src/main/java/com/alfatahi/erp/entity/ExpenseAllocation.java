@@ -21,14 +21,13 @@ public class ExpenseAllocation {
     private AccountsPayable accountsPayable;
 
     @Column(precision = 5, scale = 2, nullable = false)
-    private BigDecimal percentage = BigDecimal.ZERO; // Ex: 30.00
+    private BigDecimal percentage = BigDecimal.ZERO;
 
     @Column(name = "allocation_value", precision = 12, scale = 2)
     private BigDecimal value;
 
     public ExpenseAllocation() {}
 
-    // Getters e Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
