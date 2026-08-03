@@ -170,9 +170,10 @@ public class WorkOrderController {
 
         workOrderService.save(targetWo);
 
-        if (targetWo.getInstallDate() != null && targetWo.getId() != null) {
+        if (targetWo.getId() != null && isTotalChanged) {
             List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
                     .filter(r -> r.getWorkOrder() != null && r.getWorkOrder().getId().equals(targetWo.getId()))
+                    .filter(r -> !"cancelled".equals(r.getStatus()))
                     .collect(Collectors.toList());
 
             if (!receivables.isEmpty()) {
@@ -186,19 +187,9 @@ public class WorkOrderController {
                 for (int i = 0; i < installmentsCount; i++) {
                     AccountsReceivable ar = receivables.get(i);
 
-                    if (i == 0) ar.setDueDate(targetWo.getInstallDate());
-                    else ar.setDueDate(targetWo.getInstallDate().plusMonths(i));
-
-                    if (!"cancelled".equals(targetWo.getStatus()) && "cancelled".equals(ar.getStatus())) {
-                        ar.setStatus("pending");
-                        ar.setNotes((ar.getNotes() != null ? ar.getNotes() : "") + "\n[Sistema] Reativado após edição da O.S.");
-                    }
-
-                    if (isTotalChanged) {
-                        ar.setTotalAmount(i == installmentsCount - 1 ? lastInstallment : installmentValue);
-                        String currentNotes = ar.getNotes() != null ? ar.getNotes() : "";
-                        ar.setNotes(currentNotes + "\n[Sistema] " + changeReasonMsg);
-                    }
+                    ar.setTotalAmount(i == installmentsCount - 1 ? lastInstallment : installmentValue);
+                    String currentNotes = ar.getNotes() != null ? ar.getNotes() : "";
+                    ar.setNotes(currentNotes + "\n[Sistema] " + changeReasonMsg);
 
                     receivableRepo.save(ar);
                 }

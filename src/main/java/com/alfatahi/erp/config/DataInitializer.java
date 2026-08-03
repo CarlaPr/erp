@@ -42,16 +42,6 @@ public class DataInitializer implements CommandLineRunner {
             gestor.setRole("GESTAO");
             userRepository.save(gestor);
 
-
-            if (isRandomPassword) {
-                logger.warn("=========================================================");
-                logger.warn("ATENÇÃO: Variável ADMIN_PASSWORD não encontrada.");
-                logger.warn("Usuário 'admin' criado com a SENHA GERADA ALEATORIAMENTE: {}", adminPass);
-                logger.warn("Copie esta senha para acessar o sistema ou defina a variável.");
-                logger.warn("=========================================================");
-            } else {
-                logger.info("Usuário inicial 'admin' criado com sucesso usando a senha do ambiente.");
-            }
         }
     }
 }

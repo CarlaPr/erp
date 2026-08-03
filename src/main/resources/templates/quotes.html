@@ -107,6 +107,14 @@
 
                     <button th:data-id="${q.id}" onclick="viewReceipt(this.getAttribute('data-id'))" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors" title="Imprimir / Gerar PDF"><i data-lucide="printer" class="w-6 h-6 inline"></i></button>
 
+                    <button th:data-id="${q.id}"
+                            th:data-client="${q.client != null ? q.client.name : ''}"
+                            onclick="openScheduleVisitModal(this.getAttribute('data-id'), this.getAttribute('data-client'))"
+                            class="text-fuchsia-600 hover:text-fuchsia-800 dark:text-fuchsia-400 dark:hover:text-fuchsia-300 p-2 rounded-lg hover:bg-fuchsia-50 dark:hover:bg-fuchsia-500/10 transition-colors"
+                            title="Agendar Visita Técnica">
+                        <i data-lucide="map-pin" class="w-6 h-6 inline"></i>
+                    </button>
+
                     <button th:if="${q.status == 'pending' || q.status == 'negotiation' || q.status == 'approved'}"
                             th:data-id="${q.id}"
                             th:data-token="${q.publicToken}"
@@ -857,6 +865,69 @@
         </div>
     </div>
 
+    <div id="scheduleVisitModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
+            <button type="button" onclick="closeModal('scheduleVisitModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="bg-fuchsia-100 dark:bg-fuchsia-500/10 p-4 rounded-full w-fit mb-5 text-fuchsia-600 dark:text-fuchsia-400">
+                <i data-lucide="map-pin" class="w-7 h-7"></i>
+            </div>
+
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-1">Agendar Visita Técnica</h3>
+            <p id="scheduleVisitClientLabel" class="text-sm text-slate-500 dark:text-slate-400 mb-6">Cliente: -</p>
+
+            <input type="hidden" id="scheduleVisitQuoteId">
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Data da visita</label>
+                    <input id="scheduleVisitDate" type="date" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Horário</label>
+                    <input id="scheduleVisitTime" type="time" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Observações</label>
+                <textarea id="scheduleVisitNotes" rows="3" placeholder="Ex: Medir vão da sacada, verificar estrutura..."
+                          class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeModal('scheduleVisitModal')"
+                        class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">
+                    Cancelar
+                </button>
+                <button type="button" onclick="executeScheduleVisit()"
+                        class="px-6 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-black shadow-lg shadow-fuchsia-500/20 transition-all text-base">
+                    Agendar Visita
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="visitSuccessModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div class="bg-emerald-100 dark:bg-emerald-500/10 p-4 rounded-full w-fit mx-auto text-emerald-600 dark:text-emerald-400 mb-4 shadow-inner">
+                <i data-lucide="check-circle" class="w-8 h-8 mx-auto"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Visita Agendada!</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+                A visita técnica foi agendada com sucesso e já está disponível na Agenda Comercial.
+            </p>
+            <div class="w-full">
+                <button type="button" onclick="closeModal('visitSuccessModal')" class="w-full px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors shadow-lg shadow-emerald-500/20 text-sm">
+                    Entendi
+                </button>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <script>
@@ -989,7 +1060,7 @@
     A garantia será cancelada caso o produto seja alterado ou reparado por pessoas não autorizadas.
     `;
 
-    const DEFAULT_OBSERVATIONS = `PRAZO DE ENTREGA
+    const DEFAULT_OBSERVATIONS = `    PRAZO DE ENTREGA
     • Até 15 dias úteis após a confirmação do pedido.
 
     EXECUÇÃO
@@ -1292,8 +1363,8 @@
             paymentMethod: document.getElementById('quotePayment').value,
             installments: installmentsValue,
             paymentPlan: (document.getElementById('quotePaymentPlan')?.offsetParent !== null
-                          ? document.getElementById('quotePaymentPlan').value
-                          : 'SPLIT_50_50'),
+                ? document.getElementById('quotePaymentPlan').value
+                : 'SPLIT_50_50'),
             discountPercent: discountPct,
             observations: document.getElementById('quoteObs').value,
             warranty: document.getElementById('quoteWarranty').value,
@@ -2169,6 +2240,59 @@
                 alert('Erro ao excluir Orçamento.');
             }
         }).catch(err => console.error("Erro crítico:", err));
+    }
+
+    function openScheduleVisitModal(quoteId, clientName) {
+        if (!clientName) {
+            alert('Este orçamento não possui um cliente vinculado. Vincule um cliente antes de agendar a visita técnica.');
+            return;
+        }
+        document.getElementById('scheduleVisitQuoteId').value = quoteId;
+        document.getElementById('scheduleVisitClientLabel').textContent = 'Cliente: ' + clientName;
+        document.getElementById('scheduleVisitDate').value = '';
+        document.getElementById('scheduleVisitTime').value = '';
+        document.getElementById('scheduleVisitNotes').value = '';
+        toggleModal('scheduleVisitModal', true);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    async function executeScheduleVisit() {
+        const quoteId = document.getElementById('scheduleVisitQuoteId').value;
+        const visitDate = document.getElementById('scheduleVisitDate').value;
+        if (!visitDate) {
+            alert('Informe a data da visita técnica.');
+            return;
+        }
+
+        const payload = {
+            visitDate: visitDate,
+            visitTime: document.getElementById('scheduleVisitTime').value ? (document.getElementById('scheduleVisitTime').value + ':00') : null,
+            notes: document.getElementById('scheduleVisitNotes').value
+        };
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrfToken) headers[csrfHeader] = csrfToken;
+
+        try {
+            const res = await fetch(`/quotes/${quoteId}/technical-visits`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.ok === false) {
+                alert('Erro ao agendar visita técnica: ' + (data.error || 'erro desconhecido'));
+                return;
+            }
+            closeModal('scheduleVisitModal');
+            toggleModal('visitSuccessModal', true);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        } catch (err) {
+            console.error(err);
+            alert('Erro de comunicação com o servidor.');
+        }
     }
 
 </script>

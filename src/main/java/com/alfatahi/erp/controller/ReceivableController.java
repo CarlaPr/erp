@@ -188,9 +188,8 @@ public class ReceivableController {
                 if (receivable.getTotalAmount() == null || receivable.getTotalAmount().compareTo(BigDecimal.ZERO) == 0) {
                     receivable.setTotalAmount(wo.getTotalValue());
                 }
-                if (receivable.getDueDate() == null && wo.getInstallDate() != null) {
-                    receivable.setDueDate(wo.getInstallDate());
-                }
+                // O vencimento NÃO é mais herdado automaticamente da data de instalação
+                // da O.S. — o usuário sempre define a data manualmente no formulário.
             }
         } else {
             receivable.setWorkOrder(null);

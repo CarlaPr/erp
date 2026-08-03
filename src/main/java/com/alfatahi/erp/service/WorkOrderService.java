@@ -22,18 +22,15 @@ public class WorkOrderService {
     private final WorkOrderItemRepository itemRepository;
     private final ScheduleService scheduleService;
     private final AccountsReceivableRepository receivableRepository;
-    private final PaymentTermsService paymentTermsService;
 
     public WorkOrderService(WorkOrderRepository workOrderRepository,
                             WorkOrderItemRepository itemRepository,
                             ScheduleService scheduleService,
-                            AccountsReceivableRepository receivableRepository,
-                            PaymentTermsService paymentTermsService) {
+                            AccountsReceivableRepository receivableRepository) {
         this.workOrderRepository = workOrderRepository;
         this.itemRepository = itemRepository;
         this.scheduleService = scheduleService;
         this.receivableRepository = receivableRepository;
-        this.paymentTermsService = paymentTermsService;
     }
 
     public List<WorkOrder> listAll() {

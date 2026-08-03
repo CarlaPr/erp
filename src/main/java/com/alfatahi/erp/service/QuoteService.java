@@ -19,11 +19,14 @@ public class QuoteService {
     private final QuoteRepository quoteRepo;
     private final WorkOrderRepository osRepo;
     private final ScheduleService scheduleService;
+    private final TechnicalVisitService technicalVisitService;
 
-    public QuoteService(QuoteRepository quoteRepo, WorkOrderRepository osRepo, ScheduleService scheduleService) {
+    public QuoteService(QuoteRepository quoteRepo, WorkOrderRepository osRepo, ScheduleService scheduleService,
+                         TechnicalVisitService technicalVisitService) {
         this.quoteRepo = quoteRepo;
         this.osRepo = osRepo;
         this.scheduleService = scheduleService;
+        this.technicalVisitService = technicalVisitService;
     }
 
     private BigDecimal calcularAreaM2(BigDecimal width, BigDecimal height) {
@@ -146,6 +149,7 @@ public class QuoteService {
                 osRepo.save(os);
             }
             scheduleService.onQuoteCancelled(quoteId);
+            technicalVisitService.onQuoteDeleted(quoteId);
             quoteRepo.delete(quote);
         }
     }

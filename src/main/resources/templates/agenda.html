@@ -11,9 +11,10 @@
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Agenda Comercial</h2>
-            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Agende, acompanhe o prazo e reagende os serviços aprovados.</p>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Agende, acompanhe o prazo e reagende os serviços aprovados e visitas técnicas.</p>
         </div>
     </header>
+
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
             <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Aprovados</span>
@@ -40,6 +41,7 @@
             <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1" th:text="${kpis.semana}">0</p>
         </div>
     </div>
+
     <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm mb-6">
         <div class="flex flex-wrap items-center gap-3">
             <div class="relative flex-1 min-w-[220px]">
@@ -58,6 +60,7 @@
                 <option value="ATRASADO">Atrasado</option>
                 <option value="REAGENDADO">Reagendado</option>
                 <option value="CANCELADO">Cancelado</option>
+                <option value="VISITA_TECNICA">Visita Técnica</option>
             </select>
 
             <select id="filterResponsible" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
@@ -99,7 +102,9 @@
             <i data-lucide="list" class="w-4 h-4"></i> Lista
         </button>
     </div>
+
     <br>
+
     <div id="calendarView">
 
         <div id="unscheduledPanel" class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-5 mb-6 hidden">
@@ -136,6 +141,7 @@
             <div id="calendarGrid" class="grid grid-cols-7"></div>
         </div>
     </div>
+
     <div id="listView" class="hidden bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
@@ -156,6 +162,7 @@
             <p id="listEmpty" class="p-8 text-center text-slate-500 font-medium hidden">Nenhum agendamento encontrado para os filtros selecionados.</p>
         </div>
     </div>
+
     <div id="dayModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative my-10">
             <button type="button" onclick="closeModal('dayModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -179,6 +186,7 @@
             <div id="dayModalList" class="space-y-3 max-h-[65vh] overflow-y-auto pr-1"></div>
         </div>
     </div>
+
     <div id="editModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-[60] overflow-y-auto py-10 px-4">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative my-auto">
             <button type="button" onclick="closeModal('editModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -243,7 +251,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável pela Obra</label>
-                    <input id="editResponsible" list="vendedoresList" type="text" placeholder="Hugo"
+                    <input id="editResponsible" list="vendedoresList" type="text" placeholder="Ex: Hugo, Anderson, Igor"
                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
                     <datalist id="vendedoresList">
                         <option th:each="v : ${vendedores}" th:value="${v}"></option>
@@ -290,6 +298,7 @@
             </div>
         </div>
     </div>
+
     <div id="cancelScheduleModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative">
             <button type="button" onclick="closeModal('cancelScheduleModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -316,12 +325,130 @@
         </div>
     </div>
 
+    <div id="visitModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-[60] overflow-y-auto py-10 px-4">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-8 relative my-auto">
+            <button type="button" onclick="closeModal('visitModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-5 h-5 text-fuchsia-500"></i> Visita Técnica
+            </h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Edite a data, o horário ou exclua a visita agendada.</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-xs">
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">Cliente</span>
+                    <span id="visitInfoClient" class="font-bold text-slate-800 dark:text-white block">-</span>
+                    <span id="visitInfoAddress" class="text-slate-500 dark:text-slate-400 mt-1 block leading-tight">-</span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">Orçamento</span>
+                    <span id="visitInfoQuote" class="font-bold text-slate-800 dark:text-white block">-</span>
+                </div>
+            </div>
+
+            <input type="hidden" id="visitId">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Data da visita</label>
+                    <input id="visitDate" type="date" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Horário</label>
+                    <input id="visitTime" type="time" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Observações</label>
+                <textarea id="visitNotes" rows="3" placeholder="Detalhes da visita técnica..."
+                          class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white"></textarea>
+            </div>
+
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <button type="button" onclick="openDeleteVisitModalFromEdit()" class="px-5 py-3 rounded-xl text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Visita
+                </button>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeModal('visitModal')" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
+                        Voltar
+                    </button>
+                    <button type="button" onclick="submitVisitForm()" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white font-black shadow-lg shadow-brand-500/20 transition-all text-sm">
+                        Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteVisitModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative">
+            <button type="button" onclick="closeModal('deleteVisitModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="bg-rose-100 dark:bg-rose-500/10 p-4 rounded-full w-fit mb-5 text-rose-600 dark:text-rose-400">
+                <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">Excluir Visita Técnica</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+                Tem certeza que deseja excluir esta visita técnica da Agenda Comercial? Esta ação não pode ser desfeita.
+            </p>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeModal('deleteVisitModal')" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
+                    Voltar
+                </button>
+                <button type="button" onclick="confirmDeleteVisit()" class="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-sm">
+                    Confirmar Exclusão
+                </button>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 
 <script th:inline="javascript">
-    const SCHEDULES = [];
+
+    const EXECUTION_SCHEDULES_RAW = /*[[${schedules}]]*/ [];
+
+    const TECHNICAL_VISITS_RAW = /*[[${technicalVisits}]]*/ [];
+
+    function normalizeVisit(v) {
+        return {
+            id: v.id,
+            kind: 'VISITA_TECNICA',
+            quoteId: v.quoteId,
+            quoteNumber: v.quoteNumber,
+            workOrderId: null,
+            workOrderNumber: null,
+            clientId: v.clientId,
+            clientName: v.clientName,
+            clientAddress: v.clientAddress,
+            serviceType: 'Visita Técnica',
+            approvalDate: null,
+            deadlineDate: null,
+            scheduledDate: v.visitDate,
+            scheduledTime: v.visitTime,
+            estimatedDurationMinutes: null,
+            status: 'VISITA_TECNICA',
+            statusLabel: 'Visita Técnica',
+            semaphore: 'NEUTRAL',
+            serviceDetails: ['Visita técnica ao cliente'],
+            daysRemaining: null,
+            responsible: null,
+            team: null,
+            observations: v.notes,
+            rescheduleReason: null
+        };
+    }
+
+    const SCHEDULES = [
+        ...EXECUTION_SCHEDULES_RAW.map(s => ({ ...s, kind: 'EXECUCAO' })),
+        ...TECHNICAL_VISITS_RAW.map(normalizeVisit)
+    ];
 
     const STATUS_META = {
         AGUARDANDO_AGENDAMENTO: { label: 'Aguardando Agendamento', badge: 'bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300', dot: 'bg-slate-400' },
@@ -331,7 +458,8 @@
         CONCLUIDO:              { label: 'Concluído',                badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', dot: 'bg-emerald-500' },
         ATRASADO:               { label: 'Atrasado',                 badge: 'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400', dot: 'bg-rose-500' },
         REAGENDADO:             { label: 'Reagendado',                badge: 'bg-purple-50 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400', dot: 'bg-purple-500' },
-        CANCELADO:              { label: 'Cancelado',                 badge: 'bg-slate-200 text-slate-500 dark:bg-slate-700/40 dark:text-slate-400 line-through', dot: 'bg-slate-400' }
+        CANCELADO:              { label: 'Cancelado',                 badge: 'bg-slate-200 text-slate-500 dark:bg-slate-700/40 dark:text-slate-400 line-through', dot: 'bg-slate-400' },
+        VISITA_TECNICA:         { label: 'Visita Técnica',            badge: 'bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-500/20 dark:text-fuchsia-400', dot: 'bg-fuchsia-500' }
     };
 
     const SEMAPHORE_DOT = { GREEN: 'bg-emerald-500', YELLOW: 'bg-amber-500', RED: 'bg-rose-500', NEUTRAL: 'bg-slate-300 dark:bg-slate-600' };
@@ -411,6 +539,8 @@
         const today = new Date(); today.setHours(0,0,0,0);
         const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
 
+        const noSpecificFilters = !f.search && !f.status && !f.from && !f.to && !f.onlyLate && !f.next7 && !f.unscheduled && !f.responsible;
+
         return list.filter(s => {
             if (f.search) {
                 const hay = `${s.clientName || ''} ${s.quoteNumber || ''} ${s.workOrderNumber || ''}`.toLowerCase();
@@ -427,6 +557,16 @@
                 if (sd < today || sd > in7) return false;
             }
             if (f.unscheduled && s.scheduledDate) return false;
+
+
+            if (noSpecificFilters && state.view === 'list' && s.scheduledDate) {
+                const scheduleDateObj = new Date(s.scheduledDate + 'T00:00:00');
+                if (scheduleDateObj.getMonth() !== state.month.getMonth() ||
+                    scheduleDateObj.getFullYear() !== state.month.getFullYear()) {
+                    return false;
+                }
+            }
+
             return true;
         });
     }
@@ -455,11 +595,11 @@
 
     function changeMonth(delta) {
         state.month = new Date(state.month.getFullYear(), state.month.getMonth() + delta, 1);
-        renderCalendar();
+        renderAll();
     }
     function goToday() {
         state.month = startOfMonth(new Date());
-        renderCalendar();
+        renderAll();
     }
 
     function renderCalendar() {
@@ -467,10 +607,14 @@
         document.getElementById('calendarLabel').textContent = label;
 
         const filtered = applyFilters(SCHEDULES);
+
         const byDate = {};
         filtered.forEach(s => {
             if (!s.scheduledDate) return;
             (byDate[s.scheduledDate] = byDate[s.scheduledDate] || []).push(s);
+        });
+        Object.keys(byDate).forEach(d => {
+            byDate[d].sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
         });
 
         const year = state.month.getFullYear();
@@ -495,7 +639,9 @@
             }
 
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+
             const items = byDate[dateStr] || [];
+
             const isToday = dateStr === todayStr;
 
             const numEl = document.createElement('div');
@@ -511,7 +657,7 @@
                 chip.type = 'button';
                 chip.className = 'w-full text-left mb-1 px-1.5 py-1 rounded-md text-[11px] font-semibold truncate flex items-center gap-1 hover:opacity-80 transition-opacity ' + (STATUS_META[s.status]?.badge || '');
                 chip.innerHTML = `<span class="w-1.5 h-1.5 rounded-full shrink-0 ${SEMAPHORE_DOT[s.semaphore] || ''}"></span><span class="truncate">${s.serviceType || 'Serviço'} · ${s.clientName || ''}</span>`;
-                chip.onclick = () => openEditModal(s.id);
+                chip.onclick = () => s.kind === 'VISITA_TECNICA' ? openVisitModal(s.id) : openEditModal(s.id);
                 cell.appendChild(chip);
             });
 
@@ -534,7 +680,12 @@
     }
 
     function openDayModal(dateStr) {
-        const items = applyFilters(SCHEDULES).filter(s => s.scheduledDate === dateStr);
+
+        const items = applyFilters(SCHEDULES)
+            .filter(s => s.scheduledDate === dateStr)
+            .slice()
+            .sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
+
         document.getElementById('dayModalTitle').textContent = 'Serviços do dia ' + fmtBR(dateStr);
         document.getElementById('btnDayPdf').onclick = () => generateDayPdf(dateStr);
 
@@ -547,6 +698,7 @@
 
         items.forEach(s => {
             const meta = STATUS_META[s.status] || {};
+            const isVisit = s.kind === 'VISITA_TECNICA';
             const row = document.createElement('div');
             row.className = 'border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50 dark:bg-slate-900';
             row.innerHTML = `
@@ -561,7 +713,7 @@
                 </div>
 
                 <div class="mb-4 p-2.5 bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-lg shadow-inner">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Serviços / Itens Agendados</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">${isVisit ? 'Visita Técnica' : 'Serviços / Itens Agendados'}</p>
                     <div class="flex flex-col gap-1.5">
                         ${(s.serviceDetails && Array.isArray(s.serviceDetails))
                 ? s.serviceDetails.map(item => `<div class="bg-brand-50 dark:bg-cyan-900/20 border border-brand-100 dark:border-cyan-800/50 px-2.5 py-1.5 rounded-md text-[11px] font-semibold text-brand-700 dark:text-cyan-400">${item}</div>`).join('')
@@ -573,14 +725,19 @@
                 <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 mb-4">
                     <span><b>Orçamento:</b> ${s.quoteNumber || '-'}</span>
                     <span><b>OS:</b> ${s.workOrderNumber || '-'}</span>
-                    <span><b>Aprovação:</b> ${fmtDateTimeBR(s.approvalDate)}</span>
-                    <span><b>Prazo - Entregar até:</b> ${fmtBR(s.deadlineDate)}</span>
+                    <span><b>${isVisit ? 'Observações' : 'Aprovação'}:</b> ${isVisit ? (s.observations || '-') : fmtDateTimeBR(s.approvalDate)}</span>
+                    <span><b>${isVisit ? 'Agendada para' : 'Prazo - Entregar até'}:</b> ${fmtBR(isVisit ? s.scheduledDate : s.deadlineDate)}</span>
                     <span><b>Responsável:</b> ${s.responsible || '-'}</span>
                     <span><b>Hora Prevista:</b> ${s.scheduledTime ? fmtTimeBR(s.scheduledTime) : '-'}</span>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openEditModal('${s.id}')">Gerenciar (Agendar/Editar)</button>
-                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/quotes'">Abrir Orçamento</button>
+                    ${isVisit ? `
+                        <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-fuchsia-600 text-white hover:opacity-90" onclick="openVisitModal('${s.id}')">Editar Visita</button>
+                        <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white hover:opacity-90" onclick="quickDeleteVisit('${s.id}')">Excluir Visita</button>
+                    ` : `
+                        <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openEditModal('${s.id}')">Gerenciar (Agendar/Editar)</button>
+                    `}
+                    <button type="button" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/quotes'">Abrir Orçamento</button>
                 </div>
             `;
             list.appendChild(row);
@@ -590,7 +747,10 @@
     }
 
     function generateDayPdf(dateStr) {
-        const items = applyFilters(SCHEDULES).filter(s => s.scheduledDate === dateStr);
+        const items = applyFilters(SCHEDULES)
+            .filter(s => s.scheduledDate === dateStr)
+            .slice()
+            .sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
         if (items.length === 0) {
             alert('Não há serviços para gerar o PDF neste dia.');
             return;
@@ -665,7 +825,7 @@
                 setTimeout(() => {
                     window.print();
                     window.onafterprint = function() { window.close(); };
-                }, 500); // Aumentei para 500ms para garantir que o render termine
+                }, 500);
             };
         </body>
         </html>
@@ -679,7 +839,7 @@
     }
 
     function renderUnscheduledPanel() {
-        const pending = applyFilters(SCHEDULES).filter(s => !s.scheduledDate && s.status !== 'CANCELADO');
+        const pending = applyFilters(SCHEDULES).filter(s => s.kind !== 'VISITA_TECNICA' && !s.scheduledDate && s.status !== 'CANCELADO');
         const panel = document.getElementById('unscheduledPanel');
         const list = document.getElementById('unscheduledList');
         list.innerHTML = '';
@@ -705,7 +865,10 @@
         const filtered = applyFilters(SCHEDULES).slice().sort((a, b) => {
             const da = a.scheduledDate || a.deadlineDate || '9999-99-99';
             const db = b.scheduledDate || b.deadlineDate || '9999-99-99';
-            return da.localeCompare(db);
+            if (da !== db) return da.localeCompare(db);
+            const ta = a.scheduledTime || '99:99:99';
+            const tb = b.scheduledTime || '99:99:99';
+            return ta.localeCompare(tb);
         });
 
         const body = document.getElementById('listBody');
@@ -728,7 +891,12 @@
                 <td class="p-4">${s.scheduledDate ? fmtBR(s.scheduledDate) : '<span class="text-slate-400 italic">Não agendado</span>'}</td>
                 <td class="p-4"><span class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase ${meta.badge || ''}">${meta.label || s.status}</span></td>
                 <td class="p-4 text-right whitespace-nowrap">
-                    <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar / Agendar" onclick="openEditModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                    ${s.kind === 'VISITA_TECNICA' ? `
+                        <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar Visita Técnica" onclick="openVisitModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Excluir Visita Técnica" onclick="quickDeleteVisit('${s.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    ` : `
+                        <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar / Agendar" onclick="openEditModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                    `}
                     <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Abrir Orçamento" onclick="window.location.href='/quotes'"><i data-lucide="file-signature" class="w-4 h-4"></i></button>
                 </td>
             `;
@@ -837,6 +1005,82 @@
                 window.location.reload();
             } else {
                 alert('Erro ao cancelar agendamento.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
+    async function openVisitModal(id) {
+        try {
+            const res = await fetch(`/agenda/technical-visits/view-data/${id}`);
+            if (!res.ok) throw new Error('Falha ao carregar visita técnica');
+            const v = await res.json();
+
+            document.getElementById('visitInfoClient').textContent = v.clientName || '-';
+            document.getElementById('visitInfoAddress').textContent = v.clientAddress || 'Endereço não informado';
+            document.getElementById('visitInfoQuote').textContent = v.quoteNumber || '-';
+
+            document.getElementById('visitId').value = v.id;
+            document.getElementById('visitDate').value = v.visitDate || '';
+            document.getElementById('visitTime').value = v.visitTime ? v.visitTime.substring(0, 5) : '';
+            document.getElementById('visitNotes').value = v.notes || '';
+
+            closeModal('dayModal');
+            toggleModal('visitModal', true);
+            lucide.createIcons();
+        } catch (err) {
+            console.error(err);
+            alert('Não foi possível carregar os dados da visita técnica.');
+        }
+    }
+
+    async function submitVisitForm() {
+        const payload = {
+            id: document.getElementById('visitId').value,
+            visitDate: document.getElementById('visitDate').value || null,
+            visitTime: document.getElementById('visitTime').value ? (document.getElementById('visitTime').value + ':00') : null,
+            notes: document.getElementById('visitNotes').value
+        };
+
+        if (!payload.visitDate) {
+            alert('Informe a data da visita técnica.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/agenda/technical-visits/save-ajax', { method: 'POST', headers: csrfHeaders(true), body: JSON.stringify(payload) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                alert('Erro ao salvar visita técnica: ' + (data.error || 'erro desconhecido'));
+                return;
+            }
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
+    function openDeleteVisitModalFromEdit() {
+        toggleModal('deleteVisitModal', true);
+    }
+
+    function quickDeleteVisit(id) {
+        document.getElementById('visitId').value = id;
+        closeModal('dayModal');
+        toggleModal('deleteVisitModal', true);
+    }
+
+    async function confirmDeleteVisit() {
+        const id = document.getElementById('visitId').value;
+        try {
+            const res = await fetch(`/agenda/technical-visits/${id}`, { method: 'DELETE', headers: csrfHeaders(false) });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert('Erro ao excluir visita técnica.');
             }
         } catch (err) {
             console.error(err);

@@ -178,19 +178,21 @@ public class PayableController {
         LocalDate inicioMes = ym.atDay(1);
         LocalDate fimMes = ym.atEndOfMonth().plusDays(1);
 
-        List<AccountsPayable> fixas = payableRepository.findByCategoryIgnoreCaseOrderByDueDateAsc("FIXA").stream()
+        List<AccountsPayable> fixasOuRecorrentes = financeService.listAllPayables().stream()
                 .filter(p -> !"cancelled".equals(p.getStatus()))
+                .filter(p -> "FIXA".equalsIgnoreCase(p.getCategory()) || Boolean.TRUE.equals(p.getRecurring()))
+                .sorted((a, b) -> a.getDueDate().compareTo(b.getDueDate()))
                 .collect(Collectors.toList());
 
-        List<AccountsPayable> doMesAtual = fixas.stream()
+        List<AccountsPayable> doMesAtual = fixasOuRecorrentes.stream()
                 .filter(p -> !p.getDueDate().isBefore(inicioMes) && p.getDueDate().isBefore(fimMes))
                 .collect(Collectors.toList());
 
-        List<AccountsPayable> vencidas = fixas.stream()
+        List<AccountsPayable> vencidas = fixasOuRecorrentes.stream()
                 .filter(AccountsPayable::isOverdue)
                 .collect(Collectors.toList());
 
-        List<AccountsPayable> pagas = fixas.stream()
+        List<AccountsPayable> pagas = fixasOuRecorrentes.stream()
                 .filter(p -> "paid".equals(p.getStatus()))
                 .sorted((a, b) -> {
                     LocalDate da = a.getPaymentDate() != null ? a.getPaymentDate() : a.getDueDate();
@@ -200,14 +202,30 @@ public class PayableController {
                 .limit(50)
                 .collect(Collectors.toList());
 
-        List<AccountsPayable> futuras = fixas.stream()
+        List<AccountsPayable> futuras = fixasOuRecorrentes.stream()
                 .filter(p -> ("pending".equals(p.getStatus()) || "partial".equals(p.getStatus())) && !p.getDueDate().isBefore(fimMes))
                 .collect(Collectors.toList());
 
-        BigDecimal totalMes = nvl(payableRepository.sumFixedTotalByMonth(inicioMes, fimMes));
-        BigDecimal totalPagoMes = nvl(payableRepository.sumFixedPaidByMonth(inicioMes, fimMes));
-        BigDecimal totalPendenteMes = nvl(payableRepository.sumFixedPendingByMonth(inicioMes, fimMes));
-        List<AccountsPayable> proximosVencimentos = payableRepository.findUpcomingFixedDue(hoje).stream()
+        BigDecimal totalMes = fixasOuRecorrentes.stream()
+                .filter(p -> !p.getDueDate().isBefore(inicioMes) && p.getDueDate().isBefore(fimMes))
+                .map(AccountsPayable::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalPagoMes = fixasOuRecorrentes.stream()
+                .filter(p -> ("paid".equals(p.getStatus()) || "partial".equals(p.getStatus()))
+                        && !p.getDueDate().isBefore(inicioMes) && p.getDueDate().isBefore(fimMes))
+                .map(AccountsPayable::getPaidAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalPendenteMes = fixasOuRecorrentes.stream()
+                .filter(p -> ("pending".equals(p.getStatus()) || "partial".equals(p.getStatus()))
+                        && !p.getDueDate().isBefore(inicioMes) && p.getDueDate().isBefore(fimMes))
+                .map(AccountsPayable::getBalance)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<AccountsPayable> proximosVencimentos = fixasOuRecorrentes.stream()
+                .filter(p -> ("pending".equals(p.getStatus()) || "partial".equals(p.getStatus())) && !p.getDueDate().isBefore(hoje))
+                .sorted((a, b) -> a.getDueDate().compareTo(b.getDueDate()))
                 .limit(5)
                 .collect(Collectors.toList());
 
@@ -228,7 +246,7 @@ public class PayableController {
 
     @PostMapping("/edit/{id}")
     public String edit(@PathVariable UUID id, @ModelAttribute AccountsPayable form,
-                        @RequestParam(required = false, defaultValue = "single") String editScope) {
+                       @RequestParam(required = false, defaultValue = "single") String editScope) {
         AccountsPayable ap = payableRepository.findById(id).orElseThrow(() -> new RuntimeException("Conta não encontrada"));
         applyDerivedFields(form);
 
@@ -274,11 +292,11 @@ public class PayableController {
 
     @PostMapping("/save")
     public String save(@ModelAttribute AccountsPayable payable,
-                        @RequestParam(required = false, defaultValue = "false") boolean recurrenceEnabled,
-                        @RequestParam(required = false) String recurrenceFrequency,
-                        @RequestParam(required = false) String recurrenceEndType,
-                        @RequestParam(required = false) Integer recurrenceCount,
-                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate recurrenceEndDate) {
+                       @RequestParam(required = false, defaultValue = "false") boolean recurrenceEnabled,
+                       @RequestParam(required = false) String recurrenceFrequency,
+                       @RequestParam(required = false) String recurrenceEndType,
+                       @RequestParam(required = false) Integer recurrenceCount,
+                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate recurrenceEndDate) {
 
         applyDerivedFields(payable);
 

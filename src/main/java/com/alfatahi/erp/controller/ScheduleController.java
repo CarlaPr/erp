@@ -2,9 +2,11 @@ package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.dto.ScheduleDto;
 import com.alfatahi.erp.dto.ScheduleSaveRequest;
+import com.alfatahi.erp.dto.TechnicalVisitDto;
 import com.alfatahi.erp.entity.AppUser;
 import com.alfatahi.erp.repository.AppUserRepository;
 import com.alfatahi.erp.service.ScheduleService;
+import com.alfatahi.erp.service.TechnicalVisitService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +25,13 @@ import java.util.stream.Collectors;
 public class ScheduleController {
 
     private final ScheduleService scheduleService;
+    private final TechnicalVisitService technicalVisitService;
     private final AppUserRepository appUserRepo;
 
-    public ScheduleController(ScheduleService scheduleService, AppUserRepository appUserRepo) {
+    public ScheduleController(ScheduleService scheduleService, TechnicalVisitService technicalVisitService,
+                               AppUserRepository appUserRepo) {
         this.scheduleService = scheduleService;
+        this.technicalVisitService = technicalVisitService;
         this.appUserRepo = appUserRepo;
     }
 
@@ -34,6 +39,7 @@ public class ScheduleController {
     @Transactional(readOnly = true)
     public String index(Model model) {
         List<ScheduleDto> schedules = scheduleService.listAllDto();
+        List<TechnicalVisitDto> technicalVisits = technicalVisitService.listAllDto();
 
         List<String> vendedores = appUserRepo.findByRole("VENDAS").stream()
                 .map(AppUser::getUsername)
@@ -41,6 +47,7 @@ public class ScheduleController {
 
         model.addAttribute("currentPage", "agenda");
         model.addAttribute("schedules", schedules);
+        model.addAttribute("technicalVisits", technicalVisits);
         model.addAttribute("vendedores", vendedores);
         model.addAttribute("kpis", scheduleService.getKpis());
 
