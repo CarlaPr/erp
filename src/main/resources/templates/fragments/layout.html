@@ -55,6 +55,7 @@
 <body class="bg-slate-50 text-slate-800 dark:bg-[#0B1120] dark:text-slate-200 antialiased">
 
 <div th:fragment="sidebar">
+
     <div id="sidebarOverlay" onclick="closeSidebar()" class="fixed inset-0 bg-slate-900/60 z-40 opacity-0 pointer-events-none transition-opacity duration-300 lg:hidden"></div>
 
     <aside id="sidebar" class="w-72 bg-white dark:bg-slate-900 h-screen fixed left-0 top-0 border-r border-slate-200 dark:border-slate-800 shadow-xl flex flex-col z-50 transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0">
@@ -98,6 +99,7 @@
                 <a href="/dashboard" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'dashboard'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Executivo
                 </a>
+
                 <a href="/work-orders" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO', 'TECNICO')" th:classappend="${currentPage == 'work-orders'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Ordens de Serviço
                 </a>
@@ -237,6 +239,72 @@
         window.addEventListener('resize', function () {
             if (window.innerWidth >= 1024) closeSidebar();
         });
+    </script>
+
+    <div id="sessionExpiredOverlay"
+         style="display:none; position:fixed; inset:0; z-index:2147483647; background:rgba(15,23,42,.92); backdrop-filter:blur(2px); align-items:center; justify-content:center; padding:1.5rem;">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-sm w-full p-7 text-center border border-slate-200 dark:border-slate-800">
+            <div class="mx-auto mb-4 w-14 h-14 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+                <i data-lucide="clock-alert" class="w-7 h-7 text-amber-500"></i>
+            </div>
+            <h2 class="text-lg font-extrabold text-slate-900 dark:text-white mb-2">Sessão expirada</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                Você ficou inativo por muito tempo e sua sessão foi encerrada por segurança.
+                Qualquer dado não salvo em uma tela aberta pode ter sido perdido.
+                Faça login novamente para continuar.
+            </p>
+            <button onclick="window.location.href='/login'"
+                    class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 rounded-lg transition-all">
+                Fazer login novamente
+            </button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            let overlayShown = false;
+            let lastActivity = Date.now();
+            const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000; // 5 min
+            const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'click', 'scroll', 'touchstart'];
+
+            ACTIVITY_EVENTS.forEach(function (evt) {
+                document.addEventListener(evt, function () { lastActivity = Date.now(); }, { passive: true });
+            });
+
+            function showSessionExpiredOverlay() {
+                if (overlayShown) return;
+                overlayShown = true;
+                const overlay = document.getElementById('sessionExpiredOverlay');
+                if (!overlay) return;
+                overlay.style.display = 'flex';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                document.body.style.overflow = 'hidden';
+            }
+            window.showSessionExpiredOverlay = showSessionExpiredOverlay;
+
+            const originalFetch = window.fetch.bind(window);
+            window.fetch = function (input, init) {
+                init = init || {};
+                const headers = new Headers(init.headers || {});
+                if (!headers.has('X-Requested-With')) headers.set('X-Requested-With', 'XMLHttpRequest');
+                init.headers = headers;
+
+                return originalFetch(input, init).then(function (response) {
+                    const redirectedToLogin = response.redirected && response.url.indexOf('/login') !== -1;
+                    if (response.status === 401 || redirectedToLogin) {
+                        showSessionExpiredOverlay();
+                        return new Promise(function () {});
+                    }
+                    return response;
+                });
+            };
+
+            setInterval(function () {
+                if (Date.now() - lastActivity <= HEARTBEAT_INTERVAL_MS) {
+                    fetch('/ping').catch(function () {});
+                }
+            }, HEARTBEAT_INTERVAL_MS);
+        })();
     </script>
 </div>
 

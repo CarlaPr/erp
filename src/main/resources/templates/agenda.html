@@ -163,24 +163,34 @@
         </div>
     </div>
 
+    <!-- DAY MODAL ATUALIZADO (Whatsapp + Cores Visita) -->
     <div id="dayModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative my-10">
             <button type="button" onclick="closeModal('dayModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
             <br><br>
-            <div class="flex items-center justify-between mb-4">
-                <h3 id="dayModalTitle"
-                    class="text-xl font-black text-slate-900 dark:text-white">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <h3 id="dayModalTitle" class="text-xl font-black text-slate-900 dark:text-white">
                     Serviços do dia
                 </h3>
 
-                <button type="button"
-                        id="btnDayPdf"
-                        class="px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-md flex items-center gap-2">
-                    <i data-lucide="printer" class="w-4 h-4"></i>
-                    Gerar Roteiro (PDF) - Imprimir
-                </button>
+                <div class="flex items-center gap-2">
+                    <!-- Botão WhatsApp -->
+                    <button type="button"
+                            id="btnDayWhatsapp"
+                            class="px-4 py-2 bg-emerald-500 text-white text-sm font-bold rounded-xl hover:bg-emerald-600 transition-colors shadow-md flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        WhatsApp
+                    </button>
+                    <!-- Botão Imprimir -->
+                    <button type="button"
+                            id="btnDayPdf"
+                            class="px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-md flex items-center gap-2">
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        Imprimir
+                    </button>
+                </div>
             </div>
 
             <div id="dayModalList" class="space-y-3 max-h-[65vh] overflow-y-auto pr-1"></div>
@@ -687,7 +697,10 @@
             .sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
 
         document.getElementById('dayModalTitle').textContent = 'Serviços do dia ' + fmtBR(dateStr);
+
+        // Atrelando eventos aos botões
         document.getElementById('btnDayPdf').onclick = () => generateDayPdf(dateStr);
+        document.getElementById('btnDayWhatsapp').onclick = () => shareDayWhatsapp(dateStr);
 
         const list = document.getElementById('dayModalList');
         list.innerHTML = '';
@@ -699,8 +712,14 @@
         items.forEach(s => {
             const meta = STATUS_META[s.status] || {};
             const isVisit = s.kind === 'VISITA_TECNICA';
+
+            // Destaque visual: fundo azul claro para visita técnica
+            const bgClass = isVisit
+                ? 'bg-blue-50/60 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/50'
+                : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800';
+
             const row = document.createElement('div');
-            row.className = 'border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50 dark:bg-slate-900';
+            row.className = `border rounded-xl p-4 ${bgClass}`;
             row.innerHTML = `
                 <div class="flex justify-between items-start mb-3">
                     <div>
@@ -746,6 +765,51 @@
         toggleModal('dayModal', true);
     }
 
+    function shareDayWhatsapp(dateStr) {
+        const items = applyFilters(SCHEDULES)
+            .filter(s => s.scheduledDate === dateStr)
+            .slice()
+            .sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
+
+        if (items.length === 0) {
+            alert('Não há serviços para compartilhar neste dia.');
+            return;
+        }
+
+        const dataFormatada = fmtBR(dateStr);
+        let texto = `*Roteiro de Obras - ${dataFormatada}*\nTotal de Atendimentos: ${items.length}\n\n`;
+
+        items.forEach((s, i) => {
+            const isVisit = s.kind === 'VISITA_TECNICA';
+            texto += `*${i + 1}. Cliente: ${s.clientName || 'Não informado'}*\n`;
+            texto += `📍 *Endereço:* ${s.clientAddress || '-'}\n`;
+            texto += `⏰ *Horário:* ${s.scheduledTime ? s.scheduledTime.substring(0, 5) : 'A definir'}\n`;
+
+            if (isVisit) {
+                texto += `🔍 *Tipo:* VISITA TÉCNICA\n`;
+                texto += `📄 *Orçamento:* ${s.quoteNumber || '-'}\n`;
+            } else {
+                texto += `📄 *OS:* ${s.workOrderNumber || '-'} | *Orç:* ${s.quoteNumber || '-'}\n`;
+            }
+
+            if (s.team || s.responsible) {
+                texto += `👷 *Equipe:* ${s.team || s.responsible}\n`;
+            }
+            if (!isVisit && s.serviceDetails && s.serviceDetails.length > 0) {
+                texto += `🛠️ *Serviços:* ${s.serviceDetails.join(', ')}\n`;
+            } else if (!isVisit && s.serviceType) {
+                texto += `🛠️ *Serviço:* ${s.serviceType}\n`;
+            }
+            if (s.observations) {
+                texto += `📌 *Obs:* ${s.observations}\n`;
+            }
+            texto += `\n`;
+        });
+
+        const encodedText = encodeURIComponent(texto);
+        window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+    }
+
     function generateDayPdf(dateStr) {
         const items = applyFilters(SCHEDULES)
             .filter(s => s.scheduledDate === dateStr)
@@ -769,7 +833,7 @@
                 h2 { text-align: center; margin-bottom: 5px; color: #0f172a; text-transform: uppercase; }
                 .subtitle { text-align: center; font-size: 14px; color: #64748b; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
                 .card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 20px; page-break-inside: avoid; }
-                .card-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
+                .card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
                 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; margin-bottom: 15px; }
                 .label { font-weight: bold; color: #475569; }
                 .items-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; }
@@ -777,6 +841,7 @@
                 .item-line { font-size: 13px; font-weight: 600; color: #0369a1; margin-bottom: 4px; padding-left: 10px; position: relative; }
                 .item-line::before { content: "•"; position: absolute; left: 0; color: #0284c7; }
                 .obs { margin-top: 12px; font-size: 13px; background: #fffbeb; padding: 8px 12px; border-left: 3px solid #f59e0b; border-radius: 4px; }
+                .badge-visit { color: #2563eb; font-size: 11px; border: 1px solid #93c5fd; background: #eff6ff; padding: 2px 6px; border-radius: 4px; margin-left: 10px; vertical-align: middle; }
                 @media print {
                     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 }
@@ -788,6 +853,8 @@
         `;
 
         items.forEach((s, i) => {
+            const isVisit = s.kind === 'VISITA_TECNICA';
+
             let listaItens = '';
             if (s.serviceDetails && Array.isArray(s.serviceDetails)) {
                 listaItens = s.serviceDetails.map(item => `<div class="item-line">${item}</div>`).join('');
@@ -798,8 +865,11 @@
             html += `
             <div class="card">
                 <div class="card-header">
-                    <span>${i + 1}. Cliente: ${s.clientName || 'Não informado'}</span>
-                    <span>OS: ${s.workOrderNumber || '-'}</span>
+                    <span>
+                        ${i + 1}. Cliente: ${s.clientName || 'Não informado'}
+                        ${isVisit ? '<span class="badge-visit">VISITA TÉCNICA</span>' : ''}
+                    </span>
+                    <span>${isVisit ? 'Orçamento: ' + (s.quoteNumber || '-') : 'OS: ' + (s.workOrderNumber || '-')}</span>
                 </div>
                 <div class="grid">
                     <div><span class="label">Endereço:</span> ${s.clientAddress || '-'}</div>
@@ -808,7 +878,7 @@
                     <div><span class="label">Equipe/Resp.:</span> ${s.team || s.responsible || '-'}</div>
                 </div>
                 <div class="items-box">
-                    <div class="items-box-title">Serviços / Itens a Executar na Obra</div>
+                    <div class="items-box-title">${isVisit ? 'Descrição da Visita' : 'Serviços / Itens a Executar na Obra'}</div>
                     ${listaItens}
                 </div>
                 ${s.observations ? `<div class="obs"><span class="label">Observações da Obra:</span> ${s.observations}</div>` : ''}
@@ -819,14 +889,17 @@
         html += `
             <script>
             window.onload = function() {
-
-                lucide.createIcons();
+                // Tentativa de carregar ícones caso exista
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
 
                 setTimeout(() => {
                     window.print();
                     window.onafterprint = function() { window.close(); };
                 }, 500);
             };
+            <\/script>
         </body>
         </html>
         `;
@@ -897,7 +970,7 @@
                     ` : `
                         <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar / Agendar" onclick="openEditModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
                     `}
-                    <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Abrir Orçamento" onclick="window.location.href='/quotes'"><i data-lucide="file-signature" class="w-4 h-4"></i></button>
+                    <button type="button" class="hidden p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Abrir Orçamento" onclick="window.location.href='/quotes'"><i data-lucide="file-signature" class="w-4 h-4"></i></button>
                 </td>
             `;
             body.appendChild(tr);
@@ -1087,7 +1160,6 @@
             alert('Erro de comunicação com o servidor.');
         }
     }
-
 
     document.addEventListener('DOMContentLoaded', () => {
         switchView('calendar');
