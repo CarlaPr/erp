@@ -131,55 +131,96 @@
 
             <div id="itemFormSection" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5 sm:p-7 mb-5 lg:mb-6">
                 <h3 class="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-5 flex items-center gap-2">
-                    <i data-lucide="package-plus" class="w-4 h-4"></i> Inserir Item / Serviço
+                    <i data-lucide="package-plus" class="w-4 h-4"></i>
+                    Inserir Item / Serviço
                 </h3>
-
                 <div id="itemEditBanner" class="hidden mb-5 flex items-center justify-between gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 rounded-xl px-4 py-3 text-sm font-bold">
-                    <span class="flex items-center gap-2"><i data-lucide="pencil" class="w-4 h-4"></i> Editando item da lista</span>
-                    <button type="button" onclick="cancelEditItem()" class="text-xs underline hover:no-underline">Cancelar edição</button>
-                </div>
+                <span class="flex items-center gap-2">
+                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                    Editando item da lista
+                </span>
+                            <button type="button" onclick="cancelEditItem()" class="text-xs underline hover:no-underline">
+                                Cancelar edição
+                            </button>
+                        </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-6 gap-4 sm:gap-5 mb-5">
-                    <div class="sm:col-span-2 relative">
-                        <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">Categoria / Serviço</label>
-                        <input type="text" id="itemCat" readonly placeholder="Selecione ou crie..."
-                               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none cursor-pointer focus:border-brand-500 dark:focus:border-cyan-500 text-base font-semibold"
-                               onclick="openServiceModal()" />
-                        <button type="button" onclick="openServiceModal()" class="absolute right-3 top-8 text-slate-400 hover:text-brand-600 dark:hover:text-cyan-400">
-                            <i data-lucide="search" class="w-5 h-5"></i>
-                        </button>
+
+                        <div class="mb-5">
+                            <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">
+                                Categoria / Serviço
+                            </label>
+                            <div class="relative">
+                                <input type="text" id="itemCat" readonly placeholder="Selecione ou crie..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 pr-12 text-slate-900 dark:text-white outline-none cursor-pointer focus:border-brand-500 dark:focus:border-cyan-500 text-base font-semibold" onclick="openServiceModal()" />
+                                <button type="button" onclick="openServiceModal()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-600 dark:hover:text-cyan-400 transition-colors">
+
+                                    <i data-lucide="search" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <div class="flex items-center justify-between gap-3 mb-1">
+                                <label class="block text-slate-500 text-xs font-bold ml-1 uppercase">
+                                    Descrição / Especificação
+                                </label>
+                                <span class="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium">
+                        Arraste o canto inferior para ajustar o tamanho
+                    </span>
                     </div>
-                    <div class="sm:col-span-4">
-                        <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">Descrição / Especificação</label>
-                        <textarea id="itemProd" rows="2" placeholder="Especificação detalhada do Item (Ex: Temperado 8mm Incolor)&#10;Dê Enter para quebrar linha..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base resize-y"></textarea>
-                    </div>
+                    <textarea id="itemProd" rows="8"
+                            placeholder="Especificação detalhada do Item (Ex: Temperado 8mm Incolor)&#10;&#10;Você pode inserir uma descrição completa do serviço, materiais utilizados, medidas, acabamentos e observações.&#10;&#10;Dê Enter para quebrar linha..."
+                            class="w-full min-h-[220px] sm:min-h-[260px] max-h-[600px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-4 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/10 dark:focus:ring-cyan-500/10 text-base leading-relaxed resize-y transition-all"
+                    ></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-6 lg:grid-cols-12 gap-4 sm:gap-5">
+
                     <div class="col-span-1 sm:col-span-2 lg:col-span-2">
-                        <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">Largura (m)</label>
-                        <input type="number" step="0.01" min="0" oninput="if(this.value < 0) this.value = 0;" id="itemWidth" placeholder="0.00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-base" />
+                        <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">
+                            Largura (m)
+                        </label>
+                        <input type="number" step="0.01" min="0" oninput="if(this.value < 0) this.value = 0;" id="itemWidth"
+                                placeholder="0.00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-base"
+                        />
                     </div>
                     <div class="col-span-1 sm:col-span-2 lg:col-span-2">
-                        <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">Altura (m)</label>
-                        <input type="number" step="0.01" min="0" oninput="if(this.value < 0) this.value = 0;" id="itemHeight" placeholder="0.00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-base" />
+                        <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">
+                            Altura (m)
+                        </label>
+                        <input type="number" step="0.01" min="0" oninput="if(this.value < 0) this.value = 0;" id="itemHeight"
+                                placeholder="0.00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-base"
+                        />
                     </div>
+
                     <div class="col-span-1 sm:col-span-2 lg:col-span-2">
-                        <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">Quantidade</label>
-                        <input type="number" id="itemQtd" min="1" oninput="if(this.value < 1) this.value = 1;" placeholder="1" value="1" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-base font-bold" />
+                        <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">
+                            Quantidade
+                        </label>
+                        <input type="number" id="itemQtd" min="1" oninput="if(this.value < 1) this.value = 1;" placeholder="1"
+                                value="1" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-base font-bold"
+                        />
+
                     </div>
                     <div class="col-span-1 sm:col-span-3 lg:col-span-3">
-                        <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">Preço do M² / Unit. / Linear (R$)</label>
-                        <input type="number" step="0.01" min="0" oninput="if(this.value < 0) this.value = 0;" id="itemPrice" placeholder="0,00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-900 dark:text-white outline-none text-right focus:border-brand-500 dark:focus:border-cyan-500 text-base font-bold text-brand-700 dark:text-cyan-400" />
+                        <label class="block text-slate-500 text-xs font-bold mb-1 ml-1 uppercase">
+                            Preço do M² / Unit. / Linear (R$)
+                        </label>
+                        <input type="number" step="0.01" min="0" oninput="if(this.value < 0) this.value = 0;" id="itemPrice" placeholder="0,00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-900 dark:text-white outline-none text-right focus:border-brand-500 dark:focus:border-cyan-500 text-base font-bold text-brand-700 dark:text-cyan-400"
+                        />
+
                     </div>
                     <div class="col-span-2 sm:col-span-3 lg:col-span-3 flex items-end">
-                        <button type="button" id="btnAddItem" onclick="addItemToQuote()" class="w-full bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 px-4 py-3 rounded-xl font-bold hover:bg-brand-700 dark:hover:bg-cyan-600 transition-colors shadow-sm text-sm sm:text-base flex items-center justify-center gap-2">
-                            <i data-lucide="plus" class="w-5 h-5"></i> Adicionar à Lista
+                        <button type="button" id="btnAddItem"
+                                onclick="addItemToQuote()" class="w-full bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 px-4 py-3 rounded-xl font-bold hover:bg-brand-700 dark:hover:bg-cyan-600 transition-colors shadow-sm text-sm sm:text-base flex items-center justify-center gap-2"
+                        >
+
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+
+                            Adicionar à Lista
                         </button>
                     </div>
                 </div>
             </div>
-
             <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden mb-5 lg:mb-6">
                 <h3 class="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider p-5 sm:p-7 pb-0 flex items-center gap-2">
                     <i data-lucide="list" class="w-4 h-4"></i> Itens do Orçamento
@@ -1056,61 +1097,266 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
-    /* ===================== CATÁLOGO DE SERVIÇOS ===================== */
 
     const predefinedServicesMap = {
-        "Box de Banheiro - Padrão": "Vidro temperado 8mm.\nKit de alumínio branco ou preto.\nInstalação inclusa.",
-        "Box de Banheiro - Até o Teto": "Vidro temperado 8mm.\nKit de alumínio branco ou preto.\nInstalação inclusa.",
-        "Box de Banheiro - Acrílico": "Box em chapa de acrílico.\nEstrutura em alumínio branco ou preto.\nInstalação inclusa.",
-        "Box de Banheiro - Flex": "Box articulado Flex (camarão).\nVidro temperado 8mm incolor.\nInstalação inclusa.",
-        "Box de Banheiro - Open": "Sistema Open.\nVidro temperado 8mm incolor.\nInstalação inclusa.",
-        "Box de Banheiro - Elegance": "Sistema Elegance.\nRoldanas aparentes cromadas.\nVidro temperado 8mm.\nInstalação inclusa.",
-        "Fechamento de Sacada": "Vidro temperado.\nSistema retrátil.\nInstalação inclusa.",
-        "Janela": "Vidro temperado 8mm incolor.\nFerragens e trincos.\nInstalação inclusa.",
-        "Espelho": "Fornecimento e instalação de espelho Cebrace 4 mm, produzido com tecnologia de alta qualidade, proporcionando excelente reflexão de imagem, maior durabilidade e resistência à umidade em ambientes internos.\n" +
-            "\n" +
+        "Box de Banheiro - Padrão": "Fornecimento e instalação de Box de Banheiro padrão, desenvolvido para proporcionar segurança, praticidade e excelente aproveitamento do espaço.\n\n" +
+            "Especificações do serviço:\n" +
+            "Vidro temperado 8 mm\n" +
+            "Vidro incolor\n" +
+            "Kit de alumínio na cor branca ou preta\n" +
+            "Sistema de abertura conforme configuração do projeto\n" +
+            "Ferragens e acessórios compatíveis com o sistema\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicado para banheiros residenciais, comerciais e corporativos.",
+
+        "Box de Banheiro - Até o Teto": "Fornecimento e instalação de Box de Banheiro até o teto, proporcionando maior área de fechamento, melhor contenção de água e um acabamento moderno e sofisticado ao ambiente.\n\n" +
+            "Especificações do serviço:\n" +
+            "Vidro temperado 8 mm\n" +
+            "Vidro incolor\n" +
+            "Kit de alumínio na cor branca ou preta\n" +
+            "Estrutura dimensionada de acordo com o local\n" +
+            "Sistema de abertura conforme configuração do projeto\n" +
+            "Ferragens e acessórios compatíveis\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicado para projetos residenciais e comerciais que buscam um fechamento completo da área de banho.",
+
+        "Box de Banheiro - Acrílico": "Fornecimento e instalação de Box de Banheiro em acrílico, oferecendo uma solução funcional, leve e prática para o fechamento da área de banho.\n\n" +
+            "Especificações do serviço:\n" +
+            "Chapa de acrílico para fechamento\n" +
+            "Estrutura em alumínio\n" +
+            "Alumínio na cor branca ou preta\n" +
+            "Sistema de abertura conforme configuração do projeto\n" +
+            "Componentes e acessórios compatíveis\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicado para residências, imóveis comerciais e projetos que buscam uma alternativa prática ao vidro.",
+
+        "Box de Banheiro - Flex": "Fornecimento e instalação de Box de Banheiro modelo Flex, também conhecido como sistema camarão, desenvolvido para otimizar o espaço disponível e proporcionar maior praticidade na abertura.\n\n" +
+            "Especificações do serviço:\n" +
+            "Vidro temperado 8 mm\n" +
+            "Vidro incolor\n" +
+            "Sistema articulado tipo Flex (camarão)\n" +
+            "Ferragens e componentes próprios para o sistema\n" +
+            "Estrutura e acabamentos conforme projeto\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicado para banheiros residenciais e comerciais que necessitam de melhor aproveitamento do espaço.",
+
+        "Box de Banheiro - Open": "Fornecimento e instalação de Box de Banheiro com sistema Open, proporcionando um visual moderno, minimalista e sofisticado ao ambiente.\n\n" +
+            "Especificações do serviço:\n" +
+            "Vidro temperado 8 mm\n" +
+            "Vidro incolor\n" +
+            "Sistema Open/Abrir\n" +
+            "Ferragens e acessórios compatíveis com o sistema\n" +
+            "Configuração conforme medidas e características do local\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicado para projetos residenciais e comerciais que valorizam estética, funcionalidade e modernidade.",
+
+        "Box de Banheiro - Elegance": "Fornecimento e instalação de Box de Banheiro modelo Elegance, desenvolvido para oferecer um acabamento sofisticado e contemporâneo.\n\n" +
+            "Especificações do serviço:\n" +
+            "Vidro temperado 8 mm\n" +
+            "Vidro incolor\n" +
+            "Sistema Elegance\n" +
+            "Roldanas aparentes cromadas\n" +
+            "Ferragens e acessórios compatíveis\n" +
+            "Configuração conforme projeto\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicado para projetos que buscam um Box com maior destaque estético e acabamento diferenciado.",
+
+        "Fechamento de Sacada": "Fornecimento e instalação de sistema de fechamento de sacada em vidro, desenvolvido para proporcionar proteção contra vento, chuva e intempéries, mantendo a luminosidade e a integração visual do ambiente.\n\n" +
+            "Especificações do serviço:\n" +
+            "Vidros dimensionados conforme o projeto\n" +
+            "Sistema retrátil de fechamento\n" +
+            "Trilhos e componentes específicos para o sistema\n" +
+            "Ferragens e acessórios compatíveis\n" +
+            "Configuração conforme medidas e características da sacada\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicado para apartamentos, residências, áreas gourmet, varandas e ambientes comerciais.",
+
+        "Janela": "Fornecimento e instalação de janela em vidro temperado, oferecendo segurança, luminosidade e acabamento moderno ao ambiente.\n\n" +
+            "Especificações do serviço:\n" +
+            "Vidro temperado 8 mm\n" +
+            "Vidro incolor\n" +
+            "Ferragens e trincos\n" +
+            "Componentes compatíveis com o sistema\n" +
+            "Medidas conforme levantamento realizado no local\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicada para ambientes residenciais, comerciais e corporativos.",
+
+        "Espelho": "Fornecimento e instalação de espelho Cebrace 4 mm, produzido com tecnologia de alta qualidade, proporcionando excelente reflexão de imagem, nitidez, durabilidade e resistência à umidade em ambientes internos.\n\n" +
             "Especificações do espelho:\n" +
             "Marca: Cebrace\n" +
             "Espessura: 4 mm\n" +
             "Alta definição e nitidez na reflexão\n" +
-            "Bordas lapidadas (quando especificado)\n" +
-            "Indicado para residências, comércios e escritórios",
-        "Espelho Lapidado": "Fornecimento e instalação de espelho Cebrace 4 mm, produzido com tecnologia de alta qualidade, proporcionando excelente reflexão de imagem, maior durabilidade e resistência à umidade em ambientes internos.\n" +
-            "\n" +
+            "Corte e dimensionamento conforme projeto\n" +
+            "Acabamento das bordas conforme especificação do orçamento\n" +
+            "Instalação inclusa\n" +
+            "Indicado para residências, comércios, escritórios, academias, salões e demais ambientes internos.",
+
+        "Espelho Lapidado": "Fornecimento e instalação de espelho Cebrace 4 mm com acabamento lapidado nas bordas, proporcionando maior sofisticação, segurança no manuseio e acabamento refinado.\n\n" +
             "Especificações do espelho:\n" +
             "Marca: Cebrace\n" +
             "Espessura: 4 mm\n" +
             "Alta definição e nitidez na reflexão\n" +
-            "Bordas lapidadas (quando especificado)\n" +
-            "Indicado para residências, comércios e escritórios",
-        "Espelho Bisote": "Fornecimento e instalação de espelho Cebrace 4 mm, produzido com tecnologia de alta qualidade, proporcionando excelente reflexão de imagem, maior durabilidade e resistência à umidade em ambientes internos.\n" +
-            "\n" +
+            "Bordas lapidadas\n" +
+            "Corte e dimensionamento conforme projeto\n" +
+            "Acabamento refinado nas bordas\n" +
+            "Instalação inclusa\n" +
+            "Indicado para residências, comércios, escritórios e ambientes decorativos.",
+
+        "Espelho Bisote": "Fornecimento e instalação de espelho Cebrace 4 mm com acabamento bisotado, proporcionando um detalhe decorativo sofisticado e valorizando o acabamento da peça.\n\n" +
             "Especificações do espelho:\n" +
             "Marca: Cebrace\n" +
             "Espessura: 4 mm\n" +
             "Alta definição e nitidez na reflexão\n" +
-            "Bordas lapidadas (quando especificado)\n" +
-            "Indicado para residências, comércios e escritórios",
-        "Espelho LED": "Fornecimento e instalação de espelho Cebrace 4 mm, produzido com tecnologia de alta qualidade, proporcionando excelente reflexão de imagem, maior durabilidade e resistência à umidade em ambientes internos.\n" +
-            "\n" +
+            "Acabamento bisotado nas bordas\n" +
+            "Corte e dimensionamento conforme projeto\n" +
+            "Peça produzida sob medida\n" +
+            "Instalação inclusa\n" +
+            "Indicado para residências, comércios, escritórios e ambientes que buscam um acabamento diferenciado.",
+
+        "Espelho LED": "Fornecimento e instalação de espelho Cebrace 4 mm com iluminação LED integrada, combinando funcionalidade, iluminação e acabamento moderno e sofisticado.\n\n" +
             "Especificações do espelho:\n" +
             "Marca: Cebrace\n" +
             "Espessura: 4 mm\n" +
             "Alta definição e nitidez na reflexão\n" +
-            "Bordas lapidadas (quando especificado)\n" +
-            "Indicado para residências, comércios e escritórios",
-        "Porta de Vidro": "Porta de Vidro temperado 8mm.\nFechadura.\nPuxador.\nInstalação inclusa.",
-        "Kit Versatik VT3": "Sistema Versatik VT3.\n3 folhas de vidro temperado 8mm.\nInstalação inclusa.",
-        "Guarda Corpo": "Vidro temperado ou laminado.\nSuportes e fixadores em inox ou alumínio.\nInstalação inclusa.",
-        "Abrigo de Pia": "Fechamento em vidro temperado 8mm incolor.\nInstalação inclusa.",
-        "Cobertura": "Vidros temperados ou laminados.\nEstrutura em alumínio.\nInstalação inclusa.",
-        "Cobertura Policarbonato": "Chapa de policarbonato.\nEstrutura de fixação.\nInstalação inclusa.",
-        "Cobertura Habitat": "Vidro de controle solar Linha Habitat.\nProteção térmica e contra raios UV.\nInstalação inclusa.",
-        "Cobertura Retratil": "Cobertura retrátil em vidro.\nEstrutura em alumínio.\nSistema de recolhimento.\nInstalação inclusa.",
-        "Vidro Comum": "Vidro comum.",
+            "Iluminação LED integrada\n" +
+            "Formato e dimensões conforme projeto\n" +
+            "Acabamento das bordas conforme especificação\n" +
+            "Sistema elétrico e componentes conforme configuração contratada\n" +
+            "Instalação inclusa\n" +
+            "Indicado para banheiros, lavabos, closets, quartos, salões e demais ambientes internos.",
+
+        "Porta de Vidro": "Fornecimento e instalação de porta de vidro temperado, desenvolvida para proporcionar segurança, luminosidade, praticidade e acabamento moderno ao ambiente.\n\n" +
+            "Especificações da porta:\n" +
+            "Vidro temperado 8 mm\n" +
+            "Vidro incolor\n" +
+            "Fechadura\n" +
+            "Puxador\n" +
+            "Ferragens compatíveis com o sistema\n" +
+            "Medidas conforme levantamento do local\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicada para residências, escritórios, lojas, comércios e demais ambientes.",
+
+        "Kit Versatik VT3": "Fornecimento e instalação de sistema Versatik VT3, desenvolvido para fechamento de vãos com folhas de vidro deslizantes, proporcionando praticidade, aproveitamento do espaço e acabamento moderno.\n\n" +
+            "Especificações do sistema:\n" +
+            "Sistema Versatik VT3\n" +
+            "3 folhas de vidro temperado 8 mm\n" +
+            "Vidro incolor, salvo especificação diferente no orçamento\n" +
+            "Trilhos e componentes próprios do sistema\n" +
+            "Ferragens e acessórios compatíveis\n" +
+            "Dimensionamento conforme o vão existente\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicado para sacadas, varandas, áreas internas e externas e demais ambientes que necessitem de sistema de fechamento deslizante.",
+
+        "Guarda Corpo": "Fornecimento e instalação de guarda-corpo em vidro, desenvolvido para proporcionar segurança, proteção e acabamento arquitetônico moderno ao ambiente.\n\n" +
+            "Especificações do sistema:\n" +
+            "Vidro temperado ou laminado, conforme projeto\n" +
+            "Espessura e composição conforme dimensionamento\n" +
+            "Suportes e fixadores em inox ou alumínio\n" +
+            "Componentes dimensionados conforme aplicação\n" +
+            "Medidas conforme levantamento do local\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicado para escadas, mezaninos, sacadas, varandas, corredores e demais áreas que necessitem de proteção e acabamento em vidro.",
+
+        "Abrigo de Pia": "Fornecimento e instalação de fechamento para abrigo de pia em vidro temperado, proporcionando um acabamento moderno, resistente e de fácil limpeza.\n\n" +
+            "Especificações do serviço:\n" +
+            "Vidro temperado 8 mm\n" +
+            "Vidro incolor\n" +
+            "Corte e dimensionamento conforme projeto\n" +
+            "Ferragens e componentes compatíveis\n" +
+            "Acabamento conforme especificação\n" +
+            "Instalação inclusa\n" +
+            "Fácil limpeza e manutenção\n\n" +
+            "Indicado para áreas de serviço, cozinhas, espaços externos e demais ambientes que necessitem de fechamento para área de pia.",
+
+        "Cobertura": "Fornecimento e instalação de cobertura em vidro, desenvolvida para proporcionar proteção, aproveitamento da iluminação natural e valorização estética do ambiente.\n\n" +
+            "Especificações do sistema:\n" +
+            "Vidro temperado ou laminado, conforme projeto\n" +
+            "Estrutura em alumínio\n" +
+            "Perfis e componentes dimensionados conforme aplicação\n" +
+            "Sistema de fixação adequado ao projeto\n" +
+            "Medidas conforme levantamento técnico\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicada para áreas externas, entradas, corredores, varandas, áreas gourmet e demais ambientes que necessitem de cobertura em vidro.",
+
+        "Cobertura Policarbonato": "Fornecimento e instalação de cobertura em policarbonato, oferecendo proteção contra chuva e demais intempéries, além de aproveitamento da luminosidade natural.\n\n" +
+            "Especificações do sistema:\n" +
+            "Chapa de policarbonato\n" +
+            "Estrutura de sustentação e fixação\n" +
+            "Perfis e acessórios compatíveis\n" +
+            "Dimensionamento conforme projeto\n" +
+            "Sistema adequado para aplicação externa\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicada para garagens, corredores, áreas externas, entradas, varandas e demais espaços que necessitem de proteção contra chuva e sol.",
+
+        "Cobertura Habitat": "Fornecimento e instalação de cobertura com vidro de controle solar da Linha Habitat, desenvolvida para proporcionar proteção e maior conforto térmico ao ambiente.\n\n" +
+            "Especificações do sistema:\n" +
+            "Vidro de controle solar Linha Habitat\n" +
+            "Proteção contra raios UV\n" +
+            "Auxílio no controle da incidência solar\n" +
+            "Contribuição para o conforto térmico\n" +
+            "Estrutura e componentes conforme projeto\n" +
+            "Dimensionamento conforme o local\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicada para coberturas residenciais, comerciais e projetos arquitetônicos que buscam maior conforto e controle da incidência solar.",
+
+        "Cobertura Retratil": "Fornecimento e instalação de cobertura retrátil em vidro, desenvolvida para proporcionar flexibilidade de utilização do ambiente, permitindo o recolhimento dos painéis conforme a necessidade.\n\n" +
+            "Especificações do sistema:\n" +
+            "Vidro conforme especificação do projeto\n" +
+            "Estrutura em alumínio\n" +
+            "Sistema de recolhimento retrátil\n" +
+            "Trilhos e componentes específicos\n" +
+            "Ferragens e acessórios compatíveis\n" +
+            "Dimensionamento conforme o local\n" +
+            "Instalação inclusa\n" +
+            "Acabamento profissional\n\n" +
+            "Indicada para áreas gourmet, varandas, espaços externos, coberturas residenciais e comerciais.",
+
+        "Vidro Comum": "Fornecimento de vidro comum para aplicações compatíveis com suas características técnicas, podendo ser utilizado em diferentes projetos conforme necessidade do cliente.\n\n" +
+            "Especificações do vidro:\n" +
+            "Vidro comum\n" +
+            "Espessura conforme orçamento\n" +
+            "Corte sob medida\n" +
+            "Dimensões conforme projeto\n" +
+            "Acabamento das bordas conforme especificação\n" +
+            "Aplicação conforme necessidade do projeto\n\n" +
+            "Observação: por não ser vidro temperado, sua utilização deve ser destinada exclusivamente a aplicações compatíveis com suas características técnicas.",
+
         "Manutenção": " ",
-        "Película de segurança": "Película de segurança.\nAplicação inclusa.",
-        "Adesivo": "Adesivo decorativo ou jateado.\nAplicação inclusa.",
+
+        "Película de segurança": "Fornecimento e aplicação de película de segurança para vidro, desenvolvida para aumentar a retenção dos fragmentos em caso de quebra e proporcionar uma camada adicional de proteção à superfície envidraçada.\n\n" +
+            "Especificações da aplicação:\n" +
+            "Película de segurança\n" +
+            "Aplicação profissional\n" +
+            "Corte e dimensionamento conforme o vidro existente\n" +
+            "Acabamento adequado à superfície\n" +
+            "Aplicação inclusa\n" +
+            "Material e especificação conforme orçamento\n\n" +
+            "Indicada para residências, comércios, escritórios, portas, janelas e outras superfícies envidraçadas compatíveis.",
+
+        "Adesivo": "Fornecimento e aplicação de adesivo para vidro, proporcionando privacidade, personalização e acabamento diferenciado.\n\n" +
+            "Especificações da aplicação:\n" +
+            "Adesivo\n" +
+            "Aplicação profissional\n" +
+            "Corte e dimensionamento conforme projeto\n" +
+            "Acabamento conforme modelo escolhido\n" +
+            "Aplicação inclusa\n" +
+            "Material e padrão conforme orçamento\n\n" +
+            "Indicado para portas, janelas, divisórias, boxes, vitrines, escritórios, residências e ambientes comerciais.",
+
         "Serviço/Item Avulso": ""
     };
 
