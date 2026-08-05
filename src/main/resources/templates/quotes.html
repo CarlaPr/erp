@@ -6,7 +6,7 @@
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
 
-<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
+<main class="lg:ml-72 px-3 sm:px-6 lg:px-8 pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
     <header class="flex justify-between items-center mb-8">
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Gestão de Orçamentos</h2>
@@ -14,123 +14,376 @@
         </div>
     </header>
 
-    <div class="flex flex-wrap gap-3 mb-6 bg-white dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700/50 w-fit shadow-sm">
-        <a href="/quotes" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all border"
-           th:classappend="${selectedFilterStatus == null} ? 'bg-brand-600 text-white border-brand-600 dark:bg-slate-700 dark:border-slate-700' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
-            Todos
-        </a>
-        <a href="/quotes?status=pending" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all border"
-           th:classappend="${selectedFilterStatus == 'pending'} ? 'bg-amber-500 text-white border-amber-500 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
-            Pendentes
-        </a>
-        <a href="/quotes?status=approved" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all border"
-           th:classappend="${selectedFilterStatus == 'approved'} ? 'bg-emerald-600 text-white border-emerald-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
-            Aprovados
-        </a>
-        <a href="/quotes?status=expired" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all border"
-           th:classappend="${selectedFilterStatus == 'expired'} ? 'bg-slate-600 text-white border-slate-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
-            Expirados
-        </a>
-        <a href="/quotes/new" class="ml-2 bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm transition-all border border-transparent">
-            <i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Orçamento
-        </a>
+    <div class="mb-5 -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div class="flex items-center gap-2 overflow-x-auto pb-1  bg-white dark:bg-slate-800/50 p-2 rounded-xl  border border-slate-200 dark:border-slate-700/50  shadow-sm  scrollbar-hide">
+            <a href="/quotes" class="shrink-0 px-4 py-2.5 rounded-lg text-sm font-bold   transition-all border whitespace-nowrap"
+               th:classappend="${selectedFilterStatus == null}
+                    ? 'bg-brand-600 text-white border-brand-600 dark:bg-slate-700 dark:border-slate-700'
+                    : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+                Todos
+            </a>
+            <a href="/quotes?status=pending" class="shrink-0 px-4 py-2.5 rounded-lg text-sm font-bold
+                      transition-all border whitespace-nowrap"
+               th:classappend="${selectedFilterStatus == 'pending'}
+                    ? 'bg-amber-500 text-white border-amber-500 dark:bg-slate-700 dark:border-slate-700 dark:text-white'
+                    : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+                Pendentes
+            </a>
+            <a href="/quotes?status=approved" class="shrink-0 px-4 py-2.5 rounded-lg text-sm font-bold   transition-all border whitespace-nowrap"
+               th:classappend="${selectedFilterStatus == 'approved'}
+                    ? 'bg-emerald-600 text-white border-emerald-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white'
+                    : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+                Aprovados
+            </a>
+            <a href="/quotes?status=expired" class="shrink-0 px-4 py-2.5 rounded-lg text-sm font-bold   transition-all border whitespace-nowrap"
+               th:classappend="${selectedFilterStatus == 'expired'}
+                    ? 'bg-slate-600 text-white border-slate-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white'
+                    : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+                Expirados
+            </a>
+        </div>
     </div>
 
-    <form method="GET" action="/quotes" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-5 mb-8 shadow-sm">
+    <form method="GET" action="/quotes" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-2xl grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 mb-6 lg:mb-8 shadow-sm">
         <div>
-            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Filtrar por Mês</label>
-            <select name="month" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors">
-                <option value="all" th:selected="${selectedMonth == 'all'}">Ver Todos os Meses</option>
-                <option th:each="m : ${availableMonths}" th:value="${m.value}" th:selected="${selectedMonth == m.value}" th:text="${m.label}"></option>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
+                Filtrar por Mês
+            </label>
+
+            <select name="month"
+                    class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors">
+                <option value="all"
+                        th:selected="${selectedMonth == 'all'}">
+                    Ver Todos os Meses
+                </option>
+
+                <option th:each="m : ${availableMonths}"
+                        th:value="${m.value}"
+                        th:selected="${selectedMonth == m.value}"
+                        th:text="${m.label}">
+                </option>
             </select>
         </div>
+
         <div>
-            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">N° do Orçamento</label>
-            <input type="text" name="number" th:value="${selectedNumber}" placeholder="Ex: ORC-05" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors" />
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
+                N° do Orçamento
+            </label>
+
+            <input type="text"
+                   name="number"
+                   th:value="${selectedNumber}"
+                   placeholder="Ex: ORC-05"
+                   class="w-full bg-slate-50 dark:bg-slate-950  border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3  text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors"/>
         </div>
+
         <div>
-            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome do Cliente</label>
-            <input type="text" name="name" th:value="${selectedName}" placeholder="Buscar cliente..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors" />
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400  mb-1.5 uppercase tracking-wider">
+                Nome do Cliente
+            </label>
+            <input type="text"
+                   name="name"
+                   th:value="${selectedName}"
+                   placeholder="Buscar cliente..."
+                   class="w-full bg-slate-50 dark:bg-slate-950  border border-slate-300 dark:border-slate-700  rounded-xl px-4 py-3  text-sm text-slate-900 dark:text-white  focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors"/>
         </div>
-        <div class="flex items-end gap-2">
-            <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
-                <i data-lucide="search" class="w-5 h-5"></i> Filtrar Painel
+
+        <div class="flex items-end">
+            <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600  dark:text-slate-900 font-bold py-3 rounded-xl text-sm  transition-all shadow-md flex items-center justify-center gap-2">
+                <i data-lucide="search" class="w-5 h-5"></i>Filtrar Painel
             </button>
         </div>
     </form>
 
-    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
-                <th class="p-5">Orçamento</th>
-                <th class="p-5">Cliente</th>
-                <th class="p-5 text-center">Status</th>
-                <th class="p-5 text-center">Vínculo (O.S.)</th>
-                <th class="p-5 text-center">Ações</th>
-            </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
-            <tr th:each="q : ${quotes}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                <td class="p-5">
-                    <div class="font-mono font-bold text-brand-600 dark:text-cyan-400 text-base" th:text="${q.number}">ORC-123</div>
-                    <div class="text-xs font-medium text-slate-500 mt-1" th:text="${#temporals.format(q.dateCreated, 'dd/MM/yyyy')}">Data</div>
-                </td>
-                <td class="p-5 font-bold text-slate-900 dark:text-white text-base" th:text="${q.client != null ? q.client.name : 'Consumidor Final'}">Cliente</td>
-                <td class="p-5 text-center">
-                    <span th:if="${q.status == 'pending'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 uppercase border border-amber-200 dark:border-transparent">Pendente</span>
-                    <span th:if="${q.status == 'approved'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 uppercase border border-emerald-200 dark:border-transparent">Aprovado</span>
-                    <span th:if="${q.status == 'expired'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300 uppercase border border-slate-300 dark:border-transparent">Expirado</span>
-                </td>
-                <td class="p-5 text-center">
-                    <span th:if="${q.workOrder != null}" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-brand-600 dark:text-cyan-400 font-mono text-sm font-bold rounded-lg" th:text="${q.workOrder.number}">OS</span>
-                    <span th:if="${q.workOrder == null}" class="text-slate-400 font-bold text-sm">—</span>
-                </td>
-                <td class="p-5 text-center space-x-3">
-                    <button th:if="${q.status == 'pending' || q.status == 'expired'}" th:data-id="${q.id}" onclick="approveQuote(this.getAttribute('data-id'))" class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors" title="Aprovar Venda e Gerar OS"><i data-lucide="check-circle" class="w-6 h-6 inline"></i></button>
+    <div class="hidden md:block  bg-white dark:bg-[#131C2F]  rounded-2xl  border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="border-b border-slate-200  dark:border-slate-700/50   bg-slate-50 dark:bg-slate-800/80  text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
+                        <th class="px-5 py-4">Orçamento</th>
+                        <th class="px-5 py-4">Cliente</th>
+                        <th class="px-5 py-4 text-center">Status</th>
+                        <th class="px-5 py-4 text-center">Vínculo (O.S.)</th>
+                        <th class="px-5 py-4 text-center">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100    dark:divide-slate-700/50 text-sm">
+                    <tr th:each="q : ${quotes}" class="hover:bg-slate-50   dark:hover:bg-slate-700/30      transition-colors">
 
-                    <a th:if="${q.status == 'pending' || q.status == 'expired' }"
-                       th:href="@{/quotes/{id}/edit(id=${q.id})}"
-                       class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors inline-block"
-                       title="Editar Orçamento">
-                        <i data-lucide="pencil" class="w-6 h-6 inline"></i>
-                    </a>
+                        <td class="px-5 py-5">
+                            <div class="font-mono font-bold    text-brand-600 dark:text-cyan-400   text-base"
+                                 th:text="${q.number}">
+                                ORC-123
+                            </div>
+                            <div class="text-xs font-medium    text-slate-500 mt-1"
+                                 th:text="${#temporals.format(q.dateCreated, 'dd/MM/yyyy')}">
+                                Data
+                            </div>
+                        </td>
 
-                    <button th:if="${q.status == 'pending' || q.status == 'expired'}"
-                            th:data-id="${q.id}"
-                            onclick="deleteQuote(this.getAttribute('data-id'))"
-                            class="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
-                            title="Excluir Definitivamente">
-                        <i data-lucide="trash-2" class="w-6 h-6 inline"></i>
-                    </button>
+                        <td class="px-5 py-5">
+                            <div class="font-bold     text-slate-900 dark:text-white     text-base"
+                                 th:text="${q.client != null ? q.client.name : 'Consumidor Final'}">
+                                Cliente
+                            </div>
+                        </td>
 
-                    <button th:data-id="${q.id}" onclick="viewReceipt(this.getAttribute('data-id'))" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors" title="Imprimir / Gerar PDF"><i data-lucide="printer" class="w-6 h-6 inline"></i></button>
+                        <td class="px-5 py-5 text-center">
+                            <span th:if="${q.status == 'pending'}" class="inline-flex items-center px-3 py-1.5   rounded-lg text-xs font-bold   bg-amber-100 text-amber-700   dark:bg-amber-500/20 dark:text-amber-400 uppercase border border-amber-200">
+                                Pendente
+                            </span>
 
-                    <button th:data-id="${q.id}"
-                            th:data-client="${q.client != null ? q.client.name : ''}"
-                            onclick="openScheduleVisitModal(this.getAttribute('data-id'), this.getAttribute('data-client'))"
-                            class="text-fuchsia-600 hover:text-fuchsia-800 dark:text-fuchsia-400 dark:hover:text-fuchsia-300 p-2 rounded-lg hover:bg-fuchsia-50 dark:hover:bg-fuchsia-500/10 transition-colors"
-                            title="Agendar Visita Técnica">
-                        <i data-lucide="map-pin" class="w-6 h-6 inline"></i>
-                    </button>
+                            <span th:if="${q.status == 'approved'}" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold  bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 uppercase border border-emerald-200">
+                                Aprovado
+                            </span>
 
-                    <button th:if="${q.status == 'pending' || q.status == 'negotiation' || q.status == 'approved'}"
-                            th:data-id="${q.id}"
-                            th:data-token="${q.publicToken}"
-                            th:data-signed="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}"
-                            onclick="handleSignatureLinkClick(this)"
-                            th:classappend="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)} ? 'text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10' : 'text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10'"
-                            class="p-2 rounded-lg transition-colors"
-                            th:title="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)} ? 'Assinado pelo cliente - clique para ver opções' : 'Copiar Link de Assinatura para WhatsApp'">
-                        <i th:data-lucide="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)} ? 'file-check' : 'link'" class="w-6 h-6 inline"></i>
-                    </button>
-                </td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(quotes)}">
-                <td colspan="5" class="p-10 text-center text-slate-500 font-medium text-base">Nenhum orçamento encontrado com estes filtros.</td>
-            </tr>
-            </tbody>
-        </table>
+                            <span th:if="${q.status == 'expired'}" class="inline-flex items-center px-3 py-1.5     rounded-lg text-xs font-bold  bg-slate-200 text-slate-600   dark:bg-slate-700 dark:text-slate-300  uppercase border border-slate-300">
+                                Expirado
+                            </span>
+                        </td>
+
+                        <td class="px-5 py-5 text-center">
+                            <span th:if="${q.workOrder != null}"
+                                  class="inline-flex items-center     px-3 py-1.5    bg-slate-100 dark:bg-slate-900    border border-slate-200 dark:border-slate-700   text-brand-600 dark:text-cyan-400    font-mono text-sm font-bold rounded-lg"
+                                  th:text="${q.workOrder.number}">
+                                OS
+                            </span>
+
+                            <span th:if="${q.workOrder == null}"
+                                  class="text-slate-400 font-bold text-sm">
+                                —
+                            </span>
+                        </td>
+
+                        <td class="px-5 py-5">
+                            <div class="flex items-center justify-center gap-1">
+                                <button th:if="${q.status == 'pending' || q.status == 'expired'}"
+                                        th:data-id="${q.id}"
+                                        onclick="approveQuote(this.getAttribute('data-id'))"
+                                        class="text-emerald-600  hover:text-emerald-800   dark:text-emerald-400   dark:hover:text-emerald-300   p-2 rounded-lg   hover:bg-emerald-50   dark:hover:bg-emerald-500/10   transition-colors"
+                                        title="Aprovar Venda e Gerar OS">
+                                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                                </button>
+
+                                <a th:if="${q.status == 'pending' || q.status == 'expired'}"
+                                   th:href="@{/quotes/{id}/edit(id=${q.id})}"
+                                   class="text-blue-600 hover:text-blue-800   dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-lg  hover:bg-blue-50   dark:hover:bg-blue-500/10      transition-colors"
+                                   title="Editar Orçamento">
+                                    <i data-lucide="pencil" class="w-5 h-5"></i>
+                                </a>
+
+                                <button th:if="${q.status == 'pending' || q.status == 'expired'}"
+                                        th:data-id="${q.id}"
+                                        onclick="deleteQuote(this.getAttribute('data-id'))"
+                                        class="text-rose-600 hover:text-rose-800     dark:text-rose-400 dark:hover:text-rose-300   p-2 rounded-lg    hover:bg-rose-50      dark:hover:bg-rose-500/10     transition-colors"
+                                        title="Excluir Definitivamente">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </button>
+
+                                <button th:data-id="${q.id}"
+                                        onclick="viewReceipt(this.getAttribute('data-id'))"
+                                        class="text-indigo-600 hover:text-indigo-800     dark:text-indigo-400 dark:hover:text-indigo-300   p-2 rounded-lg   hover:bg-indigo-50    dark:hover:bg-indigo-500/10   transition-colors"
+                                        title="Imprimir / Gerar PDF">
+                                    <i data-lucide="printer" class="w-5 h-5"></i>
+                                </button>
+
+                                <button th:data-id="${q.id}"
+                                        th:data-client="${q.client != null ? q.client.name : ''}"
+                                        onclick="openScheduleVisitModal(
+                                            this.getAttribute('data-id'),
+                                            this.getAttribute('data-client')
+                                        )"
+                                        class="text-fuchsia-600 hover:text-fuchsia-800   dark:text-fuchsia-400  dark:hover:text-fuchsia-300  p-2 rounded-lg  hover:bg-fuchsia-50  dark:hover:bg-fuchsia-500/10    transition-colors"
+                                        title="Agendar Visita Técnica">
+                                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+                                </button>
+
+                                <button th:if="${q.status == 'pending' || q.status == 'negotiation' || q.status == 'approved'}"
+                                        th:data-id="${q.id}"
+                                        th:data-token="${q.publicToken}"
+                                        th:data-signed="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}"
+                                        onclick="handleSignatureLinkClick(this)"
+                                        th:classappend="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                                            ? 'text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'
+                                            : 'text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10'"
+                                        class="p-2 rounded-lg transition-colors"
+                                        th:title="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                                            ? 'Assinado pelo cliente - clique para ver opções'
+                                            : 'Copiar Link de Assinatura para WhatsApp'">
+
+                                    <i th:data-lucide="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                                        ? 'file-check'
+                                        : 'link'"
+                                       class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(quotes)}">
+                        <td colspan="5"
+                            class="p-12 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="w-14 h-14 rounded-full    bg-slate-100 dark:bg-slate-800   flex items-center justify-center  text-slate-400 mb-4">
+                                    <i data-lucide="file-search" class="w-7 h-7"></i>
+                                </div>
+                                <p class="text-slate-500     font-medium text-base">
+                                    Nenhum orçamento encontrado
+                                    com estes filtros.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    <div class="md:hidden space-y-3">
+        <div th:each="q : ${quotes}" class="bg-white dark:bg-[#131C2F]  rounded-2xl border border-slate-200 dark:border-slate-700/50  shadow-sm overflow-hidden">
+            <div class="px-4 py-4  border-b border-slate-100 dark:border-slate-700/50">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <div class="w-9 h-9 rounded-lg   bg-brand-50 dark:bg-cyan-500/10   text-brand-600 dark:text-cyan-400  flex items-center justify-center shrink-0">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-mono font-black   text-brand-600 dark:text-cyan-400     text-base"
+                                   th:text="${q.number}">
+                                    ORC-123
+                                </p>
+                                <p class="text-xs text-slate-500" th:text="${#temporals.format(q.dateCreated, 'dd/MM/yyyy')}">
+                                    05/08/2026
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shrink-0">
+                        <span th:if="${q.status == 'pending'}" class="inline-flex px-2.5 py-1  rounded-lg text-[10px] font-black  bg-amber-100 text-amber-700  dark:bg-amber-500/20 dark:text-amber-400  uppercase">
+                            Pendente
+                        </span>
+                        <span th:if="${q.status == 'approved'}" class="inline-flex px-2.5 py-1   rounded-lg text-[10px] font-black  bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 uppercase">
+                            Aprovado
+                        </span>
+                        <span th:if="${q.status == 'expired'}" class="inline-flex px-2.5 py-1  rounded-lg text-[10px] font-black  bg-slate-200 text-slate-600   dark:bg-slate-700 dark:text-slate-300 uppercase">
+                            Expirado
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-4 py-4 space-y-4">
+                <div>
+                    <p class="text-[10px] font-black uppercase       tracking-widest    text-slate-400 dark:text-slate-500 mb-1">
+                        Cliente
+                    </p>
+                    <p class="font-bold text-base   text-slate-900 dark:text-white     break-words"
+                       th:text="${q.client != null ? q.client.name : 'Consumidor Final'}">
+                        Cliente
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between    bg-slate-50 dark:bg-slate-900/60  rounded-xl px-3 py-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-400"></i>
+                        <span class="text-xs font-bold    text-slate-500 dark:text-slate-400">
+                            Ordem de Serviço
+                        </span>
+                    </div>
+
+                    <span th:if="${q.workOrder != null}" class="font-mono font-bold    text-brand-600 dark:text-cyan-400 text-sm"
+                          th:text="${q.workOrder.number}">
+                        OS-000
+                    </span>
+
+                    <span th:if="${q.workOrder == null}" class="font-bold text-slate-400 text-sm">
+                        Ainda não vinculada
+                    </span>
+                </div>
+
+                <div>
+                    <p class="text-[10px] font-black uppercase     tracking-widest    text-slate-400 dark:text-slate-500 mb-2">
+                        Ações
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button th:if="${q.status == 'pending' || q.status == 'expired'}"
+                                th:data-id="${q.id}"
+                                onclick="approveQuote(this.getAttribute('data-id'))"
+                                class="min-h-[46px]    rounded-xl    bg-emerald-50 dark:bg-emerald-500/10   text-emerald-700 dark:text-emerald-400   font-bold text-xs   flex items-center justify-center gap-2   border border-emerald-100     dark:border-emerald-500/20">
+
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            Aprovar
+                        </button>
+
+                        <a th:if="${q.status == 'pending' || q.status == 'expired'}"
+                           th:href="@{/quotes/{id}/edit(id=${q.id})}"
+                           class="min-h-[46px]    rounded-xl   bg-blue-50 dark:bg-blue-500/10  text-blue-700 dark:text-blue-400   font-bold text-xs   flex items-center justify-center gap-2  border border-blue-100   dark:border-blue-500/20">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                            Editar
+                        </a>
+
+                        <button th:data-id="${q.id}"
+                                onclick="viewReceipt(this.getAttribute('data-id'))"
+                                class="min-h-[46px]  rounded-xl    bg-indigo-50 dark:bg-indigo-500/10  text-indigo-700 dark:text-indigo-400   font-bold text-xs  flex items-center justify-center gap-2   border border-indigo-100   dark:border-indigo-500/20">
+                            <i data-lucide="printer" class="w-4 h-4"></i>
+                            PDF / Imprimir
+                        </button>
+
+                        <button th:data-id="${q.id}"
+                                th:data-client="${q.client != null ? q.client.name : ''}"
+                                onclick="openScheduleVisitModal(
+                                    this.getAttribute('data-id'),
+                                    this.getAttribute('data-client')
+                                )"
+                                class="min-h-[46px] rounded-xl bg-fuchsia-50 dark:bg-fuchsia-500/10   text-fuchsia-700 dark:text-fuchsia-400  font-bold text-xs   flex items-center justify-center gap-2   border border-fuchsia-100 dark:border-fuchsia-500/20">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            Agendar Visita
+                        </button>
+
+                        <button th:if="${q.status == 'pending' || q.status == 'negotiation' || q.status == 'approved'}"
+                                th:data-id="${q.id}"
+                                th:data-token="${q.publicToken}"
+                                th:data-signed="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}"
+                                onclick="handleSignatureLinkClick(this)"
+                                th:classappend="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20'
+                                    : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-100 dark:border-amber-500/20'"
+                                class="min-h-[46px]   rounded-xl  font-bold text-xs  flex items-center justify-center gap-2 border">
+                            <i th:data-lucide="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                                ? 'file-check'
+                                : 'link'"
+                               class="w-4 h-4"></i>
+                            <span th:text="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                                ? 'Assinatura'
+                                : 'Enviar Assinatura'">
+                                Assinatura
+                            </span>
+                        </button>
+
+                        <button th:if="${q.status == 'pending' || q.status == 'expired'}"
+                                th:data-id="${q.id}"
+                                onclick="deleteQuote(this.getAttribute('data-id'))"
+                                class="min-h-[46px]  rounded-xl  bg-rose-50 dark:bg-rose-500/10  text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center justify-center gap-2 border border-rose-100  dark:border-rose-500/20">
+                            <i data-lucide="trash-2"
+                               class="w-4 h-4"></i>
+                            Excluir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(quotes)}"
+             class="bg-white dark:bg-[#131C2F] rounded-2xl  border border-slate-200 dark:border-slate-700/50 p-10 text-center">
+            <div class="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto mb-4">
+                <i data-lucide="file-search" class="w-7 h-7"></i>
+            </div>
+
+            <p class="text-slate-500 font-medium">Nenhum orçamento encontrado com estes filtros.
+            </p>
+        </div>
     </div>
 
     <div id="deleteQuoteModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
@@ -274,25 +527,45 @@
                     </div>
                 </div>
 
-                <div class="mb-5 bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 flex items-center gap-3">
-                    <div class="w-1 h-10 bg-slate-900 rounded-full shrink-0"></div>
-                    <div class="w-full">
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">Orçamento elaborado para</p>
-                        <h4 class="text-xl font-black text-slate-900 mt-0.5 leading-tight" id="recClient">Nome do Cliente</h4>
+                <div class="mb-5   bg-slate-50  border border-slate-200  rounded-xl px-4 sm:px-5 py-4   flex items-start gap-3">
+                    <div class="w-1 h-10    bg-slate-900 rounded-full      shrink-0">
+                    </div>
+                    <div class="w-full min-w-0">
+                        <p class="text-xs font-bold  text-slate-400 uppercase  tracking-widest font-mono">
 
-                        <div id="pdfClientDetailsPanel" class="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 font-semibold border-t border-slate-200/60 pt-2 hidden">
-                            <p id="pdfClientDocRow" class="hidden"><strong>CPF/CNPJ:</strong> <span id="pdfClientDoc" class="font-mono"></span></p>
-                            <p id="pdfClientPhoneRow" class="hidden"><strong>Telefone:</strong> <span id="pdfClientPhone"></span></p>
-                            <p id="pdfClientEmailRow" class="hidden"><strong>E-mail:</strong> <span id="pdfClientEmail"></span></p>
-                            <p id="pdfClientAddressRow" class="hidden sm:col-span-2"><strong>Endereço:</strong> <span id="pdfClientAddress"></span></p>
+                            Orçamento elaborado para
+                        </p>
+
+                        <h4 id="recClient" class="text-lg sm:text-xl   font-black text-slate-900   mt-0.5 leading-tight     break-words">
+                            Nome do Cliente
+                        </h4>
+
+                        <div id="pdfClientDetailsPanel" class="mt-2.5  grid grid-cols-1 sm:grid-cols-2   gap-x-4 gap-y-1   text-xs text-slate-600    font-semibold   border-t border-slate-200/60     pt-2 hidden">
+                            <p id="pdfClientDocRow" class="hidden">
+                                <strong>CPF/CNPJ:</strong>
+                                <span id="pdfClientDoc" class="font-mono"></span>
+                            </p>
+                            <p id="pdfClientPhoneRow" class="hidden">
+                                <strong>Telefone:</strong>
+                                <span id="pdfClientPhone"></span>
+                            </p>
+
+                            <p id="pdfClientEmailRow" class="hidden">
+                                <strong>E-mail:</strong>
+                                <span id="pdfClientEmail"></span>
+                            </p>
+                            <p id="pdfClientAddressRow" class="hidden sm:col-span-2">
+                                <strong>Endereço:</strong>
+                                <span id="pdfClientAddress"></span>
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <div class="rounded-xl overflow-hidden border border-slate-200 shadow-sm mb-0">
-                    <table class="w-full text-left border-collapse text-sm">
+                <div class="receipt-items-wrapper   rounded-xl overflow-hidden    border border-slate-200   shadow-sm mb-0">
+                    <table class="receipt-items-table    w-full text-left  border-collapse text-sm">
                         <thead>
-                        <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider text-xs">
+                        <tr class="bg-slate-900 text-white  font-bold uppercase tracking-wider text-xs">
                             <th class="px-4 py-3 pl-5 w-[52%]">Descrição do Serviço / Produto</th>
                             <th class="px-3 py-3 text-center">Unid.</th>
                             <th class="px-3 py-3 text-center">Qtd.</th>
@@ -300,102 +573,152 @@
                             <th class="px-4 py-3 text-right pr-5">Subtotal</th>
                         </tr>
                         </thead>
-                        <tbody id="recItems" class="divide-y divide-slate-100 font-medium text-slate-800">
+                        <tbody id="recItems" class="divide-y divide-slate-100   font-medium text-slate-800">
                         </tbody>
                     </table>
                 </div>
 
-                <div class="border border-t-0 border-slate-200 rounded-b-xl overflow-hidden mb-5">
-                    <div id="recSubtotalRow" class="flex justify-between items-center px-5 pr-5 py-2.5 bg-slate-50" style="display: none !important;">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-widest font-mono">Subtotal:</span>
-                        <span id="recSubtotal" class="text-lg font-mono text-slate-700 tracking-tight">R$ 0,00</span>
+                <div class="border border-t-0     border-slate-200   rounded-b-xl  overflow-hidden mb-5">
+                    <div id="recSubtotalRow" class="flex justify-between items-center   px-5 py-2.5 bg-slate-50" style="display:none !important;">
+                        <span class="text-xs font-bold   text-slate-500   uppercase tracking-widest font-mono">
+
+                            Subtotal:
+
+                        </span>
+                        <span id="recSubtotal" class="text-lg font-mono text-slate-700">
+
+                            R$ 0,00
+
+                        </span>
+                    </div>
+                    <div id="recDiscountRow" class="flex justify-between items-center   px-5 py-2.5 bg-rose-50" style="display:none !important;">
+                        <span class="text-xs font-bold   text-rose-600  uppercase tracking-widest font-mono">
+
+                            Desconto:
+
+                        </span>
+                        <span id="recDiscount" class="text-lg font-mono text-rose-700">
+
+                            0%
+
+                        </span>
                     </div>
 
-                    <div id="recDiscountRow" class="flex justify-between items-center px-5 pr-5 py-2.5 bg-rose-50" style="display: none !important;">
-                        <span class="text-xs font-bold text-rose-600 uppercase tracking-widest font-mono">Desconto:</span>
-                        <span id="recDiscount" class="text-lg font-mono text-rose-700 tracking-tight">0%</span>
+                    <div class="flex flex-col sm:flex-row   justify-between    sm:items-center  gap-1  px-5 py-3 bg-slate-900">
+                        <span class="text-xs sm:text-sm   font-black text-slate-300  uppercase tracking-widest font-mono">
+
+                            VALOR TOTAL DO ORÇAMENTO
+                        </span>
+                        <span id="recTotal" class="text-xl sm:text-2xl   font-black font-mono  text-white">
+
+                            R$ 0,00
+                        </span>
                     </div>
 
-                    <div class="flex justify-between items-center px-5 pr-5 py-3 bg-slate-900">
-                        <span class="text-sm font-black text-slate-300 uppercase tracking-widest font-mono">VALOR TOTAL DO ORÇAMENTO</span>
-                        <span id="recTotal" class="text-2xl font-black font-mono text-white tracking-tight">R$ 0,00</span>
-                    </div>
+                    <div id="recFinalRow" class="flex justify-between items-center   px-5 py-2.5 bg-slate-800" style="display:none !important;">
+                        <span class="text-xs font-bold   text-slate-400 uppercase tracking-widest font-mono">
 
-                    <div id="recFinalRow" class="flex justify-between items-center px-5 pr-5 py-2.5 bg-slate-800" style="display: none !important;">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">Parcelado em:</span>
-                        <span id="recFinalInstallments" class="text-xl font-black font-mono text-emerald-400 tracking-tight">10x R$ 0,00</span>
+                            Parcelado em:
+
+                        </span>
+
+                        <span id="recFinalInstallments"
+                              class="text-lg sm:text-xl  font-black font-mono  text-emerald-400">
+
+                            10x R$ 0,00
+                        </span>
                     </div>
                 </div>
 
-                <div class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm">
-                    <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
-                        <i data-lucide="credit-card" class="w-4 h-4 text-slate-600 print:hidden"></i>
-                        <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Formas de Pagamento Aceitas</h5>
+                <div class="border border-slate-200   rounded-xl overflow-hidden    mb-5 avoid-break shadow-sm">
+                    <div class="bg-slate-100    border-b border-slate-200    px-4 py-2     flex items-center gap-2">
+                        <i data-lucide="credit-card" class="w-4 h-4 text-slate-600    print:hidden"></i>
+                        <h5 class="text-xs font-black    text-slate-700   uppercase tracking-widest font-mono">Formas de Pagamento Aceitas</h5>
                     </div>
-                    <div id="recPaymentMethods" class="text-sm font-bold text-slate-800 p-4 bg-white">--</div>
+                    <div id="recPaymentMethods" class="text-sm font-bold   text-slate-800    p-4 bg-white">
+                        --
+                    </div>
                 </div>
 
-                <div class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm">
-                    <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
-                        <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-600 print:hidden"></i>
-                        <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Condições & Observações</h5>
+                <div class="border border-slate-200   rounded-xl overflow-hidden   mb-5 avoid-break shadow-sm">
+                    <div class="bg-slate-100   border-b border-slate-200   px-4 py-2   flex items-center gap-2">
+                        <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-600     print:hidden"></i>
+                        <h5 class="text-xs font-black text-slate-700  uppercase tracking-widest font-mono">
+                            Condições & Observações
+                        </h5>
                     </div>
-                    <div id="recObs" class="whitespace-pre-line text-xs text-slate-700 font-sans leading-relaxed p-4 bg-white min-h-[80px]">--</div>
+                    <div id="recObs" class="whitespace-pre-line    text-xs text-slate-700  leading-relaxed p-4   bg-white min-h-[80px]">
+                        --
+                    </div>
                 </div>
 
-                <div class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm">
-                    <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
-                        <i data-lucide="shield-check" class="w-4 h-4 text-slate-600 print:hidden"></i>
-                        <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Termos de Garantia</h5>
+                <div class="border border-slate-200     rounded-xl overflow-hidden    mb-5 avoid-break shadow-sm">
+                    <div class="bg-slate-100    border-b border-slate-200    px-4 py-2   flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-slate-600     print:hidden"></i>
+                        <h5 class="text-xs font-black     text-slate-700     uppercase tracking-widest font-mono">
+                            Termos de Garantia
+                        </h5>
                     </div>
-                    <div id="recWarrantyText" class="whitespace-pre-line text-xs text-slate-700 font-sans leading-relaxed p-4 bg-white min-h-[80px]">--</div>
+                    <div id="recWarrantyText" class="whitespace-pre-line      text-xs text-slate-700     leading-relaxed p-4    bg-white min-h-[80px]">
+                        --
+                    </div>
                 </div>
 
-                <div class="avoid-break border-t-2 border-dashed border-slate-300 pt-5 mt-4">
-                    <br><br>
-                    <div class="grid grid-cols-2 gap-16 text-center">
-                        <div class="relative flex flex-col items-center justify-end min-h-[80px]">
-                            <img id="pdfCompanySignature" class="absolute bottom-12 max-h-16 object-contain pointer-events-none mix-blend-multiply" style="display: none;" />
+                <div class="avoid-break      border-t-2 border-dashed   border-slate-300   pt-5 mt-4">
+                    <br class="hidden sm:block">
+                    <div class="grid grid-cols-1 sm:grid-cols-2  gap-12 sm:gap-16    text-center">
 
-                            <div class="w-full border-t-2 border-slate-900 pt-2">
-                                <p class="font-black text-slate-900 text-sm" id="pdfCompanySignatureName">Nome da Empresa</p>
-                                <p class="text-xs text-slate-500 font-bold mt-0.5" id="pdfCompanySignatureDoc">CNPJ/CPF: 00.000.000/0000-00</p>
+                        <div class="relative   flex flex-col   items-center justify-end    min-h-[80px]">
+                            <img id="pdfCompanySignature" class="absolute bottom-12  max-h-16   object-contain  pointer-events-none   mix-blend-multiply" style="display:none;"/>
+                            <div class="w-full   border-t-2    border-slate-900   pt-2">
+                                <p id="pdfCompanySignatureName" class="font-black       text-slate-900 text-sm">Nome da Empresa</p>
+                                <p id="pdfCompanySignatureDoc" class="text-xs text-slate-500     font-bold mt-0.5">CNPJ/CPF: 00.000.000/0000-00</p>
                             </div>
                         </div>
-                        <div class="flex flex-col items-center justify-end min-h-[80px] relative">
-                            <img id="recSignatureClientImage" class="absolute bottom-10 max-h-16 object-contain pointer-events-none mix-blend-multiply" style="display: none;" />
-                            <div class="w-full border-t-2 border-slate-900 pt-2">
-                                <p class="font-black text-slate-900 text-sm" id="recSignatureClientName">Assinatura do Cliente</p>
-                                <p class="text-xs text-slate-500 font-bold mt-0.5" id="recSignatureClientStatus">Ciente e de Acordo</p>
+
+                        <div class="flex flex-col     items-center justify-end     min-h-[80px]    relative">
+                            <img id="recSignatureClientImage" class="absolute bottom-10  max-h-16  object-contain  pointer-events-none   mix-blend-multiply" style="display:none;"/>
+                            <div class="w-full  border-t-2   border-slate-900   pt-2">
+                                <p id="recSignatureClientName" class="font-black    text-slate-900 text-sm">Assinatura do Cliente</p>
+                                <p id="recSignatureClientStatus" class="text-xs    text-slate-500    font-bold mt-0.5">Ciente e de Acordo</p>
                             </div>
                         </div>
                     </div>
-                    <div class="hidden print:block w-full" style="height: 25mm;"></div>
 
-                    <div class="mt-6 pt-3 border-t border-slate-100 text-center print:hidden">
-                        <p class="text-[11px] font-mono text-slate-400 font-bold tracking-wide">
+                    <div class="hidden print:block  w-full" style="height:25mm;"></div>
+                    <div class="mt-6 pt-3  border-t border-slate-100   text-center print:hidden">
+                        <p class="text-[11px]  font-mono text-slate-400  font-bold tracking-wide">
                             Documento Comercial Processado Digitalmente
                         </p>
                     </div>
 
-                    <div class="fixed-print-footer hidden justify-between items-center text-slate-500 w-full px-2">
+                    <div class="fixed-print-footer hidden  justify-between items-center    text-slate-500 w-full px-2">
                         <div>
-                            <p class="font-bold text-slate-800 text-[12px] uppercase tracking-wide" id="pfName">Nome da Empresa</p>
-                            <p class="text-[10px]" id="pfDetails">CNPJ/CPF: 00.000.000/0000-00 | Endereço</p>
-                            <p class="text-[10px]" id="pfContact">email@empresa.com | (00) 0000-0000</p>
+                            <p id="pfName" class="font-bold  text-slate-800  text-[12px]   uppercase tracking-wide">Nome da Empresa</p>
+                            <p id="pfDetails" class="text-[10px]">CNPJ/CPF | Endereço</p>
+                            <p id="pfContact" class="text-[10px]">email | telefone</p>
                         </div>
-                        <div class="text-right font-bold text-slate-400 text-[10px] font-mono">
-                            Documento Oficial Comercial
-                        </div>
+                        <div class="text-right  font-bold text-slate-400  text-[10px] font-mono">Documento Oficial Comercial</div>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-4 print:hidden border-t border-slate-200 pt-6 mt-6">
-                    <button onclick="closeModal('receiptModal')" class="bg-white border border-slate-300 text-slate-700 px-6 py-3 rounded-xl font-bold text-base hover:bg-slate-50 transition">Fechar Visualização</button>
-                    <button id="btnShareWhatsAppBottom" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-black flex items-center gap-3 text-base hover:bg-emerald-700 transition shadow-lg shadow-emerald-600/20"><i data-lucide="message-circle" class="w-5 h-5"></i> Compartilhar no WhatsApp</button>
-                    <button id="btnPrintPdfBottom" onclick="generateAndPrintQuotePdf()" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-black flex items-center gap-3 text-base hover:bg-slate-800 transition shadow-lg shadow-black/20"><i data-lucide="printer" class="w-5 h-5"></i> Imprimir / Salvar PDF</button>
-                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3  gap-3  print:hidden  border-t border-slate-200   pt-6 mt-6">
+                    <button onclick="closeModal('receiptModal')" class="bg-white border border-slate-300  text-slate-700  px-5 py-3  rounded-xl font-bold text-sm hover:bg-slate-50  transition">
+                        Fechar Visualização
+                    </button>
 
+                    <button id="btnShareWhatsAppBottom" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600  text-white  px-5 py-3  rounded-xl  font-black flex items-center  justify-center gap-2   text-sm">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                        Compartilhar WhatsApp
+                    </button>
+
+                    <button id="btnPrintPdfBottom"
+                            onclick="generateAndPrintQuotePdf()"
+                            class="bg-slate-900 text-white px-5 py-3 rounded-xl font-black flex items-center justify-center gap-2    text-sm">
+                        <i data-lucide="printer" class="w-5 h-5"></i>
+                        Imprimir / Salvar PDF
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -521,7 +844,6 @@
             </div>
         </div>
     </div>
-
 
     <div id="visitSuccessModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200">
@@ -1114,6 +1436,29 @@
             alert('Erro de comunicação com o servidor.');
         }
     }
+
+    document.addEventListener('DOMContentLoaded',
+        () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();}
+        }
+    );
+
+    document.addEventListener('keydown',
+        event => {
+            if (event.key !== 'Escape') {
+                return;
+            }
+            const modals = document.querySelectorAll('.fixed.inset-0.flex');
+            modals.forEach(modal => {
+                if (modal.id !== 'receiptModal') {
+                    closeModal(modal.id);
+                }
+            });
+        }
+    );
+
+</script>
 
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
