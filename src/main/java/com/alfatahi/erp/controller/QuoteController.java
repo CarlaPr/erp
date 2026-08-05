@@ -305,6 +305,28 @@ public class QuoteController {
         return "quotes";
     }
 
+    @GetMapping("/new")
+    public String newQuoteForm(Model model) {
+        model.addAttribute("currentPage", "quotes");
+        model.addAttribute("clients", clientRepo.findAll());
+        model.addAttribute("profiles", profileRepo.findAll());
+        model.addAttribute("quoteId", "");
+        return "quote-form";
+    }
+
+    @GetMapping("/{id}/edit")
+    @Transactional(readOnly = true)
+    public String editQuoteForm(@PathVariable UUID id, Model model) {
+        // Garante que o orçamento existe antes de exibir a página de edição.
+        quoteRepo.findById(id).orElseThrow();
+
+        model.addAttribute("currentPage", "quotes");
+        model.addAttribute("clients", clientRepo.findAll());
+        model.addAttribute("profiles", profileRepo.findAll());
+        model.addAttribute("quoteId", id.toString());
+        return "quote-form";
+    }
+
     @GetMapping("/view-data/{id}")
     @ResponseBody
     @Transactional(readOnly = true)

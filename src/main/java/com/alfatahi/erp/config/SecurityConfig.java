@@ -63,7 +63,7 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
-                        // Libera rotas públicas
+
                         .requestMatchers("/login", "/css/**", "/js/**", "/public/**").permitAll()
                         .requestMatchers("/admin/users/**").hasAuthority("GESTAO")
 
