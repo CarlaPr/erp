@@ -6,6 +6,82 @@
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
 
+<style>
+    /* =========================================================
+       CONTAS A PAGAR — RESPONSIVIDADE MOBILE
+       ========================================================= */
+    .payables-mobile { display:none; }
+    @media (max-width: 767px) {
+        body { overflow-x:hidden; }
+        main { margin-left:0 !important; padding:76px 12px 24px !important; width:100% !important; }
+        main > header { margin-bottom:16px !important; padding-bottom:16px !important; }
+        main > header h2 { font-size:1.55rem !important; line-height:1.2; }
+        main > header p { font-size:.82rem !important; max-width:260px; }
+        main > header button { width:100%; justify-content:center; min-height:48px; }
+        .payables-tabs { overflow-x:auto; flex-wrap:nowrap !important; padding-bottom:4px; margin-right:-12px; padding-right:12px; scrollbar-width:none; }
+        .payables-tabs::-webkit-scrollbar { display:none; }
+        .payables-tabs a { flex:0 0 auto; white-space:nowrap; min-height:42px; display:inline-flex; align-items:center; }
+        .payables-kpis { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px !important; margin-bottom:14px !important; }
+        .payables-kpis > div { padding:14px !important; border-radius:16px !important; min-width:0; }
+        .payables-kpis span { font-size:.62rem !important; line-height:1.25; }
+        .payables-kpis p { font-size:1rem !important; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .payables-filter { padding:14px !important; border-radius:16px !important; margin-bottom:14px !important; }
+        .payables-filter .grid { gap:12px !important; }
+        .payables-filter label { font-size:.62rem !important; }
+        .payables-filter input, .payables-filter select { min-height:46px; font-size:.9rem !important; }
+        .payables-filter > div:last-child { align-items:stretch !important; }
+        .payables-filter > div:last-child > div { width:100% !important; }
+        .payables-filter > div:last-child > div:last-child { display:grid !important; grid-template-columns:1fr 1fr; width:100% !important; gap:8px; }
+        .payables-filter > div:last-child > div:last-child button,
+        .payables-filter > div:last-child > div:last-child a { justify-content:center; min-height:44px; margin:0 !important; }
+        .payables-filter > div:last-child > div:last-child button:last-child { grid-column:span 2; }
+        .payables-desktop { display:none !important; }
+        .payables-mobile { display:block; }
+        .payable-card { position:relative; overflow:hidden; background:#fff; border:1px solid #e2e8f0; border-radius:18px; padding:15px; margin-bottom:10px; box-shadow:0 2px 8px rgba(15,23,42,.04); }
+        .dark .payable-card { background:#131C2F; border-color:rgba(71,85,105,.55); box-shadow:none; }
+        .payable-card.cancelled { opacity:.55; filter:grayscale(.7); }
+        .payable-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding-bottom:12px; border-bottom:1px solid #f1f5f9; }
+        .dark .payable-card-top { border-color:rgba(51,65,85,.55); }
+        .payable-card-title { min-width:0; }
+        .payable-card-title .sub { font-size:.98rem; font-weight:900; color:#0f172a; line-height:1.25; word-break:break-word; }
+        .dark .payable-card-title .sub { color:#fff; }
+        .payable-card-title .desc { margin-top:3px; font-size:.78rem; color:#64748b; line-height:1.35; word-break:break-word; }
+        .dark .payable-card-title .desc { color:#94a3b8; }
+        .payable-due { flex:0 0 auto; text-align:right; }
+        .payable-due small { display:block; color:#94a3b8; font-size:.58rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+        .payable-due strong { display:block; margin-top:2px; color:#334155; font-size:.78rem; }
+        .dark .payable-due strong { color:#cbd5e1; }
+        .payable-due.overdue strong { color:#e11d48; font-weight:900; }
+        .dark .payable-due.overdue strong { color:#fb7185; }
+        .payable-card-info { display:grid; grid-template-columns:1fr 1fr; gap:9px; padding:12px 0; }
+        .payable-info-item { min-width:0; }
+        .payable-info-item.full { grid-column:1/-1; }
+        .payable-info-item small { display:block; font-size:.58rem; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:3px; }
+        .payable-info-item strong { display:block; font-size:.78rem; color:#334155; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .dark .payable-info-item strong { color:#cbd5e1; }
+        .payable-money { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; background:#f8fafc; border-radius:12px; padding:9px; }
+        .dark .payable-money { background:rgba(15,23,42,.55); }
+        .payable-money div { min-width:0; }
+        .payable-money small { display:block; font-size:.56rem; color:#94a3b8; font-weight:800; text-transform:uppercase; }
+        .payable-money strong { display:block; margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.73rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .payable-money .total strong { color:#475569; }
+        .payable-money .paid strong { color:#059669; }
+        .payable-money .balance strong { color:#e11d48; }
+        .dark .payable-money .total strong { color:#cbd5e1; }
+        .dark .payable-money .paid strong { color:#34d399; }
+        .dark .payable-money .balance strong { color:#fb7185; }
+        .payable-card-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:11px; }
+        .payable-actions { display:flex; align-items:center; gap:4px; }
+        .payable-actions button { width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:11px; }
+        .payable-status { font-size:.62rem !important; padding:6px 9px !important; }
+        .mobile-empty { padding:36px 20px; text-align:center; background:#fff; border:1px solid #e2e8f0; border-radius:18px; color:#64748b; }
+        .dark .mobile-empty { background:#131C2F; border-color:rgba(71,85,105,.55); color:#94a3b8; }
+        .mobile-modal { align-items:flex-end !important; padding:0 !important; }
+        .mobile-modal > div { max-height:92vh; overflow-y:auto; border-radius:22px 22px 0 0 !important; margin:0 !important; }
+        .mobile-modal form { padding:18px !important; }
+        .mobile-modal .p-8 { padding:18px !important; }
+    }
+</style>
 <main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen">
 
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
@@ -19,7 +95,7 @@
         </button>
     </header>
 
-    <div class="flex flex-wrap gap-2 mb-6">
+    <div class="flex flex-wrap gap-2 mb-6 payables-tabs">
         <a th:href="@{/payables(aba='todas')}"
            th:classappend="${filterAba == null or filterAba == 'todas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
            class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Todas</a>
@@ -44,7 +120,7 @@
         </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 payables-kpis">
         <div class="bg-indigo-600 dark:bg-indigo-900 p-6 rounded-2xl shadow-md border-none">
             <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1">Saldo Real (Atual)</span>
             <p class="text-2xl font-black text-white" th:text="'R$ ' + ${#numbers.formatDecimal(saldoReal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
@@ -63,7 +139,7 @@
         </div>
     </div>
 
-    <form method="GET" action="/payables" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 mb-8 shadow-sm">
+    <form method="GET" action="/payables" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 mb-8 shadow-sm payables-filter">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end mb-5">
             <div class="lg:col-span-2">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Buscar</label>
@@ -144,7 +220,96 @@
         </div>
     </form>
 
-    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+    <div class="payables-mobile" id="payablesMobileList">
+        <div th:if="${#lists.isEmpty(payables)}" class="mobile-empty">
+            <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>
+            <p class="font-bold">Nenhuma conta encontrada.</p>
+            <a href="/payables" class="text-sm text-brand-600 dark:text-cyan-400 hover:underline font-bold inline-block mt-2">Limpar filtros</a>
+        </div>
+
+        <article th:each="p : ${payables}"
+                 class="payable-card"
+                 th:classappend="${p.status == 'cancelled'} ? 'cancelled' : ''">
+            <div class="payable-card-top">
+                <div class="payable-card-title">
+                    <div class="sub" th:text="${p.subcategory != null and !p.subcategory.isEmpty() ? p.subcategory : (p.description != null ? p.description : 'Conta a pagar')}">Subcategoria</div>
+                    <div class="desc" th:if="${p.subcategory != null and !p.subcategory.isEmpty()}" th:text="${p.description}">Descrição</div>
+                </div>
+                <div class="payable-due" th:classappend="${(p.status == 'pending' or p.status == 'partial') and p.dueDate.isBefore(T(java.time.LocalDate).now())} ? 'overdue' : ''">
+                    <small>Vencimento</small>
+                    <strong th:text="${#temporals.format(p.dueDate, 'dd/MM/yyyy')}">01/01/2026</strong>
+                </div>
+            </div>
+
+            <div class="payable-card-info">
+                <div class="payable-info-item">
+                    <small>Categoria</small>
+                    <strong th:switch="${p.category}">
+                        <span th:case="'FIXA'">Fixa</span>
+                        <span th:case="'VARIAVEL'">Variável</span>
+                        <span th:case="'PROVISIONAMENTO'">Provisão</span>
+                        <span th:case="'IMPOSTOS'">Impostos</span>
+                        <span th:case="'INVESTIMENTOS'">Investimentos</span>
+                        <span th:case="'MANUTENCAO'">Manutenção</span>
+                        <span th:case="'FINANCEIRO'">Financeiro</span>
+                        <span th:case="'PESSOAL'">Pessoal</span>
+                        <span th:case="'OPERACIONAL'">Operacional</span>
+                        <span th:case="'ADMINISTRATIVO'">Administrativo</span>
+                        <span th:case="*" th:text="${p.category != null ? p.category : '-'}">-</span>
+                    </strong>
+                </div>
+                <div class="payable-info-item">
+                    <small>O.S.</small>
+                    <strong th:text="${p.workOrder != null ? p.workOrder.number : '-'}">-</strong>
+                </div>
+                <div class="payable-info-item full" th:if="${p.costCenter != null and !p.costCenter.isEmpty()}">
+                    <small>Centro de custo</small>
+                    <strong th:text="${p.costCenter}">-</strong>
+                </div>
+            </div>
+
+            <div class="payable-money">
+                <div class="total">
+                    <small>Total</small>
+                    <strong th:text="'R$ ' + ${#numbers.formatDecimal(p.totalAmount, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</strong>
+                </div>
+                <div class="paid">
+                    <small>Pago</small>
+                    <strong th:text="'R$ ' + ${#numbers.formatDecimal(p.paidAmount, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</strong>
+                </div>
+                <div class="balance">
+                    <small>Restante</small>
+                    <strong th:text="'R$ ' + ${#numbers.formatDecimal(p.balance, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</strong>
+                </div>
+            </div>
+
+            <div class="payable-card-footer">
+                <div>
+                    <span th:if="${p.status == 'paid'}" class="payable-status px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-transparent uppercase">Pago</span>
+                    <span th:if="${p.status == 'partial'}" class="payable-status px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-transparent uppercase">Parcial</span>
+                    <span th:if="${p.status == 'pending'}" class="payable-status px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:border-transparent uppercase">Pendente</span>
+                    <span th:if="${p.status == 'cancelled'}" class="payable-status px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-500/20 dark:text-slate-400 dark:border-transparent uppercase">Cancelado</span>
+                </div>
+                <div class="payable-actions">
+                    <button th:if="${p.status != 'paid' and p.status != 'cancelled'}" th:data-id="${p.id}" th:data-balance="${p.balance}" onclick="openPayModal(this.dataset.id, this.dataset.balance)" class="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10" title="Registrar pagamento">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </button>
+                    <button th:if="${p.status != 'cancelled'}"
+                            th:data-id="${p.id}" th:data-description="${p.description}" th:data-category="${p.category}" th:data-subcategory="${p.subcategory}" th:data-total="${p.totalAmount}" th:data-duedate="${p.dueDate}" th:data-payment="${p.paymentMethod}" th:data-document="${p.documentNumber}" th:data-recurring="${p.recurring}" th:data-notes="${p.notes}" th:data-supplier="${p.supplier != null ? p.supplier.id : ''}" th:data-workorder="${p.workOrder != null ? p.workOrder.id : ''}" th:data-paidamount="${p.paidAmount}" th:data-expensetype="${p.expenseType}" th:data-expensenature="${p.expenseNature}" th:data-costcenter="${p.costCenter}" th:data-competencia="${p.competencia}" th:data-recurrenceid="${p.recurrenceId}" onclick="openEditModal(this.dataset)" class="text-brand-600 hover:bg-brand-50 dark:text-cyan-400 dark:hover:bg-cyan-500/10" title="Editar">
+                        <i data-lucide="edit" class="w-5 h-5"></i>
+                    </button>
+                    <button th:if="${p.status != 'cancelled' and p.recurrenceId == null}" th:data-id="${p.id}" onclick="confirmCancel(this.dataset.id)" class="text-rose-600 hover:bg-rose-50 dark:text-rose-500 dark:hover:bg-rose-500/10" title="Cancelar conta">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                    <button th:if="${p.status != 'cancelled' and p.recurrenceId != null}" th:data-id="${p.id}" th:data-recurrenceid="${p.recurrenceId}" onclick="confirmCancelRecurrence(this.dataset.id, this.dataset.recurrenceid)" class="text-rose-600 hover:bg-rose-50 dark:text-rose-500 dark:hover:bg-rose-500/10" title="Cancelar série recorrente">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <div class="payables-desktop"><div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[980px]" id="payablesTable">
             <thead>
             <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
@@ -295,6 +460,7 @@
             </tbody>
         </table>
     </div>
+    </div>
 
     <select id="hiddenClientsData" class="hidden">
         <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
@@ -309,7 +475,7 @@
         </option>
     </select>
 
-    <div id="payableModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div id="payableModal" class="hidden fixed mobile-modal inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
                 <h2 class="text-2xl font-black text-slate-900 dark:text-white">Nova Conta a Pagar</h2>
@@ -514,7 +680,7 @@
         </div>
     </div>
 
-    <div id="payModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div id="payModal" class="hidden fixed mobile-modal inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
                 <h2 class="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3"><i data-lucide="check-circle" class="w-6 h-6 text-emerald-500"></i> Registrar Pagamento</h2>
@@ -562,7 +728,7 @@
         </div>
     </div>
 
-    <div id="editModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div id="editModal" class="hidden fixed mobile-modal inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
                 <h2 class="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
@@ -712,7 +878,7 @@
         </div>
     </div>
 
-    <div id="cancelModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div id="cancelModal" class="hidden fixed mobile-modal inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200 text-center">
 
             <button type="button" onclick="closeModal('cancelModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -736,7 +902,7 @@
         </div>
     </div>
 
-    <div id="recurrenceDeleteModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div id="recurrenceDeleteModal" class="hidden fixed mobile-modal inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
 
             <button type="button" onclick="closeModal('recurrenceDeleteModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -794,7 +960,7 @@
         </div>
     </div>
 
-    <div id="exportModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div id="exportModal" class="hidden fixed mobile-modal inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
                 <h2 class="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">

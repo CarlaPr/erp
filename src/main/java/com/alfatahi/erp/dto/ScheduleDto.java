@@ -46,6 +46,16 @@ public class ScheduleDto {
 
     private List<ScheduleHistory> history;
 
+    /**
+     * Todas as datas em que este agendamento está marcado para execução.
+     * Permite que um mesmo serviço (mesma OS) apareça em mais de um dia
+     * na agenda (ex.: OS1001 em 10/08 e 17/08).
+     */
+    private List<ScheduleOccurrenceDto> occurrences;
+
+    public List<ScheduleOccurrenceDto> getOccurrences() { return occurrences; }
+    public void setOccurrences(List<ScheduleOccurrenceDto> occurrences) { this.occurrences = occurrences; }
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 

@@ -1,6 +1,8 @@
 package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.dto.ScheduleDto;
+import com.alfatahi.erp.dto.ScheduleOccurrenceDto;
+import com.alfatahi.erp.dto.ScheduleOccurrenceSaveRequest;
 import com.alfatahi.erp.dto.ScheduleSaveRequest;
 import com.alfatahi.erp.dto.TechnicalVisitDto;
 import com.alfatahi.erp.entity.AppUser;
@@ -104,6 +106,101 @@ public class ScheduleController {
         }
     }
 
+    /**
+     * Altera o prazo (data limite) de um agendamento — "arrumar o prazo" na agenda.
+     */
+    @PostMapping(value = "/{id}/deadline", consumes = "application/json")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> changeDeadline(@PathVariable UUID id,
+                                                                @RequestBody Map<String, String> body) {
+        if (SecurityUtils.isTecnico()) {
+            return forbidden();
+        }
+        try {
+            LocalDate newDeadline = LocalDate.parse(body.get("deadlineDate"));
+            String reason = body.get("reason");
+            scheduleService.changeDeadline(id, newDeadline, reason);
+            Map<String, Object> resp = new LinkedHashMap<>();
+            resp.put("ok", true);
+            return ResponseEntity.ok(resp);
+        } catch (DateTimeParseException e) {
+            return badRequest("Data de prazo inválida.");
+        } catch (IllegalArgumentException e) {
+            return badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return internalError("Erro ao alterar o prazo.");
+        }
+    }
+
+    /**
+     * Adiciona um novo dia de execução ao agendamento, sem remover os já
+     * existentes — permite que o mesmo serviço (mesma OS) fique agendado em
+     * mais de uma data (ex.: 10/08 e 17/08).
+     */
+    @PostMapping(value = "/occurrences/add", consumes = "application/json")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> addOccurrence(@RequestBody ScheduleOccurrenceSaveRequest request) {
+        if (SecurityUtils.isTecnico()) {
+            return forbidden();
+        }
+        try {
+            ScheduleOccurrenceDto occ = scheduleService.addOccurrence(request);
+            Map<String, Object> resp = new LinkedHashMap<>();
+            resp.put("ok", true);
+            resp.put("occurrence", occ);
+            return ResponseEntity.ok(resp);
+        } catch (IllegalArgumentException e) {
+            return badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return internalError("Erro ao adicionar dia de agendamento.");
+        }
+    }
+
+    /** Edita uma das datas já agendadas (muda dia/hora/equipe/status daquela ocorrência). */
+    @PostMapping(value = "/occurrences/update", consumes = "application/json")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateOccurrence(@RequestBody ScheduleOccurrenceSaveRequest request) {
+        if (SecurityUtils.isTecnico()) {
+            return forbidden();
+        }
+        try {
+            ScheduleOccurrenceDto occ = scheduleService.updateOccurrence(request);
+            Map<String, Object> resp = new LinkedHashMap<>();
+            resp.put("ok", true);
+            resp.put("occurrence", occ);
+            return ResponseEntity.ok(resp);
+        } catch (IllegalArgumentException e) {
+            return badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return internalError("Erro ao editar dia de agendamento.");
+        }
+    }
+
+    /** Remove um dos dias agendados para este serviço. */
+    @PostMapping(value = "/occurrences/{occurrenceId}/remove", consumes = "application/json")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> removeOccurrence(@PathVariable UUID occurrenceId,
+                                                                  @RequestBody(required = false) Map<String, String> body) {
+        if (SecurityUtils.isTecnico()) {
+            return forbidden();
+        }
+        try {
+            String reason = body != null ? body.get("reason") : null;
+            scheduleService.removeOccurrence(occurrenceId, reason);
+            Map<String, Object> resp = new LinkedHashMap<>();
+            resp.put("ok", true);
+            return ResponseEntity.ok(resp);
+        } catch (IllegalArgumentException e) {
+            return badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return internalError("Erro ao remover dia de agendamento.");
+        }
+    }
+
     @PostMapping("/cancel/{id}")
     @ResponseBody
     public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody(required = false) String reason) {
@@ -167,12 +264,20 @@ public class ScheduleController {
             }
 
             // O roteiro do dia mostra todos os serviços agendados e também as visitas técnicas.
+            // Um mesmo serviço pode ter mais de um dia agendado (ex.: OS1001 em 10/08 e
+            // 17/08): por isso percorremos as ocorrências, não só a data "resumo".
             List<ScheduleDto> schedules = scheduleService.listAllDto();
 
             List<RoteiroItemView> items = new ArrayList<>();
             for (ScheduleDto s : schedules) {
-                if (day.equals(s.getScheduledDate())) {
-                    items.add(toRoteiroRow(s));
+                if (s.getOccurrences() != null && !s.getOccurrences().isEmpty()) {
+                    for (var occ : s.getOccurrences()) {
+                        if (day.equals(occ.getOccurrenceDate())) {
+                            items.add(toRoteiroRow(s, occ));
+                        }
+                    }
+                } else if (day.equals(s.getScheduledDate())) {
+                    items.add(toRoteiroRow(s, null));
                 }
             }
 
@@ -221,6 +326,20 @@ public class ScheduleController {
         return ResponseEntity.status(403).body(body);
     }
 
+    private ResponseEntity<Map<String, Object>> badRequest(String message) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("ok", false);
+        body.put("error", message);
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    private ResponseEntity<Map<String, Object>> internalError(String message) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("ok", false);
+        body.put("error", message);
+        return ResponseEntity.internalServerError().body(body);
+    }
+
     private void registerFonts(PdfRendererBuilder builder) {
         int[] weights = {400, 500, 600, 700, 800, 900};
         for (int weight : weights) {
@@ -234,20 +353,28 @@ public class ScheduleController {
         }
     }
 
-    private RoteiroItemView toRoteiroRow(ScheduleDto s) {
+    private RoteiroItemView toRoteiroRow(ScheduleDto s, ScheduleOccurrenceDto occ) {
         RoteiroItemView r = new RoteiroItemView();
         r.setClientName(nvl(s.getClientName(), "Não informado"));
         r.setClientAddress(nvl(s.getClientAddress(), "-"));
         r.setQuoteNumber(nvl(s.getQuoteNumber(), "-"));
         r.setWorkOrderNumber(nvl(s.getWorkOrderNumber(), "-"));
-        r.setSortTime(s.getScheduledTime());
-        r.setTimeFormatted(s.getScheduledTime() != null ? s.getScheduledTime().toString().substring(0, 5) : "A definir");
-        String team = s.getTeam() != null && !s.getTeam().isBlank() ? s.getTeam() : s.getResponsible();
+
+        LocalTime time = occ != null ? occ.getOccurrenceTime() : s.getScheduledTime();
+        r.setSortTime(time);
+        r.setTimeFormatted(time != null ? time.toString().substring(0, 5) : "A definir");
+
+        String occTeam = occ != null ? occ.getTeam() : null;
+        String occResponsible = occ != null ? occ.getResponsible() : null;
+        String team = (occTeam != null && !occTeam.isBlank()) ? occTeam
+                : (occResponsible != null && !occResponsible.isBlank()) ? occResponsible
+                : (s.getTeam() != null && !s.getTeam().isBlank() ? s.getTeam() : s.getResponsible());
         r.setTeamOrResponsible(nvl(team, "-"));
+
         r.setItems((s.getServiceDetails() != null && !s.getServiceDetails().isEmpty())
                 ? s.getServiceDetails()
                 : List.of(nvl(s.getServiceType(), "Serviço não detalhado")));
-        r.setObservations(s.getObservations());
+        r.setObservations(occ != null && occ.getObservations() != null ? occ.getObservations() : s.getObservations());
         r.setVisit(false);
         r.setTypeLabel("Execução de Serviço");
         return r;

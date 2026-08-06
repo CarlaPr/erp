@@ -213,7 +213,25 @@
                     <span class="block text-slate-400 font-bold uppercase mb-1">Orçamento / OS</span>
                     <span id="editInfoDocs" class="font-bold text-slate-800 dark:text-white block">-</span>
                     <span class="block text-slate-400 font-bold uppercase mt-2 mb-1">Prazo - Entregar até</span>
-                    <span id="editInfoDeadline" class="font-bold text-slate-800 dark:text-white block">-</span>
+                    <div class="flex items-center gap-2">
+                        <span id="editInfoDeadline" class="font-bold text-slate-800 dark:text-white block">-</span>
+                        <button type="button" onclick="toggleDeadlineEditor()" title="Alterar prazo"
+                                class="text-slate-400 hover:text-brand-600 dark:hover:text-cyan-400 transition-colors">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                    <div id="deadlineEditor" class="hidden mt-2 flex items-center gap-1.5">
+                        <input id="editDeadlineDate" type="date"
+                               class="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs outline-none focus:border-brand-500 dark:text-white">
+                        <button type="button" onclick="saveDeadline()" title="Confirmar novo prazo"
+                                class="p-1.5 rounded-lg bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900 hover:opacity-90 transition-opacity">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button type="button" onclick="toggleDeadlineEditor()" title="Cancelar"
+                                class="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:opacity-90 transition-opacity">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
                     <span class="block text-slate-400 font-bold uppercase mb-2">Serviços / Itens a Executar</span>
@@ -223,9 +241,52 @@
 
             <input type="hidden" id="editId">
 
+            <div class="mb-4">
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+                        Dias agendados <span class="text-slate-400 normal-case font-medium">(este serviço pode ter mais de um dia)</span>
+                    </label>
+                    <button type="button" onclick="openAddOccurrenceEditor()"
+                            class="text-xs font-bold text-brand-600 dark:text-cyan-400 hover:underline flex items-center gap-1">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Adicionar outro dia
+                    </button>
+                </div>
+                <div id="occurrencesList" class="flex flex-wrap gap-2 mb-2"></div>
+
+                <div id="occurrenceEditor" class="hidden bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 mt-2">
+                    <input type="hidden" id="occEditingId">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Data</label>
+                            <input id="occDate" type="date" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Horário</label>
+                            <input id="occTime" type="time" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Equipe / Responsável</label>
+                            <input id="occTeam" type="text" placeholder="Ex: Yago, Igor" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Observação deste dia</label>
+                            <input id="occObservations" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
+                        </div>
+                    </div>
+                    <p id="occEditorHint" class="text-[11px] text-slate-400 mb-2"></p>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="closeOccurrenceEditor()" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
+                        <button type="button" id="occEditorSubmitBtn" onclick="submitOccurrenceEditor()" class="px-3 py-1.5 rounded-lg bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900 text-xs font-black hover:opacity-90 transition-opacity">Adicionar à lista</button>
+                    </div>
+                </div>
+            </div>
+
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Data de execução</label>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Data de execução (principal)</label>
                     <input id="editDate" type="date" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
                 </div>
                 <div>
@@ -550,8 +611,34 @@
         };
     }
 
+    // Expande cada agendamento em uma "entrada de calendário" por dia agendado
+    // (ocorrência), permitindo que o mesmo serviço apareça em mais de uma
+    // data (ex.: OS1001 em 10/08 e 17/08). O clique em qualquer uma delas
+    // abre o mesmo agendamento (mesmo id), que lista todos os seus dias.
+    function expandOccurrences(schedule) {
+        const occs = Array.isArray(schedule.occurrences) ? schedule.occurrences : [];
+        if (occs.length === 0) {
+            // Sem ocorrências cadastradas (ex.: ainda "aguardando agendamento"):
+            // mantém uma única entrada "virtual" baseada nos campos resumo.
+            return [{ ...schedule, kind: 'EXECUCAO' }];
+        }
+        return occs.map(o => ({
+            ...schedule,
+            kind: 'EXECUCAO',
+            occurrenceId: o.id,
+            scheduledDate: o.occurrenceDate,
+            scheduledTime: o.occurrenceTime,
+            estimatedDurationMinutes: o.estimatedDurationMinutes,
+            status: o.status,
+            statusLabel: o.statusLabel,
+            responsible: o.responsible || schedule.responsible,
+            team: o.team || schedule.team,
+            observations: o.observations || schedule.observations
+        }));
+    }
+
     const SCHEDULES = [
-        ...EXECUTION_SCHEDULES_RAW.map(s => ({ ...s, kind: 'EXECUCAO' })),
+        ...EXECUTION_SCHEDULES_RAW.flatMap(expandOccurrences),
         ...TECHNICAL_VISITS_RAW.map(normalizeVisit)
     ];
 
@@ -947,6 +1034,7 @@
     }
 
     let currentEditSchedule = null;
+    let pendingOccurrences = []; // dias adicionais ainda não persistidos (ver seção mais abaixo)
 
     async function openEditModal(id) {
         try {
@@ -983,6 +1071,12 @@
             document.getElementById('editReason').value = '';
             document.getElementById('editObservations').value = s.observations || '';
 
+            document.getElementById('deadlineEditor').classList.add('hidden');
+            document.getElementById('editDeadlineDate').value = s.deadlineDate || '';
+            pendingOccurrences = []; // reinicia a lista de dias pendentes ao (re)abrir o modal
+            renderOccurrencesList(s.occurrences || []);
+            closeOccurrenceEditor();
+
             const hist = document.getElementById('editHistory');
             hist.innerHTML = '';
             (s.history || []).forEach(h => {
@@ -1004,6 +1098,208 @@
         }
     }
 
+    // ---------------------------------------------------------------
+    // Prazo (deadline) — alterar a data limite do agendamento
+    // ---------------------------------------------------------------
+    function toggleDeadlineEditor() {
+        document.getElementById('deadlineEditor').classList.toggle('hidden');
+    }
+
+    async function saveDeadline() {
+        const newDeadline = document.getElementById('editDeadlineDate').value;
+        if (!newDeadline) { alert('Informe a nova data de prazo.'); return; }
+        const id = document.getElementById('editId').value;
+        try {
+            const res = await fetch(`/agenda/${id}/deadline`, {
+                method: 'POST', headers: csrfHeaders(true),
+                body: JSON.stringify({ deadlineDate: newDeadline, reason: document.getElementById('editReason').value || null })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { alert('Erro ao alterar prazo: ' + (data.error || 'erro desconhecido')); return; }
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Dias agendados (ocorrências) — permite mais de uma data para o
+    // mesmo serviço, ex.: OS1001 em 10/08 e novamente em 17/08.
+    //
+    // Comportamento:
+    // - Dias já salvos no servidor (têm "id" real) aparecem como chip normal;
+    //   editar/remover um desses aplica IMEDIATAMENTE no servidor.
+    // - Dias novos, adicionados via "+ Adicionar outro dia", ficam PENDENTES
+    //   (chip com marcador "não salvo") só na tela — só são gravados quando
+    //   o usuário clicar em SALVAR no rodapé do modal, junto com o dia
+    //   principal, numa única ação.
+    // ---------------------------------------------------------------
+
+    function renderOccurrencesList(occurrences) {
+        const list = document.getElementById('occurrencesList');
+        const saved = occurrences || [];
+
+        if (saved.length === 0 && pendingOccurrences.length === 0) {
+            list.innerHTML = '<span class="text-xs text-slate-400 italic">Nenhum dia agendado ainda.</span>';
+            return;
+        }
+
+        // Guarda o objeto de cada ocorrência num Map (em vez de serializar no HTML)
+        // para evitar quebra de atributo quando observações/equipe contêm aspas.
+        window.__occurrencesById = {};
+
+        const savedChips = saved.map(o => {
+            window.__occurrencesById[o.id] = o;
+            const meta = STATUS_META[o.status] || { badge: 'bg-slate-200 text-slate-700' };
+            const timeStr = o.occurrenceTime ? ' ' + o.occurrenceTime.substring(0, 5) : '';
+            return `
+                <div class="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 ${meta.badge} text-xs font-bold">
+                    <span>${fmtBR(o.occurrenceDate)}${timeStr}</span>
+                    <button type="button" data-occ-id="${o.id}" onclick="openEditOccurrenceEditor(window.__occurrencesById[this.dataset.occId])" title="Editar este dia" class="hover:opacity-70 transition-opacity p-0.5">
+                        <i data-lucide="pencil" class="w-3 h-3"></i>
+                    </button>
+                    <button type="button" onclick="deleteOccurrence('${o.id}')" title="Remover este dia" class="hover:opacity-70 transition-opacity p-0.5">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>
+                </div>`;
+        }).join('');
+
+        const pendingChips = pendingOccurrences.map((o, idx) => {
+            const timeStr = o.occurrenceTime ? ' ' + o.occurrenceTime.substring(0, 5) : '';
+            return `
+                <div class="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-full border border-dashed border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-bold" title="Será salvo ao clicar em Salvar">
+                    <span>${fmtBR(o.occurrenceDate)}${timeStr} <span class="font-medium normal-case">(não salvo)</span></span>
+                    <button type="button" data-pending-idx="${idx}" onclick="openEditPendingOccurrenceEditor(this.dataset.pendingIdx)" title="Editar este dia" class="hover:opacity-70 transition-opacity p-0.5">
+                        <i data-lucide="pencil" class="w-3 h-3"></i>
+                    </button>
+                    <button type="button" data-pending-idx="${idx}" onclick="removePendingOccurrence(this.dataset.pendingIdx)" title="Remover este dia" class="hover:opacity-70 transition-opacity p-0.5">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>
+                </div>`;
+        }).join('');
+
+        list.innerHTML = savedChips + pendingChips;
+        lucide.createIcons();
+    }
+
+    let editingPendingIndex = null;
+
+    function openAddOccurrenceEditor() {
+        editingPendingIndex = null;
+        document.getElementById('occEditingId').value = '';
+        document.getElementById('occDate').value = '';
+        document.getElementById('occTime').value = '';
+        document.getElementById('occTeam').value = currentEditSchedule ? (currentEditSchedule.team || '') : '';
+        document.getElementById('occObservations').value = '';
+        document.getElementById('occEditorHint').textContent =
+            'Este dia fica pendente e só é gravado quando você clicar em Salvar (no rodapé), junto com o dia principal.';
+        document.getElementById('occEditorSubmitBtn').textContent = 'Adicionar este dia';
+        document.getElementById('occurrenceEditor').classList.remove('hidden');
+    }
+
+    function openEditOccurrenceEditor(o) {
+        editingPendingIndex = null;
+        document.getElementById('occEditingId').value = o.id;
+        document.getElementById('occDate').value = o.occurrenceDate || '';
+        document.getElementById('occTime').value = o.occurrenceTime ? o.occurrenceTime.substring(0, 5) : '';
+        document.getElementById('occTeam').value = o.team || '';
+        document.getElementById('occObservations').value = o.observations || '';
+        document.getElementById('occEditorHint').textContent = 'Este dia já está salvo — a alteração é aplicada imediatamente.';
+        document.getElementById('occEditorSubmitBtn').textContent = 'Salvar alteração deste dia';
+        document.getElementById('occurrenceEditor').classList.remove('hidden');
+    }
+
+    function openEditPendingOccurrenceEditor(idxStr) {
+        const idx = parseInt(idxStr);
+        const o = pendingOccurrences[idx];
+        if (!o) return;
+        editingPendingIndex = idx;
+        document.getElementById('occEditingId').value = '';
+        document.getElementById('occDate').value = o.occurrenceDate || '';
+        document.getElementById('occTime').value = o.occurrenceTime ? o.occurrenceTime.substring(0, 5) : '';
+        document.getElementById('occTeam').value = o.team || '';
+        document.getElementById('occObservations').value = o.observations || '';
+        document.getElementById('occEditorHint').textContent = 'Este dia ainda não foi salvo — a alteração fica pendente até você clicar em Salvar.';
+        document.getElementById('occEditorSubmitBtn').textContent = 'Atualizar este dia';
+        document.getElementById('occurrenceEditor').classList.remove('hidden');
+    }
+
+    function closeOccurrenceEditor() {
+        editingPendingIndex = null;
+        document.getElementById('occurrenceEditor').classList.add('hidden');
+    }
+
+    /**
+     * Confirma o mini-formulário de um dia. Se for um dia NOVO (sem
+     * occEditingId), não vai ao servidor — só entra/atualiza na lista local
+     * pendingOccurrences, e será enviado junto no próximo clique em Salvar.
+     * Se for edição de um dia JÁ salvo (occEditingId preenchido), aplica no
+     * servidor imediatamente, como antes.
+     */
+    async function submitOccurrenceEditor() {
+        const occurrenceId = document.getElementById('occEditingId').value;
+        const occurrenceDate = document.getElementById('occDate').value;
+        if (!occurrenceDate) { alert('Informe a data deste dia de agendamento.'); return; }
+
+        const draft = {
+            occurrenceId: occurrenceId || null,
+            occurrenceDate: occurrenceDate,
+            occurrenceTime: document.getElementById('occTime').value ? (document.getElementById('occTime').value + ':00') : null,
+            team: document.getElementById('occTeam').value || null,
+            observations: document.getElementById('occObservations').value || null
+        };
+
+        if (occurrenceId) {
+            // Dia já existente no servidor: aplica direto.
+            await persistOccurrence({ ...draft, scheduleId: document.getElementById('editId').value }, '/agenda/occurrences/update');
+            return;
+        }
+
+        // Dia novo: fica pendente até o Salvar geral do modal.
+        if (editingPendingIndex !== null) {
+            pendingOccurrences[editingPendingIndex] = draft;
+        } else {
+            pendingOccurrences.push(draft);
+        }
+        closeOccurrenceEditor();
+        renderOccurrencesList(currentEditSchedule ? currentEditSchedule.occurrences : []);
+    }
+
+    /** Grava imediatamente só esta ocorrência (usado para editar um dia já salvo). */
+    async function persistOccurrence(payload, url) {
+        try {
+            const res = await fetch(url, { method: 'POST', headers: csrfHeaders(true), body: JSON.stringify(payload) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { alert('Erro ao salvar dia de agendamento: ' + (data.error || 'erro desconhecido')); return; }
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
+    function removePendingOccurrence(idxStr) {
+        const idx = parseInt(idxStr);
+        pendingOccurrences.splice(idx, 1);
+        renderOccurrencesList(currentEditSchedule ? currentEditSchedule.occurrences : []);
+    }
+
+    async function deleteOccurrence(occurrenceId) {
+        if (!confirm('Remover este dia agendado? Os outros dias deste serviço não serão afetados.')) return;
+        try {
+            const res = await fetch(`/agenda/occurrences/${occurrenceId}/remove`, {
+                method: 'POST', headers: csrfHeaders(true), body: JSON.stringify({})
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { alert('Erro ao remover dia: ' + (data.error || 'erro desconhecido')); return; }
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
     async function submitScheduleForm() {
         const payload = {
             id: document.getElementById('editId').value,
@@ -1014,7 +1310,10 @@
             team: document.getElementById('editTeam').value,
             estimatedDurationMinutes: document.getElementById('editDuration').value ? parseInt(document.getElementById('editDuration').value) : null,
             observations: document.getElementById('editObservations').value,
-            reason: document.getElementById('editReason').value
+            reason: document.getElementById('editReason').value,
+            // Dias adicionais ainda não salvos: vão junto neste mesmo Salvar,
+            // permitindo cadastrar o dia principal + outro(s) dia(s) de uma vez.
+            extraOccurrences: pendingOccurrences.length > 0 ? pendingOccurrences : null
         };
 
         try {
@@ -1025,6 +1324,7 @@
                 return;
             }
             if (data.warning) alert(data.warning);
+            pendingOccurrences = [];
             window.location.reload();
         } catch (err) {
             console.error(err);

@@ -22,4 +22,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
            "LEFT JOIN FETCH s.client " +
            "ORDER BY s.approvalDate DESC")
     List<Schedule> findAllWithRelations();
+
+    @Query("SELECT DISTINCT s FROM Schedule s LEFT JOIN FETCH s.occurrences WHERE s.id = :id")
+    Optional<Schedule> findByIdWithOccurrences(UUID id);
 }

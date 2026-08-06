@@ -1,9 +1,12 @@
 package com.alfatahi.erp.service;
 
 import com.alfatahi.erp.dto.ScheduleDto;
+import com.alfatahi.erp.dto.ScheduleOccurrenceDto;
+import com.alfatahi.erp.dto.ScheduleOccurrenceSaveRequest;
 import com.alfatahi.erp.dto.ScheduleSaveRequest;
 import com.alfatahi.erp.entity.*;
 import com.alfatahi.erp.repository.ScheduleHistoryRepository;
+import com.alfatahi.erp.repository.ScheduleOccurrenceRepository;
 import com.alfatahi.erp.repository.ScheduleRepository;
 import com.alfatahi.erp.repository.WorkOrderRepository;
 import org.springframework.security.core.Authentication;
@@ -27,12 +30,14 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepo;
     private final ScheduleHistoryRepository historyRepo;
+    private final ScheduleOccurrenceRepository occurrenceRepo;
     private final WorkOrderRepository workOrderRepo;
 
     public ScheduleService(ScheduleRepository scheduleRepo, ScheduleHistoryRepository historyRepo,
-                           WorkOrderRepository workOrderRepo) {
+                           ScheduleOccurrenceRepository occurrenceRepo, WorkOrderRepository workOrderRepo) {
         this.scheduleRepo = scheduleRepo;
         this.historyRepo = historyRepo;
+        this.occurrenceRepo = occurrenceRepo;
         this.workOrderRepo = workOrderRepo;
     }
 
@@ -99,7 +104,9 @@ public class ScheduleService {
         if (req.getId() == null) {
             throw new IllegalArgumentException("ID do agendamento é obrigatório.");
         }
-        Schedule schedule = scheduleRepo.findById(req.getId())
+
+        // A variável schedule agora será efetivamente final (nunca será reatribuída)
+        final Schedule schedule = scheduleRepo.findById(req.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Agendamento não encontrado: " + req.getId()));
 
         boolean isFirstScheduling = schedule.getScheduledDate() == null && req.getScheduledDate() != null;
@@ -119,6 +126,25 @@ public class ScheduleService {
         schedule.setEstimatedDurationMinutes(req.getEstimatedDurationMinutes());
         schedule.setObservations(req.getObservations());
 
+        if (req.getScheduledDate() != null) {
+            ScheduleOccurrence occ = (previousDate != null
+                    ? occurrenceRepo.findByScheduleIdAndOccurrenceDate(schedule.getId(), previousDate)
+                    : Optional.<ScheduleOccurrence>empty())
+                    .orElseGet(() -> {
+                        ScheduleOccurrence created = new ScheduleOccurrence();
+                        created.setSchedule(schedule);
+                        schedule.getOccurrences().add(created);
+                        return created;
+                    });
+            occ.setOccurrenceDate(req.getScheduledDate());
+            occ.setOccurrenceTime(req.getScheduledTime());
+            occ.setEstimatedDurationMinutes(req.getEstimatedDurationMinutes());
+            occ.setResponsible(req.getResponsible());
+            occ.setTeam(req.getTeam());
+            occ.setObservations(req.getObservations());
+            occurrenceRepo.save(occ);
+        }
+
         String newStatus = req.getStatus();
         if (newStatus == null || newStatus.isBlank()) {
             if (isReschedule) {
@@ -130,6 +156,13 @@ public class ScheduleService {
             }
         }
         schedule.setStatus(newStatus);
+
+        final String statusForLambda = newStatus;
+
+        if (req.getScheduledDate() != null) {
+            occurrenceRepo.findByScheduleIdAndOccurrenceDate(schedule.getId(), req.getScheduledDate())
+                    .ifPresent(occ -> occ.setStatus(statusForLambda));
+        }
 
         String action;
         if (Schedule.STATUS_CANCELADO.equals(newStatus)) {
@@ -169,7 +202,31 @@ public class ScheduleService {
                 : req.getObservations();
         addHistory(schedule, action, req.getReason(), historyNotes);
 
-        syncWorkOrder(schedule);
+        Schedule scheduleToSync = schedule;
+
+        if (req.getExtraOccurrences() != null) {
+            for (ScheduleOccurrenceSaveRequest extra : req.getExtraOccurrences()) {
+                if (extra.getOccurrenceDate() == null) {
+                    continue;
+                }
+                extra.setScheduleId(schedule.getId());
+                if (extra.getOccurrenceId() != null) {
+                    updateOccurrence(extra);
+                } else {
+                    boolean alreadyExists = occurrenceRepo
+                            .findByScheduleIdAndOccurrenceDate(schedule.getId(), extra.getOccurrenceDate())
+                            .isPresent();
+                    if (!alreadyExists) {
+                        addOccurrence(extra);
+                    }
+                }
+            }
+            scheduleToSync = scheduleRepo.findById(schedule.getId()).orElse(schedule);
+        }
+
+        resyncHeaderFromOccurrences(scheduleToSync);
+        scheduleRepo.saveAndFlush(scheduleToSync);
+        syncWorkOrder(scheduleToSync);
 
         return warning;
     }
@@ -179,9 +236,187 @@ public class ScheduleService {
         Schedule schedule = scheduleRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Agendamento não encontrado: " + id));
         schedule.setStatus(Schedule.STATUS_CANCELADO);
+        schedule.getOccurrences().forEach(o -> o.setStatus(Schedule.STATUS_CANCELADO));
         scheduleRepo.saveAndFlush(schedule);
         addHistory(schedule, "Cancelado", reason, null);
         syncWorkOrder(schedule);
+    }
+
+    @Transactional
+    public void changeDeadline(UUID scheduleId, LocalDate newDeadline, String reason) {
+        if (newDeadline == null) {
+            throw new IllegalArgumentException("Informe a nova data de prazo.");
+        }
+        Schedule schedule = scheduleRepo.findById(scheduleId)
+                .orElseThrow(() -> new IllegalArgumentException("Agendamento não encontrado: " + scheduleId));
+
+        LocalDate oldDeadline = schedule.getDeadlineDate();
+        if (Objects.equals(oldDeadline, newDeadline)) {
+            return;
+        }
+        schedule.setDeadlineDate(newDeadline);
+
+        if (Schedule.STATUS_ATRASADO.equals(schedule.getStatus()) && !newDeadline.isBefore(LocalDate.now())) {
+            schedule.setStatus(schedule.getScheduledDate() != null ? Schedule.STATUS_AGENDADO : Schedule.STATUS_AGUARDANDO_AGENDAMENTO);
+        }
+
+        scheduleRepo.saveAndFlush(schedule);
+        addHistory(schedule, "Prazo Alterado", reason,
+                "Prazo alterado de " + fmt(oldDeadline) + " para " + fmt(newDeadline) + ".");
+
+        WorkOrder wo = schedule.getWorkOrder();
+        if (wo != null) {
+            wo.setInstallDate(newDeadline);
+            workOrderRepo.save(wo);
+        }
+    }
+
+    @Transactional
+    public ScheduleOccurrenceDto addOccurrence(ScheduleOccurrenceSaveRequest req) {
+        if (req.getScheduleId() == null) {
+            throw new IllegalArgumentException("Agendamento (scheduleId) é obrigatório.");
+        }
+        if (req.getOccurrenceDate() == null) {
+            throw new IllegalArgumentException("Informe a data do dia a agendar.");
+        }
+        Schedule schedule = scheduleRepo.findById(req.getScheduleId())
+                .orElseThrow(() -> new IllegalArgumentException("Agendamento não encontrado: " + req.getScheduleId()));
+
+        occurrenceRepo.findByScheduleIdAndOccurrenceDate(schedule.getId(), req.getOccurrenceDate())
+                .ifPresent(o -> {
+                    throw new IllegalArgumentException("Este serviço já está agendado para " + fmt(req.getOccurrenceDate()) + ".");
+                });
+
+        ScheduleOccurrence occ = new ScheduleOccurrence();
+        occ.setSchedule(schedule);
+        occ.setOccurrenceDate(req.getOccurrenceDate());
+        occ.setOccurrenceTime(req.getOccurrenceTime());
+        occ.setEstimatedDurationMinutes(req.getEstimatedDurationMinutes());
+        occ.setResponsible(req.getResponsible() != null ? req.getResponsible() : schedule.getResponsible());
+        occ.setTeam(req.getTeam() != null ? req.getTeam() : schedule.getTeam());
+        occ.setObservations(req.getObservations());
+        occ.setStatus(req.getStatus() != null && !req.getStatus().isBlank() ? req.getStatus() : Schedule.STATUS_AGENDADO);
+
+        schedule.getOccurrences().add(occ);
+        occ = occurrenceRepo.saveAndFlush(occ);
+
+        resyncHeaderFromOccurrences(schedule);
+        scheduleRepo.saveAndFlush(schedule);
+
+        addHistory(schedule, "Dia Adicionado", req.getReason(),
+                "Novo dia de execução agendado para " + fmt(occ.getOccurrenceDate())
+                        + (occ.getOccurrenceTime() != null ? " às " + occ.getOccurrenceTime() : "") + ".");
+
+        syncWorkOrder(schedule);
+
+        return toOccurrenceDto(occ);
+    }
+
+    @Transactional
+    public ScheduleOccurrenceDto updateOccurrence(ScheduleOccurrenceSaveRequest req) {
+        if (req.getOccurrenceId() == null) {
+            throw new IllegalArgumentException("ID da ocorrência é obrigatório.");
+        }
+        ScheduleOccurrence occ = occurrenceRepo.findById(req.getOccurrenceId())
+                .orElseThrow(() -> new IllegalArgumentException("Data de agendamento não encontrada: " + req.getOccurrenceId()));
+        Schedule schedule = occ.getSchedule();
+
+        LocalDate oldDate = occ.getOccurrenceDate();
+
+        if (req.getOccurrenceDate() != null && !req.getOccurrenceDate().equals(oldDate)) {
+            occurrenceRepo.findByScheduleIdAndOccurrenceDate(schedule.getId(), req.getOccurrenceDate())
+                    .filter(other -> !other.getId().equals(occ.getId()))
+                    .ifPresent(other -> {
+                        throw new IllegalArgumentException("Este serviço já está agendado para " + fmt(req.getOccurrenceDate()) + ".");
+                    });
+            occ.setOccurrenceDate(req.getOccurrenceDate());
+        }
+        if (req.getOccurrenceTime() != null) occ.setOccurrenceTime(req.getOccurrenceTime());
+        if (req.getEstimatedDurationMinutes() != null) occ.setEstimatedDurationMinutes(req.getEstimatedDurationMinutes());
+        if (req.getResponsible() != null) occ.setResponsible(req.getResponsible());
+        if (req.getTeam() != null) occ.setTeam(req.getTeam());
+        if (req.getObservations() != null) occ.setObservations(req.getObservations());
+        if (req.getStatus() != null && !req.getStatus().isBlank()) occ.setStatus(req.getStatus());
+
+        occurrenceRepo.saveAndFlush(occ);
+
+        resyncHeaderFromOccurrences(schedule);
+        scheduleRepo.saveAndFlush(schedule);
+
+        String notes = !occ.getOccurrenceDate().equals(oldDate)
+                ? "Dia reagendado de " + fmt(oldDate) + " para " + fmt(occ.getOccurrenceDate()) + "."
+                : "Dia " + fmt(occ.getOccurrenceDate()) + " atualizado.";
+        addHistory(schedule, "Dia Alterado", req.getReason(), notes);
+
+        syncWorkOrder(schedule);
+
+        return toOccurrenceDto(occ);
+    }
+
+    @Transactional
+    public void removeOccurrence(UUID occurrenceId, String reason) {
+        ScheduleOccurrence occ = occurrenceRepo.findById(occurrenceId)
+                .orElseThrow(() -> new IllegalArgumentException("Data de agendamento não encontrada: " + occurrenceId));
+        Schedule schedule = occ.getSchedule();
+        LocalDate removedDate = occ.getOccurrenceDate();
+
+        schedule.getOccurrences().removeIf(o -> o.getId().equals(occ.getId()));
+        occurrenceRepo.delete(occ);
+
+        resyncHeaderFromOccurrences(schedule);
+        scheduleRepo.saveAndFlush(schedule);
+
+        addHistory(schedule, "Dia Removido", reason, "Dia " + fmt(removedDate) + " removido da agenda.");
+
+        syncWorkOrder(schedule);
+    }
+
+    private void resyncHeaderFromOccurrences(Schedule schedule) {
+        List<ScheduleOccurrence> sorted = schedule.getOccurrencesSorted();
+
+        if (sorted.isEmpty()) {
+            schedule.setScheduledDate(null);
+            schedule.setScheduledTime(null);
+            if (!Schedule.STATUS_CANCELADO.equals(schedule.getStatus())) {
+                schedule.setStatus(Schedule.STATUS_AGUARDANDO_AGENDAMENTO);
+            }
+            return;
+        }
+
+        LocalDate today = LocalDate.now();
+        ScheduleOccurrence representative = sorted.stream()
+                .filter(o -> !o.getOccurrenceDate().isBefore(today))
+                .findFirst()
+                .orElse(sorted.get(sorted.size() - 1));
+
+        schedule.setScheduledDate(representative.getOccurrenceDate());
+        schedule.setScheduledTime(representative.getOccurrenceTime());
+        schedule.setEstimatedDurationMinutes(representative.getEstimatedDurationMinutes());
+        if (representative.getResponsible() != null) schedule.setResponsible(representative.getResponsible());
+        if (representative.getTeam() != null) schedule.setTeam(representative.getTeam());
+
+        if (!Schedule.STATUS_CANCELADO.equals(schedule.getStatus())
+                && !Schedule.STATUS_CONCLUIDO.equals(schedule.getStatus())) {
+            schedule.setStatus(representative.getStatus());
+        }
+    }
+
+    private ScheduleOccurrenceDto toOccurrenceDto(ScheduleOccurrence o) {
+        ScheduleOccurrenceDto dto = new ScheduleOccurrenceDto();
+        dto.setId(o.getId());
+        dto.setOccurrenceDate(o.getOccurrenceDate());
+        dto.setOccurrenceTime(o.getOccurrenceTime());
+        dto.setEstimatedDurationMinutes(o.getEstimatedDurationMinutes());
+        dto.setStatus(o.getStatus());
+        dto.setStatusLabel(statusLabel(o.getStatus()));
+        dto.setResponsible(o.getResponsible());
+        dto.setTeam(o.getTeam());
+        dto.setObservations(o.getObservations());
+        return dto;
+    }
+
+    private String fmt(LocalDate date) {
+        return date == null ? "-" : date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
 
     @Transactional
@@ -208,6 +443,7 @@ public class ScheduleService {
         if (historyList != null && !historyList.isEmpty()) {
             historyRepo.deleteAll(historyList);
         }
+        occurrenceRepo.deleteByScheduleId(schedule.getId());
         scheduleRepo.delete(schedule);
     }
 
@@ -377,6 +613,10 @@ public class ScheduleService {
         dto.setTeam(s.getTeam());
         dto.setObservations(s.getObservations());
         dto.setRescheduleReason(s.getRescheduleReason());
+
+        dto.setOccurrences(s.getOccurrencesSorted().stream()
+                .map(this::toOccurrenceDto)
+                .collect(Collectors.toList()));
 
         LocalDate today = LocalDate.now();
         if (s.getDeadlineDate() != null) {

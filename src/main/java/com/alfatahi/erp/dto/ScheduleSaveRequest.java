@@ -2,6 +2,7 @@ package com.alfatahi.erp.dto;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -16,6 +17,15 @@ public class ScheduleSaveRequest {
     private Integer estimatedDurationMinutes;
     private String observations;
     private String reason;
+
+    /**
+     * Dias adicionais a agendar para este MESMO serviço, junto com o dia
+     * principal acima, em uma única ação de Salvar (ex.: além do dia
+     * principal 10/08, agendar também 17/08). Cada item vira uma nova
+     * ScheduleOccurrence; itens com occurrenceId preenchido atualizam uma
+     * ocorrência existente em vez de criar uma nova.
+     */
+    private List<ScheduleOccurrenceSaveRequest> extraOccurrences;
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -43,4 +53,8 @@ public class ScheduleSaveRequest {
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
+
+    public List<ScheduleOccurrenceSaveRequest> getExtraOccurrences() { return extraOccurrences; }
+    public void setExtraOccurrences(List<ScheduleOccurrenceSaveRequest> extraOccurrences) { this.extraOccurrences = extraOccurrences; }
 }
+

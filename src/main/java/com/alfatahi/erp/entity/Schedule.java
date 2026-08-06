@@ -6,6 +6,9 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -74,9 +77,31 @@ public class Schedule {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    /**
+     * Datas em que este mesmo agendamento (mesma OS/Orçamento) está marcado
+     * para execução. Permite que um serviço seja agendado em mais de um dia
+     * (ex.: OS1001 em 10/08 e 17/08). scheduledDate/scheduledTime acima
+     * continuam existindo e são mantidos sincronizados com a próxima
+     * ocorrência em aberto (ou a mais recente, se todas já passaram),
+     * para não quebrar telas/relatórios que ainda leem esses campos.
+     */
+    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ScheduleOccurrence> occurrences = new ArrayList<>();
+
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public List<ScheduleOccurrence> getOccurrences() { return occurrences; }
+    public void setOccurrences(List<ScheduleOccurrence> occurrences) { this.occurrences = occurrences; }
+
+    /** Ocorrências em ordem cronológica. */
+    public List<ScheduleOccurrence> getOccurrencesSorted() {
+        return occurrences.stream()
+                .sorted(Comparator.comparing(ScheduleOccurrence::getOccurrenceDate)
+                        .thenComparing(o -> o.getOccurrenceTime() != null ? o.getOccurrenceTime() : LocalTime.MIN))
+                .toList();
     }
 
     public UUID getId() { return id; }
