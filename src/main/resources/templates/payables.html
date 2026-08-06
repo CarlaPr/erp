@@ -1,479 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-<head th:replace="~{fragments/layout :: head(title='Contas a Pagar - Alfa Tahi')}">
-    <style>
-        @media (max-width: 767px) {
-
-            main {
-                padding-left: 12px !important;
-                padding-right: 12px !important;
-                padding-top: 76px !important;
-            }
-
-            main > header {
-                margin-bottom: 18px !important;
-                padding-bottom: 16px !important;
-            }
-
-            main > header h2 {
-                font-size: 1.65rem !important;
-                line-height: 1.2;
-            }
-
-            main > header p {
-                font-size: 0.85rem !important;
-                line-height: 1.4;
-            }
-
-            main > header button {
-                width: 100%;
-                justify-content: center;
-                min-height: 48px;
-            }
-
-            .payables-tabs {
-                display: flex !important;
-                flex-wrap: nowrap !important;
-                overflow-x: auto;
-                overflow-y: hidden;
-                gap: 8px;
-                padding-bottom: 6px;
-                margin-bottom: 18px !important;
-
-                scrollbar-width: none;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .payables-tabs::-webkit-scrollbar {
-                display: none;
-            }
-
-            .payables-tabs > * {
-                flex: 0 0 auto;
-                white-space: nowrap;
-            }
-
-            .payables-kpis {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                gap: 10px !important;
-                margin-bottom: 18px !important;
-            }
-
-            .payables-kpis > div {
-                padding: 14px !important;
-                min-height: 92px;
-            }
-
-            .payables-kpis span {
-                font-size: 9px !important;
-                line-height: 1.2;
-            }
-
-            .payables-kpis p {
-                font-size: 1.05rem !important;
-                line-height: 1.3;
-                margin-top: 6px !important;
-                word-break: break-word;
-            }
-
-            .payables-filter {
-                padding: 14px !important;
-                margin-bottom: 18px !important;
-            }
-
-            .payables-filter-grid {
-                display: grid !important;
-                grid-template-columns: 1fr !important;
-                gap: 13px !important;
-            }
-
-            .payables-filter input,
-            .payables-filter select {
-                min-height: 46px;
-                font-size: 16px !important;
-            }
-
-            .payables-filter label {
-                font-size: 10px !important;
-            }
-
-            .payables-period {
-                width: 100% !important;
-            }
-
-            .payables-period-fields {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
-            }
-
-            .payables-filter-actions {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
-                gap: 8px !important;
-                width: 100% !important;
-            }
-
-            .payables-filter-actions button,
-            .payables-filter-actions a {
-                width: 100% !important;
-                justify-content: center !important;
-                margin-left: 0 !important;
-                min-height: 46px;
-            }
-
-            .payables-filter-actions button:last-child {
-                grid-column: span 2;
-            }
-
-            .payable-mobile-card {
-                background: white;
-                border: 1px solid rgb(226 232 240);
-                border-radius: 16px;
-                padding: 15px;
-                box-shadow: 0 1px 3px rgb(15 23 42 / 0.06);
-            }
-
-            .dark .payable-mobile-card {
-                background: #131C2F;
-                border-color: rgb(51 65 85 / 0.65);
-            }
-
-            .payable-mobile-card.cancelled {
-                opacity: 0.55;
-                filter: grayscale(0.8);
-            }
-
-            .payable-mobile-top {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                gap: 10px;
-                margin-bottom: 13px;
-            }
-
-            .payable-mobile-title {
-                min-width: 0;
-                flex: 1;
-            }
-
-            .payable-mobile-title strong {
-                display: block;
-                font-size: 15px;
-                line-height: 1.3;
-                color: rgb(15 23 42);
-                overflow-wrap: anywhere;
-            }
-
-            .dark .payable-mobile-title strong {
-                color: white;
-            }
-
-            .payable-mobile-title span {
-                display: block;
-                margin-top: 3px;
-                color: rgb(100 116 139);
-                font-size: 12px;
-                line-height: 1.35;
-                overflow-wrap: anywhere;
-            }
-
-            .payable-mobile-status {
-                flex-shrink: 0;
-            }
-
-            .payable-mobile-info {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-                padding: 12px 0;
-                border-top: 1px solid rgb(226 232 240);
-                border-bottom: 1px solid rgb(226 232 240);
-            }
-
-            .dark .payable-mobile-info {
-                border-color: rgb(51 65 85 / 0.55);
-            }
-
-            .payable-mobile-info-item {
-                min-width: 0;
-            }
-
-            .payable-mobile-label {
-                display: block;
-                font-size: 9px;
-                text-transform: uppercase;
-                letter-spacing: .06em;
-                font-weight: 800;
-                color: rgb(100 116 139);
-                margin-bottom: 3px;
-            }
-
-            .payable-mobile-value {
-                display: block;
-                font-size: 12px;
-                font-weight: 700;
-                color: rgb(30 41 59);
-                overflow-wrap: anywhere;
-            }
-
-            .dark .payable-mobile-value {
-                color: rgb(226 232 240);
-            }
-
-            .payable-mobile-values {
-                display: grid;
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 7px;
-                margin-top: 12px;
-            }
-
-            .payable-mobile-money {
-                background: rgb(248 250 252);
-                border-radius: 10px;
-                padding: 9px 7px;
-                min-width: 0;
-            }
-
-            .dark .payable-mobile-money {
-                background: rgb(15 23 42 / 0.55);
-            }
-
-            .payable-mobile-money-label {
-                display: block;
-                font-size: 8px;
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: .04em;
-                color: rgb(100 116 139);
-                margin-bottom: 3px;
-            }
-
-            .payable-mobile-money-value {
-                display: block;
-                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-                font-size: 11px;
-                font-weight: 900;
-                overflow-wrap: anywhere;
-            }
-
-            .payable-mobile-actions {
-                display: flex;
-                gap: 7px;
-                margin-top: 13px;
-            }
-
-            .payable-mobile-actions button {
-                min-height: 43px;
-                flex: 1;
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 5px;
-                font-size: 11px;
-                font-weight: 800;
-            }
-
-            .payable-action-icon {
-                flex: 0 0 43px !important;
-                max-width: 43px;
-            }
-
-            #payableModal,
-            #editModal,
-            #payModal,
-            #cancelModal,
-            #recurrenceDeleteModal,
-            #exportModal,
-            #osSearchModal {
-                padding: 8px !important;
-                align-items: flex-start !important;
-            }
-
-            #payableModal > div,
-            #editModal > div {
-                width: 100% !important;
-                max-width: none !important;
-                margin: 8px 0 !important;
-                max-height: calc(100vh - 16px);
-                overflow-y: auto;
-                border-radius: 16px !important;
-            }
-
-            #payModal > div,
-            #cancelModal > div,
-            #recurrenceDeleteModal > div,
-            #exportModal > div,
-            #osSearchModal > div {
-                width: 100% !important;
-                max-width: none !important;
-                margin: 8px 0 !important;
-                max-height: calc(100vh - 16px);
-                overflow-y: auto;
-                border-radius: 16px !important;
-            }
-
-            /* Cabeçalho dos modais */
-            #payableModal > div > div:first-child,
-            #editModal > div > div:first-child,
-            #payModal > div > div:first-child {
-                padding: 15px !important;
-                position: sticky;
-                top: 0;
-                z-index: 5;
-            }
-
-            #payableModal h2,
-            #editModal h2 {
-                font-size: 1.05rem !important;
-                padding-right: 30px;
-            }
-
-            /* Formulários dos modais */
-            #payableModal form,
-            #editModal form,
-            #payModal form {
-                padding: 15px !important;
-            }
-
-            #payableModal form > div,
-            #editModal form > div {
-                gap: 12px !important;
-            }
-
-            #payableModal input,
-            #payableModal select,
-            #payableModal textarea,
-            #editModal input,
-            #editModal select,
-            #editModal textarea,
-            #payModal input,
-            #payModal select,
-            #payModal textarea {
-                min-height: 46px;
-                font-size: 16px !important;
-            }
-
-            #payableModal textarea,
-            #editModal textarea,
-            #payModal textarea {
-                min-height: 90px;
-            }
-
-            #payableModal form > div:last-child,
-            #editModal form > div:last-child,
-            #payModal form > div:last-child {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-            }
-
-            #payableModal form > div:last-child button,
-            #editModal form > div:last-child button,
-            #payModal form > div:last-child button {
-                width: 100%;
-                padding-left: 10px !important;
-                padding-right: 10px !important;
-            }
-
-            /* Recorrência */
-            #recurrencePanel {
-                padding: 12px !important;
-            }
-
-            #recurrencePanel .flex.flex-wrap {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
-            #recurrencePanel .flex.gap-4 {
-                flex-direction: column;
-            }
-
-            #recurrencePanel input[type="number"],
-            #recurrencePanel input[type="date"] {
-                width: 100% !important;
-            }
-
-            /* Busca de O.S. */
-            #osSearchModal > div {
-                padding: 12px !important;
-            }
-
-            #osSearchModal .min-h-\[300px\] {
-                min-height: 250px !important;
-                height: 55vh !important;
-            }
-
-            /* Cancelamentos */
-            #cancelModal > div,
-            #recurrenceDeleteModal > div {
-                padding: 18px !important;
-            }
-
-            #cancelModal form .flex,
-            #recurrenceDeleteModal form > .flex {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-            }
-
-            #cancelModal form button,
-            #recurrenceDeleteModal form button {
-                width: 100% !important;
-            }
-
-            /* Exportação */
-            #exportModal > div {
-                padding: 0 !important;
-            }
-
-            /* Melhor toque em controles */
-            button,
-            a,
-            select,
-            input[type="checkbox"],
-            input[type="radio"] {
-                -webkit-tap-highlight-color: transparent;
-            }
-
-            /* Remove qualquer overflow horizontal */
-            body {
-                overflow-x: hidden;
-            }
-        }
-
-        /* Celulares muito pequenos */
-        @media (max-width: 380px) {
-
-            main {
-                padding-left: 8px !important;
-                padding-right: 8px !important;
-            }
-
-            .payables-kpis {
-                gap: 7px !important;
-            }
-
-            .payables-kpis > div {
-                padding: 11px !important;
-            }
-
-            .payables-kpis p {
-                font-size: 0.95rem !important;
-            }
-
-            .payable-mobile-values {
-                grid-template-columns: 1fr;
-            }
-
-            .payable-mobile-actions button span {
-                display: none;
-            }
-        }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: head(title='Contas a Pagar - Alfa Tahi')}"></head>
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
@@ -484,7 +11,7 @@
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Contas a Pagar</h2>
-            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Controle de fornecedores, despesas fixas e CMV.</p>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Controlo de fornecedores, despesas fixas e CMV.</p>
         </div>
         <button onclick="openModal('payableModal')"
                 class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-rose-500/20 text-base">
@@ -492,7 +19,7 @@
         </button>
     </header>
 
-    <div class="payables-tabs flex flex-wrap gap-2 mb-6">
+    <div class="flex flex-wrap gap-2 mb-6">
         <a th:href="@{/payables(aba='todas')}"
            th:classappend="${filterAba == null or filterAba == 'todas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
            class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Todas</a>
@@ -517,7 +44,7 @@
         </a>
     </div>
 
-    <div class="payables-kpis grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-indigo-600 dark:bg-indigo-900 p-6 rounded-2xl shadow-md border-none">
             <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1">Saldo Real (Atual)</span>
             <p class="text-2xl font-black text-white" th:text="'R$ ' + ${#numbers.formatDecimal(saldoReal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
@@ -536,10 +63,8 @@
         </div>
     </div>
 
-    <form method="GET"
-          action="/payables"
-          class="payables-filter bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-5 lg:p-6 mb-8 shadow-sm">
-        <div class="payables-filter-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end mb-5">
+    <form method="GET" action="/payables" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 mb-8 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end mb-5">
             <div class="lg:col-span-2">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Buscar</label>
                 <div class="relative">
@@ -591,9 +116,9 @@
         </div>
 
         <div class="flex flex-col lg:flex-row justify-between items-end gap-5">
-            <div class="payables-period w-full lg:w-1/3">
+            <div class="w-full lg:w-1/3">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Período (Vencimento)</label>
-                <div class="payables-period-fields flex gap-2">
+                <div class="flex gap-2">
                     <input type="date" name="dateFrom" th:value="${filterDateFrom}"
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 outline-none focus:border-rose-500 transition-all text-sm"/>
                     <input type="date" name="dateTo" th:value="${filterDateTo}"
@@ -602,7 +127,7 @@
             </div>
             <input type="hidden" name="aba" th:value="${filterAba}"/>
 
-            <div class="payables-filter-actions flex flex-wrap gap-2 w-full lg:w-auto">
+            <div class="flex flex-wrap gap-2 w-full lg:w-auto">
                 <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl px-6 py-3 text-sm transition-all shadow-md shadow-rose-500/20 flex items-center gap-2">
                     <i data-lucide="filter" class="w-4 h-4"></i> Filtrar
                 </button>
@@ -619,366 +144,156 @@
         </div>
     </form>
 
-    <div class="payables-mobile flex flex-col gap-2.5 md:hidden">
-        <div th:if="${#lists.isEmpty(payables)}"
-             class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 p-8 text-center">
-            <i data-lucide="inbox"
-               class="w-10 h-10 mx-auto mb-3 text-slate-400 opacity-50"></i>
-            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">
-                Nenhuma conta encontrada.
-            </p>
-            <a href="/payables"
-               class="inline-block mt-3 text-sm text-brand-600 dark:text-cyan-400 hover:underline font-bold">
-                Limpar filtros
-            </a>
-        </div>
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[980px]" id="payablesTable">
+            <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
+                <th class="p-5">Vencimento</th>
+                <th class="p-5">Descrição / Subcategoria</th>
+                <th class="p-5">Categoria</th>
+                <th class="p-5">O.S.</th>
+                <th class="p-5 text-right">Total</th>
+                <th class="p-5 text-right">Pago</th>
+                <th class="p-5 text-right">Pendente</th>
+                <th class="p-5 text-center">Status</th>
+                <th class="p-5 text-center">Ações</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
 
-        <div th:each="p : ${payables}"
-             class="payable-mobile-card"
-             th:classappend="${p.status == 'cancelled'} ? 'cancelled'">
-            <div class="payable-mobile-top">
-                <div class="payable-mobile-title">
-                    <strong th:text="${p.description != null ? p.description : 'Conta a pagar'}">
-                        Conta a pagar
-                    </strong>
+            <tr th:if="${#lists.isEmpty(payables)}">
+                <td colspan="9" class="p-10 text-center text-slate-500 font-medium text-base bg-slate-50 dark:bg-slate-800/10">
+                    <div class="flex flex-col items-center gap-3">
+                        <i data-lucide="inbox" class="w-10 h-10 opacity-40"></i>
+                        <p>Nenhuma conta encontrada.</p>
+                        <a href="/payables" class="text-sm text-brand-600 dark:text-cyan-400 hover:underline font-bold">Limpar filtros</a>
+                    </div>
+                </td>
+            </tr>
 
-                    <span th:if="${p.subcategory != null and !p.subcategory.isEmpty()}"
-                          th:text="${p.subcategory}">
-                        Subcategoria
-                    </span>
-                </div>
-                <div class="payable-mobile-status">
-                <span th:if="${p.status == 'paid'}"
-                      class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 uppercase whitespace-nowrap">
-                    Pago
-                </span>
-                    <span th:if="${p.status == 'partial'}"
-                          class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 uppercase whitespace-nowrap">
-                    Parcial
-                </span>
-                    <span th:if="${p.status == 'pending'}"
-                          class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 uppercase whitespace-nowrap">
-                    Pendente
-                </span>
-                    <span th:if="${p.status == 'cancelled'}"
-                          class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400 uppercase whitespace-nowrap">
-                    Cancelado
-                </span>
-                </div>
-            </div>
-            <div class="payable-mobile-info">
-                <div class="payable-mobile-info-item">
-                <span class="payable-mobile-label">
-                    Vencimento
-                </span>
-                    <span class="payable-mobile-value"
-                          th:classappend="${(p.status == 'pending' or p.status == 'partial')
-                      and p.dueDate.isBefore(T(java.time.LocalDate).now())}
-                      ? 'text-rose-600 dark:text-rose-400 font-black'">
+            <tr th:each="p : ${payables}"
+                class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                th:data-category="${p.category}"
+                th:classappend="${p.status == 'cancelled'} ? 'opacity-50 grayscale' : ''">
 
-                    <span th:text="${#temporals.format(p.dueDate, 'dd/MM/yyyy')}">
-                        06/08/2026
-                    </span>
-                </span>
-                </div>
-                <div class="payable-mobile-info-item">
-                <span class="payable-mobile-label">
-                    Categoria
-                </span>
-                    <span class="payable-mobile-value">
-                    <span th:text="${p.category != null ? p.category : '-'}">
-                        Operacional
-                    </span>
-                    <span th:if="${p.recurring}"
-                          class="text-cyan-500 ml-1"
-                          title="Conta recorrente">
-                        ↻
-                    </span>
-                </span>
-                </div>
-                <div class="payable-mobile-info-item">
-                <span class="payable-mobile-label">
-                    O.S.
-                </span>
-                    <span class="payable-mobile-value text-brand-600 dark:text-cyan-400"
-                          th:text="${p.workOrder != null ? p.workOrder.number : '-'}">
-                    -
-                </span>
-                </div>
-                <div class="payable-mobile-info-item">
-                <span class="payable-mobile-label">
-                    Centro de Custo
-                </span>
-
-                    <span class="payable-mobile-value"
-                          th:text="${p.costCenter != null and !p.costCenter.isEmpty()
-                      ? p.costCenter : '-'}">
-                    -
-                </span>
-                </div>
-            </div>
-            <div class="payable-mobile-values">
-                <div class="payable-mobile-money">
-                <span class="payable-mobile-money-label">
-                    Total
-                </span>
-                    <span class="payable-mobile-money-value text-slate-700 dark:text-slate-300"
-                          th:text="'R$ ' + ${#numbers.formatDecimal(
-                      p.totalAmount, 1, 'POINT', 2, 'COMMA')}">
-                    R$ 0,00
-                </span>
-                </div>
-                <div class="payable-mobile-money">
-                <span class="payable-mobile-money-label">
-                    Pago
-                </span>
-                    <span class="payable-mobile-money-value text-emerald-600 dark:text-emerald-400"
-                          th:text="'R$ ' + ${#numbers.formatDecimal(
-                      p.paidAmount, 1, 'POINT', 2, 'COMMA')}">
-                    R$ 0,00
-                </span>
-                </div>
-                <div class="payable-mobile-money">
-                <span class="payable-mobile-money-label">
-                    Pendente
-                </span>
-
-                    <span class="payable-mobile-money-value"
-                          th:classappend="${p.balance.compareTo(
-                      T(java.math.BigDecimal).ZERO) > 0}
-                      ? 'text-rose-600 dark:text-rose-400'
-                      : 'text-slate-500'"
-
-                          th:text="'R$ ' + ${#numbers.formatDecimal(
-                      p.balance, 1, 'POINT', 2, 'COMMA')}">
-                    R$ 0,00
-                </span>
-                </div>
-            </div>
-            <div class="payable-mobile-actions">
-                <button
-                        th:if="${p.status != 'paid' and p.status != 'cancelled'}"
-                        th:data-id="${p.id}"
-                        th:data-balance="${p.balance}"
-                        onclick="openPayModal(this.dataset.id, this.dataset.balance)"
-                        class="bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-                    <i data-lucide="check-circle"
-                       class="w-4 h-4">
-                    </i>
-                    <span>Pagar</span>
-                </button>
-                <button
-                        th:if="${p.status != 'cancelled'}"
-                        th:data-id="${p.id}"
-                        th:data-description="${p.description}"
-                        th:data-category="${p.category}"
-                        th:data-subcategory="${p.subcategory}"
-                        th:data-total="${p.totalAmount}"
-                        th:data-duedate="${p.dueDate}"
-                        th:data-payment="${p.paymentMethod}"
-                        th:data-document="${p.documentNumber}"
-                        th:data-recurring="${p.recurring}"
-                        th:data-notes="${p.notes}"
-                        th:data-supplier="${p.supplier != null ? p.supplier.id : ''}"
-                        th:data-workorder="${p.workOrder != null ? p.workOrder.id : ''}"
-                        th:data-paidamount="${p.paidAmount}"
-                        th:data-expensetype="${p.expenseType}"
-                        th:data-expensenature="${p.expenseNature}"
-                        th:data-costcenter="${p.costCenter}"
-                        th:data-competencia="${p.competencia}"
-                        th:data-recurrenceid="${p.recurrenceId}"
-                        onclick="openEditModal(this.dataset)"
-                        class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                    <i data-lucide="edit"
-                       class="w-4 h-4">
-                    </i>
-                    <span>Editar</span>
-                </button>
-                <button
-                        th:if="${p.status != 'cancelled' and p.recurrenceId == null}"
-                        th:data-id="${p.id}"
-                        onclick="confirmCancel(this.dataset.id)"
-                        class="payable-action-icon bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
-                        title="Cancelar conta">
-                    <i data-lucide="trash-2"
-                       class="w-4 h-4">
-                    </i>
-                </button>
-                <button
-                        th:if="${p.status != 'cancelled' and p.recurrenceId != null}"
-
-                        th:data-id="${p.id}"
-                        th:data-recurrenceid="${p.recurrenceId}"
-                        onclick="confirmCancelRecurrence(
-                        this.dataset.id,
-                        this.dataset.recurrenceid
-                    )"
-
-                        class="payable-action-icon bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
-                        title="Cancelar série">
-
-                    <i data-lucide="trash-2"
-                       class="w-4 h-4">
-                    </i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div class="payables-desktop hidden md:block">
-        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
-
-            <table class="w-full text-left border-collapse min-w-[980px]" id="payablesTable">
-                <thead>
-                <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
-                    <th class="p-5">Vencimento</th>
-                    <th class="p-5">Descrição / Subcategoria</th>
-                    <th class="p-5">Categoria</th>
-                    <th class="p-5">O.S.</th>
-                    <th class="p-5 text-right">Total</th>
-                    <th class="p-5 text-right">Pago</th>
-                    <th class="p-5 text-right">Pendente</th>
-                    <th class="p-5 text-center">Status</th>
-                    <th class="p-5 text-center">Ações</th>
-                </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
-
-                <tr th:if="${#lists.isEmpty(payables)}">
-                    <td colspan="9" class="p-10 text-center text-slate-500 font-medium text-base bg-slate-50 dark:bg-slate-800/10">
-                        <div class="flex flex-col items-center gap-3">
-                            <i data-lucide="inbox" class="w-10 h-10 opacity-40"></i>
-                            <p>Nenhuma conta encontrada.</p>
-                            <a href="/payables" class="text-sm text-brand-600 dark:text-cyan-400 hover:underline font-bold">Limpar filtros</a>
-                        </div>
-                    </td>
-                </tr>
-
-                <tr th:each="p : ${payables}"
-                    class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
-                    th:data-category="${p.category}"
-                    th:classappend="${p.status == 'cancelled'} ? 'opacity-50 grayscale' : ''">
-
-                    <td class="p-5">
+                <td class="p-5">
                     <span th:text="${#temporals.format(p.dueDate, 'dd/MM/yyyy')}"
                           class="text-base block"
                           th:classappend="${(p.status == 'pending' or p.status == 'partial') and p.dueDate.isBefore(T(java.time.LocalDate).now())} ? 'text-rose-600 dark:text-rose-400 font-black' : 'text-slate-900 dark:text-white font-bold'">
                         01/01/2026
                     </span>
-                    </td>
+                </td>
 
-                    <td class="p-5">
-                        <div class="font-bold text-slate-900 dark:text-white text-base" th:text="${p.description}">Descrição</div>
-                        <div th:if="${p.subcategory != null and !p.subcategory.isEmpty()}" class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5" th:text="${p.subcategory}">Subcategoria</div>
+                <td class="p-5">
+                    <div class="font-bold text-slate-900 dark:text-white text-base" th:text="${p.subcategory != null and !p.subcategory.isEmpty() ? p.subcategory : '-'}">Subcategoria</div>
+                    <div class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5" th:text="${p.description}">Desc</div>
+                    <div th:if="${p.documentNumber != null and !p.documentNumber.isEmpty()}"
+                         class=" hidden text-xs text-slate-400 dark:text-slate-500 font-mono mt-1 font-bold" th:text="'Doc: ' + ${p.documentNumber}"></div>
+                </td>
 
-                        <div th:if="${p.documentNumber != null and !p.documentNumber.isEmpty()}"
-                             class="text-xs text-slate-400 dark:text-slate-500 font-mono mt-1 font-bold" th:text="'Doc: ' + ${p.documentNumber}"></div>
-                    </td>
+                <td class="p-5">
+                    <th:block th:switch="${p.category}">
+                        <span th:case="'FIXA'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-transparent uppercase tracking-wide">Fixa</span>
+                        <span th:case="'VARIAVEL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent uppercase tracking-wide">Variável</span>
+                        <span th:case="'PROVISIONAMENTO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-transparent uppercase tracking-wide">Provisão</span>
+                        <span th:case="'IMPOSTOS'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-transparent uppercase tracking-wide">Impostos</span>
+                        <span th:case="'INVESTIMENTOS'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent uppercase tracking-wide">Investimentos</span>
+                        <span th:case="'MANUTENCAO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-transparent uppercase tracking-wide">Manutenção</span>
+                        <span th:case="'FINANCEIRO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-transparent uppercase tracking-wide">Financeiro</span>
+                        <span th:case="'PESSOAL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200 dark:bg-fuchsia-500/10 dark:text-fuchsia-400 dark:border-transparent uppercase tracking-wide">Pessoal</span>
+                        <span th:case="'OPERACIONAL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-500/10 dark:text-teal-400 dark:border-transparent uppercase tracking-wide">Operacional</span>
+                        <span th:case="'ADMINISTRATIVO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-transparent uppercase tracking-wide">Administrativo</span>
+                        <span th:case="*" th:if="${p.category != null}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-700/40 dark:text-slate-300 dark:border-transparent uppercase tracking-wide" th:text="${p.category}"></span>
+                    </th:block>
 
-                    <td class="p-5">
-                        <th:block th:switch="${p.category}">
-                            <span th:case="'FIXA'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-transparent uppercase tracking-wide">Fixa</span>
-                            <span th:case="'VARIAVEL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent uppercase tracking-wide">Variável</span>
-                            <span th:case="'PROVISIONAMENTO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-transparent uppercase tracking-wide">Provisão</span>
-                            <span th:case="'IMPOSTOS'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-transparent uppercase tracking-wide">Impostos</span>
-                            <span th:case="'INVESTIMENTOS'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent uppercase tracking-wide">Investimentos</span>
-                            <span th:case="'MANUTENCAO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-transparent uppercase tracking-wide">Manutenção</span>
-                            <span th:case="'FINANCEIRO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-transparent uppercase tracking-wide">Financeiro</span>
-                            <span th:case="'PESSOAL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200 dark:bg-fuchsia-500/10 dark:text-fuchsia-400 dark:border-transparent uppercase tracking-wide">Pessoal</span>
-                            <span th:case="'OPERACIONAL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-500/10 dark:text-teal-400 dark:border-transparent uppercase tracking-wide">Operacional</span>
-                            <span th:case="'ADMINISTRATIVO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-transparent uppercase tracking-wide">Administrativo</span>
-                            <span th:case="*" th:if="${p.category != null}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-700/40 dark:text-slate-300 dark:border-transparent uppercase tracking-wide" th:text="${p.category}"></span>
-                        </th:block>
-
-                        <span th:if="${p.recurring}" title="Despesa recorrente" class="ml-1.5 inline-flex items-center text-brand-500 dark:text-cyan-400">
+                    <span th:if="${p.recurring}" title="Despesa recorrente" class="ml-1.5 inline-flex items-center text-brand-500 dark:text-cyan-400">
                         <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
                     </span>
+                    <div th:if="${p.subcategory != null and !p.subcategory.isEmpty()}" class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1.5" th:text="${p.subcategory}"></div>
+                    <div th:if="${p.costCenter != null and !p.costCenter.isEmpty()}" class="text-xs text-slate-400 dark:text-slate-500 mt-0.5" th:text="'CC: ' + ${p.costCenter}"></div>
+                </td>
 
-                        <div th:if="${p.costCenter != null and !p.costCenter.isEmpty()}" class="text-xs text-slate-400 dark:text-slate-500 mt-1.5" th:text="'CC: ' + ${p.costCenter}"></div>
-                    </td>
+                <td class="p-5 text-brand-600 dark:text-cyan-400 font-mono font-bold text-base" th:text="${p.workOrder != null ? p.workOrder.number : '-'}">-</td>
 
-                    <td class="p-5 text-brand-600 dark:text-cyan-400 font-mono font-bold text-base" th:text="${p.workOrder != null ? p.workOrder.number : '-'}">-</td>
+                <td class="p-5 text-right font-mono font-bold text-slate-700 dark:text-slate-300 text-base"
+                    th:text="'R$ ' + ${#numbers.formatDecimal(p.totalAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
 
-                    <td class="p-5 text-right font-mono font-bold text-slate-700 dark:text-slate-300 text-base"
-                        th:text="'R$ ' + ${#numbers.formatDecimal(p.totalAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
+                <td class="p-5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-base"
+                    th:text="'R$ ' + ${#numbers.formatDecimal(p.paidAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
 
-                    <td class="p-5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-base"
-                        th:text="'R$ ' + ${#numbers.formatDecimal(p.paidAmount, 1, 'POINT', 2, 'COMMA')}">0,00</td>
+                <td class="p-5 text-right font-mono font-black text-base"
+                    th:classappend="${p.balance.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-500'"
+                    th:text="'R$ ' + ${#numbers.formatDecimal(p.balance, 1, 'POINT', 2, 'COMMA')}">0,00</td>
 
-                    <td class="p-5 text-right font-mono font-black text-base"
-                        th:classappend="${p.balance.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-500'"
-                        th:text="'R$ ' + ${#numbers.formatDecimal(p.balance, 1, 'POINT', 2, 'COMMA')}">0,00</td>
-
-                    <td class="p-5 text-center">
-                        <span th:if="${p.status == 'paid'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-transparent uppercase block w-fit mx-auto">Pago</span>
-                        <span th:if="${p.status == 'partial'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-transparent uppercase block w-fit mx-auto">Parcial</span>
-                        <span th:if="${p.status == 'pending'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:border-transparent uppercase block w-fit mx-auto">Pendente</span>
-                        <span th:if="${p.status == 'cancelled'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-500/20 dark:text-slate-400 dark:border-transparent uppercase block w-fit mx-auto">Cancelado</span>
+                <td class="p-5 text-center">
+                    <span th:if="${p.status == 'paid'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-transparent uppercase block w-fit mx-auto">Pago</span>
+                    <span th:if="${p.status == 'partial'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-transparent uppercase block w-fit mx-auto">Parcial</span>
+                    <span th:if="${p.status == 'pending'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:border-transparent uppercase block w-fit mx-auto">Pendente</span>
+                    <span th:if="${p.status == 'cancelled'}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-500/20 dark:text-slate-400 dark:border-transparent uppercase block w-fit mx-auto">Cancelado</span>
 
 
-                    </td>
+                </td>
 
-                    <td class="p-5 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                            <button
-                                    th:if="${p.status != 'paid' and p.status != 'cancelled'}"
-                                    th:data-id="${p.id}"
-                                    th:data-balance="${p.balance}"
-                                    onclick="openPayModal(this.dataset.id, this.dataset.balance)"
-                                    class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors" title="Registar Pagamento">
-                                <i data-lucide="check-circle" class="w-5 h-5"></i>
-                            </button>
+                <td class="p-5 text-center">
+                    <div class="flex items-center justify-center gap-2">
+                        <button
+                                th:if="${p.status != 'paid' and p.status != 'cancelled'}"
+                                th:data-id="${p.id}"
+                                th:data-balance="${p.balance}"
+                                onclick="openPayModal(this.dataset.id, this.dataset.balance)"
+                                class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors" title="Registar Pagamento">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                        </button>
 
-                            <button
-                                    th:if="${p.status != 'cancelled'}"
-                                    th:data-id="${p.id}"
-                                    th:data-description="${p.description}"
-                                    th:data-category="${p.category}"
-                                    th:data-subcategory="${p.subcategory}"
-                                    th:data-total="${p.totalAmount}"
-                                    th:data-duedate="${p.dueDate}"
-                                    th:data-payment="${p.paymentMethod}"
-                                    th:data-document="${p.documentNumber}"
-                                    th:data-recurring="${p.recurring}"
-                                    th:data-notes="${p.notes}"
-                                    th:data-supplier="${p.supplier != null ? p.supplier.id : ''}"
-                                    th:data-workorder="${p.workOrder != null ? p.workOrder.id : ''}"
-                                    th:data-paidamount="${p.paidAmount}"
-                                    th:data-expensetype="${p.expenseType}"
-                                    th:data-expensenature="${p.expenseNature}"
-                                    th:data-costcenter="${p.costCenter}"
-                                    th:data-competencia="${p.competencia}"
-                                    th:data-recurrenceid="${p.recurrenceId}"
-                                    onclick="openEditModal(this.dataset)"
-                                    class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors" title="Editar">
-                                <i data-lucide="edit" class="w-5 h-5"></i>
-                            </button>
+                        <button
+                                th:if="${p.status != 'cancelled'}"
+                                th:data-id="${p.id}"
+                                th:data-description="${p.description}"
+                                th:data-category="${p.category}"
+                                th:data-subcategory="${p.subcategory}"
+                                th:data-total="${p.totalAmount}"
+                                th:data-duedate="${p.dueDate}"
+                                th:data-payment="${p.paymentMethod}"
+                                th:data-document="${p.documentNumber}"
+                                th:data-recurring="${p.recurring}"
+                                th:data-notes="${p.notes}"
+                                th:data-supplier="${p.supplier != null ? p.supplier.id : ''}"
+                                th:data-workorder="${p.workOrder != null ? p.workOrder.id : ''}"
+                                th:data-paidamount="${p.paidAmount}"
+                                th:data-expensetype="${p.expenseType}"
+                                th:data-expensenature="${p.expenseNature}"
+                                th:data-costcenter="${p.costCenter}"
+                                th:data-competencia="${p.competencia}"
+                                th:data-recurrenceid="${p.recurrenceId}"
+                                onclick="openEditModal(this.dataset)"
+                                class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors" title="Editar">
+                            <i data-lucide="edit" class="w-5 h-5"></i>
+                        </button>
 
-                            <button
-                                    th:if="${p.status != 'cancelled' and p.recurrenceId == null}"
-                                    th:data-id="${p.id}"
-                                    onclick="confirmCancel(this.dataset.id)"
-                                    title="Cancelar Conta"
-                                    class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
+                        <button
+                                th:if="${p.status != 'cancelled' and p.recurrenceId == null}"
+                                th:data-id="${p.id}"
+                                onclick="confirmCancel(this.dataset.id)"
+                                title="Cancelar Conta"
+                                class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
 
-                            <button
-                                    th:if="${p.status != 'cancelled' and p.recurrenceId != null}"
-                                    th:data-id="${p.id}"
-                                    th:data-recurrenceid="${p.recurrenceId}"
-                                    onclick="confirmCancelRecurrence(this.dataset.id, this.dataset.recurrenceid)"
-                                    title="Excluir/Cancelar (série recorrente)"
-                                    class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                        <button
+                                th:if="${p.status != 'cancelled' and p.recurrenceId != null}"
+                                th:data-id="${p.id}"
+                                th:data-recurrenceid="${p.recurrenceId}"
+                                onclick="confirmCancelRecurrence(this.dataset.id, this.dataset.recurrenceid)"
+                                title="Excluir/Cancelar (série recorrente)"
+                                class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
 
-                </tbody>
-            </table>
-        </div>
+            </tbody>
+        </table>
     </div>
 
     <select id="hiddenClientsData" class="hidden">
