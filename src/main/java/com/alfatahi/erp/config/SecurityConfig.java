@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.csrf.CsrfException;
 
 @Configuration
 @EnableWebSecurity
@@ -37,7 +38,8 @@ public class SecurityConfig {
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write("{\"error\":\"SESSION_EXPIRED\",\"message\":\"Sua sessão expirou por inatividade.\"}");
             } else {
-                response.sendRedirect(request.getContextPath() + "/login");
+                // ?expired aciona o modal "Sessão Expirada" já existente em login.html
+                response.sendRedirect(request.getContextPath() + "/login?expired");
             }
         };
     }
@@ -45,12 +47,27 @@ public class SecurityConfig {
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return (request, response, accessDeniedException) -> {
+            // Um token CSRF inválido/ausente quase sempre significa que a sessão
+            // por trás dele já morreu (ela guarda o token). Isso é tratado como
+            // sessão expirada, não como falta de permissão de verdade.
+            boolean sessionLikelyExpired = accessDeniedException instanceof CsrfException;
+
             if (isAjaxRequest(request)) {
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write("{\"error\":\"SESSION_EXPIRED\",\"message\":\"Sua sessão expirou ou o token de segurança é inválido.\"}");
+                if (sessionLikelyExpired) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"error\":\"SESSION_EXPIRED\",\"message\":\"Sua sessão expirou por inatividade.\"}");
+                } else {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"error\":\"ACCESS_DENIED\",\"message\":\"Você não tem permissão para executar esta ação.\"}");
+                }
             } else {
-                response.sendRedirect(request.getContextPath() + "/acesso-negado");
+                if (sessionLikelyExpired) {
+                    response.sendRedirect(request.getContextPath() + "/login?expired");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/acesso-negado");
+                }
             }
         };
     }
@@ -71,10 +88,12 @@ public class SecurityConfig {
                                 "/losses/**", "/dre/**", "/suppliers/**",
                                 "/settings/**", "/settings/users/**", "/cut-plans/**").hasAuthority("GESTAO")
 
-                        .requestMatchers("/work-orders/**").hasAnyAuthority("GESTAO", "TECNICO")
+                        .requestMatchers("/work-orders/**").hasAuthority("GESTAO")
 
-                        .requestMatchers("/commercial/**", "/quotes/**", "/clients/**",
-                                "/agenda/**", "/login-success").hasAnyAuthority("GESTAO", "VENDAS", "TECNICO")
+                        .requestMatchers("/commercial/**", "/quotes/**", "/clients/**")
+                        .hasAnyAuthority("GESTAO", "VENDAS")
+
+                        .requestMatchers("/agenda/**", "/login-success").hasAnyAuthority("GESTAO", "VENDAS", "TECNICO")
 
                         .anyRequest().authenticated()
                 )

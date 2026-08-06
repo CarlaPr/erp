@@ -76,6 +76,17 @@ public class ScheduleService {
         return dto;
     }
 
+    @Transactional
+    public void addTechnicianNote(UUID scheduleId, String notes) {
+        if (notes == null || notes.isBlank()) {
+            throw new IllegalArgumentException("Escreva uma observação antes de salvar.");
+        }
+        Schedule schedule = scheduleRepo.findById(scheduleId)
+                .orElseThrow(() -> new IllegalArgumentException("Agendamento não encontrado: " + scheduleId));
+
+        addHistory(schedule, "Observação do Técnico", null, notes.trim());
+    }
+
     public List<Schedule> findByDate(LocalDate date) {
         return scheduleRepo.findAll().stream()
                 .filter(s -> s.getScheduledDate() != null
@@ -243,7 +254,6 @@ public class ScheduleService {
         kpis.put("aprovados", (long) all.size());
         kpis.put("aguardandoAgendamento", all.stream().filter(s -> Schedule.STATUS_AGUARDANDO_AGENDAMENTO.equals(s.getStatus())).count());
         kpis.put("agendados", all.stream().filter(s -> Schedule.STATUS_AGENDADO.equals(s.getStatus())
-                || Schedule.STATUS_CONFIRMADO.equals(s.getStatus())
                 || Schedule.STATUS_REAGENDADO.equals(s.getStatus())).count());
         kpis.put("atrasados", all.stream().filter(s -> isLate(s, today)).count());
         kpis.put("semana", all.stream().filter(s -> s.getScheduledDate() != null

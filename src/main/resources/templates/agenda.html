@@ -11,11 +11,11 @@
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Agenda Comercial</h2>
-            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Agende, acompanhe o prazo e reagende os serviços aprovados e visitas técnicas.</p>
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1"
+               th:text="${isTecnico} ? 'Veja seus serviços agendados e registre observações sobre o atendimento.' : 'Agende, acompanhe o prazo e reagende os serviços aprovados.'">Agende, acompanhe o prazo e reagende os serviços aprovados.</p>
         </div>
     </header>
-
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+    <div th:if="${!isTecnico}" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
             <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Aprovados</span>
             <p class="text-2xl font-black text-slate-900 dark:text-white mt-1" th:text="${kpis.aprovados}">0</p>
@@ -41,8 +41,7 @@
             <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1" th:text="${kpis.semana}">0</p>
         </div>
     </div>
-
-    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm mb-6">
+    <div th:if="${!isTecnico}" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm mb-6">
         <div class="flex flex-wrap items-center gap-3">
             <div class="relative flex-1 min-w-[220px]">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
@@ -92,19 +91,30 @@
         </div>
     </div>
 
-    <div class="flex items-center gap-1 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-1 shadow-sm">
-        <button type="button" id="btnViewCalendar" onclick="switchView('calendar')"
-                class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
-            <i data-lucide="calendar-days" class="w-4 h-4"></i> Calendário
-        </button>
-        <button type="button" id="btnViewList" onclick="switchView('list')"
-                class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
-            <i data-lucide="list" class="w-4 h-4"></i> Lista
-        </button>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-1 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-1 shadow-sm">
+            <button type="button" id="btnViewCalendar" onclick="switchView('calendar')"
+                    class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
+                <i data-lucide="calendar-days" class="w-4 h-4"></i> Calendário
+            </button>
+            <button type="button" id="btnViewList" onclick="switchView('list')"
+                    class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
+                <i data-lucide="list" class="w-4 h-4"></i> Lista
+            </button>
+        </div>
+
+        <div class="flex items-center gap-2 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-2 shadow-sm">
+            <label for="routeDatePicker" class="text-xs font-bold text-slate-500 dark:text-slate-400 pl-1 flex items-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="calendar-search" class="w-4 h-4"></i> Ver serviços do dia:
+            </label>
+            <input id="routeDatePicker" type="date" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+            <button type="button" onclick="openRouteDayFromPicker()"
+                    class="px-4 py-2 rounded-lg text-sm font-bold bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="eye" class="w-4 h-4"></i> Ver
+            </button>
+        </div>
     </div>
-
     <br>
-
     <div id="calendarView">
 
         <div id="unscheduledPanel" class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-5 mb-6 hidden">
@@ -141,7 +151,6 @@
             <div id="calendarGrid" class="grid grid-cols-7"></div>
         </div>
     </div>
-
     <div id="listView" class="hidden bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
@@ -162,41 +171,29 @@
             <p id="listEmpty" class="p-8 text-center text-slate-500 font-medium hidden">Nenhum agendamento encontrado para os filtros selecionados.</p>
         </div>
     </div>
-
-    <!-- DAY MODAL ATUALIZADO (Whatsapp + Cores Visita) -->
     <div id="dayModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative my-10">
             <button type="button" onclick="closeModal('dayModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
             <br><br>
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                <h3 id="dayModalTitle" class="text-xl font-black text-slate-900 dark:text-white">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="dayModalTitle"
+                    class="text-xl font-black text-slate-900 dark:text-white">
                     Serviços do dia
                 </h3>
 
-                <div class="flex items-center gap-2">
-                    <!-- Botão WhatsApp -->
-                    <button type="button"
-                            id="btnDayWhatsapp"
-                            class="px-4 py-2 bg-emerald-500 text-white text-sm font-bold rounded-xl hover:bg-emerald-600 transition-colors shadow-md flex items-center gap-2">
-                        <i data-lucide="message-circle" class="w-4 h-4"></i>
-                        WhatsApp
-                    </button>
-                    <!-- Botão Imprimir -->
-                    <button type="button"
-                            id="btnDayPdf"
-                            class="px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-md flex items-center gap-2">
-                        <i data-lucide="printer" class="w-4 h-4"></i>
-                        Imprimir
-                    </button>
-                </div>
+                <button type="button"
+                        id="btnDayPdf"
+                        class="px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-md flex items-center gap-2">
+                    <i data-lucide="file-down" class="w-4 h-4"></i>
+                    Abrir Roteiro em PDF
+                </button>
             </div>
 
             <div id="dayModalList" class="space-y-3 max-h-[65vh] overflow-y-auto pr-1"></div>
         </div>
     </div>
-
     <div id="editModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-[60] overflow-y-auto py-10 px-4">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative my-auto">
             <button type="button" onclick="closeModal('editModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -261,7 +258,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável pela Obra</label>
-                    <input id="editResponsible" list="vendedoresList" type="text" placeholder="Ex: Hugo, Anderson, Igor"
+                    <input id="editResponsible" list="vendedoresList" type="text" placeholder="Hugo"
                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
                     <datalist id="vendedoresList">
                         <option th:each="v : ${vendedores}" th:value="${v}"></option>
@@ -308,7 +305,6 @@
             </div>
         </div>
     </div>
-
     <div id="cancelScheduleModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative">
             <button type="button" onclick="closeModal('cancelScheduleModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -392,7 +388,6 @@
             </div>
         </div>
     </div>
-
     <div id="deleteVisitModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative">
             <button type="button" onclick="closeModal('deleteVisitModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -416,15 +411,115 @@
         </div>
     </div>
 
+    <div id="technicianNoteModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-[60] overflow-y-auto py-10 px-4">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-8 relative my-auto">
+            <button type="button" onclick="closeModal('technicianNoteModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+                <i data-lucide="clipboard-check" class="w-5 h-5 text-brand-600 dark:text-cyan-400"></i> Serviço Agendado
+            </h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Confira os dados do serviço e registre uma observação sobre o atendimento.</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-xs">
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 sm:col-span-2">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">Cliente</span>
+                    <span id="tnInfoClient" class="font-bold text-slate-800 dark:text-white block">-</span>
+                    <span id="tnInfoAddress" class="text-slate-500 dark:text-slate-400 mt-1 block leading-tight">-</span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">Data / Horário</span>
+                    <span id="tnInfoWhen" class="font-bold text-slate-800 dark:text-white block">-</span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">OS</span>
+                    <span id="tnInfoWorkOrder" class="font-bold text-slate-800 dark:text-white block">-</span>
+                </div>
+            </div>
+
+            <div class="mb-4 p-2.5 bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-lg">
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Serviços / Itens</p>
+                <div id="tnInfoItems" class="flex flex-col gap-1.5"></div>
+            </div>
+
+            <div class="mb-4">
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Observações já registradas</p>
+                <div id="tnHistoryList" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1"></div>
+            </div>
+
+            <input type="hidden" id="tnScheduleId">
+
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Nova observação</label>
+                <textarea id="tnNotes" rows="3" placeholder="Ex: Serviço concluído sem intercorrências / Cliente solicitou reagendar / Faltou material..."
+                          class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeModal('technicianNoteModal')" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
+                    Fechar
+                </button>
+                <button type="button" onclick="submitTechnicianNote()" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white font-black shadow-lg shadow-brand-500/20 transition-all text-sm">
+                    Salvar Observação
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="technicianVisitViewModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-[60] overflow-y-auto py-10 px-4">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-8 relative my-auto">
+            <button type="button" onclick="closeModal('technicianVisitViewModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-5 h-5 text-fuchsia-500"></i> Visita Técnica
+            </h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Detalhes da visita técnica agendada (somente visualização).</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-xs">
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 sm:col-span-2">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">Cliente</span>
+                    <span id="tvInfoClient" class="font-bold text-slate-800 dark:text-white block">-</span>
+                    <span id="tvInfoAddress" class="text-slate-500 dark:text-slate-400 mt-1 block leading-tight">-</span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">Orçamento</span>
+                    <span id="tvInfoQuote" class="font-bold text-slate-800 dark:text-white block">-</span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                    <span class="block text-slate-400 font-bold uppercase mb-1">Data / Horário</span>
+                    <span id="tvInfoWhen" class="font-bold text-slate-800 dark:text-white block">-</span>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Observações</p>
+                <p id="tvInfoNotes" class="text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 leading-relaxed">-</p>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="button" onclick="closeModal('technicianVisitViewModal')" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white font-black shadow-lg shadow-brand-500/20 transition-all text-sm">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 
 <script th:inline="javascript">
-
+    // --- CORREÇÃO APLICADA AQUI ---
+    // Substituindo "const SCHEDULES = [];" por:
     const EXECUTION_SCHEDULES_RAW = /*[[${schedules}]]*/ [];
-
+    // Visitas técnicas agendadas a partir dos Orçamentos, exibidas junto na Agenda Comercial.
     const TECHNICAL_VISITS_RAW = /*[[${technicalVisits}]]*/ [];
+    // Quando true, o usuário logado é do perfil TÉCNICO: ele só vê os próprios serviços e
+    // pode apenas registrar observações (sem editar/agendar/cancelar).
+    const IS_TECNICO = /*[[${isTecnico}]]*/ false;
 
     function normalizeVisit(v) {
         return {
@@ -531,14 +626,18 @@
         renderAll();
     }
 
+    // Para o perfil TÉCNICO o card de filtros nem é renderizado (th:if), então os elementos
+    // abaixo podem não existir no DOM — os listeners checam a existência antes de usar.
     ['filterSearch', 'filterStatus', 'filterResponsible', 'filterFrom', 'filterTo'].forEach(id => {
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById(id).addEventListener('input', () => {
-                state.filters.search = document.getElementById('filterSearch').value.toLowerCase();
-                state.filters.status = document.getElementById('filterStatus').value;
-                state.filters.responsible = document.getElementById('filterResponsible').value;
-                state.filters.from = document.getElementById('filterFrom').value;
-                state.filters.to = document.getElementById('filterTo').value;
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', () => {
+                state.filters.search = document.getElementById('filterSearch')?.value.toLowerCase() || '';
+                state.filters.status = document.getElementById('filterStatus')?.value || '';
+                state.filters.responsible = document.getElementById('filterResponsible')?.value || '';
+                state.filters.from = document.getElementById('filterFrom')?.value || '';
+                state.filters.to = document.getElementById('filterTo')?.value || '';
                 renderAll();
             });
         });
@@ -548,8 +647,6 @@
         const f = state.filters;
         const today = new Date(); today.setHours(0,0,0,0);
         const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
-
-        const noSpecificFilters = !f.search && !f.status && !f.from && !f.to && !f.onlyLate && !f.next7 && !f.unscheduled && !f.responsible;
 
         return list.filter(s => {
             if (f.search) {
@@ -567,16 +664,6 @@
                 if (sd < today || sd > in7) return false;
             }
             if (f.unscheduled && s.scheduledDate) return false;
-
-
-            if (noSpecificFilters && state.view === 'list' && s.scheduledDate) {
-                const scheduleDateObj = new Date(s.scheduledDate + 'T00:00:00');
-                if (scheduleDateObj.getMonth() !== state.month.getMonth() ||
-                    scheduleDateObj.getFullYear() !== state.month.getFullYear()) {
-                    return false;
-                }
-            }
-
             return true;
         });
     }
@@ -605,11 +692,26 @@
 
     function changeMonth(delta) {
         state.month = new Date(state.month.getFullYear(), state.month.getMonth() + delta, 1);
-        renderAll();
+        renderCalendar();
     }
     function goToday() {
         state.month = startOfMonth(new Date());
-        renderAll();
+        renderCalendar();
+    }
+
+    function openRouteDayFromPicker() {
+        // Alternativa simples e visível ao duplo clique no número do dia: escolher a data
+        // num campo e clicar em "Ver" já abre os serviços/roteiro daquele dia.
+        const val = document.getElementById('routeDatePicker').value;
+        if (!val) {
+            alert('Selecione uma data para ver os serviços do dia.');
+            return;
+        }
+        state.month = new Date(val + 'T00:00:00');
+        if (state.view === 'calendar') {
+            renderCalendar();
+        }
+        openDayModal(val);
     }
 
     function renderCalendar() {
@@ -617,12 +719,12 @@
         document.getElementById('calendarLabel').textContent = label;
 
         const filtered = applyFilters(SCHEDULES);
-
         const byDate = {};
         filtered.forEach(s => {
             if (!s.scheduledDate) return;
             (byDate[s.scheduledDate] = byDate[s.scheduledDate] || []).push(s);
         });
+        // Ordena os serviços de cada dia por horário (mais cedo primeiro).
         Object.keys(byDate).forEach(d => {
             byDate[d].sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
         });
@@ -649,16 +751,18 @@
             }
 
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-
             const items = byDate[dateStr] || [];
-
             const isToday = dateStr === todayStr;
 
             const numEl = document.createElement('div');
-            numEl.className = 'text-xs font-bold mb-1.5 ' + (isToday
-                ? 'w-6 h-6 flex items-center justify-center rounded-full bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900'
-                : 'text-slate-500 dark:text-slate-400');
+            numEl.className = 'text-xs font-bold mb-1.5 cursor-pointer select-none transition-colors ' + (isToday
+                ? 'w-6 h-6 flex items-center justify-center rounded-full bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900 hover:opacity-80'
+                : 'text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-cyan-400');
             numEl.textContent = String(dayNum);
+            numEl.title = 'Ver serviços do dia ' + String(dayNum);
+            // Um único clique no número do dia já abre os serviços/roteiro daquele dia —
+            // não é mais necessário dar dois cliques.
+            numEl.addEventListener('click', () => openDayModal(dateStr));
             cell.appendChild(numEl);
 
             const visible = items.slice(0, 3);
@@ -667,7 +771,9 @@
                 chip.type = 'button';
                 chip.className = 'w-full text-left mb-1 px-1.5 py-1 rounded-md text-[11px] font-semibold truncate flex items-center gap-1 hover:opacity-80 transition-opacity ' + (STATUS_META[s.status]?.badge || '');
                 chip.innerHTML = `<span class="w-1.5 h-1.5 rounded-full shrink-0 ${SEMAPHORE_DOT[s.semaphore] || ''}"></span><span class="truncate">${s.serviceType || 'Serviço'} · ${s.clientName || ''}</span>`;
-                chip.onclick = () => s.kind === 'VISITA_TECNICA' ? openVisitModal(s.id) : openEditModal(s.id);
+                chip.onclick = () => IS_TECNICO
+                    ? (s.kind === 'VISITA_TECNICA' ? openTechnicianVisitView(s.id) : openTechnicianNoteModal(s.id))
+                    : (s.kind === 'VISITA_TECNICA' ? openVisitModal(s.id) : openEditModal(s.id));
                 cell.appendChild(chip);
             });
 
@@ -690,17 +796,15 @@
     }
 
     function openDayModal(dateStr) {
-
+        // Serviços do dia em ordem de horário: o que for mais cedo aparece primeiro.
+        // Itens sem horário definido vão para o final da lista.
         const items = applyFilters(SCHEDULES)
             .filter(s => s.scheduledDate === dateStr)
             .slice()
             .sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
 
         document.getElementById('dayModalTitle').textContent = 'Serviços do dia ' + fmtBR(dateStr);
-
-        // Atrelando eventos aos botões
-        document.getElementById('btnDayPdf').onclick = () => generateDayPdf(dateStr);
-        document.getElementById('btnDayWhatsapp').onclick = () => shareDayWhatsapp(dateStr);
+        document.getElementById('btnDayPdf').onclick = () => openRoteiroPdf(dateStr);
 
         const list = document.getElementById('dayModalList');
         list.innerHTML = '';
@@ -712,14 +816,8 @@
         items.forEach(s => {
             const meta = STATUS_META[s.status] || {};
             const isVisit = s.kind === 'VISITA_TECNICA';
-
-            // Destaque visual: fundo azul claro para visita técnica
-            const bgClass = isVisit
-                ? 'bg-blue-50/60 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/50'
-                : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800';
-
             const row = document.createElement('div');
-            row.className = `border rounded-xl p-4 ${bgClass}`;
+            row.className = 'border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50 dark:bg-slate-900';
             row.innerHTML = `
                 <div class="flex justify-between items-start mb-3">
                     <div>
@@ -750,13 +848,17 @@
                     <span><b>Hora Prevista:</b> ${s.scheduledTime ? fmtTimeBR(s.scheduledTime) : '-'}</span>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    ${isVisit ? `
+                    ${IS_TECNICO ? (isVisit ? `
+                        <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-fuchsia-600 text-white hover:opacity-90" onclick="openTechnicianVisitView('${s.id}')">Ver Visita Técnica</button>
+                    ` : `
+                        <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openTechnicianNoteModal('${s.id}')">Registrar Observação</button>
+                    `) : isVisit ? `
                         <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-fuchsia-600 text-white hover:opacity-90" onclick="openVisitModal('${s.id}')">Editar Visita</button>
                         <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white hover:opacity-90" onclick="quickDeleteVisit('${s.id}')">Excluir Visita</button>
                     ` : `
                         <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openEditModal('${s.id}')">Gerenciar (Agendar/Editar)</button>
                     `}
-                    <button type="button" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/quotes'">Abrir Orçamento</button>
+                    ${!IS_TECNICO ? `<button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/quotes'">Abrir Orçamento</button>` : ''}
                 </div>
             `;
             list.appendChild(row);
@@ -765,150 +867,10 @@
         toggleModal('dayModal', true);
     }
 
-    function shareDayWhatsapp(dateStr) {
-        const items = applyFilters(SCHEDULES)
-            .filter(s => s.scheduledDate === dateStr)
-            .slice()
-            .sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
-
-        if (items.length === 0) {
-            alert('Não há serviços para compartilhar neste dia.');
-            return;
-        }
-
-        const dataFormatada = fmtBR(dateStr);
-        let texto = `*Roteiro de Obras - ${dataFormatada}*\nTotal de Atendimentos: ${items.length}\n\n`;
-
-        items.forEach((s, i) => {
-            const isVisit = s.kind === 'VISITA_TECNICA';
-            texto += `*${i + 1}. Cliente: ${s.clientName || 'Não informado'}*\n`;
-            texto += `📍 *Endereço:* ${s.clientAddress || '-'}\n`;
-            texto += `⏰ *Horário:* ${s.scheduledTime ? s.scheduledTime.substring(0, 5) : 'A definir'}\n`;
-
-            if (isVisit) {
-                texto += `🔍 *Tipo:* VISITA TÉCNICA\n`;
-                texto += `📄 *Orçamento:* ${s.quoteNumber || '-'}\n`;
-            } else {
-                texto += `📄 *OS:* ${s.workOrderNumber || '-'} | *Orç:* ${s.quoteNumber || '-'}\n`;
-            }
-
-            if (s.team || s.responsible) {
-                texto += `👷 *Equipe:* ${s.team || s.responsible}\n`;
-            }
-            if (!isVisit && s.serviceDetails && s.serviceDetails.length > 0) {
-                texto += `🛠️ *Serviços:* ${s.serviceDetails.join(', ')}\n`;
-            } else if (!isVisit && s.serviceType) {
-                texto += `🛠️ *Serviço:* ${s.serviceType}\n`;
-            }
-            if (s.observations) {
-                texto += `📌 *Obs:* ${s.observations}\n`;
-            }
-            texto += `\n`;
-        });
-
-        const encodedText = encodeURIComponent(texto);
-        window.open(`https://wa.me/?text=${encodedText}`, '_blank');
-    }
-
-    function generateDayPdf(dateStr) {
-        const items = applyFilters(SCHEDULES)
-            .filter(s => s.scheduledDate === dateStr)
-            .slice()
-            .sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
-        if (items.length === 0) {
-            alert('Não há serviços para gerar o PDF neste dia.');
-            return;
-        }
-
-        const dataFormatada = fmtBR(dateStr);
-
-        let html = `
-        <!DOCTYPE html>
-        <html lang="pt-BR">
-        <head>
-            <meta charset="UTF-8">
-            <title>Roteiro de Obras - ${dataFormatada}</title>
-            <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 20px; line-height: 1.5; }
-                h2 { text-align: center; margin-bottom: 5px; color: #0f172a; text-transform: uppercase; }
-                .subtitle { text-align: center; font-size: 14px; color: #64748b; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
-                .card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 20px; page-break-inside: avoid; }
-                .card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
-                .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; margin-bottom: 15px; }
-                .label { font-weight: bold; color: #475569; }
-                .items-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; }
-                .items-box-title { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #64748b; margin-bottom: 8px; letter-spacing: 0.5px; }
-                .item-line { font-size: 13px; font-weight: 600; color: #0369a1; margin-bottom: 4px; padding-left: 10px; position: relative; }
-                .item-line::before { content: "•"; position: absolute; left: 0; color: #0284c7; }
-                .obs { margin-top: 12px; font-size: 13px; background: #fffbeb; padding: 8px 12px; border-left: 3px solid #f59e0b; border-radius: 4px; }
-                .badge-visit { color: #2563eb; font-size: 11px; border: 1px solid #93c5fd; background: #eff6ff; padding: 2px 6px; border-radius: 4px; margin-left: 10px; vertical-align: middle; }
-                @media print {
-                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                }
-            </style>
-        </head>
-        <body>
-            <h2>Agenda Comercial - Roteiro Diário</h2>
-            <div class="subtitle">Data de Execução: <strong>${dataFormatada}</strong> &nbsp;|&nbsp; Total de Obras: <strong>${items.length}</strong></div>
-        `;
-
-        items.forEach((s, i) => {
-            const isVisit = s.kind === 'VISITA_TECNICA';
-
-            let listaItens = '';
-            if (s.serviceDetails && Array.isArray(s.serviceDetails)) {
-                listaItens = s.serviceDetails.map(item => `<div class="item-line">${item}</div>`).join('');
-            } else {
-                listaItens = `<div class="item-line">${s.serviceType || 'Serviço não detalhado'}</div>`;
-            }
-
-            html += `
-            <div class="card">
-                <div class="card-header">
-                    <span>
-                        ${i + 1}. Cliente: ${s.clientName || 'Não informado'}
-                        ${isVisit ? '<span class="badge-visit">VISITA TÉCNICA</span>' : ''}
-                    </span>
-                    <span>${isVisit ? 'Orçamento: ' + (s.quoteNumber || '-') : 'OS: ' + (s.workOrderNumber || '-')}</span>
-                </div>
-                <div class="grid">
-                    <div><span class="label">Endereço:</span> ${s.clientAddress || '-'}</div>
-                    <div><span class="label">Orçamento:</span> ${s.quoteNumber || '-'}</div>
-                    <div><span class="label">Horário Agendado:</span> ${s.scheduledTime ? s.scheduledTime.substring(0, 5) : 'A definir'}</div>
-                    <div><span class="label">Equipe/Resp.:</span> ${s.team || s.responsible || '-'}</div>
-                </div>
-                <div class="items-box">
-                    <div class="items-box-title">${isVisit ? 'Descrição da Visita' : 'Serviços / Itens a Executar na Obra'}</div>
-                    ${listaItens}
-                </div>
-                ${s.observations ? `<div class="obs"><span class="label">Observações da Obra:</span> ${s.observations}</div>` : ''}
-            </div>
-            `;
-        });
-
-        html += `
-            <script>
-            window.onload = function() {
-                // Tentativa de carregar ícones caso exista
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
-
-                setTimeout(() => {
-                    window.print();
-                    window.onafterprint = function() { window.close(); };
-                }, 500);
-            };
-            <\/script>
-        </body>
-        </html>
-        `;
-
-        const janelaPdf = window.open('', '_blank');
-        janelaPdf.document.write(html);
-        janelaPdf.document.close();
-
-        lucide.createIcons();
+    function openRoteiroPdf(dateStr) {
+        // Abre o PDF real do roteiro do dia, gerado no servidor — funciona em qualquer
+        // dispositivo (computador, tablet ou celular), sem depender da impressão do navegador.
+        window.open('/agenda/roteiro-pdf/' + dateStr, '_blank');
     }
 
     function renderUnscheduledPanel() {
@@ -928,7 +890,7 @@
             chip.type = 'button';
             chip.className = 'px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-500/30 text-xs font-bold text-amber-800 dark:text-amber-300 hover:shadow-md transition-shadow flex items-center gap-2';
             chip.innerHTML = `<span class="w-2 h-2 rounded-full ${SEMAPHORE_DOT[s.semaphore]}"></span> ${s.clientName || 'Cliente'} · ${s.quoteNumber || ''} <span class="text-amber-500">(até ${fmtBR(s.deadlineDate)})</span>`;
-            chip.onclick = () => openEditModal(s.id);
+            chip.onclick = () => IS_TECNICO ? openTechnicianNoteModal(s.id) : openEditModal(s.id);
             list.appendChild(chip);
         });
     }
@@ -939,6 +901,7 @@
             const da = a.scheduledDate || a.deadlineDate || '9999-99-99';
             const db = b.scheduledDate || b.deadlineDate || '9999-99-99';
             if (da !== db) return da.localeCompare(db);
+            // Mesmo dia: ordena por horário, mais cedo primeiro.
             const ta = a.scheduledTime || '99:99:99';
             const tb = b.scheduledTime || '99:99:99';
             return ta.localeCompare(tb);
@@ -964,13 +927,17 @@
                 <td class="p-4">${s.scheduledDate ? fmtBR(s.scheduledDate) : '<span class="text-slate-400 italic">Não agendado</span>'}</td>
                 <td class="p-4"><span class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase ${meta.badge || ''}">${meta.label || s.status}</span></td>
                 <td class="p-4 text-right whitespace-nowrap">
-                    ${s.kind === 'VISITA_TECNICA' ? `
+                    ${IS_TECNICO ? (s.kind === 'VISITA_TECNICA' ? `
+                        <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Ver Visita Técnica" onclick="openTechnicianVisitView('${s.id}')"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                    ` : `
+                        <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Registrar Observação" onclick="openTechnicianNoteModal('${s.id}')"><i data-lucide="clipboard-edit" class="w-4 h-4"></i></button>
+                    `) : s.kind === 'VISITA_TECNICA' ? `
                         <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar Visita Técnica" onclick="openVisitModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
                         <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Excluir Visita Técnica" onclick="quickDeleteVisit('${s.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     ` : `
                         <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar / Agendar" onclick="openEditModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Abrir Orçamento" onclick="window.location.href='/quotes'"><i data-lucide="file-signature" class="w-4 h-4"></i></button>
                     `}
-                    <button type="button" class="hidden p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Abrir Orçamento" onclick="window.location.href='/quotes'"><i data-lucide="file-signature" class="w-4 h-4"></i></button>
                 </td>
             `;
             body.appendChild(tr);
@@ -1085,6 +1052,8 @@
         }
     }
 
+    // --- Visita Técnica: editar data/hora/observações e excluir ---
+
     async function openVisitModal(id) {
         try {
             const res = await fetch(`/agenda/technical-visits/view-data/${id}`);
@@ -1161,8 +1130,101 @@
         }
     }
 
+    // --- Perfil TÉCNICO: ver o serviço e registrar observação do atendimento ---
+
+    async function openTechnicianNoteModal(id) {
+        try {
+            const res = await fetch(`/agenda/view-data/${id}`);
+            if (!res.ok) throw new Error('Falha ao carregar serviço');
+            const s = await res.json();
+
+            document.getElementById('tnScheduleId').value = s.id;
+            document.getElementById('tnInfoClient').textContent = s.clientName || 'Sem cliente';
+            document.getElementById('tnInfoAddress').textContent = s.clientAddress || 'Endereço não informado';
+            document.getElementById('tnInfoWhen').textContent = (s.scheduledDate ? fmtBR(s.scheduledDate) : 'Sem data definida') + (s.scheduledTime ? ' às ' + fmtTimeBR(s.scheduledTime) : '');
+            document.getElementById('tnInfoWorkOrder').textContent = s.workOrderNumber || '-';
+
+            const itemsWrap = document.getElementById('tnInfoItems');
+            itemsWrap.innerHTML = (s.serviceDetails && Array.isArray(s.serviceDetails) && s.serviceDetails.length)
+                ? s.serviceDetails.map(item => `<div class="bg-brand-50 dark:bg-cyan-900/20 border border-brand-100 dark:border-cyan-800/50 px-2.5 py-1.5 rounded-md text-[11px] font-semibold text-brand-700 dark:text-cyan-400">${item}</div>`).join('')
+                : `<span class="text-xs font-semibold text-brand-700 dark:text-cyan-400">${s.serviceType || 'Não detalhado'}</span>`;
+
+            const histWrap = document.getElementById('tnHistoryList');
+            const notesHistory = (s.history || []).filter(h => h.notes);
+            histWrap.innerHTML = notesHistory.length
+                ? notesHistory.slice().reverse().map(h => `
+                    <div class="text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-bold uppercase mb-1">
+                            <span>${h.username || '-'}</span>
+                            <span>${h.eventDate ? fmtDateTimeBR(h.eventDate) : ''}</span>
+                        </div>
+                        <p class="text-slate-700 dark:text-slate-200">${h.notes}</p>
+                    </div>
+                  `).join('')
+                : '<p class="text-xs text-slate-400">Nenhuma observação registrada ainda.</p>';
+
+            document.getElementById('tnNotes').value = '';
+
+            closeModal('dayModal');
+            toggleModal('technicianNoteModal', true);
+            lucide.createIcons();
+        } catch (err) {
+            console.error(err);
+            alert('Não foi possível carregar os dados do serviço.');
+        }
+    }
+
+    async function submitTechnicianNote() {
+        const id = document.getElementById('tnScheduleId').value;
+        const notes = document.getElementById('tnNotes').value.trim();
+        if (!notes) {
+            alert('Escreva uma observação sobre o serviço antes de salvar.');
+            return;
+        }
+        try {
+            const res = await fetch(`/agenda/${id}/technician-note`, { method: 'POST', headers: csrfHeaders(true), body: JSON.stringify({ notes }) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.ok === false) {
+                alert('Erro ao salvar observação: ' + (data.error || 'erro desconhecido'));
+                return;
+            }
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
+    // Visualização somente leitura da visita técnica para o perfil TÉCNICO — ele vê os
+    // dados, mas não edita nem exclui (isso continua exclusivo de GESTAO/VENDAS).
+    async function openTechnicianVisitView(id) {
+        try {
+            const res = await fetch(`/agenda/technical-visits/view-data/${id}`);
+            if (!res.ok) throw new Error('Falha ao carregar visita técnica');
+            const v = await res.json();
+
+            document.getElementById('tvInfoClient').textContent = v.clientName || 'Sem cliente';
+            document.getElementById('tvInfoAddress').textContent = v.clientAddress || 'Endereço não informado';
+            document.getElementById('tvInfoQuote').textContent = v.quoteNumber || '-';
+            document.getElementById('tvInfoWhen').textContent = (v.visitDate ? fmtBR(v.visitDate) : 'Sem data definida') + (v.visitTime ? ' às ' + fmtTimeBR(v.visitTime) : '');
+            document.getElementById('tvInfoNotes').textContent = v.notes && v.notes.trim() ? v.notes : 'Nenhuma observação registrada.';
+
+            closeModal('dayModal');
+            toggleModal('technicianVisitViewModal', true);
+            lucide.createIcons();
+        } catch (err) {
+            console.error(err);
+            alert('Não foi possível carregar os dados da visita técnica.');
+        }
+    }
+
+
     document.addEventListener('DOMContentLoaded', () => {
         switchView('calendar');
+        const rdp = document.getElementById('routeDatePicker');
+        if (rdp && !rdp.value) {
+            rdp.value = new Date().toISOString().substring(0, 10);
+        }
     });
 </script>
 

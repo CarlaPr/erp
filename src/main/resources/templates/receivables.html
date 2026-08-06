@@ -8,39 +8,52 @@
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
 
-<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+<main class="lg:ml-72 px-3 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen overflow-x-hidden">
 
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
-        <div>
-            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Contas a Receber</h2>
-            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Gestão de faturamentos, parcelas e cobranças.</p>
+    <header class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mb-6 sm:mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
+
+        <div class="min-w-0">
+            <h2 class="text-lg sm:text-xl lg:text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                Contas a Receber
+            </h2>
+
+            <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1">
+                Gestão de faturamentos, parcelas e cobranças.
+            </p>
         </div>
-        <button onclick="openModal('receivableModal')"
-                class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-emerald-500/20 text-base">
-            <i data-lucide="plus" class="w-5 h-5"></i> Nova Receita
+
+        <button
+                onclick="openModal('receivableModal')"
+                class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 sm:px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-emerald-500/20 text-sm sm:text-base">
+
+            <i data-lucide="plus" class="w-5 h-5"></i>
+            Nova Receita
         </button>
+
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
         <div class="bg-indigo-600 dark:bg-indigo-900 p-6 rounded-2xl shadow-md border-none">
             <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1">Saldo Real (Atual)</span>
-            <p class="text-2xl font-black text-white" th:text="'R$ ' + ${#numbers.formatDecimal(saldoReal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            <p class="text-lg sm:text-xl lg:text-2xl font-black text-white" th:text="'R$ ' + ${#numbers.formatDecimal(saldoReal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-emerald-500">
             <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Recebido (Filtro)</span>
-            <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(valRecebido, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            <p class="text-lg sm:text-xl lg:text-2xl font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(valRecebido, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-amber-500">
             <span class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-1">Pendente</span>
-            <p class="text-2xl font-black text-amber-600 dark:text-amber-400" th:text="'R$ ' + ${#numbers.formatDecimal(valAReceber, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            <p class="text-lg sm:text-xl lg:text-2xl font-black text-amber-600 dark:text-amber-400" th:text="'R$ ' + ${#numbers.formatDecimal(valAReceber, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-rose-500">
             <span class="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider block mb-1">Vencido</span>
-            <p class="text-2xl font-black text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(valAtraso, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            <p class="text-lg sm:text-xl lg:text-2xl font-black text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(valAtraso, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
     </div>
 
-    <form method="GET" action="/receivables" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 mb-8 shadow-sm">
+    <form method="GET"
+          action="/receivables"
+          class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end mb-5">
             <div class="lg:col-span-2">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Buscar</label>
@@ -88,9 +101,11 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-2 w-full lg:w-auto">
-                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-6 py-3 text-sm transition-all shadow-md shadow-emerald-500/20 flex items-center gap-2">
-                    <i data-lucide="filter" class="w-4 h-4"></i> Filtrar
+            <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full lg:w-auto">
+                <button type="submit"
+                        class="col-span-2 sm:col-span-1 justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-5 py-3 text-sm transition-all shadow-md shadow-emerald-500/20 flex items-center gap-2">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    Filtrar
                 </button>
                 <a href="/receivables" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2" title="Voltar para visualização da semana atual">
                     <i data-lucide="calendar" class="w-4 h-4"></i> Semana Atual
@@ -98,14 +113,21 @@
                 <a href="/receivables?allMonths=true" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2">
                     <i data-lucide="calendar-days" class="w-4 h-4"></i> Todos os Meses
                 </a>
-                <button type="button" onclick="openModal('exportModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl px-4 py-3 text-sm transition-all shadow-md shadow-indigo-500/20 ml-auto" title="Exportar para Excel (CSV)">
+                <button type="button"
+                        onclick="openModal('exportModal')"
+                        class="justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl px-4 py-3 text-sm transition-all shadow-md shadow-indigo-500/20 flex items-center gap-2"
+                        title="Exportar para Excel (CSV)">
+
                     <i data-lucide="download" class="w-4 h-4"></i>
+
+                    <span class="sm:hidden">Exportar</span>
                 </button>
             </div>
         </div>
     </form>
-    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[980px]">
+    <div class="receivables-table-container bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
+
+        <table class="receivables-table w-full text-left border-collapse">
             <thead>
             <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
                 <th class="p-5">Vencimento</th>
@@ -124,7 +146,7 @@
             <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
 
             <tr th:if="${#lists.isEmpty(receivables)}">
-                <td colspan="10" class="p-10 text-center text-slate-500 font-medium text-base bg-slate-50 dark:bg-slate-800/10">
+                <td colspan="11" class="p-10 text-center text-slate-500 font-medium text-base bg-slate-50 dark:bg-slate-800/10">
                     <div class="flex flex-col items-center gap-3">
                         <i data-lucide="inbox" class="w-10 h-10 opacity-40"></i>
                         <p>Nenhum registo encontrado.</p>
@@ -262,7 +284,7 @@
     <div id="receivableModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
-                <h2 class="text-2xl font-black text-slate-900 dark:text-white">Nova Conta a Receber</h2>
+                <h2 class="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white">Nova Conta a Receber</h2>
                 <button type="button" onclick="closeModal('receivableModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white bg-white dark:bg-transparent p-1.5 rounded-lg border border-slate-200 dark:border-transparent transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -503,7 +525,7 @@
     <div id="editModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <div class="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 rounded-t-2xl">
-                <h2 class="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                <h2 class="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                     <i data-lucide="edit" class="w-6 h-6 text-brand-600 dark:text-cyan-400"></i> Editar Conta a Receber
                 </h2>
                 <button type="button" onclick="closeModal('editModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white bg-white dark:bg-transparent p-1.5 rounded-lg border border-slate-200 dark:border-transparent transition-colors">
@@ -622,7 +644,7 @@
                 <i data-lucide="trash-2" class="w-8 h-8"></i>
             </div>
 
-            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Cancelar Receita?</h3>
+            <h3 class="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white mb-2">Cancelar Receita?</h3>
             <p class="text-base text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">A conta será marcada como cancelada e removida dos cálculos e fluxo de caixa. O histórico será preservado.</p>
 
             <form id="cancelForm" method="POST">
@@ -678,44 +700,311 @@
 </main>
 
 <style>
-    .label-form{
-        display:block;
-        color:#94a3b8;
-        font-size:10px;
-        font-weight:700;
-        text-transform:uppercase;
-        margin-bottom:6px;
+    @media (max-width: 767px) {
+
+        html,
+        body {
+            overflow-x: hidden;
+        }
+
+        .receivables-table-container {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+        }
+
+        .receivables-table,
+        .receivables-table tbody,
+        .receivables-table tr,
+        .receivables-table td {
+            display: block;
+            width: 100%;
+        }
+
+        .receivables-table thead {
+            display: none;
+        }
+
+        .receivables-table tbody tr {
+            position: relative;
+
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+
+            margin-bottom: 12px;
+            padding: 14px;
+
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+
+            overflow: hidden;
+        }
+
+        .dark .receivables-table tbody tr {
+            background: #131C2F;
+            border-color: #334155;
+            box-shadow: none;
+        }
+
+        .receivables-table tbody td {
+            display: grid;
+            grid-template-columns: 105px minmax(0, 1fr);
+
+            align-items: center;
+
+            gap: 10px;
+
+            padding: 9px 2px !important;
+
+            text-align: left !important;
+
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dark .receivables-table tbody td {
+            border-bottom-color: #1e293b;
+        }
+
+        .receivables-table tbody td:last-child {
+            border-bottom: none;
+        }
+
+        .receivables-table tbody td::before {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+
+            color: #64748b;
+
+            content: "";
+        }
+
+        .dark .receivables-table tbody td::before {
+            color: #94a3b8;
+        }
+
+        .receivables-table tbody td:nth-child(1)::before {
+            content: "Vencimento";
+        }
+
+        .receivables-table tbody td:nth-child(2)::before {
+            content: "Cliente";
+        }
+
+        .receivables-table tbody td:nth-child(3)::before {
+            content: "O.S.";
+        }
+
+        .receivables-table tbody td:nth-child(4)::before {
+            content: "Total Bruto";
+        }
+
+        .receivables-table tbody td:nth-child(5)::before {
+            content: "Desconto";
+        }
+
+        .receivables-table tbody td:nth-child(6)::before {
+            content: "Recebido";
+        }
+
+        .receivables-table tbody td:nth-child(7)::before {
+            content: "Pendente";
+        }
+
+        .receivables-table tbody td:nth-child(8)::before {
+            content: "Recebimento";
+        }
+
+        .receivables-table tbody td:nth-child(9)::before {
+            content: "Estágio";
+        }
+
+        .receivables-table tbody td:nth-child(10)::before {
+            content: "Status";
+        }
+
+        .receivables-table tbody td:nth-child(11)::before {
+            content: "Ações";
+        }
+
+        .receivables-table tbody td > * {
+            min-width: 0;
+        }
+
+        .receivables-table tbody td:nth-child(2) {
+            display: block;
+            padding: 12px 2px !important;
+        }
+
+        .receivables-table tbody td:nth-child(2)::before {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .receivables-table tbody td:nth-child(3) {
+            font-size: 14px;
+        }
+
+        .receivables-table tbody td:nth-child(4),
+        .receivables-table tbody td:nth-child(5),
+        .receivables-table tbody td:nth-child(6),
+        .receivables-table tbody td:nth-child(7) {
+            font-size: 14px !important;
+        }
+
+        .receivables-table tbody td:nth-child(10) span {
+            margin-left: 0 !important;
+        }
+
+        .receivables-table tbody td:last-child {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+
+            padding-top: 13px !important;
+            margin-top: 3px;
+
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .dark .receivables-table tbody td:last-child {
+            border-top-color: #334155;
+        }
+
+        .receivables-table tbody td:last-child::before {
+            margin-right: auto;
+        }
+
+        .receivables-table tbody td:last-child button {
+            width: 42px;
+            height: 42px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 12px;
+        }
+
+        .receivables-table tbody tr:has(td[colspan]) {
+            display: block;
+            padding: 25px 15px;
+        }
+
+        .receivables-table tbody tr:has(td[colspan]) td {
+            display: block;
+            border: none;
+            text-align: center !important;
+        }
+
+        .receivables-table tbody tr:has(td[colspan]) td::before {
+            display: none;
+        }
+
+        .receivables-table td,
+        .receivables-table span,
+        .receivables-table div {
+            overflow-wrap: anywhere;
+        }
     }
-    .input-form{
-        width:100%;
-        background:#0f172a;
-        border:1px solid #334155;
-        border-radius:8px;
-        padding:10px 14px;
-        color:white;
-    }
-    .btn-primary{
-        padding:10px 24px;
-        border-radius:8px;
-        font-weight:700;
-    }
-    .btn-secondary{
-        padding:10px 20px;
-        border-radius:8px;
-        color:#cbd5e1;
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: #cbd5e1;
-        border-radius: 20px;
-    }
-    .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: #334155;
+
+    @media (max-width: 639px) {
+
+        #receivableModal > div,
+        #editModal > div,
+        #receiveModal > div,
+        #clientSearchModal > div,
+        #osSearchModal > div,
+        #cancelModal > div,
+        #exportModal > div {
+            width: calc(100vw - 20px) !important;
+            max-width: none !important;
+
+            max-height: calc(100vh - 20px);
+
+            border-radius: 18px;
+
+            overflow-y: auto;
+        }
+
+        #receivableModal > div > div:first-child,
+        #editModal > div > div:first-child,
+        #receiveModal > div > div:first-child {
+            padding: 16px !important;
+        }
+
+        #receivableModal form,
+        #editModal form,
+        #receiveModal form {
+            padding: 16px !important;
+        }
+
+        #receivableModal h2,
+        #editModal h2 {
+            font-size: 18px;
+            line-height: 1.3;
+            padding-right: 30px;
+        }
+
+        #receivableModal .grid,
+        #editModal .grid {
+            gap: 14px !important;
+        }
+
+        #receivableModal form > div:last-child,
+        #editModal form > div:last-child,
+        #receiveModal form > div:last-child {
+            flex-direction: column-reverse;
+            gap: 10px;
+        }
+
+        #receivableModal form > div:last-child button,
+        #editModal form > div:last-child button,
+        #receiveModal form > div:last-child button {
+            width: 100%;
+            justify-content: center;
+        }
+
+        #newClientDisplay,
+        #editClientDisplay,
+        #newWorkOrderDisplay,
+        #editWorkOrderDisplay {
+            min-width: 0;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        #receivableModal .flex.gap-2 button,
+        #editModal .flex.gap-2 button {
+            flex-shrink: 0;
+            width: 44px;
+        }
+
+        #clientSearchModal > div,
+        #osSearchModal > div {
+            padding: 16px !important;
+        }
+
+        #clientSearchList li,
+        #osSearchList li {
+            min-height: 58px;
+            padding: 14px 10px;
+        }
+
+        #cancelModal > div {
+            padding: 20px !important;
+        }
+
+        #cancelModal .flex {
+            flex-direction: column-reverse;
+        }
+
+        #cancelModal .flex button {
+            width: 100%;
+        }
     }
 </style>
 

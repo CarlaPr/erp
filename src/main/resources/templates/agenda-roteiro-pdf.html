@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${'Roteiro Diário - ' + dataFormatada}">Roteiro Diário</title>
+    <style>
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @page {
+            size: A4 portrait;
+            margin: 14mm 12mm 16mm 12mm;
+
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 8px;
+                font-family: 'Inter', sans-serif;
+                color: #94a3b8;
+                font-weight: bold;
+            }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            font-size: 10.5px;
+            color: #1e293b;
+            background: #ffffff;
+            line-height: 1.45;
+            font-weight: 400;
+        }
+
+        .avoid-break { page-break-inside: avoid; }
+
+        .header-bar { border-bottom: 3px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px; }
+        .header-title { font-size: 18px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: -0.2px; }
+        .header-subtitle { font-size: 10.5px; color: #64748b; font-weight: 600; margin-top: 4px; }
+        .header-subtitle b { color: #0f172a; }
+
+        .card { border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; page-break-inside: avoid; }
+        .card-header { display: table; width: 100%; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+        .card-header-left { display: table-cell; font-weight: 800; font-size: 13.5px; color: #0f172a; vertical-align: middle; }
+        .card-header-right { display: table-cell; text-align: right; vertical-align: middle; white-space: nowrap; }
+
+        .type-badge { display: inline-block; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 999px; margin-left: 6px; }
+        .type-badge.exec { background: #e0f2fe; color: #0369a1; }
+        .type-badge.visit { background: #fae8ff; color: #a21caf; }
+
+        .os-tag { font-size: 9.5px; font-weight: 700; color: #475569; }
+
+        .grid { display: table; width: 100%; margin-bottom: 10px; }
+        .grid-row { display: table-row; }
+        .grid-cell { display: table-cell; width: 50%; font-size: 9.5px; padding-bottom: 5px; vertical-align: top; }
+        .label { font-weight: 700; color: #64748b; }
+
+        .items-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; }
+        .items-box-title { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 6px; letter-spacing: 0.5px; }
+        .item-line { font-size: 10.5px; font-weight: 600; color: #0369a1; margin-bottom: 3px; padding-left: 10px; position: relative; }
+        .item-line::before { content: "•"; position: absolute; left: 0; color: #0284c7; }
+
+        .obs { margin-top: 10px; font-size: 10px; background: #fffbeb; padding: 7px 10px; border-left: 3px solid #f59e0b; border-radius: 4px; }
+        .obs .label { color: #92400e; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 12px; font-weight: 600; }
+
+    </style>
+</head>
+<body>
+
+<div class="header-bar">
+    <div class="header-title">Agenda Comercial &#8211; Roteiro Diário</div>
+    <div class="header-subtitle">
+        Data de Execução: <b th:text="${dataFormatada}">--/--/----</b>
+        &#160;|&#160;
+        Total de Atendimentos: <b th:text="${totalItems}">0</b>
+    </div>
+</div>
+
+<div th:if="${totalItems == 0}" class="empty-state">
+    Nenhum serviço agendado para este dia.
+</div>
+
+<div class="card" th:each="item, iter : ${items}">
+    <div class="card-header">
+        <div class="card-header-left">
+            <span th:text="${(iter.index + 1) + '. ' + item.clientName}">1. Cliente</span>
+            <span th:class="${item.visit} ? 'type-badge visit' : 'type-badge exec'"
+                  th:text="${item.typeLabel}">Execução de Serviço</span>
+        </div>
+        <div class="card-header-right">
+            <span class="os-tag" th:unless="${item.visit}" th:text="${'OS: ' + item.workOrderNumber}">OS: -</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="grid-row">
+            <div class="grid-cell"><span class="label">Endereço:</span> <span th:text="${item.clientAddress}">-</span></div>
+            <div class="grid-cell"><span class="label">Orçamento:</span> <span th:text="${item.quoteNumber}">-</span></div>
+        </div>
+        <div class="grid-row">
+            <div class="grid-cell"><span class="label">Horário Agendado:</span> <span th:text="${item.timeFormatted}">A definir</span></div>
+            <div class="grid-cell"><span class="label">Equipe/Resp.:</span> <span th:text="${item.teamOrResponsible}">-</span></div>
+        </div>
+    </div>
+
+    <div class="items-box">
+        <div class="items-box-title" th:text="${item.visit} ? 'Motivo da Visita' : 'Serviços / Itens a Executar na Obra'">Serviços</div>
+        <div class="item-line" th:each="li : ${item.items}" th:text="${li}">Item</div>
+    </div>
+
+    <div class="obs" th:if="${item.observations != null and !#strings.isEmpty(item.observations)}">
+        <span class="label">Observações:</span> <span th:text="${item.observations}"></span>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,253 +1,1164 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+
 <head th:replace="~{fragments/layout :: head('Clientes - Tahi Glass ERP')}"></head>
+
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
 
-<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
-        <div>
-            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Clientes</h2>
-            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Gerenciamento da carteira de clientes do sistema.</p>
+<main
+        class="lg:ml-72 px-3 sm:px-5 lg:px-8 pb-5 sm:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
+    <header
+            class="flex flex-col lg:flex-row justify-between items-start lg:items-center
+                   mb-5 sm:mb-6
+                   border-b border-slate-200 dark:border-slate-800/80
+                   pb-5 gap-4">
+        <div class="w-full lg:w-auto">
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                Clientes
+            </h2>
+            <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1">
+                Gerenciamento da carteira de clientes do sistema.
+            </p>
         </div>
-        <button onclick="toggleModal(true)" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20">
-            <i data-lucide="user-plus" class="w-5 h-5"></i> Novo Cliente
+        <button
+                type="button"
+                onclick="toggleModal(true)"
+                class="w-full lg:w-auto
+                       bg-brand-600 hover:bg-brand-700
+                       text-white
+                       dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900
+                       font-bold
+                       px-5 py-3
+                       rounded-xl
+                       flex items-center justify-center gap-2
+                       transition-all
+                       shadow-md shadow-brand-500/20
+                       dark:shadow-cyan-500/20
+                       active:scale-[0.98]">
+
+            <i data-lucide="user-plus" class="w-5 h-5"></i>
+            <span>Novo Cliente</span>
         </button>
+
     </header>
-    <div class="mb-6 max-w-3xl">
-        <form th:action="@{/clients}" method="get" class="flex flex-col sm:flex-row gap-3">
+    <div class="mb-5 sm:mb-6 w-full lg:max-w-4xl">
+
+        <form
+                th:action="@{/clients}"
+                method="get"
+                class="flex flex-col sm:flex-row gap-3">
+
             <div class="relative flex-grow">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+
+                <div class="absolute inset-y-0 left-0 pl-4         flex items-center pointer-events-none">
+                    <i
+                            data-lucide="search"
+                            class="w-5 h-5 text-slate-400">
+                    </i>
                 </div>
-                <input type="text" name="search" th:value="${search}" class="block w-full pl-11 pr-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl leading-5 bg-white dark:bg-[#131C2F] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-cyan-500 dark:focus:border-cyan-500 transition-colors shadow-sm" placeholder="Pesquisar por nome, e-mail ou documento...">
+                <input
+                        type="text"
+                        name="search"
+                        th:value="${search}"
+                        class="block w-full
+                               pl-11 pr-4
+                               py-3
+                               border border-slate-300
+                               dark:border-slate-700
+                               rounded-xl
+                               leading-5
+                               bg-white
+                               dark:bg-[#131C2F]
+                               text-slate-900
+                               dark:text-slate-100
+                               placeholder-slate-400
+                               focus:outline-none
+                               focus:ring-2
+                               focus:ring-brand-500
+                               focus:border-brand-500
+                               dark:focus:ring-cyan-500
+                               dark:focus:border-cyan-500
+                               transition-colors
+                               shadow-sm"
+                        placeholder="Pesquisar por nome, e-mail ou documento..."
+                >
+
             </div>
-            <div class="flex gap-3">
-                <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600 px-6 py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
-                    Pesquisar
+
+            <div class="flex gap-2 sm:gap-3 w-full sm:w-auto">
+
+                <button
+                        type="submit"
+                        class="flex-1 sm:flex-none
+                               bg-slate-800 hover:bg-slate-900
+                               text-white
+                               dark:bg-slate-700 dark:hover:bg-slate-600
+                               px-5 sm:px-6 py-3
+                               rounded-xl
+                               font-bold
+                               transition-colors
+                               flex items-center justify-center gap-2
+                               shadow-sm
+                               whitespace-nowrap
+                               active:scale-[0.98]">
+
+                    <i data-lucide="search" class="w-4 h-4 sm:hidden"></i>
+                    <span>Pesquisar</span>
                 </button>
-                <a th:href="@{/clients}" th:if="${search != null and search != ''}" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-600 dark:text-slate-300 px-5 py-3 rounded-xl font-medium transition-colors flex items-center justify-center shadow-sm whitespace-nowrap">
+
+                <a
+                        th:href="@{/clients}"
+                        th:if="${search != null and search != ''}"
+                        class="flex-1 sm:flex-none
+                               bg-white hover:bg-slate-50
+                               text-slate-700
+                               border border-slate-300
+                               dark:bg-slate-800
+                               dark:hover:bg-slate-700
+                               dark:border-slate-600
+                               dark:text-slate-300
+                               px-5 py-3
+                               rounded-xl
+                               font-medium
+                               transition-colors
+                               flex items-center justify-center
+                               shadow-sm
+                               whitespace-nowrap">
+
                     Limpar
+
                 </a>
+
             </div>
+
         </form>
+
     </div>
-    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[720px]">
-            <thead>
-            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
-                <th class="p-5">Nome</th>
-                <th class="p-5">Documento</th>
-                <th class="p-5">Contato</th>
-                <th class="p-5">Cidade</th>
-                <th class="p-5">Tipo</th>
-                <th class="p-5 text-center">Ações</th>
-            </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
-            <tr th:each="client : ${clients}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                <td class="p-5 font-bold text-slate-900 dark:text-white text-base" th:text="${client.name}">Nome do Cliente</td>
-                <td class="p-5 text-slate-600 dark:text-slate-300 font-mono" th:text="${client.document}">000.000.000-00</td>
-                <td class="p-5">
-                    <div class="text-slate-700 dark:text-slate-300 font-medium" th:text="${client.email}">email@teste.com</div>
-                    <div class="text-slate-500 text-sm mt-1" th:text="${client.phone}">(11) 99999-9999</div>
-                </td>
-                <td class="p-5 text-slate-600 dark:text-slate-300 font-medium" th:text="${client.city}">Itaquaquecetuba</td>
-                <td class="p-5">
-                    <span th:if="${client.type == 'individual'}" class="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-transparent">Física</span>
-                    <span th:if="${client.type == 'company'}" class="px-3 py-1 rounded-lg text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-purple-500/10 dark:text-purple-400 border border-indigo-200 dark:border-transparent">Jurídica</span>
-                </td>
-                <td class="p-5 text-center space-x-3">
-                    <a th:href="@{/clients/edit/{id}(id=${client.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 inline-block transition-colors p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10" title="Editar">
+
+    <div
+            class="hidden md:block
+                   bg-white dark:bg-[#131C2F]
+                   rounded-2xl
+                   border border-slate-200
+                   dark:border-slate-700/50
+                   shadow-sm
+                   overflow-hidden">
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr
+                        class="border-b
+                               border-slate-200
+                               dark:border-slate-700/50
+                               bg-slate-50
+                               dark:bg-slate-800/50
+                               text-slate-500
+                               dark:text-slate-400
+                               font-bold
+                               text-xs
+                               lg:text-sm
+                               uppercase
+                               tracking-wider">
+
+                    <th class="px-4 lg:px-5 py-4">
+                        Nome
+                    </th>
+
+                    <th class="px-4 lg:px-5 py-4">
+                        Documento
+                    </th>
+
+                    <th class="px-4 lg:px-5 py-4">
+                        Contato
+                    </th>
+
+                    <th class="px-4 lg:px-5 py-4">
+                        Cidade
+                    </th>
+
+                    <th class="px-4 lg:px-5 py-4">
+                        Tipo
+                    </th>
+
+                    <th class="px-4 lg:px-5 py-4 text-center">
+                        Ações
+                    </th>
+
+                </tr>
+                </thead>
+                <tbody
+                        class="divide-y
+                               divide-slate-100
+                               dark:divide-slate-700/50
+                               text-sm">
+                <tr
+                        th:each="client : ${clients}"
+                        class="hover:bg-slate-50
+                               dark:hover:bg-slate-700/30
+                               transition-colors">
+                    <td class="px-4 lg:px-5 py-4">
+                        <div class="font-bold
+                                       text-slate-900
+                                       dark:text-white
+                                       text-sm lg:text-base
+                                       max-w-[240px]
+                                       truncate"
+                                th:text="${client.name}">
+
+                            Nome do Cliente
+
+                        </div>
+                    </td>
+                    <td
+                            class="px-4 lg:px-5 py-4
+                                   text-slate-600
+                                   dark:text-slate-300
+                                   font-mono
+                                   whitespace-nowrap"
+                            th:text="${client.document}">
+
+                        000.000.000-00
+
+                    </td>
+                    <td class="px-4 lg:px-5 py-4">
+                        <div
+                                class="text-slate-700
+                                       dark:text-slate-300
+                                       font-medium
+                                       max-w-[220px]
+                                       truncate"
+                                th:text="${client.email}">
+
+                            email@teste.com
+
+                        </div>
+                        <div
+                                class="text-slate-500
+                                       dark:text-slate-400
+                                       text-sm
+                                       mt-1
+                                       whitespace-nowrap"
+                                th:text="${client.phone}">
+
+                            (11) 99999-9999
+
+                        </div>
+                    </td>
+                    <td
+                            class="px-4 lg:px-5 py-4
+                                   text-slate-600
+                                   dark:text-slate-300
+                                   font-medium
+                                   whitespace-nowrap"
+                            th:text="${client.city}">
+
+                        Itaquaquecetuba
+
+                    </td>
+                    <td class="px-4 lg:px-5 py-4">
+                        <span
+                                th:if="${client.type == 'individual'}"
+                                class="inline-flex
+                                       px-3 py-1
+                                       rounded-lg
+                                       text-xs
+                                       font-bold
+                                       bg-emerald-100
+                                       text-emerald-700
+                                       dark:bg-emerald-500/10
+                                       dark:text-emerald-400
+                                       border
+                                       border-emerald-200
+                                       dark:border-transparent">
+
+                            Física
+
+                        </span>
+                        <span
+                                th:if="${client.type == 'company'}"
+                                class="inline-flex
+                                       px-3 py-1
+                                       rounded-lg
+                                       text-xs
+                                       font-bold
+                                       bg-indigo-100
+                                       text-indigo-700
+                                       dark:bg-purple-500/10
+                                       dark:text-purple-400
+                                       border
+                                       border-indigo-200
+                                       dark:border-transparent">
+
+                            Jurídica
+
+                        </span>
+                    </td>
+                    <td class="px-4 lg:px-5 py-4">
+                        <div class="flex justify-center items-center gap-1">
+                            <a
+                                    th:href="@{/clients/edit/{id}(id=${client.id})}"
+                                    class="text-brand-600
+                                           hover:text-brand-800
+                                           dark:text-cyan-400
+                                           dark:hover:text-cyan-300
+                                           inline-flex
+                                           items-center
+                                           justify-center
+                                           transition-colors
+                                           p-2
+                                           rounded-lg
+                                           hover:bg-brand-50
+                                           dark:hover:bg-cyan-500/10"
+                                    title="Editar">
+
+                                <i data-lucide="edit-3" class="w-5 h-5"></i>
+                            </a>
+                            <form
+                                    th:action="@{/clients/delete/{id}(id=${client.id})}"
+                                    method="POST"
+                                    class="inline-flex">
+
+                                <input
+                                        type="hidden"
+                                        name="_method"
+                                        value="DELETE"
+                                />
+                                <button
+                                        type="submit"
+                                        onclick="return confirm('Deseja realmente excluir este registro?')"
+                                        class="text-rose-600
+                                               hover:text-rose-800
+                                               dark:text-rose-500
+                                               dark:hover:text-rose-400
+                                               transition-colors
+                                               p-2
+                                               rounded-lg
+                                               hover:bg-rose-50
+                                               dark:hover:bg-rose-500/10"
+                                        title="Excluir">
+
+                                    <i
+                                            data-lucide="trash-2"
+                                            class="w-5 h-5">
+                                    </i>
+
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(clients)}">
+                    <td colspan="6" class="p-12 text-center">
+                        <div
+                                class="flex flex-col
+                                       items-center
+                                       justify-center
+                                       text-slate-500
+                                       dark:text-slate-400">
+                            <div
+                                    class="bg-slate-100
+                                           dark:bg-slate-800
+                                           rounded-full
+                                           p-4 mb-4">
+
+                                <i
+                                        data-lucide="inbox"
+                                        class="w-8 h-8
+                                               text-slate-400
+                                               dark:text-slate-500">
+                                </i>
+                            </div>
+                            <p
+                                    class="text-lg
+                                           font-bold
+                                           text-slate-700
+                                           dark:text-slate-300">
+
+                                Nenhum cliente encontrado
+
+                            </p>
+                            <p class="text-sm mt-1 max-w-sm mx-auto">
+
+                                Tente ajustar seus termos de pesquisa ou adicione
+                                um novo cliente ao sistema.
+
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="md:hidden space-y-3">
+        <article
+                th:each="client : ${clients}"
+                class="bg-white
+                       dark:bg-[#131C2F]
+                       rounded-2xl
+                       border
+                       border-slate-200
+                       dark:border-slate-700/50
+                       shadow-sm
+                       overflow-hidden">
+            <div
+                    class="p-4
+                           border-b
+                           border-slate-100
+                           dark:border-slate-700/50
+                           flex items-start
+                           justify-between
+                           gap-3">
+                <div class="min-w-0 flex-1">
+                    <h3 class="font-bold
+                                   text-base
+                                   text-slate-900
+                                   dark:text-white
+                                   break-words"
+                            th:text="${client.name}">
+
+                        Nome do Cliente
+
+                    </h3>
+                    <div class="mt-2">
+                        <span th:if="${client.type == 'individual'}"
+                                class="inline-flex
+                                       px-2.5 py-1
+                                       rounded-lg
+                                       text-[11px]
+                                       font-bold
+                                       bg-emerald-100
+                                       text-emerald-700
+                                       dark:bg-emerald-500/10
+                                       dark:text-emerald-400">
+
+                            Pessoa Física
+
+                        </span>
+                        <span th:if="${client.type == 'company'}"
+                                class="inline-flex
+                                       px-2.5 py-1
+                                       rounded-lg
+                                       text-[11px]
+                                       font-bold
+                                       bg-indigo-100
+                                       text-indigo-700
+                                       dark:bg-purple-500/10
+                                       dark:text-purple-400">
+
+                            Pessoa Jurídica
+
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                    <a th:href="@{/clients/edit/{id}(id=${client.id})}"
+                            class="w-10 h-10
+                                   flex items-center justify-center
+                                   rounded-xl
+                                   text-brand-600
+                                   dark:text-cyan-400
+                                   bg-brand-50
+                                   dark:bg-cyan-500/10
+                                   hover:bg-brand-100
+                                   dark:hover:bg-cyan-500/20
+                                   transition-colors"
+                            title="Editar">
+
                         <i data-lucide="edit-3" class="w-5 h-5"></i>
+
                     </a>
-                    <form th:action="@{/clients/delete/{id}(id=${client.id})}" method="POST" class="inline-block">
-                        <input type="hidden" name="_method" value="DELETE" />
-                        <button type="submit" onclick="return confirm('Deseja realmente excluir este registo?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 transition-colors p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10" title="Excluir">
-                            <i data-lucide="trash-2" class="w-5 h-5 inline"></i>
+                    <form th:action="@{/clients/delete/{id}(id=${client.id})}" method="POST">
+                        <input
+                                type="hidden"
+                                name="_method"
+                                value="DELETE"
+                        />
+                        <button
+                                type="submit"
+                                onclick="return confirm('Deseja realmente excluir este registro?')"
+                                class="w-10 h-10
+                                       flex items-center justify-center
+                                       rounded-xl
+                                       text-rose-600
+                                       dark:text-rose-500
+                                       bg-rose-50
+                                       dark:bg-rose-500/10
+                                       hover:bg-rose-100
+                                       dark:hover:bg-rose-500/20
+                                       transition-colors"
+                                title="Excluir">
+
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+
                         </button>
                     </form>
-                </td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(clients)}">
-                <td colspan="6" class="p-12 text-center">
-                    <div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400">
-                        <div class="bg-slate-100 dark:bg-slate-800 rounded-full p-4 mb-4">
-                            <i data-lucide="inbox" class="w-8 h-8 text-slate-400 dark:text-slate-500"></i>
-                        </div>
-                        <p class="text-lg font-bold text-slate-700 dark:text-slate-300">Nenhum cliente encontrado</p>
-                        <p class="text-sm mt-1 max-w-sm mx-auto">Tente ajustar seus termos de pesquisa ou adicione um novo cliente ao sistema.</p>
+                </div>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="flex items-start gap-3">
+                    <div class="w-9 h-9
+                                   shrink-0
+                                   rounded-lg
+                                   bg-slate-100
+                                   dark:bg-slate-800
+                                   flex items-center justify-center">
+                        <i data-lucide="credit-card"
+                                class="w-4 h-4
+                                       text-slate-500
+                                       dark:text-slate-400">
+                        </i>
                     </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+                    <div class="min-w-0">
+                        <p class="text-[11px]
+                                       uppercase
+                                       tracking-wider
+                                       font-bold
+                                       text-slate-400">
+
+                            Documento
+
+                        </p>
+                        <p class="text-sm
+                                       font-medium
+                                       text-slate-700
+                                       dark:text-slate-300
+                                       font-mono
+                                       break-all
+                                       mt-0.5"
+                                th:text="${client.document ?: 'Não informado'}">
+
+                            000.000.000-00
+
+                        </p>
+                    </div>
+                </div>
+                <div th:if="${client.email != null and client.email != ''}" class="flex items-start gap-3">
+                    <div class="w-9 h-9
+                                   shrink-0
+                                   rounded-lg
+                                   bg-slate-100
+                                   dark:bg-slate-800
+                                   flex items-center justify-center">
+
+                        <i
+                                data-lucide="mail"
+                                class="w-4 h-4
+                                       text-slate-500
+                                       dark:text-slate-400">
+                        </i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[11px]
+                                       uppercase
+                                       tracking-wider
+                                       font-bold
+                                       text-slate-400">
+
+                            E-mail
+
+                        </p>
+                        <p class="text-sm
+                                       font-medium
+                                       text-slate-700
+                                       dark:text-slate-300
+                                       break-all
+                                       mt-0.5"
+                                th:text="${client.email}">
+
+                            email@teste.com
+
+                        </p>
+                    </div>
+                </div>
+                <div th:if="${client.phone != null and client.phone != ''}" class="flex items-start gap-3">
+                    <div class="w-9 h-9
+                                   shrink-0
+                                   rounded-lg
+                                   bg-slate-100
+                                   dark:bg-slate-800
+                                   flex items-center justify-center">
+
+                        <i
+                                data-lucide="phone"
+                                class="w-4 h-4
+                                       text-slate-500
+                                       dark:text-slate-400">
+                        </i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[11px]
+                                       uppercase
+                                       tracking-wider
+                                       font-bold
+                                       text-slate-400">
+
+                            Telefone
+
+                        </p>
+                        <p class="text-sm
+                                       font-medium
+                                       text-slate-700
+                                       dark:text-slate-300
+                                       mt-0.5"
+                                th:text="${client.phone}">
+
+                            (11) 99999-9999
+
+                        </p>
+                    </div>
+                </div>
+                <div th:if="${client.city != null and client.city != ''}" class="flex items-start gap-3">
+                    <div class="w-9 h-9
+                                   shrink-0
+                                   rounded-lg
+                                   bg-slate-100
+                                   dark:bg-slate-800
+                                   flex items-center justify-center">
+
+                        <i
+                                data-lucide="map-pin"
+                                class="w-4 h-4
+                                       text-slate-500
+                                       dark:text-slate-400">
+                        </i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[11px]
+                                       uppercase
+                                       tracking-wider
+                                       font-bold
+                                       text-slate-400">
+
+                            Cidade
+
+                        </p>
+                        <p class="text-sm
+                                       font-medium
+                                       text-slate-700
+                                       dark:text-slate-300
+                                       mt-0.5"
+                                th:text="${client.city}">
+
+                            Itaquaquecetuba
+
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <div th:if="${#lists.isEmpty(clients)}"
+                class="bg-white
+                       dark:bg-[#131C2F]
+                       rounded-2xl
+                       border
+                       border-slate-200
+                       dark:border-slate-700/50
+                       p-8
+                       text-center">
+            <div class="bg-slate-100
+                           dark:bg-slate-800
+                           rounded-full
+                           p-4
+                           w-fit
+                           mx-auto
+                           mb-4">
+                <i
+                        data-lucide="inbox"
+                        class="w-8 h-8
+                               text-slate-400
+                               dark:text-slate-500">
+                </i>
+
+            </div>
+            <p class="text-base
+                           font-bold
+                           text-slate-700
+                           dark:text-slate-300">
+
+                Nenhum cliente encontrado
+
+            </p>
+            <p class="text-sm
+                           mt-1
+                           text-slate-500
+                           dark:text-slate-400">
+
+                Tente ajustar sua pesquisa ou cadastre um novo cliente.
+
+            </p>
+        </div>
     </div>
-    <div id="clientModal" th:class="${isEditing} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
-        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
-                <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditing} ? 'Editar Cliente' : 'Cadastrar Novo Cliente'">Formulário</h3>
-                <a href="/clients" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors bg-white dark:bg-transparent p-1.5 rounded-lg border border-slate-200 dark:border-transparent">
+
+    <div id="clientModal" th:class="${isEditing}
+                ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto'
+                : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-start sm:items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto'">
+        <div class="bg-white
+                       dark:bg-[#131C2F]
+                       border
+                       border-slate-200
+                       dark:border-slate-700
+                       w-full
+                       max-w-2xl
+                       my-2 sm:my-6
+                       rounded-2xl
+                       shadow-2xl
+                       overflow-hidden
+                       animate-in
+                       fade-in
+                       zoom-in-95
+                       duration-200">
+            <header class="px-4 sm:px-6
+                           py-4 sm:py-5
+                           border-b
+                           border-slate-200
+                           dark:border-slate-700/50
+                           flex
+                           justify-between
+                           items-center
+                           gap-3
+                           bg-slate-50
+                           dark:bg-slate-800/30">
+
+                <div class="min-w-0">
+                    <h3 class="text-lg sm:text-xl
+                                   font-bold
+                                   text-slate-900
+                                   dark:text-white
+                                   truncate"
+                            th:text="${isEditing}
+                                ? 'Editar Cliente'
+                                : 'Cadastrar Novo Cliente'">
+
+                        Formulário
+
+                    </h3>
+                    <p class="hidden sm:block
+                                   text-xs
+                                   text-slate-500
+                                   dark:text-slate-400
+                                   mt-1">
+
+                        Preencha os dados do cliente
+
+                    </p>
+                </div>
+                <a href="/clients"
+                        class="shrink-0
+                               w-10 h-10
+                               flex items-center justify-center
+                               text-slate-400
+                               hover:text-slate-600
+                               dark:hover:text-slate-200
+                               transition-colors
+                               bg-white
+                               dark:bg-slate-800
+                               p-1.5
+                               rounded-lg
+                               border
+                               border-slate-200
+                               dark:border-slate-700">
                     <i data-lucide="x" class="w-5 h-5"></i>
+
                 </a>
             </header>
-
-            <form th:action="@{/clients/save}" th:object="${newClient}" method="POST" class="p-6 space-y-5">
-
+            <form th:action="@{/clients/save}"
+                    th:object="${newClient}"
+                    method="POST"
+                    class="p-4 sm:p-6">
                 <input type="hidden" th:field="*{id}" />
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">
+                        <label class="block
+                                       text-sm
+                                       font-bold
+                                       text-slate-700
+                                       dark:text-slate-400
+                                       mb-1.5">
+
                             Nome Completo / Razão Social *
+
                         </label>
-                        <input
-                                type="text"
+                        <input type="text"
                                 th:field="*{name}"
                                 required
                                 maxlength="150"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-cyan-500 transition-colors"
+                                class="w-full
+                                       bg-slate-50
+                                       dark:bg-slate-900
+                                       border
+                                       border-slate-300
+                                       dark:border-slate-700
+                                       rounded-xl
+                                       px-4 py-3
+                                       text-sm sm:text-base
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-brand-500
+                                       focus:border-brand-500
+                                       dark:focus:ring-cyan-500
+                                       transition-colors"
                         />
                     </div>
-
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">
+                        <label class="block
+                                       text-sm
+                                       font-bold
+                                       text-slate-700
+                                       dark:text-slate-400
+                                       mb-1.5">
+
                             Tipo de Pessoa
+
                         </label>
-                        <select
-                                id="type"
+                        <select id="type"
                                 th:field="*{type}"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors">
-                            <option value="individual">Pessoa Física (CPF)</option>
-                            <option value="company">Pessoa Jurídica (CNPJ)</option>
+                                class="w-full
+                                       bg-slate-50
+                                       dark:bg-slate-900
+                                       border
+                                       border-slate-300
+                                       dark:border-slate-700
+                                       rounded-xl
+                                       px-4 py-3
+                                       text-sm sm:text-base
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-brand-500
+                                       dark:focus:ring-cyan-500
+                                       transition-colors">
+
+                            <option value="individual">
+                                Pessoa Física (CPF)
+                            </option>
+
+                            <option value="company">
+                                Pessoa Jurídica (CNPJ)
+                            </option>
                         </select>
                     </div>
-
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">
+                        <label class="block
+                                       text-sm
+                                       font-bold
+                                       text-slate-700
+                                       dark:text-slate-400
+                                       mb-1.5">
+
                             CPF / CNPJ
+
                         </label>
-                        <input
-                                id="document"
+                        <input id="document"
                                 type="text"
                                 th:field="*{document}"
                                 maxlength="18"
                                 autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
+                                class="w-full
+                                       bg-slate-50
+                                       dark:bg-slate-900
+                                       border
+                                       border-slate-300
+                                       dark:border-slate-700
+                                       rounded-xl
+                                       px-4 py-3
+                                       text-sm sm:text-base
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-brand-500
+                                       dark:focus:ring-cyan-500
+                                       transition-colors"
                         />
-                        <p id="documentError" class="hidden text-red-500 text-sm mt-1"></p>
-                    </div>
+                        <p
+                                id="documentError"
+                                class="hidden
+                                       text-red-500
+                                       text-xs sm:text-sm
+                                       mt-1">
+                        </p>
 
+                    </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">
+                        <label class="block
+                                       text-sm
+                                       font-bold
+                                       text-slate-700
+                                       dark:text-slate-400
+                                       mb-1.5">
+
                             E-mail
+
                         </label>
-                        <input
-                                id="email"
+                        <input id="email"
                                 type="email"
                                 th:field="*{email}"
                                 maxlength="120"
                                 autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
+                                class="w-full
+                                       bg-slate-50
+                                       dark:bg-slate-900
+                                       border
+                                       border-slate-300
+                                       dark:border-slate-700
+                                       rounded-xl
+                                       px-4 py-3
+                                       text-sm sm:text-base
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-brand-500
+                                       dark:focus:ring-cyan-500
+                                       transition-colors"
                         />
-                        <p id="emailError" class="hidden text-red-500 text-sm mt-1"></p>
-                    </div>
+                        <p id="emailError"
+                                class="hidden
+                                       text-red-500
+                                       text-xs sm:text-sm
+                                       mt-1">
+                        </p>
 
+                    </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">
+                        <label class="block
+                                       text-sm
+                                       font-bold
+                                       text-slate-700
+                                       dark:text-slate-400
+                                       mb-1.5">
+
                             Telefone
+
                         </label>
-                        <input
-                                id="phone"
+                        <input id="phone"
                                 type="text"
                                 th:field="*{phone}"
                                 maxlength="15"
                                 autocomplete="off"
+                                inputmode="numeric"
                                 placeholder="(11) 99999-9999"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
+                                class="w-full
+                                       bg-slate-50
+                                       dark:bg-slate-900
+                                       border
+                                       border-slate-300
+                                       dark:border-slate-700
+                                       rounded-xl
+                                       px-4 py-3
+                                       text-sm sm:text-base
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-brand-500
+                                       dark:focus:ring-cyan-500
+                                       transition-colors"
                         />
-                        <p id="phoneError" class="hidden text-red-500 text-sm mt-1"></p>
+                        <p id="phoneError"
+                                class="hidden
+                                       text-red-500
+                                       text-xs sm:text-sm
+                                       mt-1">
+                        </p>
                     </div>
-
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">
+                        <label class="block
+                                       text-sm
+                                       font-bold
+                                       text-slate-700
+                                       dark:text-slate-400
+                                       mb-1.5">
+
                             CEP
+
                         </label>
-                        <input
-                                id="cep"
+                        <input id="cep"
                                 type="text"
                                 maxlength="9"
+                                inputmode="numeric"
                                 placeholder="00000-000"
                                 autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
+                                class="w-full
+                                       bg-slate-50
+                                       dark:bg-slate-900
+                                       border
+                                       border-slate-300
+                                       dark:border-slate-700
+                                       rounded-xl
+                                       px-4 py-3
+                                       text-sm sm:text-base
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-brand-500
+                                       dark:focus:ring-cyan-500
+                                       transition-colors"
                         />
-                        <p id="cepError" class="hidden text-red-500 text-sm mt-1"></p>
+                        <p id="cepError"
+                                class="hidden
+                                       text-red-500
+                                       text-xs sm:text-sm
+                                       mt-1">
+                        </p>
                     </div>
-
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">
+                        <label class="block
+                                       text-sm
+                                       font-bold
+                                       text-slate-700
+                                       dark:text-slate-400
+                                       mb-1.5">
+
                             Cidade
+
                         </label>
-                        <input
-                                id="city"
+                        <input id="city"
                                 type="text"
                                 th:field="*{city}"
                                 maxlength="100"
                                 autocomplete="off"
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
+                                class="w-full
+                                       bg-slate-50
+                                       dark:bg-slate-900
+                                       border
+                                       border-slate-300
+                                       dark:border-slate-700
+                                       rounded-xl
+                                       px-4 py-3
+                                       text-sm sm:text-base
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-brand-500
+                                       dark:focus:ring-cyan-500
+                                       transition-colors"
                         />
-                        <p id="cityError" class="hidden text-red-500 text-sm mt-1"></p>
+                        <p id="cityError"
+                                class="hidden
+                                       text-red-500
+                                       text-xs sm:text-sm
+                                       mt-1">
+                        </p>
                     </div>
-
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5">
-                            Endereço Completo (Rua, Número, Bairro, UF)
+                        <label class="block
+                                       text-sm
+                                       font-bold
+                                       text-slate-700
+                                       dark:text-slate-400
+                                       mb-1.5">
+
+                            Endereço Completo
+
                         </label>
-                        <input
-                                id="address"
+                        <input id="address"
                                 type="text"
                                 th:field="*{address}"
                                 maxlength="250"
-                                placeholder="Será preenchido automaticamente ao digitar o CEP..."
-                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-cyan-500 transition-colors"
+                                placeholder="Será preenchido automaticamente pelo CEP..."
+                                class="w-full
+                                       bg-slate-50
+                                       dark:bg-slate-900
+                                       border
+                                       border-slate-300
+                                       dark:border-slate-700
+                                       rounded-xl
+                                       px-4 py-3
+                                       text-sm sm:text-base
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-brand-500
+                                       dark:focus:ring-cyan-500
+                                       transition-colors"
                         />
-                        <p id="addressError" class="hidden text-red-500 text-sm mt-1"></p>
+                        <p
+                                id="addressError"
+                                class="hidden
+                                       text-red-500
+                                       text-xs sm:text-sm
+                                       mt-1">
+                        </p>
                     </div>
                 </div>
+                <div class="flex
+                               flex-col-reverse
+                               sm:flex-row
+                               justify-end
+                               gap-2 sm:gap-3
+                               pt-5
+                               border-t
+                               border-slate-200
+                               dark:border-slate-700
+                               mt-6 sm:mt-8">
+                    <a href="/clients"
+                            class="w-full sm:w-auto
+                                   px-5 py-3
+                                   rounded-xl
+                                   border
+                                   border-slate-300
+                                   dark:border-slate-600
+                                   text-slate-700
+                                   dark:text-slate-300
+                                   hover:bg-slate-50
+                                   dark:hover:bg-slate-800
+                                   transition-colors
+                                   font-medium
+                                   text-center">
 
-                <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-8">
-                    <a href="/clients" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium">
                         Cancelar
+
                     </a>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 text-white dark:text-slate-900 font-bold transition-colors">
+                    <button type="submit"
+                            class="w-full sm:w-auto
+                                   px-5 py-3
+                                   rounded-xl
+                                   bg-brand-600
+                                   hover:bg-brand-700
+                                   dark:bg-cyan-500
+                                   dark:hover:bg-cyan-600
+                                   text-white
+                                   dark:text-slate-900
+                                   font-bold
+                                   transition-colors
+                                   text-center">
+
                         Salvar Cliente
+
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </main>
-
 <script>
-    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+    const csrfToken =
+        document.querySelector('meta[name="_csrf"]')?.content;
+
+    const csrfHeader =
+        document.querySelector('meta[name="_csrf_header"]')?.content;
 
     function toggleModal(show) {
         const modal = document.getElementById('clientModal');
-
+        if (!modal) return;
         if (show) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
         } else {
             modal.classList.remove('flex');
             modal.classList.add('hidden');
-        }
-    }
+            document.body.classList.remove('overflow-hidden');
 
-    const phoneInput = document.getElementById("phone");
-    const documentInput = document.getElementById("document");
-    const typeInput = document.getElementById("type");
+        }
+
+    }
+    const phoneInput =
+        document.getElementById("phone");
+
+    const documentInput =
+        document.getElementById("document");
+
+    const typeInput =
+        document.getElementById("type");
 
     function onlyNumbers(value) {
         return value.replace(/\D/g, '');
@@ -255,7 +1166,6 @@
 
     function formatCPF(value) {
         value = onlyNumbers(value).slice(0, 11);
-
         return value
             .replace(/(\d{3})(\d)/, '$1.$2')
             .replace(/(\d{3})(\d)/, '$1.$2')
@@ -264,7 +1174,6 @@
 
     function formatCNPJ(value) {
         value = onlyNumbers(value).slice(0, 14);
-
         return value
             .replace(/^(\d{2})(\d)/, '$1.$2')
             .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
@@ -274,8 +1183,8 @@
 
     function formatPhone(value) {
         value = onlyNumbers(value).slice(0, 11);
-
         if (value.length <= 10) {
+
             return value.replace(
                 /^(\d{2})(\d{0,4})(\d{0,4})$/,
                 '($1) $2-$3'
@@ -289,40 +1198,70 @@
     }
 
     documentInput?.addEventListener("input", () => {
+
         if (typeInput.value === "company") {
-            documentInput.value = formatCNPJ(documentInput.value);
+
+            documentInput.value =
+                formatCNPJ(documentInput.value);
         } else {
-            documentInput.value = formatCPF(documentInput.value);
+
+            documentInput.value =
+                formatCPF(documentInput.value);
         }
+
     });
 
     phoneInput?.addEventListener("input", () => {
-        phoneInput.value = formatPhone(phoneInput.value);
+
+        phoneInput.value =
+            formatPhone(phoneInput.value);
+
     });
 
     function showError(id, msg) {
-        const el = document.getElementById(id);
+
+        const el =
+            document.getElementById(id);
+
+        if (!el) return;
 
         if (!msg) {
             el.classList.add("hidden");
             return;
         }
-
         el.textContent = msg;
         el.classList.remove("hidden");
     }
 
     function validateForm(e) {
+
         let valid = true;
-        const doc = documentInput.value.trim();
-        const phone = phoneInput.value.trim();
-        const email = document.getElementById("email").value.trim();
-        const address = document.getElementById("address").value.trim();
-        const city = document.getElementById("city").value.trim();
+
+        const doc =
+            documentInput?.value.trim() || "";
+
+        const phone =
+            phoneInput?.value.trim() || "";
+
+        const email =
+            document.getElementById("email")?.value.trim() || "";
+
+        const address =
+            document.getElementById("address")?.value.trim() || "";
+
+        const city =
+            document.getElementById("city")?.value.trim() || "";
 
         if (doc !== "") {
-            const numbers = onlyNumbers(doc);
-            const expected = typeInput.value === "company" ? 14 : 11;
+
+            const numbers =
+                onlyNumbers(doc);
+
+            const expected =
+                typeInput.value === "company"
+                    ? 14
+                    : 11;
+
             if (numbers.length !== expected) {
                 showError(
                     "documentError",
@@ -337,19 +1276,30 @@
         }
 
         if (phone !== "") {
-            const numbers = onlyNumbers(phone);
-            if (numbers.length < 10 || numbers.length > 11) {
-                showError("phoneError", "Telefone inválido");
+            const numbers =
+                onlyNumbers(phone);
+            if (
+                numbers.length < 10 ||
+                numbers.length > 11
+            ) {
+                showError(
+                    "phoneError",
+                    "Telefone inválido"
+                );
                 valid = false;
             } else {
                 showError("phoneError");
             }
-        }
 
+        }
         if (email !== "") {
-            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const regex =
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!regex.test(email)) {
-                showError("emailError", "E-mail inválido");
+                showError(
+                    "emailError",
+                    "E-mail inválido"
+                );
                 valid = false;
             } else {
                 showError("emailError");
@@ -358,70 +1308,144 @@
 
         if (address !== "") {
             if (address.length < 5) {
-                showError("addressError", "Endereço muito curto");
+                showError(
+                    "addressError",
+                    "Endereço muito curto"
+                );
                 valid = false;
             } else {
                 showError("addressError");
             }
         }
 
+
         if (city !== "") {
             if (!/^[A-Za-zÀ-ÿ\s]+$/.test(city)) {
-                showError("cityError", "Cidade não pode conter números");
+                showError(
+                    "cityError",
+                    "Cidade não pode conter números"
+                );
                 valid = false;
+
             } else {
                 showError("cityError");
             }
         }
-        if (!valid) {e.preventDefault();}
+
+        if (!valid) {
+
+            e.preventDefault();
+        }
     }
 
-    const cepInput = document.getElementById("cep");
-    const addressInput = document.getElementById("address");
-    const cityInput = document.getElementById("city");
+    const cepInput =
+        document.getElementById("cep");
+
+    const addressInput =
+        document.getElementById("address");
+
+    const cityInput =
+        document.getElementById("city");
 
     cepInput?.addEventListener("input", (e) => {
-        let value = e.target.value.replace(/\D/g, '');
+
+        let value =
+            e.target.value.replace(/\D/g, '');
         if (value.length > 5) {
-            value = value.replace(/^(\d{5})(\d{1,3}).*/, '$1-$2');
+            value =
+                value.replace(
+                    /^(\d{5})(\d{1,3}).*/,
+                    '$1-$2'
+                );
         }
+
         e.target.value = value;
 
         if (value.length === 9) {
+
             buscarCep(value);
         }
     });
 
     async function buscarCep(cep) {
-        const cleanCep = cep.replace(/\D/g, '');
+        const cleanCep =
+            cep.replace(/\D/g, '');
         if (cleanCep.length !== 8) return;
-
         showError('cepError', '');
 
         try {
-            const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-            const data = await response.json();
+            const response =
+                await fetch(
+                    `https://viacep.com.br/ws/${cleanCep}/json/`
+                );
+            const data =
+                await response.json();
+
 
             if (data.erro) {
-                showError('cepError', 'CEP não encontrado');
+                showError(
+                    'cepError',
+                    'CEP não encontrado'
+                );
                 return;
             }
 
+
             if (addressInput) {
-                addressInput.value = `${data.logradouro}, Número:     - Bairro: ${data.bairro} - ${data.uf}`;
+                addressInput.value =
+                    `${data.logradouro}, Número:     - Bairro: ${data.bairro} - ${data.uf}`;
+            }
+
+
+            if (cityInput) {
+                cityInput.value =
+                    data.localidade;
+            }
+
+            if (addressInput) {
                 addressInput.focus();
             }
-            if (cityInput) {
-                cityInput.value = data.localidade;
-            }
+
         } catch (err) {
-            showError('cepError', 'Falha ao buscar CEP. Verifique a internet.');
+
+            showError(
+                'cepError',
+                'Falha ao buscar CEP. Verifique a internet.'
+            );
         }
     }
 
-    document.querySelector("form[action*='/clients/save']").addEventListener("submit", validateForm);
+    const clientForm =
+        document.querySelector(
+            "form[action*='/clients/save']"
+        );
+
+    clientForm?.addEventListener(
+        "submit",
+        validateForm
+    );
+
+    document.addEventListener("keydown", (event) => {
+
+        if (event.key === "Escape") {
+
+            const modal =
+                document.getElementById("clientModal");
+
+            if (
+                modal &&
+                !modal.classList.contains("hidden")
+            ) {
+
+                window.location.href = "/clients";
+
+            }
+        }
+    });
 
 </script>
+
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
+
 </body>
 </html>
