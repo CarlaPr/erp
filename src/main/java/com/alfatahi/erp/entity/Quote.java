@@ -33,7 +33,7 @@ public class Quote {
     @Column(name = "discount_percent", precision = 5, scale = 2)
     private BigDecimal discountPercent = BigDecimal.ZERO;
 
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "TEXT")
     private String observations;
 
     @Column(name = "seller_name", length = 100)

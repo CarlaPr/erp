@@ -891,20 +891,27 @@
     A garantia será cancelada caso o produto seja alterado ou reparado por pessoas não autorizadas.
     `;
 
-    const DEFAULT_OBSERVATIONS = `    PRAZO DE ENTREGA
-    • Até 15 dias úteis após a confirmação do pedido.
+    const DEFAULT_OBSERVATIONS = `
+    PRAZO DE ENTREGA
+    • Até 15 dias úteis após a confirmação do pedido e, quando aplicável, do pagamento da entrada.
 
-    EXECUÇÃO
-    • 50% de entrada para iniciar a produção.
-    • Saldo de 50% na conclusão da instalação.
+    FORMAS DE PAGAMENTO
+    • 100% ANTECIPADO: pagamento integral para confirmação do pedido e início da produção.
+    • 50% + 50%: 50% de entrada para confirmação do pedido e início da produção, e 50% restantes na conclusão da instalação.
+    • 100% NA ENTREGA: pagamento integral na conclusão da instalação/entrega do serviço.
 
     OBSERVAÇÕES
-    • O sinal não é reembolsável em caso de desistência.
+    • A confirmação do orçamento por WhatsApp, telefone ou e-mail caracteriza a aceitação do pedido e das condições descritas neste orçamento.
+    • No pagamento 100% antecipado, em caso de desistência após a confirmação do pedido, serão considerados para acerto os valores referentes a materiais, insumos, produtos, serviços e demais custos já realizados ou contratados.
+    • No pagamento 50% + 50%, o valor da entrada será destinado à aquisição de materiais, insumos e início da produção. O sinal não é reembolsável em caso de desistência.
+    • No pagamento 100% na entrega, mesmo sem pagamento antecipado, a confirmação do pedido autoriza a empresa a adquirir os materiais e insumos necessários para execução do serviço. Em caso de cancelamento ou desistência após a confirmação, o cliente será responsável pelos custos dos materiais, insumos, produtos, peças, serviços e demais despesas que já tenham sido adquiridos, produzidos, personalizados ou contratados especificamente para o pedido.
+    • Materiais produzidos ou adquiridos sob medida para o cliente poderão ter seus respectivos custos cobrados em caso de cancelamento, independentemente da forma de pagamento escolhida.
     • Valores sujeitos a alteração até a confirmação do pedido.
     • Produtos não retirados em até 30 dias poderão ser descartados.
-    • A confirmação por WhatsApp, telefone ou e-mail tem validade contratual.
-    • O cliente declara estar de acordo com as medidas e condições deste orçamento.
+    • O cliente declara estar de acordo com as medidas, especificações, materiais, valores e demais condições descritas neste orçamento.
     • Produtos sob medida não possuem troca ou devolução, conforme o Código de Defesa do Consumidor.
+    • Alterações solicitadas pelo cliente após a confirmação do pedido poderão gerar custos adicionais e alteração do prazo de entrega.
+    • A instalação será realizada após a disponibilização do local em condições adequadas para execução do serviço.
     `;
 
     function clearItemForm() {
@@ -1459,8 +1466,6 @@
         closeModal('serviceModal');
         document.getElementById('itemProd').focus();
     }
-
-    /* ===================== SALVAR / CARREGAR ORÇAMENTO ===================== */
 
     function saveQuote(e) {
         if(e) e.preventDefault();
