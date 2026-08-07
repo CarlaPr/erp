@@ -26,10 +26,18 @@ public class FinancialClosingController {
         model.addAttribute("currentPage", "financial-closing");
         model.addAttribute("closings",    closings);
 
-        java.time.LocalDate hoje = java.time.LocalDate.now();
-        model.addAttribute("suggestedYear",  hoje.getYear());
-        model.addAttribute("suggestedMonth", hoje.getMonthValue());
-        model.addAttribute("canClose",       hoje.getDayOfMonth() >= 6);
+        // Próximo período (dia 6 até dia 5 do mês seguinte) ainda não fechado, em ordem cronológica.
+        java.time.LocalDate proximoPeriodo    = closingService.proximoPeriodoParaFechar();
+        boolean liberado                      = closingService.periodoLiberadoParaFechamento(proximoPeriodo);
+        java.time.LocalDate dataLiberacao     = closingService.dataLiberacaoFechamento(proximoPeriodo);
+        java.time.LocalDate fimProximoPeriodo = closingService.periodoFim(proximoPeriodo);
+
+        model.addAttribute("suggestedYear",   proximoPeriodo.getYear());
+        model.addAttribute("suggestedMonth",  proximoPeriodo.getMonthValue());
+        model.addAttribute("canClose",        liberado);
+        model.addAttribute("periodoInicio",   proximoPeriodo);
+        model.addAttribute("periodoFim",      fimProximoPeriodo);
+        model.addAttribute("dataLiberacao",   dataLiberacao);
         return "financial-closing";
     }
 
@@ -46,6 +54,17 @@ public class FinancialClosingController {
             closingService.executeClosing(year, month, user, notes);
             redirectAttrs.addFlashAttribute("success",
                     "Fechamento " + String.format("%02d/%d", month, year) + " realizado com sucesso.");
+        } catch (IllegalStateException e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/financial-closing";
+    }
+
+    @PostMapping("/reopen-last")
+    public String reopenLast(RedirectAttributes redirectAttrs) {
+        try {
+            closingService.reabrirUltimoFechamento();
+            redirectAttrs.addFlashAttribute("success", "Último fechamento reaberto. Você já pode refazê-lo.");
         } catch (IllegalStateException e) {
             redirectAttrs.addFlashAttribute("error", e.getMessage());
         }

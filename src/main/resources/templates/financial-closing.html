@@ -12,7 +12,8 @@
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Fechamento Mensal</h2>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Período: <strong>dia 1 a dia 6</strong> de cada mês. Saldo final vira saldo de abertura do próximo.
+                Período: do <strong>dia 6</strong> de um mês até o <strong>dia 5 do mês seguinte</strong>.
+                Fechamento liberado no dia 6. Saldo final vira saldo de abertura do próximo.
             </p>
         </div>
         <a href="/cash-ledger"
@@ -35,14 +36,20 @@
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 shadow-sm h-fit">
             <h3 class="text-base font-black text-slate-900 dark:text-white mb-1">Fechar Período</h3>
             <p class="text-xs text-slate-500 mb-5">
-                Disponível a partir do <strong>dia 6</strong> do mês corrente.
-                Após fechado, o período não pode ser reaberto.
+                Cada fechamento cobre do <strong>dia 6</strong> de um mês até o <strong>dia 5 do mês seguinte</strong>,
+                ficando disponível a partir do dia 6. Após fechado, o período não pode ser reaberto
+                (exceto o último, veja abaixo).
             </p>
+
+            <div class="mb-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-3 text-xs text-slate-600 dark:text-slate-300">
+                Próximo período pendente:
+                <strong th:text="${#temporals.format(periodoInicio, 'dd/MM/yyyy')} + ' a ' + ${#temporals.format(periodoFim, 'dd/MM/yyyy')}">06/07/2026 a 05/08/2026</strong>
+            </div>
 
             <div th:if="${!canClose}"
                  class="mb-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 rounded-xl p-3 text-xs font-semibold flex items-center gap-2">
                 <i data-lucide="lock" class="w-4 h-4 shrink-0"></i>
-                Fechamento disponível a partir do dia 6 do mês.
+                <span th:text="'Disponível a partir de ' + ${#temporals.format(dataLiberacao, 'dd/MM/yyyy')} + '.'">Disponível em breve.</span>
             </div>
 
             <form th:if="${canClose}" th:action="@{/financial-closing/execute}" method="POST" class="space-y-4">
@@ -86,8 +93,15 @@
         </div>
 
         <div class="lg:col-span-2 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
-            <div class="p-5 border-b border-slate-100 dark:border-slate-800/80">
+            <div class="p-5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3">
                 <h3 class="text-base font-black text-slate-900 dark:text-white">Histórico de Fechamentos</h3>
+                <form th:if="${!#lists.isEmpty(closings)}" th:action="@{/financial-closing/reopen-last}" method="POST">
+                    <button type="submit"
+                            onclick="return confirm('Reabrir o fechamento mais recente? Ele será removido do histórico e o período voltará a ficar pendente para ser refeito.')"
+                            class="flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline">
+                        <i data-lucide="undo-2" class="w-3.5 h-3.5"></i> Reabrir último fechamento
+                    </button>
+                </form>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">
@@ -106,7 +120,7 @@
                     <tr th:each="c : ${closings}" class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
                         <td class="p-4 font-semibold text-slate-700 dark:text-slate-300"
                             th:text="${#temporals.format(c.periodStart, 'dd/MM/yyyy')} + ' a ' + ${#temporals.format(c.periodEnd, 'dd/MM/yyyy')}">
-                            01/07 a 06/07
+                            06/07/2026 a 05/08/2026
                         </td>
                         <td class="p-4 text-right font-mono text-slate-500"
                             th:text="|R$ ${#numbers.formatDecimal(c.openingBalance, 1, 'POINT', 2, 'COMMA')}|">R$ 0</td>
