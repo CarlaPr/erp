@@ -56,7 +56,13 @@
             color: #94a3b8;
         }
 
-        .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #0f172a; padding-bottom: 14px; margin-bottom: 16px; }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 3px solid #0f172a;
+            padding-bottom: 14px;
+            margin-bottom: 30px;
+        }
 
         .company-block { border-collapse: collapse; }
         .company-logo-cell { vertical-align: middle; padding-right: 16px; width: 1%; white-space: nowrap; }
@@ -81,7 +87,14 @@
         .client-bar-cell { width: 4px; background: #0f172a; padding: 0; }
         .client-inner { padding: 12px 16px; }
         .client-name-main { font-size: 17px; font-weight: 800; color: #0f172a; line-height: 1.15; margin-top: 3px; }
-        .client-details-row { margin-top: 9px; border-top: 1px solid #e2e8f0; padding-top: 7px; font-size: 9.5px; color: #475569; font-weight: 600; }
+        .client-details-row {
+            margin-top: 9px;
+            padding-top: 7px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 9.5px;
+            color: #475569;
+            font-weight: 600;
+        }
 
         .items-wrapper { border: 1px solid #e2e8f0; border-radius: 14px 14px 0 0; overflow: hidden; margin-bottom: 0; }
         .items-table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
@@ -155,6 +168,7 @@
                     <td class="company-info-cell">
                         <div class="company-name-main" th:text="${companyName}">EMPRESA</div>
                         <div class="company-detail" th:text="${'CNPJ/CPF: ' + companyDoc}">CNPJ/CPF: --</div>
+                        <div class="company-detail">GRUPO TAHIGLASS</div>
                         <div class="company-detail" th:if="${!companyAddress.isEmpty()}" th:text="${companyAddress}"></div>
                         <div class="company-contact-row" th:if="${!companyEmail.isEmpty()}">
                             <img src="data:image/png;base64,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" alt=""/><span th:text="${companyEmail}"></span>

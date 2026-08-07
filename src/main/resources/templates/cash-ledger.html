@@ -346,21 +346,25 @@
 
                     <td
                             class="p-3 text-xs text-slate-500"
-                            th:text="${entry.paymentMethod ?: '—'}">
+                            th:text="${entry.paymentMethod != null ? entry.paymentMethod : '—'}">
                         —
                     </td>
 
 
                     <td
                             class="p-3 pr-4 text-right font-mono font-semibold text-emerald-600 dark:text-emerald-400"
-                            th:text="${entry.entrada.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? |R$ ${#numbers.formatDecimal(entry.entrada, 1, 'POINT', 2, 'COMMA')}| : '—'">
+                            th:text="${entry.entrada.compareTo(T(java.math.BigDecimal).ZERO) > 0 ?
+                                'R$ ' + #numbers.formatDecimal(entry.entrada, 1, 'POINT', 2, 'COMMA') :
+                                '—'}">
                         —
                     </td>
 
 
                     <td
                             class="p-3 pr-4 text-right font-mono font-semibold text-rose-600 dark:text-rose-400"
-                            th:text="${entry.saida.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? |R$ ${#numbers.formatDecimal(entry.saida, 1, 'POINT', 2, 'COMMA')}| : '—'">
+                            th:text="${entry.saida.compareTo(T(java.math.BigDecimal).ZERO) > 0 ?
+                            'R$ ' + #numbers.formatDecimal(entry.saida, 1, 'POINT', 2, 'COMMA') :
+                            '—'}">
                         —
                     </td>
 
@@ -466,7 +470,7 @@
 
                         <div
                                 class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                                th:classappend="${entry.type.name() == 'ENTRADA'} ? 'bg-emerald-100 dark:bg-emerald-500/10' : (${entry.financialExpense} ? 'bg-amber-100 dark:bg-amber-500/10' : 'bg-rose-100 dark:bg-rose-500/10')}">
+                                th:classappend="${entry.type.name() == 'ENTRADA' ? 'bg-emerald-100 dark:bg-emerald-500/10' : (entry.financialExpense ? 'bg-amber-100 dark:bg-amber-500/10' : 'bg-rose-100 dark:bg-rose-500/10')}">
 
                             <i
                                     th:if="${entry.type.name() == 'ENTRADA'}"
