@@ -57,8 +57,7 @@ public class ScheduleController {
     public String index(Model model) {
         boolean isTecnico = SecurityUtils.isTecnico();
 
-        // O técnico enxerga todos os serviços agendados e também as visitas técnicas
-        // (apenas visualização — edição/exclusão de visita continua bloqueada para ele).
+
         List<ScheduleDto> schedules = scheduleService.listAllDto();
         List<TechnicalVisitDto> technicalVisits = technicalVisitService.listAllDto();
 
@@ -106,9 +105,7 @@ public class ScheduleController {
         }
     }
 
-    /**
-     * Altera o prazo (data limite) de um agendamento — "arrumar o prazo" na agenda.
-     */
+
     @PostMapping(value = "/{id}/deadline", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> changeDeadline(@PathVariable UUID id,
@@ -133,11 +130,7 @@ public class ScheduleController {
         }
     }
 
-    /**
-     * Adiciona um novo dia de execução ao agendamento, sem remover os já
-     * existentes — permite que o mesmo serviço (mesma OS) fique agendado em
-     * mais de uma data (ex.: 10/08 e 17/08).
-     */
+
     @PostMapping(value = "/occurrences/add", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> addOccurrence(@RequestBody ScheduleOccurrenceSaveRequest request) {
@@ -158,7 +151,7 @@ public class ScheduleController {
         }
     }
 
-    /** Edita uma das datas já agendadas (muda dia/hora/equipe/status daquela ocorrência). */
+
     @PostMapping(value = "/occurrences/update", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> updateOccurrence(@RequestBody ScheduleOccurrenceSaveRequest request) {
@@ -179,7 +172,7 @@ public class ScheduleController {
         }
     }
 
-    /** Remove um dos dias agendados para este serviço. */
+
     @PostMapping(value = "/occurrences/{occurrenceId}/remove", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> removeOccurrence(@PathVariable UUID occurrenceId,
@@ -216,10 +209,7 @@ public class ScheduleController {
         }
     }
 
-    /**
-     * Usado pelo perfil TECNICO (e demais perfis) para registrar, no dia do serviço, uma
-     * observação sobre o que ocorreu no atendimento. Fica salvo com usuário e data/hora.
-     */
+
     @PostMapping(value = "/{id}/technician-note", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> addTechnicianNote(@PathVariable UUID id,
@@ -248,10 +238,7 @@ public class ScheduleController {
         }
     }
 
-    /**
-     * Gera o roteiro do dia em PDF de verdade (via openhtmltopdf), para abrir em qualquer
-     * dispositivo (inclusive celular), substituindo a geração de texto/impressão via navegador.
-     */
+
     @GetMapping("/roteiro-pdf/{date}")
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> roteiroPdf(@PathVariable String date) {
@@ -263,9 +250,8 @@ public class ScheduleController {
                 return ResponseEntity.badRequest().build();
             }
 
-            // O roteiro do dia mostra todos os serviços agendados e também as visitas técnicas.
-            // Um mesmo serviço pode ter mais de um dia agendado (ex.: OS1001 em 10/08 e
-            // 17/08): por isso percorremos as ocorrências, não só a data "resumo".
+
+
             List<ScheduleDto> schedules = scheduleService.listAllDto();
 
             List<RoteiroItemView> items = new ArrayList<>();
@@ -344,8 +330,8 @@ public class ScheduleController {
         int[] weights = {400, 500, 600, 700, 800, 900};
         for (int weight : weights) {
             String path = "/fonts/Inter-" + weight + ".ttf";
-            // Só registra a fonte se o arquivo realmente existir no classpath; caso contrário,
-            // o PDF ainda é gerado normalmente usando a fonte padrão do renderizador.
+
+
             if (getClass().getResource(path) != null) {
                 builder.useFont(() -> getClass().getResourceAsStream(path), "Inter", weight,
                         PdfRendererBuilder.FontStyle.NORMAL, true);
@@ -400,7 +386,7 @@ public class ScheduleController {
         return (v != null && !v.isBlank()) ? v : def;
     }
 
-    /** View-model simples usado apenas para renderizar o PDF do roteiro do dia. */
+
     public static class RoteiroItemView {
         private String clientName;
         private String clientAddress;

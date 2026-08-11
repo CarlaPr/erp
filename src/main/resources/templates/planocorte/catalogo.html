@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Catálogo de Insumos - Tahi Glass ERP')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
+    <header class="mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5">
+        <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Catálogo de Insumos</h2>
+        <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Vidros, alumínio, ferragens, silicones e acessórios — tudo em um só lugar.</p>
+    </header>
+
+    <div th:if="${sucesso}" class="mb-6 flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 px-5 py-3.5 rounded-xl font-semibold text-sm">
+        <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0"></i> <span th:text="${sucesso}">Sucesso</span>
+    </div>
+    <div th:if="${erro}" class="mb-6 flex items-center gap-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-400 px-5 py-3.5 rounded-xl font-semibold text-sm">
+        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i> <span th:text="${erro}">Erro</span>
+    </div>
+
+
+    <div class="flex flex-wrap gap-2 mb-6" id="tabNav">
+        <button type="button" onclick="mostrarAba('vidros')" data-tabbtn="vidros" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+            <i data-lucide="square" class="w-4 h-4"></i> Vidros <span class="opacity-60" th:text="'(' + ${#lists.size(vidros)} + ')'"></span>
+        </button>
+        <button type="button" onclick="mostrarAba('aluminio')" data-tabbtn="aluminio" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+            <i data-lucide="rows-3" class="w-4 h-4"></i> Alumínio <span class="opacity-60" th:text="'(' + ${#lists.size(perfis)} + ')'"></span>
+        </button>
+        <button type="button" onclick="mostrarAba('ferragens')" data-tabbtn="ferragens" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+            <i data-lucide="wrench" class="w-4 h-4"></i> Ferragens <span class="opacity-60" th:text="'(' + ${#lists.size(ferragens)} + ')'"></span>
+        </button>
+        <button type="button" onclick="mostrarAba('silicones')" data-tabbtn="silicones" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+            <i data-lucide="droplet" class="w-4 h-4"></i> Silicones <span class="opacity-60" th:text="'(' + ${#lists.size(silicones)} + ')'"></span>
+        </button>
+        <button type="button" onclick="mostrarAba('acessorios')" data-tabbtn="acessorios" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+            <i data-lucide="puzzle" class="w-4 h-4"></i> Acessórios <span class="opacity-60" th:text="'(' + ${#lists.size(acessorios)} + ')'"></span>
+        </button>
+    </div>
+
+
+    <section id="tab-vidros" class="tab-panel space-y-5">
+        <div class="flex flex-wrap justify-between items-center gap-3">
+            <button type="button" onclick="toggleCollapse('importVidrosPanel')" class="text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1.5">
+                <i data-lucide="upload" class="w-4 h-4"></i> Importar em lote (.csv / .xlsx)
+            </button>
+            <button onclick="abrirModalNovo('vidroModal', 'vidroForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i> Novo Vidro
+            </button>
+        </div>
+
+        <div id="importVidrosPanel" class="hidden bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5">
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                Vidros com o mesmo <strong>nome</strong> são atualizados; os demais são criados. Toda mudança de valor/m² fica registrada no histórico de preço.
+            </p>
+            <form th:action="@{/cut-plans/catalogo/vidros/importar}" method="POST" enctype="multipart/form-data" class="flex flex-wrap items-center gap-3">
+                <input type="file" name="arquivo" accept=".csv,.xlsx,.xls" required
+                       class="text-sm border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-slate-100 dark:file:bg-slate-800 file:text-slate-700 dark:file:text-slate-200 file:text-sm dark:bg-slate-900 dark:text-white" />
+                <button type="submit" class="bg-slate-900 dark:bg-slate-700 text-white text-sm font-semibold rounded-lg px-4 py-2 hover:bg-slate-800 transition">Importar</button>
+                <a th:href="@{/cut-plans/catalogo/vidros/importar/modelo.csv}" class="text-sm text-slate-500 dark:text-slate-400 underline">Baixar modelo .csv</a>
+            </form>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-3 font-mono">nome, fabricante, tipo, espessura, cor, acabamento, valor_m2, valor_minimo, peso_m2</p>
+        </div>
+
+        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[860px]">
+                <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
+                    <th class="p-4">Nome</th>
+                    <th class="p-4">Tipo</th>
+                    <th class="p-4">Espessura</th>
+                    <th class="p-4">Fornecedor</th>
+                    <th class="p-4 text-right">Valor/m²</th>
+                    <th class="p-4 text-center">Status</th>
+                    <th class="p-4 text-center">Ações</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+                <tr th:each="v : ${vidros}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors" th:classappend="${!v.ativo} ? 'opacity-50' : ''">
+                    <td class="p-4">
+                        <div class="font-bold text-slate-900 dark:text-white" th:text="${v.nome}">Vidro</div>
+                        <div class="text-slate-500 dark:text-slate-400 text-xs" th:text="${v.cor} + (${v.acabamento} != null ? ' · ' + ${v.acabamento} : '')">-</div>
+                    </td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300" th:text="${v.tipo}">COMUM</td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300" th:text="${v.espessura} + 'mm'">-</td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300"
+                        th:text="${v.supplier?.name ?: '—'}">-</td>
+                    <td class="p-4 text-right font-bold text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(v.valorPorM2, 1, 2)}">-</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase" th:classappend="${v.ativo} ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'" th:text="${v.ativo} ? 'Ativo' : 'Inativo'">Ativo</span>
+                    </td>
+                    <td class="p-4 text-center space-x-1 whitespace-nowrap">
+                        <button type="button" onclick="verHistorico(this)" th:attr="data-vidro-id=${v.id},data-vidro-nome=${v.nome}" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Histórico de preço">
+                            <i data-lucide="history" class="w-4 h-4"></i>
+                        </button>
+                        <a th:href="@{/cut-plans/catalogo/vidros/{id}/editar(id=${v.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
+                        <form th:action="@{/cut-plans/catalogo/vidros/{id}/inativar(id=${v.id})}" method="POST" class="inline-block">
+                            <button type="submit" onclick="return confirm('Inativar este vidro?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Inativar"><i data-lucide="power-off" class="w-4 h-4"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(vidros)}"><td colspan="7" class="p-10 text-center text-slate-500 font-medium">Nenhum vidro cadastrado.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+
+    <section id="tab-aluminio" class="tab-panel space-y-5">
+        <div class="flex justify-end">
+            <button onclick="abrirModalNovo('perfilModal', 'perfilForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i> Novo Perfil
+            </button>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[760px]">
+                <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
+                    <th class="p-4">Linha / Perfil</th>
+                    <th class="p-4">Cor</th>
+                    <th class="p-4">Fornecedor</th>
+                    <th class="p-4 text-right">Valor/m</th>
+                    <th class="p-4 text-center">Status</th>
+                    <th class="p-4 text-center">Ações</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+                <tr th:each="p : ${perfis}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors" th:classappend="${!p.ativo} ? 'opacity-50' : ''">
+                    <td class="p-4">
+                        <div class="font-bold text-slate-900 dark:text-white" th:text="${p.linha}">Linha</div>
+                        <div class="text-slate-500 dark:text-slate-400 text-xs" th:text="${p.perfil}">Perfil</div>
+                    </td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300" th:text="${p.cor}">-</td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300" th:text="${p.supplier != null ? p.supplier.name : '—'}">-</td>
+                    <td class="p-4 text-right font-bold text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(p.valorPorMetro, 1, 2)}">-</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase" th:classappend="${p.ativo} ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'" th:text="${p.ativo} ? 'Ativo' : 'Inativo'">Ativo</span>
+                    </td>
+                    <td class="p-4 text-center space-x-1 whitespace-nowrap">
+                        <a th:href="@{/cut-plans/catalogo/aluminio/{id}/editar(id=${p.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
+                        <form th:action="@{/cut-plans/catalogo/aluminio/{id}/inativar(id=${p.id})}" method="POST" class="inline-block">
+                            <button type="submit" onclick="return confirm('Inativar este perfil?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Inativar"><i data-lucide="power-off" class="w-4 h-4"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(perfis)}"><td colspan="6" class="p-10 text-center text-slate-500 font-medium">Nenhum perfil cadastrado.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+
+    <section id="tab-ferragens" class="tab-panel space-y-5">
+        <div class="flex justify-end">
+            <button onclick="abrirModalNovo('ferragemModal', 'ferragemForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i> Nova Ferragem
+            </button>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[820px]">
+                <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
+                    <th class="p-4">Categoria / Produto</th>
+                    <th class="p-4">Fornecedor</th>
+                    <th class="p-4">Unidade</th>
+                    <th class="p-4 text-right">Valor</th>
+                    <th class="p-4 text-center">Status</th>
+                    <th class="p-4 text-center">Ações</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+                <tr th:each="f : ${ferragens}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors" th:classappend="${!f.ativo} ? 'opacity-50' : ''">
+                    <td class="p-4">
+                        <div class="font-bold text-slate-900 dark:text-white" th:text="${f.produto}">Produto</div>
+                        <div class="text-slate-500 dark:text-slate-400 text-xs" th:text="${f.categoria} + (${f.codigo} != null ? ' · ' + ${f.codigo} : '')">Categoria</div>
+                    </td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300" th:text="${f.supplier != null ? f.supplier.name : '—'}">-</td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300" th:text="${f.unidade}">un</td>
+                    <td class="p-4 text-right font-bold text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(f.valor, 1, 2)}">-</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase" th:classappend="${f.ativo} ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'" th:text="${f.ativo} ? 'Ativo' : 'Inativo'">Ativo</span>
+                    </td>
+                    <td class="p-4 text-center space-x-1 whitespace-nowrap">
+                        <a th:href="@{/cut-plans/catalogo/ferragens/{id}/editar(id=${f.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
+                        <form th:action="@{/cut-plans/catalogo/ferragens/{id}/inativar(id=${f.id})}" method="POST" class="inline-block">
+                            <button type="submit" onclick="return confirm('Inativar esta ferragem?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Inativar"><i data-lucide="power-off" class="w-4 h-4"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(ferragens)}"><td colspan="6" class="p-10 text-center text-slate-500 font-medium">Nenhuma ferragem cadastrada.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+
+    <section id="tab-silicones" class="tab-panel space-y-5">
+        <div class="flex justify-end">
+            <button onclick="abrirModalNovo('siliconeModal', 'siliconeForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i> Novo Silicone
+            </button>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
+                    <th class="p-4">Marca</th>
+                    <th class="p-4">Cor / Embalagem</th>
+                    <th class="p-4">Fornecedor</th>
+                    <th class="p-4 text-right">Valor</th>
+                    <th class="p-4 text-center">Status</th>
+                    <th class="p-4 text-center">Ações</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+                <tr th:each="s : ${silicones}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors" th:classappend="${!s.ativo} ? 'opacity-50' : ''">
+                    <td class="p-4 font-bold text-slate-900 dark:text-white" th:text="${s.marca}">Marca</td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300" th:text="${s.cor} + (${s.embalagem} != null ? ' · ' + ${s.embalagem} : '')">-</td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300" th:text="${s.supplier != null ? s.supplier.name : '—'}">-</td>
+                    <td class="p-4 text-right font-bold text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(s.valor, 1, 2)}">-</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase" th:classappend="${s.ativo} ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'" th:text="${s.ativo} ? 'Ativo' : 'Inativo'">Ativo</span>
+                    </td>
+                    <td class="p-4 text-center space-x-1 whitespace-nowrap">
+                        <a th:href="@{/cut-plans/catalogo/silicones/{id}/editar(id=${s.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
+                        <form th:action="@{/cut-plans/catalogo/silicones/{id}/inativar(id=${s.id})}" method="POST" class="inline-block">
+                            <button type="submit" onclick="return confirm('Inativar este silicone?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Inativar"><i data-lucide="power-off" class="w-4 h-4"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(silicones)}"><td colspan="6" class="p-10 text-center text-slate-500 font-medium">Nenhum silicone cadastrado.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+
+    <section id="tab-acessorios" class="tab-panel space-y-5">
+        <div class="flex justify-end">
+            <button onclick="abrirModalNovo('acessorioModal', 'acessorioForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i> Novo Acessório
+            </button>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
+                    <th class="p-4">Nome</th>
+                    <th class="p-4">Tipo</th>
+                    <th class="p-4">Fornecedor</th>
+                    <th class="p-4 text-right">Valor</th>
+                    <th class="p-4 text-center">Status</th>
+                    <th class="p-4 text-center">Ações</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+                <tr th:each="a : ${acessorios}" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors" th:classappend="${!a.ativo} ? 'opacity-50' : ''">
+                    <td class="p-4 font-bold text-slate-900 dark:text-white" th:text="${a.nome}">Nome</td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300" th:text="${a.tipo.descricao}">Tipo</td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300" th:text="${a.supplier != null ? a.supplier.name : '—'}">-</td>
+                    <td class="p-4 text-right font-bold text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(a.valor, 1, 2)} + ' / ' + ${a.unidade}">-</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase" th:classappend="${a.ativo} ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'" th:text="${a.ativo} ? 'Ativo' : 'Inativo'">Ativo</span>
+                    </td>
+                    <td class="p-4 text-center space-x-1 whitespace-nowrap">
+                        <a th:href="@{/cut-plans/catalogo/acessorios/{id}/editar(id=${a.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
+                        <form th:action="@{/cut-plans/catalogo/acessorios/{id}/inativar(id=${a.id})}" method="POST" class="inline-block">
+                            <button type="submit" onclick="return confirm('Inativar este acessório?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Inativar"><i data-lucide="power-off" class="w-4 h-4"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(acessorios)}"><td colspan="6" class="p-10 text-center text-slate-500 font-medium">Nenhum acessório cadastrado.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+
+    <div id="vidroModal" th:class="${isEditingVidro} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-8">
+            <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditingVidro} ? 'Editar Vidro' : 'Novo Vidro'">Formulário</h3>
+                <a th:href="@{/cut-plans/catalogo(tab='vidros')}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></a>
+            </header>
+            <form th:action="@{/cut-plans/catalogo/vidros}" th:object="${vidroForm}" method="POST" class="p-6 space-y-5">
+                <input type="hidden" th:field="*{id}" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome</label>
+                        <input type="text" th:field="*{nome}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tipo</label>
+                        <select th:field="*{tipo}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all">
+                            <option th:each="t : ${tiposVidro}" th:value="${t}" th:text="${t}"></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Espessura (mm)</label>
+                        <input type="number" step="0.1" th:field="*{espessura}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Cor</label>
+                        <input type="text" th:field="*{cor}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Acabamento</label>
+                        <input type="text" th:field="*{acabamento}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Fabricante</label>
+                        <input type="text" th:field="*{fabricante}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Fornecedor</label>
+                        <select th:field="*{supplierId}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all">
+                            <option value="">—</option>
+                            <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Valor por m² (R$)</label>
+                        <input type="number" step="0.01" th:field="*{valorPorM2}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Valor mínimo (R$, opcional)</label>
+                        <input type="number" step="0.01" th:field="*{valorMinimo}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Peso por m² (kg, opcional)</label>
+                        <input type="number" step="0.01" th:field="*{pesoPorM2}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Vigência desde</label>
+                        <input type="date" th:field="*{dataVigencia}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Observações</label>
+                        <textarea th:field="*{observacoes}" rows="2" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-6">
+                    <a th:href="@{/cut-plans/catalogo(tab='vidros')}" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold">Cancelar</a>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black transition-all shadow-md shadow-violet-500/20">Salvar Vidro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="perfilModal" th:class="${isEditingPerfil} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden my-8">
+            <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditingPerfil} ? 'Editar Perfil' : 'Novo Perfil de Alumínio'">Formulário</h3>
+                <a th:href="@{/cut-plans/catalogo(tab='aluminio')}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></a>
+            </header>
+            <form th:action="@{/cut-plans/catalogo/aluminio}" th:object="${perfilForm}" method="POST" class="p-6 space-y-5">
+                <input type="hidden" th:field="*{id}" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Linha</label>
+                        <input type="text" th:field="*{linha}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Perfil</label>
+                        <input type="text" th:field="*{perfil}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Cor</label>
+                        <input type="text" th:field="*{cor}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Fabricante</label>
+                        <input type="text" th:field="*{fabricante}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Fornecedor</label>
+                        <select th:field="*{supplierId}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all">
+                            <option value="">—</option>
+                            <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                        </select></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Valor por metro (R$)</label>
+                        <input type="number" step="0.01" th:field="*{valorPorMetro}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                </div>
+                <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-6">
+                    <a th:href="@{/cut-plans/catalogo(tab='aluminio')}" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold">Cancelar</a>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black transition-all shadow-md shadow-violet-500/20">Salvar Perfil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="ferragemModal" th:class="${isEditingFerragem} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-8">
+            <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditingFerragem} ? 'Editar Ferragem' : 'Nova Ferragem'">Formulário</h3>
+                <a th:href="@{/cut-plans/catalogo(tab='ferragens')}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></a>
+            </header>
+            <form th:action="@{/cut-plans/catalogo/ferragens}" th:object="${ferragemForm}" method="POST" class="p-6 space-y-5">
+                <input type="hidden" th:field="*{id}" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Categoria</label>
+                        <input type="text" th:field="*{categoria}" placeholder="Dobradiça, Puxador..." required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Produto</label>
+                        <input type="text" th:field="*{produto}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Código (opcional)</label>
+                        <input type="text" th:field="*{codigo}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Fornecedor</label>
+                        <select th:field="*{supplierId}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all">
+                            <option value="">—</option>
+                            <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                        </select></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Valor (R$)</label>
+                        <input type="number" step="0.01" th:field="*{valor}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Unidade</label>
+                        <input type="text" th:field="*{unidade}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                </div>
+
+                <details class="border-t border-slate-200 dark:border-slate-700 pt-4">
+                    <summary class="text-sm font-semibold text-slate-600 dark:text-slate-400 cursor-pointer select-none">Medidas padrão para uso automático como Elemento Técnico (opcional)</summary>
+                    <p class="text-xs text-slate-500 dark:text-slate-500 mt-2 mb-3">Preenchidas aqui, essas medidas são sugeridas automaticamente ao adicionar esta ferragem como elemento técnico de uma peça no Plano de Corte.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tipo padrão</label>
+                            <select th:field="*{tipoElementoPadrao}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white">
+                                <option value="">—</option>
+                                <option th:each="t : ${tiposElemento}" th:value="${t}" th:text="${t.descricao}"></option>
+                            </select></div>
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Diâmetro furação (mm)</label>
+                            <input type="number" step="0.1" th:field="*{diametroFuracaoMm}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Qtd. furos</label>
+                            <input type="number" step="1" th:field="*{quantidadeFuros}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Dist. borda (mm)</label>
+                            <input type="number" step="0.1" th:field="*{distanciaBordaMm}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Dist. topo (mm)</label>
+                            <input type="number" step="0.1" th:field="*{distanciaTopoMm}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Largura (mm)</label>
+                            <input type="number" step="0.1" th:field="*{larguraMm}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Altura (mm)</label>
+                            <input type="number" step="0.1" th:field="*{alturaMm}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Comprimento (mm)</label>
+                            <input type="number" step="0.1" th:field="*{comprimentoMm}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Profundidade (mm)</label>
+                            <input type="number" step="0.1" th:field="*{profundidadeMm}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Raio (mm)</label>
+                            <input type="number" step="0.1" th:field="*{raioMm}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
+                        <div><label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Ângulo (°)</label>
+                            <input type="number" step="0.1" th:field="*{anguloGraus}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
+                    </div>
+                </details>
+
+                <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-6">
+                    <a th:href="@{/cut-plans/catalogo(tab='ferragens')}" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold">Cancelar</a>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black transition-all shadow-md shadow-violet-500/20">Salvar Ferragem</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="siliconeModal" th:class="${isEditingSilicone} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden my-8">
+            <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditingSilicone} ? 'Editar Silicone' : 'Novo Silicone'">Formulário</h3>
+                <a th:href="@{/cut-plans/catalogo(tab='silicones')}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></a>
+            </header>
+            <form th:action="@{/cut-plans/catalogo/silicones}" th:object="${siliconeForm}" method="POST" class="p-6 space-y-5">
+                <input type="hidden" th:field="*{id}" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2"><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Marca</label>
+                        <input type="text" th:field="*{marca}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Cor</label>
+                        <input type="text" th:field="*{cor}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Embalagem</label>
+                        <input type="text" th:field="*{embalagem}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Fornecedor</label>
+                        <select th:field="*{supplierId}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all">
+                            <option value="">—</option>
+                            <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                        </select></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Valor (R$)</label>
+                        <input type="number" step="0.01" th:field="*{valor}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                </div>
+                <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-6">
+                    <a th:href="@{/cut-plans/catalogo(tab='silicones')}" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold">Cancelar</a>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black transition-all shadow-md shadow-violet-500/20">Salvar Silicone</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="acessorioModal" th:class="${isEditingAcessorio} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden my-8">
+            <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditingAcessorio} ? 'Editar Acessório' : 'Novo Acessório'">Formulário</h3>
+                <a th:href="@{/cut-plans/catalogo(tab='acessorios')}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></a>
+            </header>
+            <form th:action="@{/cut-plans/catalogo/acessorios}" th:object="${acessorioForm}" method="POST" class="p-6 space-y-5">
+                <input type="hidden" th:field="*{id}" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2"><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome</label>
+                        <input type="text" th:field="*{nome}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tipo</label>
+                        <select th:field="*{tipo}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all">
+                            <option th:each="t : ${tiposAcessorio}" th:value="${t}" th:text="${t.descricao}"></option>
+                        </select></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Unidade</label>
+                        <input type="text" th:field="*{unidade}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Fornecedor</label>
+                        <select th:field="*{supplierId}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all">
+                            <option value="">—</option>
+                            <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                        </select></div>
+                    <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Valor (R$)</label>
+                        <input type="number" step="0.01" th:field="*{valor}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
+                </div>
+                <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-6">
+                    <a th:href="@{/cut-plans/catalogo(tab='acessorios')}" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold">Cancelar</a>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black transition-all shadow-md shadow-violet-500/20">Salvar Acessório</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="historicoModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-8">
+            <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Histórico de preço — <span id="historicoVidroNome"></span></h3>
+                <button type="button" onclick="fecharHistorico()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </header>
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <table class="w-full text-sm">
+                    <thead class="text-slate-500 dark:text-slate-400 uppercase text-xs font-bold">
+                        <tr><th class="text-left pb-2">Data</th><th class="text-left pb-2">De</th><th class="text-left pb-2">Para</th><th class="text-left pb-2">Origem</th><th class="text-left pb-2">Usuário</th></tr>
+                    </thead>
+                    <tbody id="historicoTbody" class="divide-y divide-slate-100 dark:divide-slate-700/50"></tbody>
+                </table>
+                <p id="historicoVazio" class="text-center text-slate-500 py-8 hidden">Sem alterações registradas ainda.</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    const ACTIVE_TAB = /*[[${activeTab}]]*/ 'vidros';
+    const MODAL_ABERTO = /*[[${modalAberto}]]*/ null;
+    const MODAL_IDS = { vidro: 'vidroModal', perfil: 'perfilModal', ferragem: 'ferragemModal', silicone: 'siliconeModal', acessorio: 'acessorioModal' };
+    const OPEN_MODAL = MODAL_ABERTO ? MODAL_IDS[MODAL_ABERTO] : null;
+
+    function mostrarAba(nome) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        document.getElementById('tab-' + nome).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            const ativo = b.getAttribute('data-tabbtn') === nome;
+            b.classList.toggle('bg-violet-600', ativo);
+            b.classList.toggle('text-white', ativo);
+            b.classList.toggle('shadow-md', ativo);
+            b.classList.toggle('bg-white', !ativo);
+            b.classList.toggle('dark:bg-[#131C2F]', !ativo);
+            b.classList.toggle('text-slate-600', !ativo);
+            b.classList.toggle('dark:text-slate-300', !ativo);
+            b.classList.toggle('border', !ativo);
+            b.classList.toggle('border-slate-200', !ativo);
+            b.classList.toggle('dark:border-slate-700/50', !ativo);
+        });
+        history.replaceState(null, '', '/cut-plans/catalogo?tab=' + nome);
+    }
+
+    function toggleCollapse(id) {
+        document.getElementById(id).classList.toggle('hidden');
+    }
+
+    function abrirModalNovo(modalId, formId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function verHistorico(btn) {
+        const id = btn.getAttribute('data-vidro-id');
+        const nome = btn.getAttribute('data-vidro-nome');
+        document.getElementById('historicoVidroNome').textContent = nome;
+        const modal = document.getElementById('historicoModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        fetch('/cut-plans/catalogo/vidros/' + id + '/historico')
+            .then(r => r.json())
+            .then(lista => {
+                const tbody = document.getElementById('historicoTbody');
+                tbody.innerHTML = '';
+                document.getElementById('historicoVazio').classList.toggle('hidden', lista.length > 0);
+                lista.forEach(h => {
+                    const tr = document.createElement('tr');
+                    const data = h.criadoEm ? new Date(h.criadoEm).toLocaleString('pt-BR') : '-';
+                    const de = h.valorAntigo != null ? 'R$ ' + Number(h.valorAntigo).toFixed(2) : '—';
+                    const para = 'R$ ' + Number(h.valorNovo).toFixed(2);
+                    tr.innerHTML = '<td class="py-2 text-slate-600 dark:text-slate-300">' + data + '</td>'
+                        + '<td class="py-2 text-slate-600 dark:text-slate-300">' + de + '</td>'
+                        + '<td class="py-2 font-bold text-slate-900 dark:text-white">' + para + '</td>'
+                        + '<td class="py-2 text-slate-600 dark:text-slate-300">' + (h.origem || '-') + '</td>'
+                        + '<td class="py-2 text-slate-600 dark:text-slate-300">' + (h.usuario || '-') + '</td>';
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(() => {
+                document.getElementById('historicoVazio').textContent = 'Não foi possível carregar o histórico.';
+                document.getElementById('historicoVazio').classList.remove('hidden');
+            });
+    }
+
+    function fecharHistorico() {
+        const modal = document.getElementById('historicoModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        mostrarAba(ACTIVE_TAB);
+        if (OPEN_MODAL) {
+            const modal = document.getElementById(OPEN_MODAL);
+            if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+        }
+    });
+</script>
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>

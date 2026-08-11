@@ -7,9 +7,6 @@
 <div th:replace="~{fragments/layout :: topbar}"></div>
 
 <style>
-    /* =========================================================
-       CONTAS A PAGAR — RESPONSIVIDADE MOBILE
-       ========================================================= */
     .payables-mobile { display:none; }
     @media (max-width: 767px) {
         body { overflow-x:hidden; }
@@ -1075,7 +1072,6 @@
         document.getElementById('searchOsIcon').classList.remove('hidden');
     }
 
-    // ── Lógicas Originais Mantidas ──
     function openPayModal(id, balance) {
         document.getElementById('payForm').action = '/payables/pay/' + id;
         document.getElementById('payBalance').textContent = 'R$ ' + balance;

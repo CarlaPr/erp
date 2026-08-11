@@ -573,13 +573,13 @@
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 
 <script th:inline="javascript">
-    // --- CORREÇÃO APLICADA AQUI ---
-    // Substituindo "const SCHEDULES = [];" por:
+
+
     const EXECUTION_SCHEDULES_RAW = /*[[${schedules}]]*/ [];
-    // Visitas técnicas agendadas a partir dos Orçamentos, exibidas junto na Agenda Comercial.
+
     const TECHNICAL_VISITS_RAW = /*[[${technicalVisits}]]*/ [];
-    // Quando true, o usuário logado é do perfil TÉCNICO: ele só vê os próprios serviços e
-    // pode apenas registrar observações (sem editar/agendar/cancelar).
+
+
     const IS_TECNICO = /*[[${isTecnico}]]*/ false;
 
     function normalizeVisit(v) {
@@ -611,15 +611,14 @@
         };
     }
 
-    // Expande cada agendamento em uma "entrada de calendário" por dia agendado
-    // (ocorrência), permitindo que o mesmo serviço apareça em mais de uma
-    // data (ex.: OS1001 em 10/08 e 17/08). O clique em qualquer uma delas
-    // abre o mesmo agendamento (mesmo id), que lista todos os seus dias.
+
+
+
     function expandOccurrences(schedule) {
         const occs = Array.isArray(schedule.occurrences) ? schedule.occurrences : [];
         if (occs.length === 0) {
-            // Sem ocorrências cadastradas (ex.: ainda "aguardando agendamento"):
-            // mantém uma única entrada "virtual" baseada nos campos resumo.
+
+
             return [{ ...schedule, kind: 'EXECUCAO' }];
         }
         return occs.map(o => ({
@@ -713,8 +712,7 @@
         renderAll();
     }
 
-    // Para o perfil TÉCNICO o card de filtros nem é renderizado (th:if), então os elementos
-    // abaixo podem não existir no DOM — os listeners checam a existência antes de usar.
+
     ['filterSearch', 'filterStatus', 'filterResponsible', 'filterFrom', 'filterTo'].forEach(id => {
         document.addEventListener('DOMContentLoaded', () => {
             const el = document.getElementById(id);
@@ -787,8 +785,8 @@
     }
 
     function openRouteDayFromPicker() {
-        // Alternativa simples e visível ao duplo clique no número do dia: escolher a data
-        // num campo e clicar em "Ver" já abre os serviços/roteiro daquele dia.
+
+
         const val = document.getElementById('routeDatePicker').value;
         if (!val) {
             alert('Selecione uma data para ver os serviços do dia.');
@@ -811,7 +809,7 @@
             if (!s.scheduledDate) return;
             (byDate[s.scheduledDate] = byDate[s.scheduledDate] || []).push(s);
         });
-        // Ordena os serviços de cada dia por horário (mais cedo primeiro).
+
         Object.keys(byDate).forEach(d => {
             byDate[d].sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
         });
@@ -847,8 +845,8 @@
                 : 'text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-cyan-400');
             numEl.textContent = String(dayNum);
             numEl.title = 'Ver serviços do dia ' + String(dayNum);
-            // Um único clique no número do dia já abre os serviços/roteiro daquele dia —
-            // não é mais necessário dar dois cliques.
+
+
             numEl.addEventListener('click', () => openDayModal(dateStr));
             cell.appendChild(numEl);
 
@@ -883,8 +881,8 @@
     }
 
     function openDayModal(dateStr) {
-        // Serviços do dia em ordem de horário: o que for mais cedo aparece primeiro.
-        // Itens sem horário definido vão para o final da lista.
+
+
         const items = applyFilters(SCHEDULES)
             .filter(s => s.scheduledDate === dateStr)
             .slice()
@@ -955,8 +953,8 @@
     }
 
     function openRoteiroPdf(dateStr) {
-        // Abre o PDF real do roteiro do dia, gerado no servidor — funciona em qualquer
-        // dispositivo (computador, tablet ou celular), sem depender da impressão do navegador.
+
+
         window.open('/agenda/roteiro-pdf/' + dateStr, '_blank');
     }
 
@@ -988,7 +986,7 @@
             const da = a.scheduledDate || a.deadlineDate || '9999-99-99';
             const db = b.scheduledDate || b.deadlineDate || '9999-99-99';
             if (da !== db) return da.localeCompare(db);
-            // Mesmo dia: ordena por horário, mais cedo primeiro.
+
             const ta = a.scheduledTime || '99:99:99';
             const tb = b.scheduledTime || '99:99:99';
             return ta.localeCompare(tb);
@@ -1098,9 +1096,8 @@
         }
     }
 
-    // ---------------------------------------------------------------
-    // Prazo (deadline) — alterar a data limite do agendamento
-    // ---------------------------------------------------------------
+
+
     function toggleDeadlineEditor() {
         document.getElementById('deadlineEditor').classList.toggle('hidden');
     }
@@ -1123,18 +1120,17 @@
         }
     }
 
-    // ---------------------------------------------------------------
-    // Dias agendados (ocorrências) — permite mais de uma data para o
-    // mesmo serviço, ex.: OS1001 em 10/08 e novamente em 17/08.
-    //
-    // Comportamento:
-    // - Dias já salvos no servidor (têm "id" real) aparecem como chip normal;
-    //   editar/remover um desses aplica IMEDIATAMENTE no servidor.
-    // - Dias novos, adicionados via "+ Adicionar outro dia", ficam PENDENTES
-    //   (chip com marcador "não salvo") só na tela — só são gravados quando
-    //   o usuário clicar em SALVAR no rodapé do modal, junto com o dia
-    //   principal, numa única ação.
-    // ---------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
     function renderOccurrencesList(occurrences) {
         const list = document.getElementById('occurrencesList');
@@ -1145,8 +1141,7 @@
             return;
         }
 
-        // Guarda o objeto de cada ocorrência num Map (em vez de serializar no HTML)
-        // para evitar quebra de atributo quando observações/equipe contêm aspas.
+
         window.__occurrencesById = {};
 
         const savedChips = saved.map(o => {
@@ -1230,13 +1225,7 @@
         document.getElementById('occurrenceEditor').classList.add('hidden');
     }
 
-    /**
-     * Confirma o mini-formulário de um dia. Se for um dia NOVO (sem
-     * occEditingId), não vai ao servidor — só entra/atualiza na lista local
-     * pendingOccurrences, e será enviado junto no próximo clique em Salvar.
-     * Se for edição de um dia JÁ salvo (occEditingId preenchido), aplica no
-     * servidor imediatamente, como antes.
-     */
+
     async function submitOccurrenceEditor() {
         const occurrenceId = document.getElementById('occEditingId').value;
         const occurrenceDate = document.getElementById('occDate').value;
@@ -1251,12 +1240,11 @@
         };
 
         if (occurrenceId) {
-            // Dia já existente no servidor: aplica direto.
+
             await persistOccurrence({ ...draft, scheduleId: document.getElementById('editId').value }, '/agenda/occurrences/update');
             return;
         }
 
-        // Dia novo: fica pendente até o Salvar geral do modal.
         if (editingPendingIndex !== null) {
             pendingOccurrences[editingPendingIndex] = draft;
         } else {
@@ -1266,7 +1254,7 @@
         renderOccurrencesList(currentEditSchedule ? currentEditSchedule.occurrences : []);
     }
 
-    /** Grava imediatamente só esta ocorrência (usado para editar um dia já salvo). */
+
     async function persistOccurrence(payload, url) {
         try {
             const res = await fetch(url, { method: 'POST', headers: csrfHeaders(true), body: JSON.stringify(payload) });
@@ -1311,8 +1299,8 @@
             estimatedDurationMinutes: document.getElementById('editDuration').value ? parseInt(document.getElementById('editDuration').value) : null,
             observations: document.getElementById('editObservations').value,
             reason: document.getElementById('editReason').value,
-            // Dias adicionais ainda não salvos: vão junto neste mesmo Salvar,
-            // permitindo cadastrar o dia principal + outro(s) dia(s) de uma vez.
+
+
             extraOccurrences: pendingOccurrences.length > 0 ? pendingOccurrences : null
         };
 
@@ -1352,7 +1340,6 @@
         }
     }
 
-    // --- Visita Técnica: editar data/hora/observações e excluir ---
 
     async function openVisitModal(id) {
         try {
@@ -1430,7 +1417,6 @@
         }
     }
 
-    // --- Perfil TÉCNICO: ver o serviço e registrar observação do atendimento ---
 
     async function openTechnicianNoteModal(id) {
         try {
@@ -1495,8 +1481,7 @@
         }
     }
 
-    // Visualização somente leitura da visita técnica para o perfil TÉCNICO — ele vê os
-    // dados, mas não edita nem exclui (isso continua exclusivo de GESTAO/VENDAS).
+
     async function openTechnicianVisitView(id) {
         try {
             const res = await fetch(`/agenda/technical-visits/view-data/${id}`);

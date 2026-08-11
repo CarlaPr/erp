@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+
+<head th:replace="~{fragments/layout :: head(title='Plano de Corte - Tahi Glass ERP')}"></head>
+
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
+
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                Plano de Corte
+            </h2>
+
+            <p class="text-base text-slate-500 dark:text-slate-400 mt-1">
+                Planeje o corte de vidro a partir das OS's já aprovadas.
+            </p>
+        </div>
+
+        <button
+                type="button"
+                onclick="toggleModal(true)"
+                class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20">
+
+            <i data-lucide="scissors" class="w-5 h-5"></i>
+
+            Novo Plano de Corte
+        </button>
+    </header>
+
+    <div
+            th:if="${sucesso}"
+            class="mb-6 flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 px-5 py-3.5 rounded-xl font-semibold text-sm">
+
+        <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0"></i>
+
+        <span th:text="${sucesso}">
+            Sucesso
+        </span>
+    </div>
+
+    <div th:if="${erro}"
+            class="mb-6 flex items-center gap-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-400 px-5 py-3.5 rounded-xl font-semibold text-sm">
+        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
+        <span th:text="${erro}">
+            Erro
+        </span>
+    </div>
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
+
+        <table class="w-full text-left border-collapse min-w-[900px]">
+
+            <thead>
+
+            <tr class="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">
+
+                <th class="p-5">
+                    Plano
+                </th>
+
+                <th class="p-5">
+                    OS / Cliente
+                </th>
+
+                <th class="p-5">
+                    Serviço
+                </th>
+
+                <th class="p-5">
+                    Status
+                </th>
+
+                <th class="p-5 text-right">
+                    Área / Peso
+                </th>
+
+                <th class="p-5 text-right">
+                    Valor
+                </th>
+
+                <th class="p-5 text-center">
+                    Ações
+                </th>
+
+            </tr>
+
+            </thead>
+
+
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+
+            <tr
+                    th:each="p : ${planos}"
+                    class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+
+                <td class="p-5">
+
+                    <a
+                            th:href="@{/cut-plans/{id}(id=${p.id})}"
+                            class="font-bold text-slate-900 dark:text-white text-base font-mono hover:text-violet-600 dark:hover:text-violet-400"
+                            th:text="${p.numeroFormatado}">
+
+                        PC-00001
+
+                    </a>
+
+                    <div
+                            class="text-slate-500 text-xs mt-1"
+                            th:if="${p.descricao}"
+                            th:text="${p.descricao}">
+
+                        Descrição
+
+                    </div>
+
+                </td>
+
+                <td class="p-5">
+
+                    <div
+                            class="font-bold text-slate-800 dark:text-slate-200"
+                            th:text="${p.workOrder.number}">
+
+                        OS-0000
+
+                    </div>
+
+                    <div
+                            class="text-slate-500 text-xs mt-0.5"
+                            th:text="${p.workOrder.client != null ? p.workOrder.client.name : 'Cliente avulso'}">
+
+                        Cliente
+
+                    </div>
+
+                </td>
+
+                <td
+                        class="p-5 text-slate-700 dark:text-slate-300 font-medium"
+                        th:text="${p.categoria.descricao}">
+
+                    Sacada
+
+                </td>
+
+                <td class="p-5">
+
+                    <span
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase border"
+                            th:classappend="${p.status.name() == 'FINALIZADO'}
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent'
+                                : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-transparent'"
+                            th:text="${p.status.descricao}">
+
+                        Rascunho
+
+                    </span>
+
+                </td>
+
+                <td class="p-5 text-right text-slate-700 dark:text-slate-300">
+
+                    <div
+                            th:text="${#numbers.formatDecimal(p.areaTotalM2, 1, 2)} + ' m²'">
+
+                        0 m²
+
+                    </div>
+
+                    <div
+                            class="text-slate-500 text-xs"
+                            th:text="${#numbers.formatDecimal(p.pesoTotalKg, 1, 1)} + ' kg'">
+
+                        0 kg
+
+                    </div>
+
+                </td>
+
+                <td
+                        class="p-5 text-right font-bold text-slate-900 dark:text-white"
+                        th:text="'R$ ' + ${#numbers.formatDecimal(p.valorTotalPlano, 1, 2)}">
+
+                    R$ 0,00
+
+                </td>
+
+                <td class="p-5 text-center space-x-2 whitespace-nowrap">
+                    <a
+                            th:href="@{/cut-plans/{id}(id=${p.id})}"
+                            class="text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 p-2 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors inline-block"
+                            title="Abrir plano">
+
+                        <i data-lucide="layout-grid" class="w-5 h-5"></i>
+
+                    </a>
+                    <a
+                            th:href="@{/cut-plans/editar/{id}(id=${p.id})}"
+                            class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block"
+                            title="Editar cabeçalho">
+
+                        <i data-lucide="edit-3" class="w-5 h-5"></i>
+                    </a>
+
+                    <form
+                            th:action="@{/cut-plans/{id}/excluir(id=${p.id})}"
+                            method="POST"
+                            class="inline-block">
+
+                        <button
+                                type="submit"
+                                onclick="return confirm('Excluir este plano de corte e todas as suas peças?')"
+                                class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                                title="Excluir">
+
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+
+            <tr th:if="${#lists.isEmpty(planos)}">
+                <td
+                        colspan="7"
+                        class="p-10 text-center text-slate-500 font-medium text-base">
+
+                    Nenhum plano de corte cadastrado.
+
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div
+            id="planoModal"
+            th:class="${isEditing}
+                ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto'
+                : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
+
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white"
+                        th:text="${isEditing} ? 'Editar Plano de Corte' : 'Novo Plano de Corte'">
+
+                    Formulário
+
+                </h3>
+                <a href="/cut-plans"
+                        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-white dark:bg-transparent p-1.5 rounded-lg border border-slate-200 dark:border-transparent">
+
+                    <i data-lucide="x" class="w-5 h-5"></i>
+
+                </a>
+
+            </header>
+
+            <form th:action="@{/cut-plans/salvar}"
+                    th:object="${planoCorteForm}"
+                    method="POST"
+                    class="p-6 space-y-5">
+
+                <input
+                        type="hidden"
+                        th:field="*{id}" />
+                <div>
+                    <label
+                            class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
+
+                        OS (Ordem de Serviço)
+
+                    </label>
+
+                    <input type="hidden"
+                            id="workOrderId"
+                            th:field="*{workOrderId}" />
+
+                    <div id="selectedOsBox"
+                            class="hidden mb-3 p-4 rounded-xl border border-violet-200 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10">
+
+                        <div class="flex items-center justify-between gap-3">
+
+                            <div class="flex items-center gap-3 min-w-0">
+
+                                <div class="w-10 h-10 shrink-0 rounded-xl bg-violet-600 text-white flex items-center justify-center">
+
+                                    <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+
+                                </div>
+
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                                        O.S. selecionada
+                                    </p>
+                                    <p id="selectedOsNumber"
+                                            class="font-black text-slate-900 dark:text-white truncate">
+
+                                        OS-0000
+
+                                    </p>
+                                    <p id="selectedOsClient"
+                                            class="text-xs text-slate-500 dark:text-slate-400 truncate">
+
+                                        Cliente
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <button
+                                    type="button"
+                                    onclick="clearSelectedOs()"
+                                    class="shrink-0 p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                                    title="Remover seleção">
+
+                                <i data-lucide="x" class="w-4 h-4"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+                    <button
+                            type="button"
+                            onclick="openOsSearchModal()"
+                            class="w-full flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-700 dark:text-white hover:border-violet-500 dark:hover:border-violet-500 hover:bg-violet-50/50 dark:hover:bg-violet-500/5 focus:outline-none transition-all text-left">
+
+                        <div class="flex items-center gap-3 min-w-0">
+
+                            <div class="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+
+                                <i data-lucide="search" class="w-5 h-5"></i>
+
+                            </div>
+
+                            <div class="min-w-0">
+
+                                <span class="block text-sm font-bold text-slate-800 dark:text-white">
+                                    Selecionar Ordem de Serviço
+                                </span>
+
+                                <span class="block text-xs text-slate-500 dark:text-slate-400 truncate">
+                                    Pesquise pelo número da OS ou cliente
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <i
+                                data-lucide="chevron-right"
+                                class="w-5 h-5 text-slate-400 shrink-0">
+                        </i>
+
+                    </button>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
+
+                        Serviço
+
+                    </label>
+                    <select th:field="*{categoria}"
+                            required
+                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all text-base">
+                        <option value="">
+                            Selecione...
+                        </option>
+                        <option th:each="c : ${categorias}"
+                                th:value="${c}"
+                                th:text="${c.descricao}">
+
+                            Sacada
+
+                        </option>
+                    </select>
+                    <p
+                            th:if="${isEditing}"
+                            class="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
+
+                        Só pode ser alterado enquanto o plano não tiver peças lançadas.
+
+                    </p>
+                </div>
+                <div>
+                    <label
+                            class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
+
+                        Descrição (opcional)
+
+                    </label>
+                    <textarea
+                            th:field="*{descricao}"
+                            rows="3"
+                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all text-base"
+                            placeholder="Observações sobre este plano..."></textarea>
+
+                </div>
+
+                <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-8">
+                    <a
+                            href="/cut-plans"
+                            class="px-5 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold text-base">
+
+                        Cancelar
+
+                    </a>
+
+
+                    <button
+                            type="submit"
+                            class="px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black transition-all shadow-md shadow-violet-500/20 text-base">
+
+                        Salvar Plano
+
+                    </button>
+
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div id="osSearchModal"
+            class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
+        <div
+                class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <button
+                    type="button"
+                    onclick="closeModal('osSearchModal')"
+                    class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
+
+                <i data-lucide="x" class="w-5 h-5"></i>
+
+            </button>
+
+            <h3
+                    class="text-xl font-black text-slate-900 dark:text-white mb-4 border-b border-slate-200 dark:border-slate-700 pb-4 flex items-center gap-2 pr-12">
+
+                <i
+                        data-lucide="clipboard-list"
+                        class="text-violet-600 dark:text-cyan-400 w-6 h-6">
+                </i>
+
+                Selecionar O.S.
+
+            </h3>
+
+            <div class="flex gap-2 mb-4">
+
+                <div class="relative flex-1">
+
+                    <input
+                            type="text"
+                            id="searchOsInput"
+                            oninput="filterOsInModal()"
+                            placeholder="Buscar por número, título ou cliente..."
+                            autocomplete="off"
+                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-violet-500 dark:focus:border-cyan-500 text-sm transition-colors" />
+
+                    <i
+                            data-lucide="search"
+                            class="absolute left-4 top-3.5 w-5 h-5 text-slate-400">
+                    </i>
+
+                </div>
+
+            </div>
+
+            <div
+                    class="flex-1 overflow-y-auto custom-scrollbar border border-slate-200 dark:border-slate-700 rounded-xl min-h-[300px] h-[300px]">
+
+                <ul
+                        id="osSearchList"
+                        class="divide-y divide-slate-100 dark:divide-slate-800">
+
+                    <li
+                            th:each="wo : ${workOrders}"
+                            class="os-search-item"
+                            th:attr="
+                                data-id=${wo.id},
+                                data-number=${wo.number},
+                                data-client=${wo.client != null ? wo.client.name : 'Cliente avulso'},
+                                data-search=${(wo.number + ' ' + (wo.client != null ? wo.client.name : 'Cliente avulso')).toLowerCase()}
+                            ">
+
+                        <button
+                                type="button"
+                                class="w-full text-left px-4 py-4 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors flex items-center justify-between gap-4 group"
+                                th:data-id="${wo.id}"
+                                th:data-number="${wo.number}"
+                                th:data-client="${wo.client != null ? wo.client.name : 'Cliente avulso'}"
+                                onclick="selectOs(this.dataset.id, this.dataset.number, this.dataset.client)">
+
+                            <div class="flex items-center gap-3 min-w-0">
+
+                                <div
+                                        class="w-10 h-10 shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:bg-violet-100 dark:group-hover:bg-violet-500/20 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+
+                                    <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+
+                                </div>
+
+
+                                <div class="min-w-0">
+
+                                    <div
+                                            class="font-black text-slate-900 dark:text-white text-sm"
+                                            th:text="${wo.number}">
+
+                                        OS-0001
+
+                                    </div>
+
+                                    <div
+                                            class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate"
+                                            th:text="${wo.client != null ? wo.client.name : 'Cliente avulso'}">
+
+                                        Cliente
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="shrink-0">
+
+                                <span
+                                        class="inline-flex items-center gap-1 text-xs font-bold text-violet-600 dark:text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                                    Selecionar
+
+                                    <i
+                                            data-lucide="arrow-right"
+                                            class="w-4 h-4">
+                                    </i>
+
+                                </span>
+
+                            </div>
+
+                        </button>
+
+                    </li>
+
+                </ul>
+
+                <div
+                        id="emptyOsSearch"
+                        class="hidden flex-col items-center justify-center py-8 text-slate-500 dark:text-slate-400 h-full">
+                    <i
+                            data-lucide="inbox"
+                            class="w-10 h-10 opacity-50 mb-2">
+                    </i>
+                    <p class="text-sm">
+                        Nenhuma O.S. encontrada.
+                    </p>
+                    <p class="text-xs mt-1">
+                        Tente pesquisar por outro número ou cliente.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="flex justify-end pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">
+                <button
+                        type="button"
+                        onclick="closeModal('osSearchModal')"
+                        class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold">
+
+                    Cancelar
+
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    function toggleModal(show) {
+
+        const modal = document.getElementById('planoModal');
+
+        if (!modal) {
+            return;
+        }
+
+        if (show) {
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            setTimeout(() => {
+
+                updateSelectedOsFromForm();
+
+            }, 50);
+
+        } else {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+    }
+
+    function openOsSearchModal() {
+
+        const modal = document.getElementById('osSearchModal');
+
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        const input = document.getElementById('searchOsInput');
+
+        if (input) {
+
+            input.value = '';
+
+            filterOsInModal();
+
+            setTimeout(() => {
+
+                input.focus();
+
+            }, 100);
+
+        }
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+    }
+
+    function closeModal(id) {
+
+        const modal = document.getElementById(id);
+
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+
+    }
+
+    function filterOsInModal() {
+
+        const input = document.getElementById('searchOsInput');
+        const list = document.getElementById('osSearchList');
+        const empty = document.getElementById('emptyOsSearch');
+
+        if (!input || !list || !empty) {
+            return;
+        }
+
+        const search = input.value
+            .toLowerCase()
+            .trim();
+
+        const items = list.querySelectorAll('.os-search-item');
+
+        let visibleCount = 0;
+
+        items.forEach(item => {
+
+            const searchText = (
+                item.dataset.search || ''
+            ).toLowerCase();
+
+            const matches = searchText.includes(search);
+
+            if (matches) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+
+        });
+
+
+        if (visibleCount === 0) {
+
+            empty.classList.remove('hidden');
+            empty.classList.add('flex');
+
+        } else {
+
+            empty.classList.remove('flex');
+            empty.classList.add('hidden');
+
+        }
+
+    }
+
+    function selectOs(id, number, client) {
+
+        const input = document.getElementById('workOrderId');
+
+        if (!input) {
+            return;
+        }
+
+        input.value = id;
+
+        document.getElementById('selectedOsNumber').textContent =
+            number || 'OS selecionada';
+
+        document.getElementById('selectedOsClient').textContent =
+            client || 'Cliente avulso';
+
+        const selectedBox = document.getElementById('selectedOsBox');
+        if (selectedBox) {
+            selectedBox.classList.remove('hidden');
+        }
+
+        closeModal('osSearchModal');
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function clearSelectedOs() {
+
+        const input = document.getElementById('workOrderId');
+
+        if (input) {
+            input.value = '';
+        }
+
+        const selectedBox =
+            document.getElementById('selectedOsBox');
+
+        if (selectedBox) {
+            selectedBox.classList.add('hidden');
+        }
+
+    }
+
+    function updateSelectedOsFromForm() {
+
+        const input =
+            document.getElementById('workOrderId');
+
+        if (!input || !input.value) {
+
+            const selectedBox =
+                document.getElementById('selectedOsBox');
+
+            if (selectedBox) {
+                selectedBox.classList.add('hidden');
+            }
+            return;
+
+        }
+
+        const selectedId = String(input.value);
+
+        const item =
+            document.querySelector(
+                '.os-search-item[data-id="' + selectedId + '"]'
+            );
+
+        if (!item) {
+            return;
+        }
+
+        const number =
+            item.dataset.number || 'OS selecionada';
+
+        const client =
+            item.dataset.client || 'Cliente avulso';
+
+
+        const numberElement =
+            document.getElementById('selectedOsNumber');
+
+        const clientElement =
+            document.getElementById('selectedOsClient');
+
+        const selectedBox =
+            document.getElementById('selectedOsBox');
+
+
+        if (numberElement) {
+            numberElement.textContent = number;
+        }
+        if (clientElement) {
+            clientElement.textContent = client;
+        }
+        if (selectedBox) {
+            selectedBox.classList.remove('hidden');
+        }
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') {
+            return;
+        }
+        closeModal('osSearchModal');
+    });
+
+
+    document.addEventListener('click', function (event) {
+        const modal =
+            document.getElementById('osSearchModal');
+
+        if (!modal || modal.classList.contains('hidden')) {
+            return;
+        }
+
+        if (event.target === modal) {
+            closeModal('osSearchModal');
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        updateSelectedOsFromForm();
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+
+</script>
+
+
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+
+</body>
+</html>

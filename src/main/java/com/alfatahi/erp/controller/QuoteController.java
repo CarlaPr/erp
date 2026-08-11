@@ -317,7 +317,7 @@ public class QuoteController {
     @GetMapping("/{id}/edit")
     @Transactional(readOnly = true)
     public String editQuoteForm(@PathVariable UUID id, Model model) {
-        // Garante que o orçamento existe antes de exibir a página de edição.
+
         quoteRepo.findById(id).orElseThrow();
 
         model.addAttribute("currentPage", "quotes");

@@ -92,6 +92,23 @@
                 </a>
             </div>
 
+            <div sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" class="space-y-1">
+                <div class="px-3 pt-6 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Plano de Corte</div>
+
+                <a href="/cut-plans" th:classappend="${currentPage == 'cut-plans'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="scissors" class="w-4 h-4"></i> Plano de Corte
+                </a>
+                <a href="/cut-plans/regras-tecnicas" th:classappend="${currentPage == 'cut-plans-regras'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="ruler" class="w-4 h-4"></i> Regras Técnicas
+                </a>
+                <a href="/cut-plans/parametros-servico" th:classappend="${currentPage == 'cut-plans-parametros'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Parâmetros de Serviço
+                </a>
+                <a href="/cut-plans/catalogo" th:classappend="${currentPage == 'cut-plans-catalogo'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="package" class="w-4 h-4"></i> Catálogo de Insumos
+                </a>
+            </div>
+
             <div sec:authorize="hasAuthority('GESTAO')" class="space-y-1">
                 <div class="px-3 pt-6 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Administrativo</div>
 

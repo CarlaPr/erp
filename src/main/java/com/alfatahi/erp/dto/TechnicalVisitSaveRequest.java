@@ -4,10 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
-/**
- * Usado tanto para criar (id nulo, quoteId no path) quanto para editar
- * (id preenchido) uma visita técnica a partir da Agenda Comercial.
- */
+
 public class TechnicalVisitSaveRequest {
 
     private UUID id;

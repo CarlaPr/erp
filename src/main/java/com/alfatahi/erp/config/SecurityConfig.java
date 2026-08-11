@@ -38,7 +38,6 @@ public class SecurityConfig {
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write("{\"error\":\"SESSION_EXPIRED\",\"message\":\"Sua sessão expirou por inatividade.\"}");
             } else {
-                // ?expired aciona o modal "Sessão Expirada" já existente em login.html
                 response.sendRedirect(request.getContextPath() + "/login?expired");
             }
         };
@@ -47,9 +46,7 @@ public class SecurityConfig {
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return (request, response, accessDeniedException) -> {
-            // Um token CSRF inválido/ausente quase sempre significa que a sessão
-            // por trás dele já morreu (ela guarda o token). Isso é tratado como
-            // sessão expirada, não como falta de permissão de verdade.
+
             boolean sessionLikelyExpired = accessDeniedException instanceof CsrfException;
 
             if (isAjaxRequest(request)) {
@@ -86,9 +83,11 @@ public class SecurityConfig {
 
                         .requestMatchers("/dashboard", "/payables/**", "/receivables/**",
                                 "/losses/**", "/dre/**", "/suppliers/**",
-                                "/settings/**", "/settings/users/**", "/cut-plans/**").hasAuthority("GESTAO")
+                                "/settings/**", "/settings/users/**").hasAuthority("GESTAO")
 
                         .requestMatchers("/work-orders/**").hasAuthority("GESTAO")
+
+                        .requestMatchers("/cut-plans", "/cut-plans/**").hasAnyAuthority("GESTAO", "VENDAS")
 
                         .requestMatchers("/commercial/**", "/quotes/**", "/clients/**")
                         .hasAnyAuthority("GESTAO", "VENDAS")

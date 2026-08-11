@@ -18,13 +18,7 @@ public class ScheduleSaveRequest {
     private String observations;
     private String reason;
 
-    /**
-     * Dias adicionais a agendar para este MESMO serviço, junto com o dia
-     * principal acima, em uma única ação de Salvar (ex.: além do dia
-     * principal 10/08, agendar também 17/08). Cada item vira uma nova
-     * ScheduleOccurrence; itens com occurrenceId preenchido atualizam uma
-     * ocorrência existente em vez de criar uma nova.
-     */
+
     private List<ScheduleOccurrenceSaveRequest> extraOccurrences;
 
     public UUID getId() { return id; }

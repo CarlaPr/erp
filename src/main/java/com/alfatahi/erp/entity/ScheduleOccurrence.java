@@ -8,12 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
-/**
- * Representa UMA data de execução dentro de um agendamento (Schedule).
- * Um mesmo Schedule (uma mesma OS/Orçamento) pode ter várias ocorrências,
- * permitindo agendar o mesmo serviço em mais de um dia
- * (ex.: OS1001 em 10/08 e novamente em 17/08).
- */
+
 @Entity
 @Table(name = "commercial_schedule_occurrences")
 public class ScheduleOccurrence {

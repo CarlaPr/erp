@@ -4,11 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
-/**
- * Payload para criar ou editar UMA ocorrência (uma data) de um agendamento.
- * occurrenceId nulo => cria uma nova ocorrência (nova data) para o mesmo
- * scheduleId, permitindo que o serviço fique agendado em mais de um dia.
- */
+
 public class ScheduleOccurrenceSaveRequest {
 
     private UUID scheduleId;

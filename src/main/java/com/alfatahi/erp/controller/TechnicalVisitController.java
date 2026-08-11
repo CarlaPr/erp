@@ -12,15 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Endpoints da funcionalidade de Visita Técnica:
- * - Agendamento a partir da tela de Orçamentos (POST /quotes/{quoteId}/technical-visits)
- * - Gerenciamento (editar data/hora, excluir) a partir da Agenda Comercial (/agenda/technical-visits/**)
- *
- * "/quotes/**" já é bloqueado para o perfil TECNICO em SecurityConfig. O técnico PODE visualizar
- * as visitas técnicas (elas aparecem na Agenda dele junto com os serviços agendados), mas não
- * pode editar nem excluir — só GESTAO/VENDAS têm essa ação liberada.
- */
+
 @RestController
 public class TechnicalVisitController {
 

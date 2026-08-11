@@ -105,7 +105,6 @@ public class ScheduleService {
             throw new IllegalArgumentException("ID do agendamento é obrigatório.");
         }
 
-        // A variável schedule agora será efetivamente final (nunca será reatribuída)
         final Schedule schedule = scheduleRepo.findById(req.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Agendamento não encontrado: " + req.getId()));
 
