@@ -22,10 +22,10 @@ public class EspelhoCalculadora implements ServicoCalculadora {
                 + "Tamanho total: " + entrada.larguraVaoMm().stripTrailingZeros().toPlainString() + "x"
                 + entrada.alturaVaoMm().stripTrailingZeros().toPlainString() + "mm.");
         if (temBisote) {
-            observacao.append(" Bisôte de ").append(entrada.espessuraBisoteMm().stripTrailingZeros().toPlainString())
+            observacao.append(" \nBisôte de ").append(entrada.espessuraBisoteMm().stripTrailingZeros().toPlainString())
                     .append("mm em volta de todas as laterais.");
         }
-        observacao.append(" ");
+        observacao.append("\n ");
 
         FolhaCalculada folha = new FolhaCalculada(TipoFolha.UNICA, entrada.larguraVaoMm(), entrada.alturaVaoMm(),
                 List.of(), List.of(), observacao.toString(), temBisote ? entrada.espessuraBisoteMm() : null);

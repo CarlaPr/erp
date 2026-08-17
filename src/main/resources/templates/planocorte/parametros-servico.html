@@ -2,10 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head(title='Parâmetros de Serviço - Tahi Glass ERP')}"></head>
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
-
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
-
 <main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
@@ -16,14 +14,12 @@
             <i data-lucide="sliders-horizontal" class="w-5 h-5"></i> Novo Parâmetro
         </button>
     </header>
-
     <div th:if="${sucesso}" class="mb-6 flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 px-5 py-3.5 rounded-xl font-semibold text-sm">
         <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0"></i> <span th:text="${sucesso}">Sucesso</span>
     </div>
     <div th:if="${erro}" class="mb-6 flex items-center gap-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-400 px-5 py-3.5 rounded-xl font-semibold text-sm">
         <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i> <span th:text="${erro}">Erro</span>
     </div>
-
     <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[860px]">
             <thead>
@@ -62,7 +58,6 @@
             </tbody>
         </table>
     </div>
-
     <div id="parametroModal" th:class="${isEditing} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
@@ -71,29 +66,24 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </a>
             </header>
-
             <form th:action="@{/cut-plans/parametros-servico}" th:object="${parametroForm}" method="POST" class="p-6 space-y-5">
                 <input type="hidden" th:field="*{id}" />
-
                 <div>
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Categoria de serviço</label>
                     <select th:field="*{categoria}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all text-base">
                         <option th:each="c : ${categorias}" th:value="${c}" th:text="${c.descricao}"></option>
                     </select>
                 </div>
-
                 <div>
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Código</label>
                     <input type="text" th:field="*{codigo}" placeholder="TRANSPASSE_MM" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white font-mono text-sm focus:outline-none focus:border-violet-500 transition-all" />
                     <p class="text-sm text-rose-600 dark:text-rose-400 mt-1" th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}"></p>
                 </div>
-
                 <div>
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Descrição</label>
                     <input type="text" th:field="*{descricao}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all text-base" />
                     <p class="text-sm text-rose-600 dark:text-rose-400 mt-1" th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}"></p>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Valor numérico (opcional)</label>
@@ -105,14 +95,12 @@
                     </div>
                 </div>
                 <p class="text-xs text-slate-500 -mt-3">Preencha o valor numérico OU o valor em texto, conforme o parâmetro.</p>
-
                 <div>
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Origem do parâmetro</label>
                     <select th:field="*{origem}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all text-base">
                         <option th:each="o : ${origens}" th:value="${o}" th:text="${o.descricao}"></option>
                     </select>
                 </div>
-
                 <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-8">
                     <a href="/cut-plans/parametros-servico" class="px-5 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold text-base">Cancelar</a>
                     <button type="submit" class="px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black transition-all shadow-md shadow-violet-500/20 text-base">Salvar Parâmetro</button>
@@ -121,7 +109,6 @@
         </div>
     </div>
 </main>
-
 <script>
     function toggleModal(show) {
         const modal = document.getElementById('parametroModal');

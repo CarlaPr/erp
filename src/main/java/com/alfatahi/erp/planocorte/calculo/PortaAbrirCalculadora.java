@@ -74,6 +74,9 @@ public class PortaAbrirCalculadora implements ServicoCalculadora {
         elemento.setPosicaoYMm(centroY);
         elemento.setObservacao("Recorte retangular de canto (degrau na borda) — " + RECORTE_LARGURA_MM.stripTrailingZeros().toPlainString()
                 + "mm (largura) x " + RECORTE_ALTURA_MM.stripTrailingZeros().toPlainString() + "mm (altura).");
+
+
+        elemento.setRotuloCroqui("");
         return elemento;
     }
 }

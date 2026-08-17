@@ -45,17 +45,17 @@ public class SacadaCalculadora implements ServicoCalculadora {
 
         List<FolhaCalculada> folhas = new ArrayList<>();
         for (int i = 1; i <= quantidadeFolhas; i++) {
-            StringBuilder observacao = new StringBuilder("Folha " + i + " de " + quantidadeFolhas + " — Sacada. ");
+            StringBuilder observacao = new StringBuilder("Folha " + i + " de " + quantidadeFolhas + " — Sacada.\n ");
             observacao.append("Largura bruta ").append(entrada.larguraVaoMm().stripTrailingZeros().toPlainString()).append("mm");
             observacao.append(" − ").append(descontoEsquerdo.stripTrailingZeros().toPlainString()).append("mm (desconto lateral esquerdo)");
             observacao.append(" − ").append(descontoDireito.stripTrailingZeros().toPlainString()).append("mm (desconto lateral direito)");
-            observacao.append(" = ").append(larguraUtil.stripTrailingZeros().toPlainString()).append("mm úteis ÷ ").append(quantidadeFolhas).append(" folha(s) = ")
+            observacao.append(" = ").append(larguraUtil.stripTrailingZeros().toPlainString()).append("mm úteis\n ÷ ").append(quantidadeFolhas).append(" folha(s) = ")
                     .append(larguraPorFolha.stripTrailingZeros().toPlainString()).append("mm");
             if (variasFolhas) {
                 observacao.append(" − ").append(descontoEntreFolhas.stripTrailingZeros().toPlainString())
                         .append("mm (espaço entre folhas) = ").append(larguraFinalFolha.stripTrailingZeros().toPlainString()).append("mm");
             }
-            observacao.append(" · Altura bruta ").append(entrada.alturaVaoMm().stripTrailingZeros().toPlainString())
+            observacao.append("\n · Altura bruta ").append(entrada.alturaVaoMm().stripTrailingZeros().toPlainString())
                     .append("mm − ").append(descontoAltura.stripTrailingZeros().toPlainString()).append("mm = ")
                     .append(altura.stripTrailingZeros().toPlainString()).append("mm");
 

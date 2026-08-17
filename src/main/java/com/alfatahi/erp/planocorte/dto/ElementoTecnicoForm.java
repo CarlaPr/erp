@@ -2,6 +2,7 @@ package com.alfatahi.erp.planocorte.dto;
 
 import com.alfatahi.erp.planocorte.entity.ReferenciaHorizontal;
 import com.alfatahi.erp.planocorte.entity.ReferenciaVertical;
+import com.alfatahi.erp.planocorte.entity.TipoAncoragem;
 import com.alfatahi.erp.planocorte.entity.TipoElemento;
 import jakarta.validation.constraints.NotNull;
 
@@ -11,6 +12,10 @@ public class ElementoTecnicoForm {
 
     @NotNull(message = "Selecione o tipo")
     private TipoElemento tipo;
+
+    private String nome;
+
+    private TipoAncoragem ancoragem = TipoAncoragem.CENTRO;
 
     private Long ferragemId;
 
@@ -46,6 +51,22 @@ public class ElementoTecnicoForm {
 
     public void setTipo(TipoElemento tipo) {
         this.tipo = tipo;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public TipoAncoragem getAncoragem() {
+        return ancoragem;
+    }
+
+    public void setAncoragem(TipoAncoragem ancoragem) {
+        this.ancoragem = ancoragem;
     }
 
     public Long getFerragemId() {

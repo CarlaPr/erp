@@ -12,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.csrf.CsrfException;
 
 @Configuration
@@ -26,8 +28,11 @@ public class SecurityConfig {
     private boolean isAjaxRequest(HttpServletRequest request) {
         String requestedWith = request.getHeader("X-Requested-With");
         String accept = request.getHeader("Accept");
+        String contentType = request.getContentType();
+
         return "XMLHttpRequest".equals(requestedWith)
-                || (accept != null && accept.contains("application/json"));
+                || (accept != null && accept.contains("application/json"))
+                || (contentType != null && contentType.contains("application/json"));
     }
 
     @Bean
@@ -38,7 +43,34 @@ public class SecurityConfig {
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write("{\"error\":\"SESSION_EXPIRED\",\"message\":\"Sua sessão expirou por inatividade.\"}");
             } else {
+
                 response.sendRedirect(request.getContextPath() + "/login?expired");
+            }
+        };
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return (request, response, authentication) -> {
+            if (isAjaxRequest(request)) {
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"status\":\"ok\"}");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/login-success");
+            }
+        };
+    }
+
+    @Bean
+    public AuthenticationFailureHandler authenticationFailureHandler() {
+        return (request, response, exception) -> {
+            if (isAjaxRequest(request)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"status\":\"error\",\"message\":\"Usuário ou senha inválidos.\"}");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/login?error");
             }
         };
     }
@@ -46,7 +78,6 @@ public class SecurityConfig {
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return (request, response, accessDeniedException) -> {
-
             boolean sessionLikelyExpired = accessDeniedException instanceof CsrfException;
 
             if (isAjaxRequest(request)) {
@@ -98,7 +129,8 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/login-success", true)
+                        .successHandler(authenticationSuccessHandler())
+                        .failureHandler(authenticationFailureHandler())
                         .permitAll()
                 )
                 .logout(logout -> logout

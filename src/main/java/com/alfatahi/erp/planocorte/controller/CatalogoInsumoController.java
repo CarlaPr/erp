@@ -364,7 +364,7 @@ public class CatalogoInsumoController {
         java.util.List<Supplier> suppliers = supplierRepository.findAll();
         model.addAttribute("suppliers", suppliers);
         model.addAttribute("tiposVidro", TipoVidro.values());
-        model.addAttribute("tiposElemento", TipoElemento.values());
+        model.addAttribute("tiposElemento", TipoElemento.valoresSelecionaveis());
         model.addAttribute("tiposAcessorio", TipoAcessorio.values());
     }
 }

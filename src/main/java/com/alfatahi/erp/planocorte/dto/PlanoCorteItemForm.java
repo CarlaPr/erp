@@ -1,7 +1,6 @@
 package com.alfatahi.erp.planocorte.dto;
 
 import com.alfatahi.erp.planocorte.entity.TipoBorda;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
@@ -12,13 +11,17 @@ public class PlanoCorteItemForm {
     @NotNull(message = "Selecione o vidro")
     private Long vidroId;
 
-    @NotNull(message = "Informe a largura")
-    @DecimalMin(value = "1", message = "Largura deve ser maior que zero")
     private BigDecimal larguraBrutaMm;
 
-    @NotNull(message = "Informe a altura")
-    @DecimalMin(value = "1", message = "Altura deve ser maior que zero")
     private BigDecimal alturaBrutaMm;
+
+
+    private boolean dimensoesPersonalizadas = false;
+
+    private BigDecimal alturaBrutaEsquerdaMm;
+    private BigDecimal alturaBrutaDireitaMm;
+    private BigDecimal larguraBrutaSuperiorMm;
+    private BigDecimal larguraBrutaInferiorMm;
 
     @NotNull(message = "Informe a quantidade")
     @Min(value = 1, message = "Quantidade mínima é 1")
@@ -28,6 +31,11 @@ public class PlanoCorteItemForm {
     private TipoBorda tipoBorda;
 
     private String observacoes;
+
+    private boolean cantoSuperiorEsquerdo = false;
+    private boolean cantoSuperiorDireito = false;
+    private boolean cantoInferiorEsquerdo = false;
+    private boolean cantoInferiorDireito = false;
 
     public Long getVidroId() {
         return vidroId;
@@ -53,6 +61,46 @@ public class PlanoCorteItemForm {
         this.alturaBrutaMm = alturaBrutaMm;
     }
 
+    public boolean isDimensoesPersonalizadas() {
+        return dimensoesPersonalizadas;
+    }
+
+    public void setDimensoesPersonalizadas(boolean dimensoesPersonalizadas) {
+        this.dimensoesPersonalizadas = dimensoesPersonalizadas;
+    }
+
+    public BigDecimal getAlturaBrutaEsquerdaMm() {
+        return alturaBrutaEsquerdaMm;
+    }
+
+    public void setAlturaBrutaEsquerdaMm(BigDecimal alturaBrutaEsquerdaMm) {
+        this.alturaBrutaEsquerdaMm = alturaBrutaEsquerdaMm;
+    }
+
+    public BigDecimal getAlturaBrutaDireitaMm() {
+        return alturaBrutaDireitaMm;
+    }
+
+    public void setAlturaBrutaDireitaMm(BigDecimal alturaBrutaDireitaMm) {
+        this.alturaBrutaDireitaMm = alturaBrutaDireitaMm;
+    }
+
+    public BigDecimal getLarguraBrutaSuperiorMm() {
+        return larguraBrutaSuperiorMm;
+    }
+
+    public void setLarguraBrutaSuperiorMm(BigDecimal larguraBrutaSuperiorMm) {
+        this.larguraBrutaSuperiorMm = larguraBrutaSuperiorMm;
+    }
+
+    public BigDecimal getLarguraBrutaInferiorMm() {
+        return larguraBrutaInferiorMm;
+    }
+
+    public void setLarguraBrutaInferiorMm(BigDecimal larguraBrutaInferiorMm) {
+        this.larguraBrutaInferiorMm = larguraBrutaInferiorMm;
+    }
+
     public Integer getQuantidade() {
         return quantidade;
     }
@@ -75,5 +123,37 @@ public class PlanoCorteItemForm {
 
     public void setObservacoes(String observacoes) {
         this.observacoes = observacoes;
+    }
+
+    public boolean isCantoSuperiorEsquerdo() {
+        return cantoSuperiorEsquerdo;
+    }
+
+    public void setCantoSuperiorEsquerdo(boolean cantoSuperiorEsquerdo) {
+        this.cantoSuperiorEsquerdo = cantoSuperiorEsquerdo;
+    }
+
+    public boolean isCantoSuperiorDireito() {
+        return cantoSuperiorDireito;
+    }
+
+    public void setCantoSuperiorDireito(boolean cantoSuperiorDireito) {
+        this.cantoSuperiorDireito = cantoSuperiorDireito;
+    }
+
+    public boolean isCantoInferiorEsquerdo() {
+        return cantoInferiorEsquerdo;
+    }
+
+    public void setCantoInferiorEsquerdo(boolean cantoInferiorEsquerdo) {
+        this.cantoInferiorEsquerdo = cantoInferiorEsquerdo;
+    }
+
+    public boolean isCantoInferiorDireito() {
+        return cantoInferiorDireito;
+    }
+
+    public void setCantoInferiorDireito(boolean cantoInferiorDireito) {
+        this.cantoInferiorDireito = cantoInferiorDireito;
     }
 }

@@ -17,4 +17,9 @@ public enum TipoElemento {
     public String getDescricao() {
         return descricao;
     }
+
+
+    public static TipoElemento[] valoresSelecionaveis() {
+        return new TipoElemento[]{FURO, RECORTE, CHANFRO};
+    }
 }

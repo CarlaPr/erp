@@ -3,6 +3,9 @@ package com.alfatahi.erp.planocorte.service;
 import com.alfatahi.erp.planocorte.entity.CategoriaServico;
 import com.alfatahi.erp.planocorte.entity.ElementoTecnico;
 import com.alfatahi.erp.planocorte.entity.PlanoCorteItem;
+import com.alfatahi.erp.planocorte.entity.ReferenciaHorizontal;
+import com.alfatahi.erp.planocorte.entity.ReferenciaVertical;
+import com.alfatahi.erp.planocorte.entity.TipoAncoragem;
 import com.alfatahi.erp.planocorte.entity.TipoElemento;
 import org.springframework.stereotype.Service;
 
@@ -45,16 +48,41 @@ public class ValidacaoElementoService {
             avisos.add("O elemento está fora da área da peça (peça " + largura + "×" + altura + "mm).");
         }
 
-        BigDecimal distEsquerda = x;
-        BigDecimal distDireita = largura.subtract(x);
-        BigDecimal distTopo = y;
-        BigDecimal distFundo = altura.subtract(y);
-        BigDecimal distBordaMaisProxima = min(distEsquerda, distDireita, distTopo, distFundo).subtract(raio);
+        boolean cantoRecorte = novoElemento.getAncoragem() == TipoAncoragem.CANTO
+                && novoElemento.getTipo() == TipoElemento.RECORTE
+                && novoElemento.getReferenciaHorizontal() != ReferenciaHorizontal.CENTRO
+                && novoElemento.getReferenciaVertical() != ReferenciaVertical.CENTRO;
 
-        if (distBordaMaisProxima.compareTo(distanciaMinimaBorda) < 0) {
-            avisos.add("O " + novoElemento.getTipo().getDescricao().toLowerCase()
-                    + " está a aproximadamente " + arredondar(distBordaMaisProxima) + "mm da borda mais próxima. "
-                    + "A distância mínima parametrizada é de " + distanciaMinimaBorda + "mm.");
+        if (cantoRecorte) {
+
+
+
+
+            BigDecimal larguraElemento = novoElemento.getLarguraMm() != null ? novoElemento.getLarguraMm() : BigDecimal.ZERO;
+            BigDecimal alturaElemento = novoElemento.getAlturaMm() != null ? novoElemento.getAlturaMm() : BigDecimal.ZERO;
+            boolean direita = novoElemento.getReferenciaHorizontal() == ReferenciaHorizontal.DIREITA;
+            boolean inferior = novoElemento.getReferenciaVertical() == ReferenciaVertical.INFERIOR;
+
+            BigDecimal xOposto = direita ? x.subtract(larguraElemento) : x.add(larguraElemento);
+            BigDecimal yOposto = inferior ? y.subtract(alturaElemento) : y.add(alturaElemento);
+
+            if (xOposto.signum() < 0 || yOposto.signum() < 0
+                    || xOposto.compareTo(largura) > 0 || yOposto.compareTo(altura) > 0) {
+                avisos.add("O recorte é maior do que o espaço disponível a partir do canto escolhido "
+                        + "(peça " + largura + "×" + altura + "mm).");
+            }
+        } else {
+            BigDecimal distEsquerda = x;
+            BigDecimal distDireita = largura.subtract(x);
+            BigDecimal distTopo = y;
+            BigDecimal distFundo = altura.subtract(y);
+            BigDecimal distBordaMaisProxima = min(distEsquerda, distDireita, distTopo, distFundo).subtract(raio);
+
+            if (distBordaMaisProxima.compareTo(distanciaMinimaBorda) < 0) {
+                avisos.add("O " + novoElemento.getTipo().getDescricao().toLowerCase()
+                        + " está a aproximadamente " + arredondar(distBordaMaisProxima) + "mm da borda mais próxima. "
+                        + "A distância mínima parametrizada é de " + distanciaMinimaBorda + "mm.");
+            }
         }
 
         for (var furo : item.getFuracoes()) {

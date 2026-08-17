@@ -83,10 +83,20 @@ public class PlanoCorteItem {
     @Column(name = "area_m2", nullable = false, precision = 12, scale = 4)
     private BigDecimal areaM2;
 
-
-
     @Column(name = "espessura_bisote_mm", precision = 8, scale = 2)
     private BigDecimal espessuraBisoteMm;
+
+    @Column(name = "canto_moeda_sup_esquerdo", nullable = false)
+    private boolean cantoMoedaSuperiorEsquerdo = false;
+
+    @Column(name = "canto_moeda_sup_direito", nullable = false)
+    private boolean cantoMoedaSuperiorDireito = false;
+
+    @Column(name = "canto_moeda_inf_esquerdo", nullable = false)
+    private boolean cantoMoedaInferiorEsquerdo = false;
+
+    @Column(name = "canto_moeda_inf_direito", nullable = false)
+    private boolean cantoMoedaInferiorDireito = false;
 
     @Column(name = "peso_kg", nullable = false, precision = 12, scale = 3)
     private BigDecimal pesoKg;
@@ -104,6 +114,40 @@ public class PlanoCorteItem {
     private Integer grupoVao;
 
 
+
+
+
+    @Column(name = "altura_bruta_esquerda_mm", precision = 8, scale = 2)
+    private BigDecimal alturaBrutaEsquerdaMm;
+
+    @Column(name = "altura_bruta_direita_mm", precision = 8, scale = 2)
+    private BigDecimal alturaBrutaDireitaMm;
+
+    @Column(name = "largura_bruta_superior_mm", precision = 8, scale = 2)
+    private BigDecimal larguraBrutaSuperiorMm;
+
+    @Column(name = "largura_bruta_inferior_mm", precision = 8, scale = 2)
+    private BigDecimal larguraBrutaInferiorMm;
+
+
+
+
+
+
+
+    @Column(name = "altura_final_esquerda_mm", precision = 8, scale = 2)
+    private BigDecimal alturaFinalEsquerdaMm;
+
+    @Column(name = "altura_final_direita_mm", precision = 8, scale = 2)
+    private BigDecimal alturaFinalDireitaMm;
+
+    @Column(name = "largura_final_superior_mm", precision = 8, scale = 2)
+    private BigDecimal larguraFinalSuperiorMm;
+
+    @Column(name = "largura_final_inferior_mm", precision = 8, scale = 2)
+    private BigDecimal larguraFinalInferiorMm;
+
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "plano_corte_item_furacoes", joinColumns = @JoinColumn(name = "item_id"))
     @OrderColumn(name = "ordem")
@@ -116,6 +160,11 @@ public class PlanoCorteItem {
     @CollectionTable(name = "plano_corte_item_elementos", joinColumns = @JoinColumn(name = "item_id"))
     @OrderColumn(name = "ordem")
     private List<ElementoTecnico> elementos = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "plano_corte_item_anotacoes", joinColumns = @JoinColumn(name = "item_id"))
+    @OrderColumn(name = "ordem")
+    private List<Anotacao> anotacoes = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -277,6 +326,64 @@ public class PlanoCorteItem {
         this.espessuraBisoteMm = espessuraBisoteMm;
     }
 
+    public boolean isCantoMoedaSuperiorEsquerdo() {
+        return cantoMoedaSuperiorEsquerdo;
+    }
+
+    public void setCantoMoedaSuperiorEsquerdo(boolean cantoMoedaSuperiorEsquerdo) {
+        this.cantoMoedaSuperiorEsquerdo = cantoMoedaSuperiorEsquerdo;
+    }
+
+    public boolean isCantoMoedaSuperiorDireito() {
+        return cantoMoedaSuperiorDireito;
+    }
+
+    public void setCantoMoedaSuperiorDireito(boolean cantoMoedaSuperiorDireito) {
+        this.cantoMoedaSuperiorDireito = cantoMoedaSuperiorDireito;
+    }
+
+    public boolean isCantoMoedaInferiorEsquerdo() {
+        return cantoMoedaInferiorEsquerdo;
+    }
+
+    public void setCantoMoedaInferiorEsquerdo(boolean cantoMoedaInferiorEsquerdo) {
+        this.cantoMoedaInferiorEsquerdo = cantoMoedaInferiorEsquerdo;
+    }
+
+    public boolean isCantoMoedaInferiorDireito() {
+        return cantoMoedaInferiorDireito;
+    }
+
+    public void setCantoMoedaInferiorDireito(boolean cantoMoedaInferiorDireito) {
+        this.cantoMoedaInferiorDireito = cantoMoedaInferiorDireito;
+    }
+
+
+    @Transient
+    public boolean isTemCantoArredondado() {
+        return cantoMoedaSuperiorEsquerdo || cantoMoedaSuperiorDireito
+                || cantoMoedaInferiorEsquerdo || cantoMoedaInferiorDireito;
+    }
+
+
+    @Transient
+    public String getDescricaoCantosArredondados() {
+        List<String> nomes = new ArrayList<>();
+        if (cantoMoedaSuperiorEsquerdo) {
+            nomes.add("Superior esquerdo");
+        }
+        if (cantoMoedaSuperiorDireito) {
+            nomes.add("Superior direito");
+        }
+        if (cantoMoedaInferiorEsquerdo) {
+            nomes.add("Inferior esquerdo");
+        }
+        if (cantoMoedaInferiorDireito) {
+            nomes.add("Inferior direito");
+        }
+        return String.join(", ", nomes);
+    }
+
     public BigDecimal getPesoKg() {
         return pesoKg;
     }
@@ -309,6 +416,77 @@ public class PlanoCorteItem {
         this.grupoVao = grupoVao;
     }
 
+    public BigDecimal getAlturaBrutaEsquerdaMm() {
+        return alturaBrutaEsquerdaMm;
+    }
+
+    public void setAlturaBrutaEsquerdaMm(BigDecimal alturaBrutaEsquerdaMm) {
+        this.alturaBrutaEsquerdaMm = alturaBrutaEsquerdaMm;
+    }
+
+    public BigDecimal getAlturaBrutaDireitaMm() {
+        return alturaBrutaDireitaMm;
+    }
+
+    public void setAlturaBrutaDireitaMm(BigDecimal alturaBrutaDireitaMm) {
+        this.alturaBrutaDireitaMm = alturaBrutaDireitaMm;
+    }
+
+    public BigDecimal getLarguraBrutaSuperiorMm() {
+        return larguraBrutaSuperiorMm;
+    }
+
+    public void setLarguraBrutaSuperiorMm(BigDecimal larguraBrutaSuperiorMm) {
+        this.larguraBrutaSuperiorMm = larguraBrutaSuperiorMm;
+    }
+
+    public BigDecimal getLarguraBrutaInferiorMm() {
+        return larguraBrutaInferiorMm;
+    }
+
+    public void setLarguraBrutaInferiorMm(BigDecimal larguraBrutaInferiorMm) {
+        this.larguraBrutaInferiorMm = larguraBrutaInferiorMm;
+    }
+
+    public BigDecimal getAlturaFinalEsquerdaMm() {
+        return alturaFinalEsquerdaMm;
+    }
+
+    public void setAlturaFinalEsquerdaMm(BigDecimal alturaFinalEsquerdaMm) {
+        this.alturaFinalEsquerdaMm = alturaFinalEsquerdaMm;
+    }
+
+    public BigDecimal getAlturaFinalDireitaMm() {
+        return alturaFinalDireitaMm;
+    }
+
+    public void setAlturaFinalDireitaMm(BigDecimal alturaFinalDireitaMm) {
+        this.alturaFinalDireitaMm = alturaFinalDireitaMm;
+    }
+
+    public BigDecimal getLarguraFinalSuperiorMm() {
+        return larguraFinalSuperiorMm;
+    }
+
+    public void setLarguraFinalSuperiorMm(BigDecimal larguraFinalSuperiorMm) {
+        this.larguraFinalSuperiorMm = larguraFinalSuperiorMm;
+    }
+
+    public BigDecimal getLarguraFinalInferiorMm() {
+        return larguraFinalInferiorMm;
+    }
+
+    public void setLarguraFinalInferiorMm(BigDecimal larguraFinalInferiorMm) {
+        this.larguraFinalInferiorMm = larguraFinalInferiorMm;
+    }
+
+
+    @Transient
+    public boolean isDimensoesPersonalizadas() {
+        return alturaBrutaEsquerdaMm != null && alturaBrutaDireitaMm != null
+                && larguraBrutaSuperiorMm != null && larguraBrutaInferiorMm != null;
+    }
+
     public List<Furacao> getFuracoes() {
         return furacoes;
     }
@@ -327,5 +505,13 @@ public class PlanoCorteItem {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public List<Anotacao> getAnotacoes() {
+        return anotacoes;
+    }
+
+    public void setAnotacoes(List<Anotacao> anotacoes) {
+        this.anotacoes = anotacoes;
     }
 }

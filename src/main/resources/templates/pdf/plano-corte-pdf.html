@@ -260,11 +260,12 @@
         }
 
         .piece {
-            width: 98%;
-            margin-bottom: 14px;
+            width: 100%;
+            margin-bottom: 10px;
             border: 1px solid #dbe3ec;
             border-radius: 9px;
             page-break-inside: avoid;
+            break-inside: avoid;
             overflow: hidden;
             background: #ffffff;
         }
@@ -283,7 +284,7 @@
 
         .piece-code {
             color: #0f172a;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 800;
         }
 
@@ -305,25 +306,82 @@
         }
 
         .piece-body {
-            padding: 11px 12px 12px 12px;
+            padding: 7px 9px 8px 9px;
         }
 
         .croqui-box {
             width: 100%;
             text-align: center;
-            padding: 4px 0 8px 0;
+            padding: 2px 0 5px 0;
         }
 
         .croqui-box svg {
             display: inline-block;
-            width: 250px;
-            max-width: 100%;
+            width: 100%;
+            max-width: 165mm;
+            max-height: 82mm;
             height: auto;
+            object-fit: contain;
+        }
+
+        .vao-croqui {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #bfdbfe;
+            border-radius: 9px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .vao-croqui-header {
+            padding: 8px 11px;
+            background: #dbeafe;
+            border-bottom: 1px solid #bfdbfe;
+        }
+
+        .vao-croqui-title {
+            color: #1d4ed8;
+            font-size: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+        }
+
+        .vao-croqui-subtitle {
+            color: #0f172a;
+            font-size: 11px;
+            font-weight: 800;
+            margin-top: 1px;
+        }
+
+        .vao-croqui-box {
+            width: 100%;
+            text-align: center;
+            padding: 6px 8px 8px 8px;
+            background: #f8fafc;
+        }
+
+        .vao-croqui-box svg {
+            display: inline-block;
+            width: 100%;
+            max-width: 100%;
+            max-height: 68mm;
+            height: auto;
+        }
+
+        .piece-croqui-note {
+            padding: 8px 11px;
+            background: #eff6ff;
+            border-bottom: 1px solid #e5eaf0;
+            color: #1d4ed8;
+            font-size: 8.5px;
         }
 
         .piece-meta {
             text-align: center;
-            margin: 0 0 10px 0;
+            margin: 0 0 6px 0;
         }
 
         .meta-chip {
@@ -347,7 +405,7 @@
 
         .dimensions td {
             width: 50%;
-            padding: 8px 10px;
+            padding: 6px 8px;
             border: 1px solid #e5eaf0;
             background: #ffffff;
             vertical-align: middle;
@@ -365,7 +423,7 @@
 
         .dimension-value {
             color: #0f172a;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 800;
         }
 
@@ -404,7 +462,6 @@
         .technical-value.right {
             text-align: right;
         }
-
 
         .technical-section {
             margin-top: 9px;
@@ -495,37 +552,25 @@
 
 <body>
 
-
 <div id="page-footer">
 
     <table>
         <tr>
             <td>
 
-                <span class="footer-company"
-                      th:text="${companyName}">
+                <span class="footer-company" th:text="${companyName}">
                     Empresa
                 </span>
 
                 <br/>
 
-                <span th:text="${'CNPJ/CPF: ' + companyDoc
-                    + (companyAddress != null && !companyAddress.isEmpty()
-                    ? ' | ' + companyAddress
-                    : '')}">
+                <span th:text="${'CNPJ/CPF: ' + companyDoc + (companyAddress != null && !companyAddress.isEmpty() ? ' | ' + companyAddress : '')}">
                     CNPJ/CPF
                 </span>
 
                 <br/>
 
-                <span
-                        th:if="${(companyEmail != null && !companyEmail.isEmpty())
-                        || (companyPhone != null && !companyPhone.isEmpty())}"
-                        th:text="${(companyEmail != null ? companyEmail : '')
-                        + ((companyEmail != null && !companyEmail.isEmpty())
-                        && (companyPhone != null && !companyPhone.isEmpty())
-                        ? ' | ' : '')
-                        + (companyPhone != null ? companyPhone : '')}">
+                <span th:if="${(companyEmail != null && !companyEmail.isEmpty()) || (companyPhone != null && !companyPhone.isEmpty())}" th:text="${(companyEmail != null ? companyEmail : '') + ((companyEmail != null && !companyEmail.isEmpty()) && (companyPhone != null && !companyPhone.isEmpty()) ? ' | ' : '') + (companyPhone != null ? companyPhone : '')}">
                 </span>
 
             </td>
@@ -538,36 +583,24 @@
         <td class="header-left">
             <table class="company-table">
                 <tr>
-                    <td class="company-logo-cell"
-                            th:if="${logoBase64 != null && !logoBase64.isEmpty()}">
-                        <img
-                                class="company-logo"
-                                th:src="${logoBase64}"
-                                alt="Logo"/>
+                    <td class="company-logo-cell" th:if="${logoBase64 != null && !logoBase64.isEmpty()}">
+                        <img class="company-logo" th:src="${logoBase64}" alt="Logo"/>
 
                     </td>
                     <td>
-                        <div class="company-name"
-                                th:text="${companyName}">
+                        <div class="company-name" th:text="${companyName}">
                             TAHIGLASS
                         </div>
-                        <div class="company-document"
-                                th:text="${'CNPJ/CPF: ' + companyDoc}">
+                        <div class="company-document" th:text="${'CNPJ/CPF: ' + companyDoc}">
                             CNPJ/CPF: --
                         </div>
-                        <div class="company-address"
-                                th:if="${companyAddress != null && !companyAddress.isEmpty()}"
-                                th:text="${companyAddress}">
+                        <div class="company-address" th:if="${companyAddress != null && !companyAddress.isEmpty()}" th:text="${companyAddress}">
                             Endereço
                         </div>
-                        <div class="company-contact"
-                                th:if="${companyEmail != null && !companyEmail.isEmpty()}"
-                                th:text="${companyEmail}">
+                        <div class="company-contact" th:if="${companyEmail != null && !companyEmail.isEmpty()}" th:text="${companyEmail}">
                             email@empresa.com
                         </div>
-                        <div class="company-contact"
-                                th:if="${companyPhone != null && !companyPhone.isEmpty()}"
-                                th:text="${companyPhone}">
+                        <div class="company-contact" th:if="${companyPhone != null && !companyPhone.isEmpty()}" th:text="${companyPhone}">
                             telefone
                         </div>
                     </td>
@@ -585,11 +618,7 @@
                     PLANO DE CORTE
                 </div>
 
-                <div
-                        class="document-number"
-                        th:text="${plano.numeroFormatado != null
-                        ? plano.numeroFormatado
-                        : '---'}">
+                <div class="document-number" th:text="${plano.numeroFormatado != null ? plano.numeroFormatado : '---'}">
                     PC-0001
                 </div>
 
@@ -597,9 +626,7 @@
                     Emitido em
                 </div>
 
-                <div
-                        class="document-date"
-                        th:text="${#temporals.format(dataEmissao, 'dd/MM/yyyy HH:mm')}">
+                <div class="document-date" th:text="${#temporals.format(dataEmissao, 'dd/MM/yyyy HH:mm')}">
                     09/08/2026 12:00
                 </div>
 
@@ -618,11 +645,7 @@
                 Ordem de serviço
             </div>
 
-            <div
-                    class="summary-value blue"
-                    th:text="${plano.workOrder != null
-                    ? plano.workOrder.number
-                    : '-'}">
+            <div class="summary-value blue" th:text="${plano.workOrder != null ? plano.workOrder.number : '-'}">
                 OS-0001
             </div>
         </td>
@@ -630,12 +653,7 @@
             <div class="summary-label">
                 Cliente
             </div>
-            <div
-                    class="summary-value"
-                    th:text="${plano.workOrder != null
-                    && plano.workOrder.client != null
-                    ? plano.workOrder.client.name
-                    : '-'}">
+            <div class="summary-value" th:text="${plano.workOrder != null && plano.workOrder.client != null ? plano.workOrder.client.name : '-'}">
                 Cliente
             </div>
         </td>
@@ -643,11 +661,7 @@
             <div class="summary-label">
                 Serviço
             </div>
-            <div
-                    class="summary-value"
-                    th:text="${plano.categoria != null
-                    ? plano.categoria.descricao
-                    : '-'}">
+            <div class="summary-value" th:text="${plano.categoria != null ? plano.categoria.descricao : '-'}">
                 Serviço
             </div>
         </td>
@@ -655,8 +669,7 @@
             <div class="summary-label">
                 Emissão
             </div>
-            <div class="summary-value"
-                    th:text="${#temporals.format(dataEmissao, 'dd/MM/yyyy HH:mm')}">
+            <div class="summary-value" th:text="${#temporals.format(dataEmissao, 'dd/MM/yyyy HH:mm')}">
                 09/08/2026
             </div>
         </td>
@@ -672,194 +685,148 @@
         <td>
             <div class="section-line"></div>
         </td>
-        <td class="section-counter"
-                style="width: 1%; white-space: nowrap; padding-left: 10px;">
+        <td class="section-counter" style="width: 1%; white-space: nowrap; padding-left: 10px;">
             <span th:text="${#lists.size(itens) + ' peça(s)'}">
                 0 peça(s)
             </span>
         </td>
     </tr>
 </table>
-<div class="plano-description"
-        th:if="${plano.descricao != null && !plano.descricao.isEmpty()}"
-        th:text="${plano.descricao}">
+<div class="plano-description" th:if="${plano.descricao != null && !plano.descricao.isEmpty()}" th:text="${plano.descricao}">
     Observações do plano.
 </div>
-<div class="piece"
-        th:each="item, stat : ${itens}">
-    <table class="piece-header">
+<th:block th:each="item, stat : ${itens}">
+    <div class="vao-croqui" th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null and primeiroItemIdDoGrupo.get(item.grupoVao).equals(item.id)}">
+        <div class="vao-croqui-header">
+            <div class="vao-croqui-title">
+                Croqui do vão
+            </div>
+            <div class="vao-croqui-subtitle" th:text="'Vão ' + ${item.grupoVao} + ' — ' + ${#lists.size(itensPorGrupo.get(item.grupoVao))} + ' folhas'">
+                Vão 1 — 3 folhas
+            </div>
+        </div>
+        <div class="vao-croqui-box" th:utext="${croquisVao.get(item.grupoVao)}">
+        </div>
+    </div>
+    <div class="piece">
+        <table class="piece-header">
 
-        <tr>
-            <td>
-                <div
-                        class="piece-code"
-                        th:text="${item.codigoPeca}">
-                    VID-0001
-                </div>
+            <tr>
+                <td>
+                    <div class="piece-code" th:text="${item.codigoPeca}">
+                        VID-0001
+                    </div>
 
-            </td>
-            <td class="piece-number">
+                </td>
+                <td class="piece-number">
 
                 <span th:text="'PEÇA ' + ${stat.count}">
                     PEÇA 1
                 </span>
-            </td>
-        </tr>
-    </table>
+                </td>
+            </tr>
+        </table>
 
-    <div class="piece-body">
-        <div class="croqui-box"
-             th:if="${croquis.get(item.id) != null}"
-             th:utext="${croquis.get(item.id)}">
+        <div class="piece-croqui-note" th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}">
+            O croqui desta folha já aparece no croqui combinado do vão, acima.
         </div>
-        <div class="piece-meta">
+        <div class="piece-body">
+            <div class="croqui-box" th:if="${croquis.get(item.id) != null and !(item.grupoVao != null and croquisVao.get(item.grupoVao) != null)}" th:utext="${croquis.get(item.id)}">
+            </div>
+            <div class="piece-meta">
 
-            <span class="meta-chip"
-                  th:text="${item.espessuraSnapshot != null
-                  ? #numbers.formatDecimal(item.espessuraSnapshot, 1, 1) + ' mm'
-                  : '-'}">
+            <span class="meta-chip" th:text="${item.espessuraSnapshot != null ? #numbers.formatDecimal(item.espessuraSnapshot, 1, 1) + ' mm' : '-'}">
                 8,0 mm
             </span>
-            <span
-                    class="meta-chip"
-                    th:if="${item.tipoBorda != null}"
-                    th:text="${item.tipoBorda.descricao}">
+                <span class="meta-chip" th:if="${item.tipoBorda != null}" th:text="${item.tipoBorda.descricao}">
                 Lapidado
             </span>
-            <span
-                    class="meta-chip"
-                    th:if="${item.tipoFolha != null
-                    && item.tipoFolha.name() != 'UNICA'}"
-                    th:text="${item.tipoFolha.descricao}">
+                <span class="meta-chip" th:if="${item.tipoFolha != null && item.tipoFolha.name() != 'UNICA'}" th:text="${item.tipoFolha.descricao}">
                 Fixa
             </span>
-            <span
-                    class="meta-chip"
-                    th:if="${item.grupoVao != null}"
-                    th:text="'Vão ' + ${item.grupoVao}">
+                <span class="meta-chip" th:if="${item.grupoVao != null}" th:text="'Vão ' + ${item.grupoVao}">
                 Vão 01
             </span>
-        </div>
-        <table class="dimensions">
-            <tr>
-                <td>
-                    <span class="dimension-label">
-                        Medida bruta
-                    </span>
-                    <span
-                            class="dimension-value"
-                            th:text="${item.larguraBrutaMm + ' × ' + item.alturaBrutaMm + ' mm'}">
-                        1000 × 1900 mm
-                    </span>
-                </td>
-                <td>
+            </div>
+            <table class="dimensions">
+                <tr>
+
+                    <td>
                     <span class="dimension-label">
                         Medida final
                     </span>
-                    <span
-                            class="dimension-value highlight"
-                            th:text="${item.larguraFinalMm + ' × ' + item.alturaFinalMm + ' mm'}">
+                        <span class="dimension-value highlight" th:text="${item.larguraFinalMm + ' × ' + item.alturaFinalMm + ' mm'}">
                         995 × 1895 mm
                     </span>
-                </td>
-            </tr>
-        </table>
-        <table class="technical-table">
-            <tr>
-                <td class="technical-label">
-                    Quantidade
-                </td>
+                    </td>
+                </tr>
+            </table>
+            <table class="technical-table">
+                <tr>
+                    <td class="technical-label">
+                        Quantidade
+                    </td>
 
-                <td class="technical-value"
-                    th:text="${item.quantidade}">
-                    1
-                </td>
-            </tr>
-            <tr th:if="${item.espessuraBisoteMm != null}">
-                <td class="technical-label">
-                    Bisote
-                </td>
-                <td
-                        class="technical-value"
-                        colspan="3"
-                        th:text="${item.espessuraBisoteMm + ' mm — todas as laterais'}">
-                    20 mm — todas as laterais
-                </td>
-            </tr>
-        </table>
+                    <td class="technical-value" th:text="${item.quantidade}">
+                        1
+                    </td>
+                </tr>
+                <tr th:if="${item.espessuraBisoteMm != null}">
+                    <td class="technical-label">
+                        Bisote
+                    </td>
+                    <td class="technical-value" colspan="3" th:text="${item.espessuraBisoteMm + ' mm — todas as laterais'}">
+                        20 mm — todas as laterais
+                    </td>
+                </tr>
+            </table>
 
-        <div class="technical-section"
-                th:if="${item.furacoes != null && !#lists.isEmpty(item.furacoes)}">
-            <div class="technical-section-title">
-                Furações
-            </div>
-            <div class="technical-item"
-                    th:each="f : ${item.furacoes}">
-                <span th:text="${f.tipo != null
-                        ? f.tipo.descricao
-                        : 'Furação'}">
+            <div class="technical-section" th:if="${item.furacoes != null && !#lists.isEmpty(item.furacoes)}">
+                <div class="technical-section-title">
+                    Furações
+                </div>
+                <div class="technical-item" th:each="f : ${item.furacoes}">
+                <span th:text="${f.tipo != null ? f.tipo.descricao : 'Furação'}">
                     Roldana
                 </span>
-                <span th:if="${f.descricao != null && !f.descricao.isEmpty()}"
-                        th:text="' — ' + ${f.descricao}">
+                    <span th:if="${f.descricao != null && !f.descricao.isEmpty()}" th:text="' — ' + ${f.descricao}">
                 </span>
-                <span th:text="| (${f.posicaoXMm != null ? #numbers.formatDecimal(f.posicaoXMm, 1, 0) : '?'}, ${f.posicaoYMm != null ? #numbers.formatDecimal(f.posicaoYMm, 1, 0) : '?'} mm)|">
+                    <span th:text="| (${f.posicaoXMm != null ? #numbers.formatDecimal(f.posicaoXMm, 1, 0) : '?'}, ${f.posicaoYMm != null ? #numbers.formatDecimal(f.posicaoYMm, 1, 0) : '?'} mm)|">
                     (125, 70 mm)
                 </span>
-                <span
-                        th:if="${f.diametroMm != null}"
-                        th:text="' · Ø' + ${#numbers.formatDecimal(f.diametroMm,1,1)} + ' mm'">
+                    <span th:if="${f.diametroMm != null}" th:text="' · Ø' + ${#numbers.formatDecimal(f.diametroMm,1,1)} + ' mm'">
                     · Ø30,0 mm
                 </span>
+                </div>
             </div>
-        </div>
-        <div class="technical-section"
-                th:if="${item.elementos != null && !#lists.isEmpty(item.elementos)}">
-            <div class="technical-section-title">
-                Elementos técnicos
-            </div>
-            <div class="technical-item element"
-                    th:each="e : ${item.elementos}">
-                <span
-                        th:text="${e.ferragemNomeSnapshot != null
-                        ? e.ferragemNomeSnapshot
-                        : (e.tipo != null ? e.tipo.descricao : 'Elemento')}">
+            <div class="technical-section" th:if="${item.elementos != null && !#lists.isEmpty(item.elementos)}">
+                <div class="technical-section-title">
+                    Elementos técnicos
+                </div>
+                <div class="technical-item element" th:each="e : ${item.elementos}">
+                <span th:text="${e.ferragemNomeSnapshot != null ? e.ferragemNomeSnapshot : (e.tipo != null ? e.tipo.descricao : 'Elemento')}">
                     Fechadura
                 </span>
-                <span
-                        th:if="${e.lado != null}"
-                        th:text="' · ' + ${e.lado}">
+                    <span th:if="${e.lado != null}" th:text="' · ' + ${e.lado}">
                 </span>
-                <span th:text="| (${e.posicaoXMm != null ? #numbers.formatDecimal(e.posicaoXMm, 1, 0) : '?'}, ${e.posicaoYMm != null ? #numbers.formatDecimal(e.posicaoYMm, 1, 0) : '?'} mm)|">
+                    <span th:text="| (${e.posicaoXMm != null ? #numbers.formatDecimal(e.posicaoXMm, 1, 0) : '?'}, ${e.posicaoYMm != null ? #numbers.formatDecimal(e.posicaoYMm, 1, 0) : '?'} mm)|">
                     (50, 1000 mm)
                 </span>
+                </div>
             </div>
+
         </div>
 
-        <div class="observation" th:if="${item.observacoes != null  && !item.observacoes.isEmpty()}">
-
-            <span class="observation-label">
-                Observações
-            </span>
-
-            <span th:text="${item.observacoes}">
-                Observação da peça
-            </span>
-        </div>
     </div>
+</th:block>
 
-</div>
-
-<div
-        class="empty"
-        th:if="${#lists.isEmpty(itens)}">
+<div class="empty" th:if="${#lists.isEmpty(itens)}">
 
     Nenhuma peça foi adicionada a este plano de corte.
 
 </div>
 
-<div class="document-end"
-     th:if="${!#lists.isEmpty(itens)}">
+<div class="document-end" th:if="${!#lists.isEmpty(itens)}">
 
     Documento técnico gerado pelo sistema.
     Conferir medidas e posições antes da fabricação.

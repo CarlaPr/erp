@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -246,18 +247,53 @@ public class PlanoCorteController {
         return "redirect:/cut-plans/" + id;
     }
 
+    @PostMapping("/{id}/itens/{itemId}/anotacoes")
+    public String adicionarAnotacao(@PathVariable Long id, @PathVariable Long itemId,
+                                     @RequestParam TipoAnotacao tipo,
+                                     @RequestParam BigDecimal x1Mm,
+                                     @RequestParam BigDecimal y1Mm,
+                                     @RequestParam(required = false) BigDecimal x2Mm,
+                                     @RequestParam(required = false) BigDecimal y2Mm,
+                                     @RequestParam(required = false) String texto,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            planoCorteService.adicionarAnotacao(id, itemId, tipo, x1Mm, y1Mm, x2Mm, y2Mm, texto);
+            redirectAttributes.addFlashAttribute("sucesso", "Anotação adicionada ao croqui.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/cut-plans/" + id;
+    }
+
+    @PostMapping("/{id}/itens/{itemId}/anotacoes/{index}/excluir")
+    public String removerAnotacao(@PathVariable Long id, @PathVariable Long itemId, @PathVariable int index,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            planoCorteService.removerAnotacao(id, itemId, index);
+            redirectAttributes.addFlashAttribute("sucesso", "Anotação removida.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/cut-plans/" + id;
+    }
+
     @PostMapping("/{id}/itens/{itemId}/puxador-h")
     public String adicionarPuxadorH(@PathVariable Long id, @PathVariable Long itemId,
                                      @RequestParam String lado,
                                      @RequestParam(required = false) BigDecimal tamanhoMm,
+                                     @RequestParam(required = false) BigDecimal distanciaBordaMm,
                                      RedirectAttributes redirectAttributes) {
         try {
-            planoCorteService.adicionarPuxadorH(id, itemId, lado, tamanhoMm);
+            planoCorteService.adicionarPuxadorH(id, itemId, lado, tamanhoMm, distanciaBordaMm);
             String tamanhoDescricao = tamanhoMm != null && tamanhoMm.signum() > 0
                     ? tamanhoMm.stripTrailingZeros().toPlainString() + "mm"
                     : "padrão 300mm";
+            String bordaDescricao = distanciaBordaMm != null && distanciaBordaMm.signum() > 0
+                    ? distanciaBordaMm.stripTrailingZeros().toPlainString() + "mm"
+                    : "padrão 300mm";
             redirectAttributes.addFlashAttribute("sucesso",
-                    "Puxador H adicionado (lado " + lado.toLowerCase() + ", " + tamanhoDescricao + " entre furos).");
+                    "Puxador H adicionado (lado " + lado.toLowerCase() + ", " + tamanhoDescricao + " entre furos, "
+                            + bordaDescricao + " da borda).");
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("erro", e.getMessage());
         }
@@ -328,10 +364,12 @@ public class PlanoCorteController {
                 resumoFuracoes
         );
 
+        String nomeArquivo = pdfService.nomeArquivoPdf(plano);
+
         return ResponseEntity.ok()
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=" + plano.getNumeroFormatado() + ".pdf"
+                        "inline; filename=\"" + nomeArquivo + "\""
                 )
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
@@ -346,11 +384,42 @@ public class PlanoCorteController {
             croquis.put(item.getId(), croquiService.gerarSvg(item));
         }
 
+
+
+        Map<Integer, List<PlanoCorteItem>> itensPorGrupo = new LinkedHashMap<>();
+        for (PlanoCorteItem item : itens) {
+            if (item.getGrupoVao() != null) {
+                itensPorGrupo.computeIfAbsent(item.getGrupoVao(), grupo -> new ArrayList<>()).add(item);
+            }
+        }
+
+        Map<Integer, String> croquisVao = new LinkedHashMap<>();
+        Map<Integer, Long> primeiroItemIdDoGrupo = new LinkedHashMap<>();
+        Map<Long, Integer> folhaNumeroPorItem = new LinkedHashMap<>();
+        for (Map.Entry<Integer, List<PlanoCorteItem>> entrada : itensPorGrupo.entrySet()) {
+            List<PlanoCorteItem> folhas = entrada.getValue();
+            primeiroItemIdDoGrupo.put(entrada.getKey(), folhas.get(0).getId());
+            for (int i = 0; i < folhas.size(); i++) {
+                folhaNumeroPorItem.put(folhas.get(i).getId(), i + 1);
+            }
+
+
+
+
+            if (folhas.size() > 1) {
+                croquisVao.put(entrada.getKey(), croquiService.gerarSvgVao(folhas));
+            }
+        }
+
         boolean usaCalculoAutomatico = planoCorteService.usaCalculoAutomatico(plano.getCategoria());
 
         model.addAttribute("plano", plano);
         model.addAttribute("itens", itens);
         model.addAttribute("croquis", croquis);
+        model.addAttribute("itensPorGrupo", itensPorGrupo);
+        model.addAttribute("croquisVao", croquisVao);
+        model.addAttribute("primeiroItemIdDoGrupo", primeiroItemIdDoGrupo);
+        model.addAttribute("folhaNumeroPorItem", folhaNumeroPorItem);
         model.addAttribute("usaCalculoAutomatico", usaCalculoAutomatico);
         model.addAttribute("resumoFuracoes", planoCorteService.resumoFuracoes(id));
         model.addAttribute("itemForm", itemForm);
@@ -358,7 +427,7 @@ public class PlanoCorteController {
         model.addAttribute("elementoForm", new ElementoTecnicoForm());
         model.addAttribute("vidros", vidroService.listarAtivos());
         model.addAttribute("tiposBorda", TipoBorda.values());
-        model.addAttribute("tiposElemento", TipoElemento.values());
+        model.addAttribute("tiposElemento", TipoElemento.valoresSelecionaveis());
         model.addAttribute("referenciasHorizontais", ReferenciaHorizontal.values());
         model.addAttribute("referenciasVerticais", ReferenciaVertical.values());
         model.addAttribute("ferragens", ferragemRepository.findAll());

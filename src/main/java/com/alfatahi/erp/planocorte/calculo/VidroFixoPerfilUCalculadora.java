@@ -44,11 +44,11 @@ public class VidroFixoPerfilUCalculadora implements ServicoCalculadora {
             largura = ajuste.larguraFinalMm();
             altura = ajuste.alturaFinalMm();
             resumo = ajuste.resumo().isBlank()
-                    ? "Nenhuma regra técnica cadastrada ainda em Regras Técnicas (categoria Vidro Fixo no Perfil U) e nenhum desconto personalizado informado — medida final = medida bruta."
+                    ? "Nenhuma regra técnica cadastrada ainda em Regras Técnicas (categoria Vidro Fixo) e nenhum desconto personalizado informado — medida final = medida bruta."
                     : ajuste.resumo();
         }
 
-        String observacao = "Vidro Fixo no Perfil U — " + resumo;
+        String observacao = "Vidro Fixo ";
 
         FolhaCalculada folha = new FolhaCalculada(TipoFolha.FIXA, largura, altura, List.of(), List.of(), observacao);
         return new ResultadoCalculoServico(List.of(folha));

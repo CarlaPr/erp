@@ -12,9 +12,7 @@ public class OpenAPIConfiguration implements WebMvcConfigurer {
         registry
                 .addMapping("/api/**")
                 .allowedOrigins(
-                        "http://localhost:3000",
-                        "http://localhost:4200",
-                        "https://tahiglass.onrender.com/"
+                        "https://erp-tahiglass.vps10447.panel.icontainer.net/"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")

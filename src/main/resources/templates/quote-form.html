@@ -30,6 +30,12 @@
 
     <div class="px-4 sm:px-6 lg:px-8 py-5 lg:py-8 pb-28 lg:pb-10 max-w-6xl mx-auto space-y-5 lg:space-y-6">
 
+        <div id="draftRestoredBanner" class="hidden items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300 text-sm font-semibold">
+            <i data-lucide="rotate-ccw" class="w-4 h-4 shrink-0"></i>
+            <span>Um rascunho não salvo deste orçamento foi recuperado automaticamente.</span>
+            <button type="button" onclick="discardQuoteDraft()" class="ml-auto shrink-0 underline underline-offset-2 hover:no-underline">Descartar rascunho</button>
+        </div>
+
         <form id="quoteForm" onsubmit="saveQuote(event)" novalidate>
             <input type="hidden" id="quoteId" th:value="${quoteId}" />
 
@@ -512,6 +518,95 @@
     let currentItems = [];
     let editingItemIndex = -1;
     let allClientsData = [];
+
+
+
+
+
+
+    const quoteDraftIdFromServer = document.getElementById('quoteId') ? document.getElementById('quoteId').value : '';
+    const QUOTE_DRAFT_KEY = 'quoteDraft:' + (quoteDraftIdFromServer || 'new');
+    const QUOTE_DRAFT_TTL_MS = 24 * 60 * 60 * 1000; // rascunhos com mais de 24h são ignorados
+    let draftSaveTimer = null;
+
+    function collectQuoteDraft() {
+        const clientSelect = document.getElementById('quoteClient');
+        const profileSelect = document.getElementById('quoteProfile');
+        return {
+            savedAt: Date.now(),
+            quoteId: document.getElementById('quoteId')?.value || '',
+            clientId: clientSelect ? clientSelect.value : '',
+            clientName: document.getElementById('quoteClientName')?.value || '',
+            profileId: profileSelect ? profileSelect.value : '',
+            date: document.getElementById('quoteDate')?.value || '',
+            payment: document.getElementById('quotePayment')?.value || '',
+            installments: document.getElementById('quoteInstallments')?.value || '',
+            paymentPlan: document.getElementById('quotePaymentPlan')?.value || '',
+            discount: document.getElementById('quoteDiscount')?.value || '',
+            observations: document.getElementById('quoteObs')?.value || '',
+            warranty: document.getElementById('quoteWarranty')?.value || '',
+            items: currentItems
+        };
+    }
+
+    function saveQuoteDraft() {
+        clearTimeout(draftSaveTimer);
+        draftSaveTimer = setTimeout(function () {
+            try {
+                localStorage.setItem(QUOTE_DRAFT_KEY, JSON.stringify(collectQuoteDraft()));
+            } catch (e) {  }
+        }, 400);
+    }
+
+    function discardQuoteDraft() {
+        try { localStorage.removeItem(QUOTE_DRAFT_KEY); } catch (e) {}
+        document.getElementById('draftRestoredBanner')?.classList.add('hidden');
+        document.getElementById('draftRestoredBanner')?.classList.remove('flex');
+    }
+
+    function restoreQuoteDraftIfAny() {
+        let raw;
+        try { raw = localStorage.getItem(QUOTE_DRAFT_KEY); } catch (e) { return; }
+        if (!raw) return;
+
+        let draft;
+        try { draft = JSON.parse(raw); } catch (e) { return; }
+        if (!draft || (Date.now() - (draft.savedAt || 0)) > QUOTE_DRAFT_TTL_MS) {
+            discardQuoteDraft();
+            return;
+        }
+
+        if (draft.clientId) {
+            const clientSelect = document.getElementById('quoteClient');
+            if (clientSelect) clientSelect.value = draft.clientId;
+        }
+        if (draft.clientName) document.getElementById('quoteClientName').value = draft.clientName;
+        if (draft.profileId) document.getElementById('quoteProfile').value = draft.profileId;
+        if (draft.date) document.getElementById('quoteDate').value = draft.date;
+        if (draft.payment) document.getElementById('quotePayment').value = draft.payment;
+        if (draft.installments) { const el = document.getElementById('quoteInstallments'); if (el) el.value = draft.installments; }
+        if (draft.paymentPlan) { const el = document.getElementById('quotePaymentPlan'); if (el) el.value = draft.paymentPlan; }
+        if (draft.discount) { const el = document.getElementById('quoteDiscount'); if (el) el.value = draft.discount; }
+        if (draft.observations) document.getElementById('quoteObs').value = draft.observations;
+        if (draft.warranty) document.getElementById('quoteWarranty').value = draft.warranty;
+        if (Array.isArray(draft.items) && draft.items.length > 0) currentItems = draft.items;
+
+        updateClientDetailsPanel();
+        togglePaymentOptions();
+        renderQuoteItems();
+
+        const banner = document.getElementById('draftRestoredBanner');
+        if (banner) { banner.classList.remove('hidden'); banner.classList.add('flex'); }
+    }
+
+
+    window.addEventListener('session-guard:expired', saveQuoteDraft);
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('quoteForm')?.addEventListener('input', saveQuoteDraft);
+        document.getElementById('quoteForm')?.addEventListener('change', saveQuoteDraft);
+    });
 
     function toggleModal(id, show) {
         const m = document.getElementById(id);
@@ -1102,6 +1197,8 @@
         if(totalEl) totalEl.innerText = formatarMoeda(netTotal);
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        saveQuoteDraft();
     }
 
 
@@ -1548,16 +1645,30 @@
             body: JSON.stringify(payload)
         })
             .then(async (response) => {
+                if (response.status === 401) {
+
+
+
+                    saveButtons.forEach(b => {
+                        b.disabled = false;
+                        b.innerHTML = originalHtmlMap.get(b);
+                    });
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    return;
+                }
                 if (!response.ok) throw new Error(`Status: ${response.status}`);
+                discardQuoteDraft();
                 window.location.href = '/quotes';
             })
             .catch(err => {
-                alert("FALHA AO SALVAR ORÇAMENTO!\n\n" + err.message);
-                saveButtons.forEach(b => {
-                    b.disabled = false;
-                    b.innerHTML = originalHtmlMap.get(b);
-                });
-                if (typeof lucide !== 'undefined') lucide.createIcons();
+                if (err) {
+                    alert("FALHA AO SALVAR ORÇAMENTO!\n\n" + err.message);
+                    saveButtons.forEach(b => {
+                        b.disabled = false;
+                        b.innerHTML = originalHtmlMap.get(b);
+                    });
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
             });
     }
 
@@ -1645,6 +1756,11 @@
                 const titleEl = document.getElementById('formTitle');
                 if (titleEl) titleEl.innerText = `Editar Orçamento: ${q.number}`;
                 document.title = `Editar ${q.number} - Tahi Glass`;
+
+
+
+
+                restoreQuoteDraftIfAny();
             })
             .catch(err => {
                 console.error("Erro ao buscar dados do orçamento para edição:", err);
@@ -1658,6 +1774,8 @@
             loadQuoteForEdit(idVal);
         } else {
             initNewQuoteForm();
+
+            restoreQuoteDraftIfAny();
         }
     });
 </script>

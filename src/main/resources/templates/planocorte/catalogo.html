@@ -2,23 +2,19 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head(title='Catálogo de Insumos - Tahi Glass ERP')}"></head>
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
-
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
-
 <main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen transition-colors duration-300">
     <header class="mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5">
         <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Catálogo de Insumos</h2>
         <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Vidros, alumínio, ferragens, silicones e acessórios — tudo em um só lugar.</p>
     </header>
-
     <div th:if="${sucesso}" class="mb-6 flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 px-5 py-3.5 rounded-xl font-semibold text-sm">
         <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0"></i> <span th:text="${sucesso}">Sucesso</span>
     </div>
     <div th:if="${erro}" class="mb-6 flex items-center gap-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-400 px-5 py-3.5 rounded-xl font-semibold text-sm">
         <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i> <span th:text="${erro}">Erro</span>
     </div>
-
 
     <div class="flex flex-wrap gap-2 mb-6" id="tabNav">
         <button type="button" onclick="mostrarAba('vidros')" data-tabbtn="vidros" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
@@ -38,7 +34,6 @@
         </button>
     </div>
 
-
     <section id="tab-vidros" class="tab-panel space-y-5">
         <div class="flex flex-wrap justify-between items-center gap-3">
             <button type="button" onclick="toggleCollapse('importVidrosPanel')" class="text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1.5">
@@ -48,7 +43,6 @@
                 <i data-lucide="plus" class="w-4 h-4"></i> Novo Vidro
             </button>
         </div>
-
         <div id="importVidrosPanel" class="hidden bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5">
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">
                 Vidros com o mesmo <strong>nome</strong> são atualizados; os demais são criados. Toda mudança de valor/m² fica registrada no histórico de preço.
@@ -61,7 +55,6 @@
             </form>
             <p class="text-xs text-slate-400 dark:text-slate-500 mt-3 font-mono">nome, fabricante, tipo, espessura, cor, acabamento, valor_m2, valor_minimo, peso_m2</p>
         </div>
-
         <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[860px]">
                 <thead>
@@ -104,7 +97,6 @@
             </table>
         </div>
     </section>
-
 
     <section id="tab-aluminio" class="tab-panel space-y-5">
         <div class="flex justify-end">
@@ -149,7 +141,6 @@
         </div>
     </section>
 
-
     <section id="tab-ferragens" class="tab-panel space-y-5">
         <div class="flex justify-end">
             <button onclick="abrirModalNovo('ferragemModal', 'ferragemForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
@@ -193,7 +184,6 @@
         </div>
     </section>
 
-
     <section id="tab-silicones" class="tab-panel space-y-5">
         <div class="flex justify-end">
             <button onclick="abrirModalNovo('siliconeModal', 'siliconeForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
@@ -234,7 +224,6 @@
         </div>
     </section>
 
-
     <section id="tab-acessorios" class="tab-panel space-y-5">
         <div class="flex justify-end">
             <button onclick="abrirModalNovo('acessorioModal', 'acessorioForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
@@ -274,7 +263,6 @@
             </table>
         </div>
     </section>
-
 
     <div id="vidroModal" th:class="${isEditingVidro} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-8">
@@ -347,7 +335,6 @@
         </div>
     </div>
 
-
     <div id="perfilModal" th:class="${isEditingPerfil} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden my-8">
             <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
@@ -381,7 +368,6 @@
         </div>
     </div>
 
-
     <div id="ferragemModal" th:class="${isEditingFerragem} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-8">
             <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
@@ -407,7 +393,6 @@
                     <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Unidade</label>
                         <input type="text" th:field="*{unidade}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all" /></div>
                 </div>
-
                 <details class="border-t border-slate-200 dark:border-slate-700 pt-4">
                     <summary class="text-sm font-semibold text-slate-600 dark:text-slate-400 cursor-pointer select-none">Medidas padrão para uso automático como Elemento Técnico (opcional)</summary>
                     <p class="text-xs text-slate-500 dark:text-slate-500 mt-2 mb-3">Preenchidas aqui, essas medidas são sugeridas automaticamente ao adicionar esta ferragem como elemento técnico de uma peça no Plano de Corte.</p>
@@ -439,7 +424,6 @@
                             <input type="number" step="0.1" th:field="*{anguloGraus}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-900 dark:text-white" /></div>
                     </div>
                 </details>
-
                 <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700 mt-6">
                     <a th:href="@{/cut-plans/catalogo(tab='ferragens')}" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold">Cancelar</a>
                     <button type="submit" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black transition-all shadow-md shadow-violet-500/20">Salvar Ferragem</button>
@@ -447,7 +431,6 @@
             </form>
         </div>
     </div>
-
 
     <div id="siliconeModal" th:class="${isEditingSilicone} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden my-8">
@@ -479,7 +462,6 @@
             </form>
         </div>
     </div>
-
 
     <div id="acessorioModal" th:class="${isEditingAcessorio} ? 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto' : 'fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto'">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden my-8">
@@ -514,7 +496,6 @@
         </div>
     </div>
 
-
     <div id="historicoModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-8">
             <header class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
@@ -533,13 +514,11 @@
         </div>
     </div>
 </main>
-
 <script th:inline="javascript">
     const ACTIVE_TAB = /*[[${activeTab}]]*/ 'vidros';
     const MODAL_ABERTO = /*[[${modalAberto}]]*/ null;
     const MODAL_IDS = { vidro: 'vidroModal', perfil: 'perfilModal', ferragem: 'ferragemModal', silicone: 'siliconeModal', acessorio: 'acessorioModal' };
     const OPEN_MODAL = MODAL_ABERTO ? MODAL_IDS[MODAL_ABERTO] : null;
-
     function mostrarAba(nome) {
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
         document.getElementById('tab-' + nome).classList.remove('hidden');
@@ -558,17 +537,14 @@
         });
         history.replaceState(null, '', '/cut-plans/catalogo?tab=' + nome);
     }
-
     function toggleCollapse(id) {
         document.getElementById(id).classList.toggle('hidden');
     }
-
     function abrirModalNovo(modalId, formId) {
         const modal = document.getElementById(modalId);
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
-
     function verHistorico(btn) {
         const id = btn.getAttribute('data-vidro-id');
         const nome = btn.getAttribute('data-vidro-nome');
@@ -576,7 +552,6 @@
         const modal = document.getElementById('historicoModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-
         fetch('/cut-plans/catalogo/vidros/' + id + '/historico')
             .then(r => r.json())
             .then(lista => {
@@ -601,13 +576,11 @@
                 document.getElementById('historicoVazio').classList.remove('hidden');
             });
     }
-
     function fecharHistorico() {
         const modal = document.getElementById('historicoModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
     }
-
     document.addEventListener('DOMContentLoaded', function () {
         mostrarAba(ACTIVE_TAB);
         if (OPEN_MODAL) {

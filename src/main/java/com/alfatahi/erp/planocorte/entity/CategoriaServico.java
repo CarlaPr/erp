@@ -19,7 +19,7 @@ public enum CategoriaServico {
     PORTA_CORRER("Porta de Correr"),
     JANELA_PADRAO("Janela Padrão"),
     PORTA_ABRIR("Porta de Abrir"),
-    VIDRO_FIXO_PERFIL_U("Vidro Fixo no Perfil U"),
+    VIDRO_FIXO_PERFIL_U("Vidro Fixo"),
     JANELA_BASCULANTE("Janela Basculante"),
     SACADA("Sacada"),
     ESPELHO("Espelho"),

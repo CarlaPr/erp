@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,6 +50,29 @@ public class PdfService {
                     item.getId(),
                     croquiService.gerarSvg(item)
             );
+        }
+
+
+
+
+        Map<Integer, List<PlanoCorteItem>> itensPorGrupo = new LinkedHashMap<>();
+        for (PlanoCorteItem item : itens) {
+            if (item.getGrupoVao() != null) {
+                itensPorGrupo.computeIfAbsent(item.getGrupoVao(), grupo -> new ArrayList<>()).add(item);
+            }
+        }
+
+        Map<Integer, String> croquisVao = new LinkedHashMap<>();
+        Map<Integer, Long> primeiroItemIdDoGrupo = new LinkedHashMap<>();
+        for (Map.Entry<Integer, List<PlanoCorteItem>> entrada : itensPorGrupo.entrySet()) {
+            List<PlanoCorteItem> folhas = entrada.getValue();
+            primeiroItemIdDoGrupo.put(entrada.getKey(), folhas.get(0).getId());
+
+
+
+            if (folhas.size() > 1) {
+                croquisVao.put(entrada.getKey(), croquiService.gerarSvgVao(folhas));
+            }
         }
 
         Profile profile = buscarProfileTahiGlass();
@@ -98,6 +122,21 @@ public class PdfService {
         context.setVariable(
                 "croquis",
                 croquis
+        );
+
+        context.setVariable(
+                "croquisVao",
+                croquisVao
+        );
+
+        context.setVariable(
+                "itensPorGrupo",
+                itensPorGrupo
+        );
+
+        context.setVariable(
+                "primeiroItemIdDoGrupo",
+                primeiroItemIdDoGrupo
         );
 
         context.setVariable(
@@ -180,6 +219,26 @@ public class PdfService {
                     e
             );
         }
+    }
+
+
+    public String nomeArquivoPdf(PlanoCorte plano) {
+        String empresa;
+        try {
+            empresa = nvlStr(buscarProfileTahiGlass().getCompanyName(), "Plano de Corte");
+        } catch (RuntimeException e) {
+            empresa = "Plano de Corte";
+        }
+        String base = empresa + " - " + plano.getNumeroFormatado();
+        return sanitizarNomeArquivo(base) + ".pdf";
+    }
+
+    private String sanitizarNomeArquivo(String texto) {
+        String semAcento = java.text.Normalizer.normalize(texto, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+        String limpo = semAcento.replaceAll("[^a-zA-Z0-9 _-]", "").trim();
+        limpo = limpo.replaceAll("\\s+", "_");
+        return limpo.isEmpty() ? "plano-de-corte" : limpo;
     }
 
     private Profile buscarProfileTahiGlass() {

@@ -13,6 +13,7 @@ import com.alfatahi.erp.planocorte.dto.PlanoCorteVaoForm;
 import com.alfatahi.erp.entity.WorkOrder;
 import com.alfatahi.erp.repository.WorkOrderRepository;
 import com.alfatahi.erp.planocorte.entity.CategoriaServico;
+import com.alfatahi.erp.planocorte.entity.Anotacao;
 import com.alfatahi.erp.planocorte.entity.ElementoTecnico;
 import com.alfatahi.erp.planocorte.entity.Ferragem;
 import com.alfatahi.erp.planocorte.entity.Furacao;
@@ -21,6 +22,9 @@ import com.alfatahi.erp.planocorte.entity.PlanoCorteItem;
 import com.alfatahi.erp.planocorte.entity.ReferenciaHorizontal;
 import com.alfatahi.erp.planocorte.entity.ReferenciaVertical;
 import com.alfatahi.erp.planocorte.entity.StatusPlano;
+import com.alfatahi.erp.planocorte.entity.TipoAncoragem;
+import com.alfatahi.erp.planocorte.entity.TipoAnotacao;
+import com.alfatahi.erp.planocorte.entity.TipoBorda;
 import com.alfatahi.erp.planocorte.entity.TipoFuracao;
 import com.alfatahi.erp.planocorte.entity.Vidro;
 import com.alfatahi.erp.planocorte.repository.FerragemRepository;
@@ -156,6 +160,11 @@ public class PlanoCorteService {
         planoCorteRepository.deleteById(id);
     }
 
+
+    private BigDecimal semNegativo(BigDecimal valor) {
+        return valor.signum() < 0 ? BigDecimal.ZERO : valor;
+    }
+
     public PlanoCorteItem adicionarItem(Long planoCorteId, PlanoCorteItemForm form) {
         PlanoCorte plano = buscarPorId(planoCorteId);
         garantirRascunho(plano);
@@ -163,16 +172,16 @@ public class PlanoCorteService {
         Vidro vidro = vidroRepository.findById(form.getVidroId())
                 .orElseThrow(() -> new NoSuchElementException("Vidro não encontrado: " + form.getVidroId()));
 
+        DimensoesBrutas dimensoes = resolverDimensoesPersonalizadas(
+                form.isDimensoesPersonalizadas(),
+                form.getLarguraBrutaMm(), form.getAlturaBrutaMm(),
+                form.getAlturaBrutaEsquerdaMm(), form.getAlturaBrutaDireitaMm(),
+                form.getLarguraBrutaSuperiorMm(), form.getLarguraBrutaInferiorMm());
+
         RegraTecnicaService.AjusteCalculado ajuste = regraTecnicaService.calcularAjuste(plano.getCategoria());
 
-        BigDecimal larguraFinal = form.getLarguraBrutaMm().subtract(ajuste.largura());
-        BigDecimal alturaFinal = form.getAlturaBrutaMm().subtract(ajuste.altura());
-        if (larguraFinal.signum() < 0) {
-            larguraFinal = BigDecimal.ZERO;
-        }
-        if (alturaFinal.signum() < 0) {
-            alturaFinal = BigDecimal.ZERO;
-        }
+        BigDecimal larguraFinal = semNegativo(dimensoes.larguraMm().subtract(ajuste.largura()));
+        BigDecimal alturaFinal = semNegativo(dimensoes.alturaMm().subtract(ajuste.altura()));
 
         PlanoCorteItem item = new PlanoCorteItem();
         item.setPlanoCorte(plano);
@@ -183,19 +192,85 @@ public class PlanoCorteService {
         item.setValorM2Snapshot(vidro.getValorPorM2());
         item.setValorMinimoSnapshot(vidro.getValorMinimo());
         item.setPesoM2Snapshot(vidro.getPesoPorM2());
-        item.setLarguraBrutaMm(form.getLarguraBrutaMm());
-        item.setAlturaBrutaMm(form.getAlturaBrutaMm());
+        item.setLarguraBrutaMm(dimensoes.larguraMm());
+        item.setAlturaBrutaMm(dimensoes.alturaMm());
         item.setQuantidade(form.getQuantidade());
         item.setTipoBorda(form.getTipoBorda());
         item.setObservacoes(form.getObservacoes());
         item.setLarguraFinalMm(larguraFinal);
         item.setAlturaFinalMm(alturaFinal);
 
+
+
+
+
+        if (dimensoes.alturaEsquerdaMm() != null) {
+            aplicarDimensoesPersonalizadas(item, dimensoes,
+                    semNegativo(dimensoes.alturaEsquerdaMm().subtract(ajuste.altura())),
+                    semNegativo(dimensoes.alturaDireitaMm().subtract(ajuste.altura())),
+                    semNegativo(dimensoes.larguraSuperiorMm().subtract(ajuste.largura())),
+                    semNegativo(dimensoes.larguraInferiorMm().subtract(ajuste.largura())));
+        }
+        aplicarCantosMoeda(item, form.getTipoBorda(),
+                form.isCantoSuperiorEsquerdo(), form.isCantoSuperiorDireito(),
+                form.isCantoInferiorEsquerdo(), form.isCantoInferiorDireito());
+
         calcularCustoItem(item);
 
         PlanoCorteItem salvo = itemRepository.save(item);
         recalcularTotaisPlano(plano);
         return salvo;
+    }
+
+
+    private record DimensoesBrutas(BigDecimal larguraMm, BigDecimal alturaMm,
+                                    BigDecimal alturaEsquerdaMm, BigDecimal alturaDireitaMm,
+                                    BigDecimal larguraSuperiorMm, BigDecimal larguraInferiorMm) {
+    }
+
+
+    private DimensoesBrutas resolverDimensoesPersonalizadas(
+            boolean personalizadas, BigDecimal larguraMm, BigDecimal alturaMm,
+            BigDecimal alturaEsquerdaMm, BigDecimal alturaDireitaMm,
+            BigDecimal larguraSuperiorMm, BigDecimal larguraInferiorMm) {
+        if (!personalizadas) {
+            if (larguraMm == null || larguraMm.signum() <= 0) {
+                throw new IllegalStateException("Informe a largura.");
+            }
+            if (alturaMm == null || alturaMm.signum() <= 0) {
+                throw new IllegalStateException("Informe a altura.");
+            }
+            return new DimensoesBrutas(larguraMm, alturaMm, null, null, null, null);
+        }
+
+        if (alturaEsquerdaMm == null || alturaDireitaMm == null
+                || larguraSuperiorMm == null || larguraInferiorMm == null) {
+            throw new IllegalStateException(
+                    "Informe a altura bruta dos dois lados (esquerdo e direito) e a largura bruta de cima e de baixo.");
+        }
+        if (alturaEsquerdaMm.signum() <= 0 || alturaDireitaMm.signum() <= 0
+                || larguraSuperiorMm.signum() <= 0 || larguraInferiorMm.signum() <= 0) {
+            throw new IllegalStateException("As dimensões personalizadas devem ser maiores que zero.");
+        }
+
+        BigDecimal larguraEfetiva = larguraSuperiorMm.max(larguraInferiorMm);
+        BigDecimal alturaEfetiva = alturaEsquerdaMm.max(alturaDireitaMm);
+        return new DimensoesBrutas(larguraEfetiva, alturaEfetiva,
+                alturaEsquerdaMm, alturaDireitaMm, larguraSuperiorMm, larguraInferiorMm);
+    }
+
+
+    private void aplicarDimensoesPersonalizadas(PlanoCorteItem item, DimensoesBrutas dimensoes,
+                                                  BigDecimal alturaEsquerdaFinalMm, BigDecimal alturaDireitaFinalMm,
+                                                  BigDecimal larguraSuperiorFinalMm, BigDecimal larguraInferiorFinalMm) {
+        item.setAlturaBrutaEsquerdaMm(dimensoes.alturaEsquerdaMm());
+        item.setAlturaBrutaDireitaMm(dimensoes.alturaDireitaMm());
+        item.setLarguraBrutaSuperiorMm(dimensoes.larguraSuperiorMm());
+        item.setLarguraBrutaInferiorMm(dimensoes.larguraInferiorMm());
+        item.setAlturaFinalEsquerdaMm(alturaEsquerdaFinalMm);
+        item.setAlturaFinalDireitaMm(alturaDireitaFinalMm);
+        item.setLarguraFinalSuperiorMm(larguraSuperiorFinalMm);
+        item.setLarguraFinalInferiorMm(larguraInferiorFinalMm);
     }
 
 
@@ -212,8 +287,14 @@ public class PlanoCorteService {
         Vidro vidro = vidroRepository.findById(form.getVidroId())
                 .orElseThrow(() -> new NoSuchElementException("Vidro não encontrado: " + form.getVidroId()));
 
-        EntradaCalculoServico entrada = new EntradaCalculoServico(
+        DimensoesBrutas dimensoes = resolverDimensoesPersonalizadas(
+                form.isDimensoesPersonalizadas(),
                 form.getLarguraVaoMm(), form.getAlturaVaoMm(),
+                form.getAlturaBrutaEsquerdaMm(), form.getAlturaBrutaDireitaMm(),
+                form.getLarguraBrutaSuperiorMm(), form.getLarguraBrutaInferiorMm());
+
+        EntradaCalculoServico entrada = new EntradaCalculoServico(
+                dimensoes.larguraMm(), dimensoes.alturaMm(),
                 form.getQuantidadeFolhas(), form.getQuantidadeFolhasFixas(), form.getQuantidadeFolhasMoveis(),
                 form.getLadoRecorte(),
                 vidro.getTipo(),
@@ -221,6 +302,34 @@ public class PlanoCorteService {
                 form.getEspessuraBisoteMm(),
                 form.getComFechadura());
         ResultadoCalculoServico resultado = calculadora.calcular(entrada);
+
+
+
+
+
+
+
+        BigDecimal alturaEsquerdaFinalMm = null;
+        BigDecimal alturaDireitaFinalMm = null;
+        BigDecimal larguraSuperiorFinalMm = null;
+        BigDecimal larguraInferiorFinalMm = null;
+        if (dimensoes.alturaEsquerdaMm() != null) {
+            BigDecimal larguraFinalEfetivaMm = resultado.folhas().stream()
+                    .map(FolhaCalculada::larguraMm)
+                    .max(BigDecimal::compareTo)
+                    .orElse(dimensoes.larguraMm());
+            BigDecimal alturaFinalEfetivaMm = resultado.folhas().stream()
+                    .map(FolhaCalculada::alturaMm)
+                    .max(BigDecimal::compareTo)
+                    .orElse(dimensoes.alturaMm());
+            BigDecimal descontoLarguraMm = dimensoes.larguraMm().subtract(larguraFinalEfetivaMm);
+            BigDecimal descontoAlturaMm = dimensoes.alturaMm().subtract(alturaFinalEfetivaMm);
+
+            alturaEsquerdaFinalMm = semNegativo(dimensoes.alturaEsquerdaMm().subtract(descontoAlturaMm));
+            alturaDireitaFinalMm = semNegativo(dimensoes.alturaDireitaMm().subtract(descontoAlturaMm));
+            larguraSuperiorFinalMm = semNegativo(dimensoes.larguraSuperiorMm().subtract(descontoLarguraMm));
+            larguraInferiorFinalMm = semNegativo(dimensoes.larguraInferiorMm().subtract(descontoLarguraMm));
+        }
 
         Integer grupoVao = proximoGrupoVao(planoCorteId);
         List<PlanoCorteItem> criados = new ArrayList<>();
@@ -235,8 +344,8 @@ public class PlanoCorteService {
             item.setValorM2Snapshot(vidro.getValorPorM2());
             item.setValorMinimoSnapshot(vidro.getValorMinimo());
             item.setPesoM2Snapshot(vidro.getPesoPorM2());
-            item.setLarguraBrutaMm(form.getLarguraVaoMm());
-            item.setAlturaBrutaMm(form.getAlturaVaoMm());
+            item.setLarguraBrutaMm(dimensoes.larguraMm());
+            item.setAlturaBrutaMm(dimensoes.alturaMm());
             item.setQuantidade(form.getQuantidadeVaos());
             item.setTipoBorda(form.getTipoBorda());
             item.setObservacoes(combinarObservacoes(folha.observacao(), form.getObservacoes()));
@@ -247,6 +356,13 @@ public class PlanoCorteService {
             item.setFuracoes(mapearFuracoes(folha.furacoes()));
             item.getElementos().addAll(folha.elementos());
             item.setEspessuraBisoteMm(folha.espessuraBisoteMm());
+            if (dimensoes.alturaEsquerdaMm() != null) {
+                aplicarDimensoesPersonalizadas(item, dimensoes,
+                        alturaEsquerdaFinalMm, alturaDireitaFinalMm, larguraSuperiorFinalMm, larguraInferiorFinalMm);
+            }
+            aplicarCantosMoeda(item, form.getTipoBorda(),
+                    form.isCantoSuperiorEsquerdo(), form.isCantoSuperiorDireito(),
+                    form.isCantoInferiorEsquerdo(), form.isCantoInferiorDireito());
 
             calcularCustoItem(item);
             criados.add(itemRepository.save(item));
@@ -293,6 +409,18 @@ public class PlanoCorteService {
         }
         return daFolha + " — " + doUsuario;
     }
+
+
+    private void aplicarCantosMoeda(PlanoCorteItem item, TipoBorda tipoBorda,
+                                     boolean superiorEsquerdo, boolean superiorDireito,
+                                     boolean inferiorEsquerdo, boolean inferiorDireito) {
+        boolean cantoMoeda = tipoBorda == TipoBorda.CANTO_MOEDA || tipoBorda == TipoBorda.CANTO_GARRAFA;
+        item.setCantoMoedaSuperiorEsquerdo(cantoMoeda && superiorEsquerdo);
+        item.setCantoMoedaSuperiorDireito(cantoMoeda && superiorDireito);
+        item.setCantoMoedaInferiorEsquerdo(cantoMoeda && inferiorEsquerdo);
+        item.setCantoMoedaInferiorDireito(cantoMoeda && inferiorDireito);
+    }
+
 
 
 
@@ -360,6 +488,8 @@ public class PlanoCorteService {
 
 
         elemento.setTipo(form.getTipo());
+        elemento.setNome(form.getNome());
+        elemento.setAncoragem(form.getAncoragem() != null ? form.getAncoragem() : TipoAncoragem.CENTRO);
         elemento.setReferenciaHorizontal(referenciaHorizontal);
         elemento.setDistanciaHorizontalMm(distanciaHorizontalMm);
         elemento.setReferenciaVertical(form.getReferenciaVertical());
@@ -458,6 +588,46 @@ public class PlanoCorteService {
         itemRepository.save(item);
     }
 
+
+    public Anotacao adicionarAnotacao(Long planoCorteId, Long itemId, TipoAnotacao tipo,
+                                       BigDecimal x1Mm, BigDecimal y1Mm,
+                                       BigDecimal x2Mm, BigDecimal y2Mm, String texto) {
+        PlanoCorte plano = buscarPorId(planoCorteId);
+        garantirRascunho(plano);
+        PlanoCorteItem item = buscarItem(planoCorteId, itemId);
+
+        if (tipo == null || x1Mm == null || y1Mm == null) {
+            throw new IllegalStateException("Informe o tipo e a posição da anotação.");
+        }
+        if (tipo == TipoAnotacao.TEXTO && (texto == null || texto.isBlank())) {
+            throw new IllegalStateException("Informe o texto da anotação.");
+        }
+        if ((tipo == TipoAnotacao.SETA || tipo == TipoAnotacao.LINHA) && (x2Mm == null || y2Mm == null)) {
+            throw new IllegalStateException("Informe o ponto final da " + tipo.getDescricao().toLowerCase() + ".");
+        }
+
+        Anotacao anotacao = new Anotacao();
+        anotacao.setTipo(tipo);
+        anotacao.setX1Mm(x1Mm);
+        anotacao.setY1Mm(y1Mm);
+        anotacao.setX2Mm(x2Mm);
+        anotacao.setY2Mm(y2Mm);
+        anotacao.setTexto(texto);
+
+        item.getAnotacoes().add(anotacao);
+        itemRepository.save(item);
+        return anotacao;
+    }
+
+    public void removerAnotacao(Long planoCorteId, Long itemId, int index) {
+        PlanoCorte plano = buscarPorId(planoCorteId);
+        garantirRascunho(plano);
+        PlanoCorteItem item = buscarItem(planoCorteId, itemId);
+        verificarIndice(item.getAnotacoes(), index, "Anotação");
+        item.getAnotacoes().remove(index);
+        itemRepository.save(item);
+    }
+
     private void verificarIndice(List<?> lista, int index, String rotulo) {
         if (index < 0 || index >= lista.size()) {
             throw new IllegalStateException(rotulo + " não encontrado(a).");
@@ -490,6 +660,11 @@ public class PlanoCorteService {
 
 
     public void adicionarPuxadorH(Long planoCorteId, Long itemId, String lado, BigDecimal tamanhoEntreFurosMm) {
+        adicionarPuxadorH(planoCorteId, itemId, lado, tamanhoEntreFurosMm, null);
+    }
+
+    public void adicionarPuxadorH(Long planoCorteId, Long itemId, String lado, BigDecimal tamanhoEntreFurosMm,
+                                   BigDecimal distanciaBordaMm) {
         PlanoCorte plano = buscarPorId(planoCorteId);
         garantirRascunho(plano);
         if (plano.getCategoria() == CategoriaServico.ESPELHO) {
@@ -502,13 +677,20 @@ public class PlanoCorteService {
                 ? tamanhoEntreFurosMm
                 : PUXADOR_H_DIST_ENTRE_FUROS_MM;
 
-        BigDecimal x = direito
-                ? item.getLarguraFinalMm().subtract(PUXADOR_H_DIST_LATERAL_MM)
+
+
+        BigDecimal distBorda = distanciaBordaMm != null && distanciaBordaMm.signum() > 0
+                ? distanciaBordaMm
                 : PUXADOR_H_DIST_LATERAL_MM;
+
+        BigDecimal x = direito
+                ? item.getLarguraFinalMm().subtract(distBorda)
+                : distBorda;
         BigDecimal yCentro = item.getAlturaFinalMm().subtract(PUXADOR_H_DIST_PISO_MM);
         BigDecimal metadeGap = distEntreFuros.divide(BigDecimal.valueOf(2));
 
-        String rotulo = "Puxador H (" + distEntreFuros.stripTrailingZeros().toPlainString() + "mm entre furos)";
+        String rotulo = "Puxador H (" + distEntreFuros.stripTrailingZeros().toPlainString() + "mm entre furos, "
+                + distBorda.stripTrailingZeros().toPlainString() + "mm da borda)";
         item.getFuracoes().add(new Furacao(TipoFuracao.PUXADOR, x, yCentro.subtract(metadeGap), PUXADOR_H_DIAMETRO_FURO_MM, rotulo));
         item.getFuracoes().add(new Furacao(TipoFuracao.PUXADOR, x, yCentro.add(metadeGap), PUXADOR_H_DIAMETRO_FURO_MM, ""));
         itemRepository.save(item);
@@ -547,7 +729,12 @@ public class PlanoCorteService {
                 ? item.getLarguraFinalMm().subtract(FECHADURA_DIST_LATERAL_MM)
                 : FECHADURA_DIST_LATERAL_MM;
         BigDecimal xMaior = xAlinhados.add(FECHADURA_DESLOCAMENTO_FURO_MAIOR_MM);
-        BigDecimal yCentro = item.getAlturaFinalMm().subtract(FECHADURA_DIST_PISO_MM);
+
+
+
+        BigDecimal yCentro = plano.getCategoria() == CategoriaServico.JANELA_PADRAO
+                ? item.getAlturaFinalMm().divide(BigDecimal.valueOf(2))
+                : item.getAlturaFinalMm().subtract(FECHADURA_DIST_PISO_MM);
         BigDecimal metadeGap = FECHADURA_DIST_ENTRE_FUROS_MM.divide(BigDecimal.valueOf(2));
 
         item.getFuracoes().add(new Furacao(TipoFuracao.FECHADURA, xAlinhados, yCentro.subtract(metadeGap), FECHADURA_DIAMETRO_FURO_MM, "Fechadura"));

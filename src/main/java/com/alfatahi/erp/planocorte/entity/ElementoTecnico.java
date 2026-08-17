@@ -22,6 +22,13 @@ public class ElementoTecnico {
     @Column(name = "tipo", length = 20)
     private TipoElemento tipo;
 
+    @Column(name = "nome", length = 80)
+    private String nome; // identificação livre, ex: "Tomada", "Caixa condensadora", "Buraco"
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ancoragem", length = 20)
+    private TipoAncoragem ancoragem = TipoAncoragem.CENTRO;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "referencia_horizontal", length = 20)
     private ReferenciaHorizontal referenciaHorizontal;
@@ -83,6 +90,10 @@ public class ElementoTecnico {
     @Column(name = "observacao", length = 200)
     private String observacao;
 
+
+    @Column(name = "rotulo_croqui", length = 60)
+    private String rotuloCroqui;
+
     public ElementoTecnico() {
     }
 
@@ -92,6 +103,22 @@ public class ElementoTecnico {
 
     public void setTipo(TipoElemento tipo) {
         this.tipo = tipo;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public TipoAncoragem getAncoragem() {
+        return ancoragem;
+    }
+
+    public void setAncoragem(TipoAncoragem ancoragem) {
+        this.ancoragem = ancoragem;
     }
 
     public ReferenciaHorizontal getReferenciaHorizontal() {
@@ -236,5 +263,13 @@ public class ElementoTecnico {
 
     public void setObservacao(String observacao) {
         this.observacao = observacao;
+    }
+
+    public String getRotuloCroqui() {
+        return rotuloCroqui;
+    }
+
+    public void setRotuloCroqui(String rotuloCroqui) {
+        this.rotuloCroqui = rotuloCroqui;
     }
 }
