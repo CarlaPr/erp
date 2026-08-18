@@ -11,6 +11,8 @@ public interface TechnicalVisitRepository extends JpaRepository<TechnicalVisit, 
 
     List<TechnicalVisit> findByQuoteId(UUID quoteId);
 
+    List<TechnicalVisit> findByClientIdOrderByVisitDateDescVisitTimeDesc(UUID clientId);
+
     @Query("SELECT DISTINCT v FROM TechnicalVisit v " +
            "LEFT JOIN FETCH v.quote q " +
            "LEFT JOIN FETCH v.client " +

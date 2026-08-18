@@ -87,6 +87,9 @@
                 <a href="/agenda" sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS', 'TECNICO')" th:classappend="${currentPage == 'agenda'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="calendar-clock" class="w-4 h-4"></i> Agenda Comercial
                 </a>
+                <a href="/technical-visits" sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS', 'TECNICO')" th:classappend="${currentPage == 'technical-visits'} ? 'bg-fuchsia-50 text-fuchsia-600 border-l-4 border-fuchsia-600 dark:bg-fuchsia-500/10 dark:text-fuchsia-400 dark:border-fuchsia-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Visitas Técnicas
+                </a>
                 <a href="/clients" sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" th:classappend="${currentPage == 'clients'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="users" class="w-4 h-4"></i> Clientes
                 </a>

@@ -17,7 +17,7 @@ public class TechnicalVisit {
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "quote_id", nullable = false)
+    @JoinColumn(name = "quote_id")
     @JsonIgnoreProperties({"items", "workOrder", "client"})
     private Quote quote;
 
@@ -34,6 +34,9 @@ public class TechnicalVisit {
 
     @Column(columnDefinition = "text")
     private String notes;
+
+    @Column(nullable = false, length = 20)
+    private String status = "AGENDADA";
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -63,6 +66,9 @@ public class TechnicalVisit {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

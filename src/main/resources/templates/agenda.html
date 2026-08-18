@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head(title='Agenda Comercial - Tahi Glass')}"></head>
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
@@ -93,9 +93,12 @@
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-1 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-1 shadow-sm">
+            <button type="button" onclick="openDayView()" class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 text-slate-600 dark:text-slate-400 transition-all">
+                <i data-lucide="calendar-check" class="w-4 h-4"></i> Dia
+            </button>
             <button type="button" id="btnViewCalendar" onclick="switchView('calendar')"
                     class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
-                <i data-lucide="calendar-days" class="w-4 h-4"></i> Calendário
+                <i data-lucide="calendar-days" class="w-4 h-4"></i> Mês
             </button>
             <button type="button" id="btnViewList" onclick="switchView('list')"
                     class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
@@ -117,14 +120,14 @@
     <br>
     <div id="calendarView">
 
-        <div id="unscheduledPanel" class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-5 mb-6 hidden">
+        <div id="unscheduledPanel" sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-5 mb-6 hidden">
             <h3 class="text-amber-800 dark:text-amber-400 font-bold text-sm mb-3 flex items-center gap-2">
                 <i data-lucide="calendar-x" class="w-4 h-4"></i> Aguardando Agendamento
             </h3>
             <div id="unscheduledList" class="flex flex-wrap gap-2"></div>
         </div>
 
-        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-x-auto">
             <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
                 <div class="flex items-center gap-2">
                     <button type="button" onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -143,12 +146,12 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase border-b border-slate-200 dark:border-slate-800">
+            <div class="grid grid-cols-7 min-w-[760px] text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase border-b border-slate-200 dark:border-slate-800">
                 <div class="py-2">Dom</div><div class="py-2">Seg</div><div class="py-2">Ter</div>
                 <div class="py-2">Qua</div><div class="py-2">Qui</div><div class="py-2">Sex</div><div class="py-2">Sáb</div>
             </div>
 
-            <div id="calendarGrid" class="grid grid-cols-7"></div>
+            <div id="calendarGrid" class="grid grid-cols-7 min-w-[760px]"></div>
         </div>
     </div>
     <div id="listView" class="hidden bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
@@ -784,6 +787,14 @@
         renderCalendar();
     }
 
+    function openDayView() {
+        const picker = document.getElementById('routeDatePicker');
+        if (!picker.value) picker.value = new Date().toISOString().substring(0, 10);
+        openDayModal(picker.value);
+    }
+    function openMapsAddress(address) {
+        window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address || ''), '_blank', 'noopener');
+    }
     function openRouteDayFromPicker() {
 
 
@@ -934,15 +945,19 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     ${IS_TECNICO ? (isVisit ? `
-                        <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-fuchsia-600 text-white hover:opacity-90" onclick="openTechnicianVisitView('${s.id}')">Ver Visita Técnica</button>
+                        <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-fuchsia-600 text-white hover:opacity-90" onclick="openTechnicianVisitView('${s.id}')">Registrar medições</button>
                     ` : `
                         <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openTechnicianNoteModal('${s.id}')">Registrar Observação</button>
                     `) : isVisit ? `
                         <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-fuchsia-600 text-white hover:opacity-90" onclick="openVisitModal('${s.id}')">Editar Visita</button>
+                        <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-fuchsia-300 text-fuchsia-700 dark:text-fuchsia-300" onclick="window.location.href='/technical-visits?visit=${s.id}'">Ver medições</button>
                         <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white hover:opacity-90" onclick="quickDeleteVisit('${s.id}')">Excluir Visita</button>
                     ` : `
                         <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openEditModal('${s.id}')">Gerenciar (Agendar/Editar)</button>
                     `}
+                    <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1" onclick="openMapsAddress(decodeURIComponent('${encodeURIComponent(s.clientAddress || '')}'))">
+                        <i data-lucide="map" class="w-3.5 h-3.5"></i> Google Maps
+                    </button>
                     ${!IS_TECNICO ? `<button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/quotes'">Abrir Orçamento</button>` : ''}
                 </div>
             `;
@@ -1012,12 +1027,14 @@
                 <td class="p-4">${s.scheduledDate ? fmtBR(s.scheduledDate) : '<span class="text-slate-400 italic">Não agendado</span>'}</td>
                 <td class="p-4"><span class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase ${meta.badge || ''}">${meta.label || s.status}</span></td>
                 <td class="p-4 text-right whitespace-nowrap">
+                    <button type="button" class="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg" title="Abrir no Google Maps" onclick="openMapsAddress(decodeURIComponent('${encodeURIComponent(s.clientAddress || '')}'))"><i data-lucide="map" class="w-4 h-4"></i></button>
                     ${IS_TECNICO ? (s.kind === 'VISITA_TECNICA' ? `
-                        <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Ver Visita Técnica" onclick="openTechnicianVisitView('${s.id}')"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                        <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Registrar medições" onclick="openTechnicianVisitView('${s.id}')"><i data-lucide="clipboard-ruler" class="w-4 h-4"></i></button>
                     ` : `
                         <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Registrar Observação" onclick="openTechnicianNoteModal('${s.id}')"><i data-lucide="clipboard-edit" class="w-4 h-4"></i></button>
                     `) : s.kind === 'VISITA_TECNICA' ? `
                         <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar Visita Técnica" onclick="openVisitModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button type="button" class="p-2 text-fuchsia-600 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-500/10 rounded-lg" title="Ver medições" onclick="window.location.href='/technical-visits?visit=${s.id}'"><i data-lucide="clipboard-ruler" class="w-4 h-4"></i></button>
                         <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Excluir Visita Técnica" onclick="quickDeleteVisit('${s.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     ` : `
                         <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar / Agendar" onclick="openEditModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
@@ -1483,24 +1500,7 @@
 
 
     async function openTechnicianVisitView(id) {
-        try {
-            const res = await fetch(`/agenda/technical-visits/view-data/${id}`);
-            if (!res.ok) throw new Error('Falha ao carregar visita técnica');
-            const v = await res.json();
-
-            document.getElementById('tvInfoClient').textContent = v.clientName || 'Sem cliente';
-            document.getElementById('tvInfoAddress').textContent = v.clientAddress || 'Endereço não informado';
-            document.getElementById('tvInfoQuote').textContent = v.quoteNumber || '-';
-            document.getElementById('tvInfoWhen').textContent = (v.visitDate ? fmtBR(v.visitDate) : 'Sem data definida') + (v.visitTime ? ' às ' + fmtTimeBR(v.visitTime) : '');
-            document.getElementById('tvInfoNotes').textContent = v.notes && v.notes.trim() ? v.notes : 'Nenhuma observação registrada.';
-
-            closeModal('dayModal');
-            toggleModal('technicianVisitViewModal', true);
-            lucide.createIcons();
-        } catch (err) {
-            console.error(err);
-            alert('Não foi possível carregar os dados da visita técnica.');
-        }
+        window.location.href = '/technical-visits?visit=' + encodeURIComponent(id);
     }
 
 

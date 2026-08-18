@@ -7,10 +7,14 @@ import com.alfatahi.erp.planocorte.calculo.ResultadoCalculoServico;
 import com.alfatahi.erp.planocorte.calculo.ServicoCalculadora;
 import com.alfatahi.erp.planocorte.calculo.ServicoCalculadoraRegistry;
 import com.alfatahi.erp.planocorte.dto.ElementoTecnicoForm;
+import com.alfatahi.erp.planocorte.dto.FuracaoForm;
 import com.alfatahi.erp.planocorte.dto.PlanoCorteForm;
 import com.alfatahi.erp.planocorte.dto.PlanoCorteItemForm;
 import com.alfatahi.erp.planocorte.dto.PlanoCorteVaoForm;
 import com.alfatahi.erp.entity.WorkOrder;
+import com.alfatahi.erp.entity.TechnicalVisitFeature;
+import com.alfatahi.erp.entity.TechnicalVisitOpening;
+import com.alfatahi.erp.service.TechnicalVisitDataService;
 import com.alfatahi.erp.repository.WorkOrderRepository;
 import com.alfatahi.erp.planocorte.entity.CategoriaServico;
 import com.alfatahi.erp.planocorte.entity.Anotacao;
@@ -61,6 +65,7 @@ public class PlanoCorteService {
     private final RegraTecnicaService regraTecnicaService;
     private final ServicoCalculadoraRegistry servicoCalculadoraRegistry;
     private final ValidacaoElementoService validacaoElementoService;
+    private final TechnicalVisitDataService technicalVisitDataService;
 
     public PlanoCorteService(PlanoCorteRepository planoCorteRepository,
                               PlanoCorteItemRepository itemRepository,
@@ -69,7 +74,8 @@ public class PlanoCorteService {
                               FerragemRepository ferragemRepository,
                               RegraTecnicaService regraTecnicaService,
                               ServicoCalculadoraRegistry servicoCalculadoraRegistry,
-                              ValidacaoElementoService validacaoElementoService) {
+                              ValidacaoElementoService validacaoElementoService,
+                              TechnicalVisitDataService technicalVisitDataService) {
         this.planoCorteRepository = planoCorteRepository;
         this.itemRepository = itemRepository;
         this.workOrderRepository = workOrderRepository;
@@ -78,6 +84,14 @@ public class PlanoCorteService {
         this.regraTecnicaService = regraTecnicaService;
         this.servicoCalculadoraRegistry = servicoCalculadoraRegistry;
         this.validacaoElementoService = validacaoElementoService;
+        this.technicalVisitDataService = technicalVisitDataService;
+    }
+
+    @Transactional(readOnly = true)
+    public List<TechnicalVisitOpening> listarMedicoesCliente(Long planoCorteId) {
+        PlanoCorte plano = buscarPorId(planoCorteId);
+        if (plano.getWorkOrder() == null || plano.getWorkOrder().getClient() == null) return List.of();
+        return technicalVisitDataService.findOpeningsForClient(plano.getWorkOrder().getClient().getId());
     }
 
 
@@ -143,11 +157,6 @@ public class PlanoCorteService {
         plano.setWorkOrder(workOrder);
         plano.setDescricao(form.getDescricao());
 
-        boolean possuiItens = !itemRepository.findByPlanoCorteIdOrderByIdAsc(id).isEmpty();
-        if (possuiItens && plano.getCategoria() != form.getCategoria()) {
-            throw new IllegalStateException(
-                    "Não é possível trocar o serviço de um plano que já possui peças lançadas. Remova as peças primeiro.");
-        }
         plano.setCategoria(form.getCategoria());
 
         return planoCorteRepository.save(plano);
@@ -179,13 +188,15 @@ public class PlanoCorteService {
                 form.getAlturaBrutaEsquerdaMm(), form.getAlturaBrutaDireitaMm(),
                 form.getLarguraBrutaSuperiorMm(), form.getLarguraBrutaInferiorMm());
 
-        RegraTecnicaService.AjusteCalculado ajuste = regraTecnicaService.calcularAjuste(plano.getCategoria());
+        CategoriaServico categoriaItem = form.getCategoria() != null ? form.getCategoria() : plano.getCategoria();
+        RegraTecnicaService.AjusteCalculado ajuste = regraTecnicaService.calcularAjuste(categoriaItem);
 
         BigDecimal larguraFinal = semNegativo(dimensoes.larguraMm().subtract(ajuste.largura()));
         BigDecimal alturaFinal = semNegativo(dimensoes.alturaMm().subtract(ajuste.altura()));
 
         PlanoCorteItem item = new PlanoCorteItem();
         item.setPlanoCorte(plano);
+        item.setCategoria(categoriaItem);
         item.setVidroId(vidro.getId());
         item.setVidroNomeSnapshot(vidro.getNome());
         item.setEspessuraSnapshot(vidro.getEspessura());
@@ -280,15 +291,17 @@ public class PlanoCorteService {
     public List<PlanoCorteItem> adicionarVao(Long planoCorteId, PlanoCorteVaoForm form) {
         PlanoCorte plano = buscarPorId(planoCorteId);
         garantirRascunho(plano);
+        TechnicalVisitOpening medicaoVisita = aplicarMedicaoVisita(plano, form);
+        CategoriaServico categoriaVao = form.getCategoria() != null ? form.getCategoria() : plano.getCategoria();
 
-        ServicoCalculadora calculadora = servicoCalculadoraRegistry.buscar(plano.getCategoria())
+        ServicoCalculadora calculadora = servicoCalculadoraRegistry.buscar(categoriaVao)
                 .orElseThrow(() -> new IllegalStateException(
-                        "A categoria " + plano.getCategoria().getDescricao() + " não possui cálculo automático de vão."));
+                        "A categoria " + categoriaVao.getDescricao() + " não possui cálculo automático de vão."));
 
         Vidro vidro = vidroRepository.findById(form.getVidroId())
                 .orElseThrow(() -> new NoSuchElementException("Vidro não encontrado: " + form.getVidroId()));
 
-        boolean espelhoRedondo = plano.getCategoria() == CategoriaServico.ESPELHO && form.isEspelhoRedondo();
+        boolean espelhoRedondo = categoriaVao == CategoriaServico.ESPELHO && form.isEspelhoRedondo();
         if (espelhoRedondo) {
             // Espelho redondo: o usuário informa apenas a altura (diâmetro) — a largura
             // acompanha automaticamente o mesmo valor, e dimensões personalizadas não se aplicam.
@@ -348,6 +361,7 @@ public class PlanoCorteService {
         for (FolhaCalculada folha : resultado.folhas()) {
             PlanoCorteItem item = new PlanoCorteItem();
             item.setPlanoCorte(plano);
+            item.setCategoria(categoriaVao);
             item.setVidroId(vidro.getId());
             item.setVidroNomeSnapshot(vidro.getNome());
             item.setEspessuraSnapshot(vidro.getEspessura());
@@ -380,8 +394,69 @@ public class PlanoCorteService {
             criados.add(itemRepository.save(item));
         }
 
+        if (medicaoVisita != null && !criados.isEmpty() && !medicaoVisita.getFeatures().isEmpty()) {
+            PlanoCorteItem destino = criados.stream().filter(i -> i.getTipoFolha() == TipoFolha.MOVEL)
+                    .findFirst().orElse(criados.get(0));
+            for (TechnicalVisitFeature feature : medicaoVisita.getFeatures()) {
+                destino.getElementos().add(mapearElementoVisita(destino, feature));
+            }
+            destino.setObservacoes(combinarObservacoes(destino.getObservacoes(),
+                    "Medição importada da visita: " + medicaoVisita.getName()));
+            itemRepository.save(destino);
+        }
+
         recalcularTotaisPlano(plano);
         return criados;
+    }
+
+    private TechnicalVisitOpening aplicarMedicaoVisita(PlanoCorte plano, PlanoCorteVaoForm form) {
+        if (form.getSourceOpeningId() == null) return null;
+        TechnicalVisitOpening opening = technicalVisitDataService.findOpening(form.getSourceOpeningId());
+        UUID clientePlano = plano.getWorkOrder() != null && plano.getWorkOrder().getClient() != null
+                ? plano.getWorkOrder().getClient().getId() : null;
+        UUID clienteVisita = opening.getTechnicalVisit().getClient() != null
+                ? opening.getTechnicalVisit().getClient().getId() : null;
+        if (!Objects.equals(clientePlano, clienteVisita)) {
+            throw new IllegalStateException("A medição selecionada pertence a outro cliente.");
+        }
+        boolean detalhada = opening.getGrossHeightLeftMm() != null && opening.getGrossHeightRightMm() != null
+                && opening.getGrossWidthTopMm() != null && opening.getGrossWidthBottomMm() != null;
+        if (opening.getServiceCategory() != null) {
+            form.setCategoria(opening.getServiceCategory());
+        }
+        form.setDimensoesPersonalizadas(detalhada);
+        if (detalhada) {
+            form.setAlturaBrutaEsquerdaMm(opening.getGrossHeightLeftMm());
+            form.setAlturaBrutaDireitaMm(opening.getGrossHeightRightMm());
+            form.setLarguraBrutaSuperiorMm(opening.getGrossWidthTopMm());
+            form.setLarguraBrutaInferiorMm(opening.getGrossWidthBottomMm());
+        } else {
+            form.setLarguraVaoMm(opening.getWidthMm());
+            form.setAlturaVaoMm(opening.getHeightMm());
+        }
+        form.setObservacoes(combinarObservacoes(opening.getNotes(), form.getObservacoes()));
+        return opening;
+    }
+
+    private ElementoTecnico mapearElementoVisita(PlanoCorteItem item, TechnicalVisitFeature feature) {
+        ElementoTecnico e = new ElementoTecnico();
+        e.setTipo(feature.getType());
+        e.setNome(feature.getName());
+        e.setAncoragem(TipoAncoragem.CENTRO);
+        e.setReferenciaHorizontal(feature.getReferenceHorizontal());
+        e.setDistanciaHorizontalMm(feature.getDistanceHorizontalMm());
+        e.setReferenciaVertical(feature.getReferenceVertical());
+        e.setDistanciaVerticalMm(feature.getDistanceVerticalMm());
+        e.setDiametroMm(feature.getDiameterMm());
+        e.setLarguraMm(feature.getWidthMm());
+        e.setAlturaMm(feature.getHeightMm());
+        e.setProfundidadeMm(feature.getDepthMm());
+        e.setRaioMm(feature.getRadiusMm());
+        e.setLado(feature.getCorner());
+        e.setObservacao(feature.getNotes());
+        e.setPosicaoXMm(resolverX(item.getLarguraFinalMm(), e.getReferenciaHorizontal(), e.getDistanciaHorizontalMm()));
+        e.setPosicaoYMm(resolverY(item.getAlturaFinalMm(), e.getReferenciaVertical(), e.getDistanciaVerticalMm()));
+        return e;
     }
 
 
@@ -416,9 +491,11 @@ public class PlanoCorteService {
     }
 
     private String combinarObservacoes(String daFolha, String doUsuario) {
-        if (doUsuario == null || doUsuario.isBlank()) {
-            return daFolha;
-        }
+        boolean semFolha = daFolha == null || daFolha.isBlank();
+        boolean semUsuario = doUsuario == null || doUsuario.isBlank();
+        if (semFolha && semUsuario) return null;
+        if (semUsuario) return daFolha;
+        if (semFolha) return doUsuario;
         return daFolha + " — " + doUsuario;
     }
 
@@ -483,7 +560,7 @@ public class PlanoCorteService {
 
         List<String> avisos = new ArrayList<>();
         for (ElementoTecnico elemento : novosElementos) {
-            avisos.addAll(validacaoElementoService.validar(item, elemento, plano.getCategoria()));
+            avisos.addAll(validacaoElementoService.validar(item, elemento, item.getCategoria()));
         }
 
         item.getElementos().addAll(novosElementos);
@@ -571,7 +648,7 @@ public class PlanoCorteService {
                 : null;
 
         ElementoTecnico atualizado = construirElemento(item, form, ferragem, form.getReferenciaHorizontal(), form.getDistanciaHorizontalMm());
-        List<String> avisos = validacaoElementoService.validar(item, atualizado, plano.getCategoria());
+        List<String> avisos = validacaoElementoService.validar(item, atualizado, item.getCategoria());
 
         item.getElementos().set(index, atualizado);
         itemRepository.save(item);
@@ -586,6 +663,28 @@ public class PlanoCorteService {
         PlanoCorteItem item = buscarItem(planoCorteId, itemId);
         verificarIndice(item.getElementos(), index, "Elemento técnico");
         item.getElementos().remove(index);
+        itemRepository.save(item);
+    }
+
+    public void editarFuracao(Long planoCorteId, Long itemId, int index, FuracaoForm form) {
+        PlanoCorte plano = buscarPorId(planoCorteId);
+        garantirRascunho(plano);
+        PlanoCorteItem item = buscarItem(planoCorteId, itemId);
+        verificarIndice(item.getFuracoes(), index, "Furação");
+        if (form.getTipo() == null || form.getPosicaoXMm() == null || form.getPosicaoYMm() == null) {
+            throw new IllegalStateException("Informe tipo, posição X e posição Y da furação.");
+        }
+        if (form.getPosicaoXMm().signum() < 0 || form.getPosicaoYMm().signum() < 0
+                || form.getPosicaoXMm().compareTo(item.getLarguraFinalMm()) > 0
+                || form.getPosicaoYMm().compareTo(item.getAlturaFinalMm()) > 0) {
+            throw new IllegalStateException("A posição informada precisa ficar dentro do vidro.");
+        }
+        Furacao f = item.getFuracoes().get(index);
+        f.setTipo(form.getTipo());
+        f.setPosicaoXMm(form.getPosicaoXMm());
+        f.setPosicaoYMm(form.getPosicaoYMm());
+        f.setDiametroMm(form.getDiametroMm());
+        f.setDescricao(form.getDescricao());
         itemRepository.save(item);
     }
 
@@ -692,10 +791,10 @@ public class PlanoCorteService {
                                    BigDecimal distanciaBordaMm) {
         PlanoCorte plano = buscarPorId(planoCorteId);
         garantirRascunho(plano);
-        if (plano.getCategoria() == CategoriaServico.ESPELHO) {
+        PlanoCorteItem item = buscarItem(planoCorteId, itemId);
+        if (item.getCategoria() == CategoriaServico.ESPELHO) {
             throw new IllegalStateException("Espelho não usa Puxador H automático — adicione um furo/recorte como Elemento Técnico.");
         }
-        PlanoCorteItem item = buscarItem(planoCorteId, itemId);
         garantirNaoVidroFixo(item, "Puxador H");
         boolean direito = "DIREITO".equalsIgnoreCase(lado);
 
@@ -727,10 +826,10 @@ public class PlanoCorteService {
     public void adicionarPuxadorSimples(Long planoCorteId, Long itemId, String lado) {
         PlanoCorte plano = buscarPorId(planoCorteId);
         garantirRascunho(plano);
-        if (plano.getCategoria() == CategoriaServico.ESPELHO) {
+        PlanoCorteItem item = buscarItem(planoCorteId, itemId);
+        if (item.getCategoria() == CategoriaServico.ESPELHO) {
             throw new IllegalStateException("Espelho não usa Puxador automático — adicione um furo/recorte como Elemento Técnico.");
         }
-        PlanoCorteItem item = buscarItem(planoCorteId, itemId);
         garantirNaoVidroFixo(item, "Puxador");
         boolean direito = "DIREITO".equalsIgnoreCase(lado);
 
@@ -746,10 +845,10 @@ public class PlanoCorteService {
     public void adicionarFechadura(Long planoCorteId, Long itemId, String lado) {
         PlanoCorte plano = buscarPorId(planoCorteId);
         garantirRascunho(plano);
-        if (plano.getCategoria() == CategoriaServico.ESPELHO) {
+        PlanoCorteItem item = buscarItem(planoCorteId, itemId);
+        if (item.getCategoria() == CategoriaServico.ESPELHO) {
             throw new IllegalStateException("Espelho não usa Fechadura automática — adicione um furo/recorte como Elemento Técnico.");
         }
-        PlanoCorteItem item = buscarItem(planoCorteId, itemId);
         garantirNaoVidroFixo(item, "Fechadura");
         boolean direito = "DIREITO".equalsIgnoreCase(lado);
 
@@ -760,7 +859,7 @@ public class PlanoCorteService {
 
 
 
-        BigDecimal yCentro = plano.getCategoria() == CategoriaServico.JANELA_PADRAO
+        BigDecimal yCentro = item.getCategoria() == CategoriaServico.JANELA_PADRAO
                 ? item.getAlturaFinalMm().divide(BigDecimal.valueOf(2))
                 : item.getAlturaFinalMm().subtract(FECHADURA_DIST_PISO_MM);
         BigDecimal metadeGap = FECHADURA_DIST_ENTRE_FUROS_MM.divide(BigDecimal.valueOf(2));

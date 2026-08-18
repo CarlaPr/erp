@@ -18,13 +18,10 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
     private final BigDecimal roldanaDistTopoPadraoMm;
     private final BigDecimal roldanaQtdPadrao;
 
-    // Furos de bate-fecha na folha móvel: distância fixa da borda de fechamento, diâmetro
-    // do furo, e distância (centro a centro) entre os dois furos.
     private static final BigDecimal BATE_FECHA_DIST_BORDA_MM = BigDecimal.valueOf(33);
     private static final BigDecimal BATE_FECHA_DIAMETRO_MM = BigDecimal.valueOf(20);
     private static final BigDecimal BATE_FECHA_DIST_ENTRE_FUROS_MM = BigDecimal.valueOf(50);
-    // Distância padrão do centro entre os furos até o pé do vidro, usada quando o usuário não informa.
-    private static final BigDecimal BATE_FECHA_DIST_PE_VIDRO_PADRAO_MM = BigDecimal.valueOf(300);
+    private static final BigDecimal BATE_FECHA_DIST_PISO_PADRAO_MM = BigDecimal.valueOf(300);
 
     protected AbstractPortaCorrerJanelaCalculadora(ParametroServicoService parametroServicoService) {
         this(parametroServicoService, null, null, null);
@@ -63,9 +60,9 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
         BigDecimal larguraPorFolha = CalculoUtil.dividir(entrada.larguraVaoMm(), totalFolhas);
         BigDecimal alturaFixo = CalculoUtil.descontar(entrada.alturaVaoMm(), descontoAlturaFixo);
         BigDecimal alturaMovel = CalculoUtil.descontar(entrada.alturaVaoMm(), descontoAlturaMovel);
-        BigDecimal distanciaPeVidro = entrada.alturaBateFechaMm() != null && entrada.alturaBateFechaMm().signum() > 0
+        BigDecimal distanciaPiso = entrada.alturaBateFechaMm() != null && entrada.alturaBateFechaMm().signum() > 0
                 ? entrada.alturaBateFechaMm()
-                : BATE_FECHA_DIST_PE_VIDRO_PADRAO_MM;
+                : BATE_FECHA_DIST_PISO_PADRAO_MM;
 
         List<FolhaCalculada> folhas = new ArrayList<>();
         int numero = 1;
@@ -83,7 +80,8 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
             List<FuracaoCalculada> furos = gerarFuracoesRoldana(larguraFabricacao, distBordaRoldana, distTopoRoldana, roldanaQtd);
 
             boolean ladoDireito = (i % 2 == 0);
-            List<FuracaoCalculada> furosBateFecha = gerarFuracoesBateFecha(larguraFabricacao, alturaMovel, ladoDireito, distanciaPeVidro);
+            List<FuracaoCalculada> furosBateFecha = gerarFuracoesBateFecha(
+                    larguraFabricacao, entrada.alturaVaoMm(), alturaMovel, ladoDireito, distanciaPiso);
             int qtdRoldanas = furos.size();
             furos.addAll(furosBateFecha);
 
@@ -101,7 +99,7 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
                                     + (distTopoRoldana != null ? " e " + distTopoRoldana.stripTrailingZeros().toPlainString() + "mm do topo." : "."))
                     + (furosBateFecha.isEmpty()
                             ? ""
-                            : " \n· Bate-fecha");
+                            : " \n· Bate-fecha: centro do par a " + distanciaPiso.stripTrailingZeros().toPlainString() + "mm do chão");
 
             folhas.add(new FolhaCalculada(TipoFolha.MOVEL, larguraFabricacao, alturaMovel, furos, List.of(), observacao));
             numero++;
@@ -118,20 +116,24 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
 
 
 
-    private List<FuracaoCalculada> gerarFuracoesBateFecha(BigDecimal larguraFolha, BigDecimal alturaFolha,
-                                                            boolean ladoDireito, BigDecimal distanciaPeVidroMm) {
+    private List<FuracaoCalculada> gerarFuracoesBateFecha(BigDecimal larguraFolha, BigDecimal alturaVao,
+                                                            BigDecimal alturaFolha, boolean ladoDireito,
+                                                            BigDecimal distanciaPisoMm) {
         List<FuracaoCalculada> furos = new ArrayList<>();
         BigDecimal x = ladoDireito
                 ? larguraFolha.subtract(BATE_FECHA_DIST_BORDA_MM)
                 : BATE_FECHA_DIST_BORDA_MM;
 
-        BigDecimal centroY = alturaFolha.subtract(distanciaPeVidroMm);
+        BigDecimal centroY = alturaVao.subtract(distanciaPisoMm);
         BigDecimal metadeGap = BATE_FECHA_DIST_ENTRE_FUROS_MM.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+        if (centroY.subtract(metadeGap).signum() < 0 || centroY.add(metadeGap).compareTo(alturaFolha) > 0) {
+            throw new IllegalArgumentException("A altura do bate-fecha posiciona um dos furos fora do vidro.");
+        }
         BigDecimal yFuro1 = centroY.subtract(metadeGap);
         BigDecimal yFuro2 = centroY.add(metadeGap);
 
-        String lado = ladoDireito ? "direito" : "esquerdo";
-        furos.add(new FuracaoCalculada(TipoFuracao.BATE_FECHA, x, yFuro1, BATE_FECHA_DIAMETRO_MM, "Bate-fecha"));
+        furos.add(new FuracaoCalculada(TipoFuracao.BATE_FECHA, x, yFuro1, BATE_FECHA_DIAMETRO_MM,
+                "Bate-fecha · centro a " + distanciaPisoMm.stripTrailingZeros().toPlainString() + "mm do chão"));
         furos.add(new FuracaoCalculada(TipoFuracao.BATE_FECHA, x, yFuro2, BATE_FECHA_DIAMETRO_MM, ""));
         return furos;
     }

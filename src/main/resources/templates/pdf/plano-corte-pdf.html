@@ -740,6 +740,7 @@
             </div>
             <div class="piece-meta">
 
+            <span class="meta-chip" th:if="${item.categoria != null}" th:text="${item.categoria.descricao}">Serviço</span>
             <span class="meta-chip" th:text="${item.espessuraSnapshot != null ? #numbers.formatDecimal(item.espessuraSnapshot, 1, 1) + ' mm' : '-'}">
                 8,0 mm
             </span>

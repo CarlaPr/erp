@@ -12,6 +12,9 @@ import java.util.List;
 public interface ClientRepository extends JpaRepository<Client, UUID> {
     List<Client> findByIsActiveTrueOrderByNameAsc();
 
+    @Query("SELECT c FROM Client c WHERE c.isActive = true OR c.isActive IS NULL ORDER BY LOWER(c.name)")
+    List<Client> findSelectableClients();
+
     @Query("SELECT c FROM Client c WHERE " +
             "LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
             "LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +

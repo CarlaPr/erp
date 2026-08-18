@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Visitas Técnicas - Tahi Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-5">
+        <div>
+            <p class="text-[11px] font-black uppercase tracking-[.2em] text-fuchsia-600 dark:text-fuchsia-400">Campo e medição</p>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">Visitas Técnicas</h1>
+            <p class="text-sm text-slate-500 mt-1">Registre cada vão, fotos, furos e recortes e reaproveite tudo no plano de corte.</p>
+        </div>
+        <button type="button" onclick="toggleModal('newVisitModal', true)" class="w-full sm:w-auto px-5 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-500/20">
+            <i data-lucide="calendar-plus" class="w-4 h-4"></i> Nova visita por cliente
+        </button>
+    </header>
+
+    <section class="grid grid-cols-1 xl:grid-cols-[340px_minmax(0,1fr)] gap-5">
+        <aside class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden xl:sticky xl:top-6 xl:self-start">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800">
+                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Cliente ou visita</label>
+                <div class="relative mt-2">
+                    <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
+                    <input id="visitSearch" type="search" placeholder="Buscar cliente, endereço, orçamento..." class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-fuchsia-500">
+                </div>
+                <label for="visitStatusFilter" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mt-3">Situação</label>
+                <select id="visitStatusFilter" class="w-full mt-1.5 px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm font-bold outline-none focus:border-fuchsia-500">
+                    <option value="PENDENTES">Agendadas e em andamento</option>
+                    <option value="AGENDADA">Somente agendadas</option>
+                    <option value="EM_ANDAMENTO">Somente em andamento</option>
+                    <option value="CONCLUIDA">Concluídas</option>
+                    <option value="TODAS">Todas</option>
+                </select>
+            </div>
+            <div id="visitList" class="max-h-[55vh] xl:max-h-[72vh] overflow-y-auto p-2"></div>
+        </aside>
+
+        <section id="emptyState" class="bg-white dark:bg-[#131C2F] border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl min-h-[380px] flex flex-col items-center justify-center text-center p-8">
+            <div class="w-14 h-14 rounded-2xl bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center mb-4"><i data-lucide="clipboard-list" class="w-7 h-7"></i></div>
+            <h2 class="font-black text-slate-900 dark:text-white">Selecione uma visita</h2>
+            <p class="text-sm text-slate-500 mt-2 max-w-md">Escolha uma visita ao lado ou crie uma diretamente para um cliente. Cada cliente pode ter quantos vãos e medições forem necessários.</p>
+        </section>
+
+        <section id="visitDetail" class="hidden space-y-5 min-w-0">
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm p-5 sm:p-6">
+                <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <span id="detailStatus" class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase"></span>
+                            <span id="detailQuote" class="text-xs font-mono font-bold text-brand-600 dark:text-cyan-400"></span>
+                        </div>
+                        <h2 id="detailClient" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white truncate"></h2>
+                        <p id="detailAddress" class="text-sm text-slate-500 mt-1"></p>
+                        <p id="detailWhen" class="text-sm font-bold text-slate-700 dark:text-slate-300 mt-2"></p>
+                        <p id="detailNotes" class="text-xs text-slate-500 mt-2 whitespace-pre-line"></p>
+                    </div>
+                    <div class="grid grid-cols-2 sm:flex gap-2 shrink-0">
+                        <button type="button" onclick="openMaps()" class="px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="map" class="w-4 h-4"></i> Google Maps</button>
+                        <button type="button" onclick="openVisitEditor()" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="pencil" class="w-4 h-4"></i> Visita</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="rounded-xl bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 p-4"><p class="text-[10px] font-black uppercase text-slate-400">Vãos</p><p id="kpiOpenings" class="text-2xl font-black mt-1"></p></div>
+                <div class="rounded-xl bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 p-4"><p class="text-[10px] font-black uppercase text-slate-400">Furos/recortes</p><p id="kpiFeatures" class="text-2xl font-black mt-1"></p></div>
+                <div class="rounded-xl bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 p-4"><p class="text-[10px] font-black uppercase text-slate-400">Fotos</p><p id="kpiPhotos" class="text-2xl font-black mt-1"></p></div>
+            </div>
+
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
+                <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                    <div><h3 class="font-black text-slate-900 dark:text-white">Medições dos vãos</h3><p class="text-xs text-slate-500 mt-0.5">Ex.: vão para box, espelho, porta ou janela.</p></div>
+                    <button type="button" onclick="openOpeningEditor()" class="px-3 py-2 rounded-lg bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900 text-xs font-black flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar vão</button>
+                </div>
+                <div id="openingsList" class="p-3 sm:p-5 grid grid-cols-1 2xl:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
+                <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                    <div><h3 class="font-black text-slate-900 dark:text-white">Fotos da visita</h3><p class="text-xs text-slate-500 mt-0.5">No celular, use a câmera diretamente.</p></div>
+                    <button type="button" onclick="document.getElementById('photoFile').click()" class="px-3 py-2 rounded-lg bg-slate-800 dark:bg-slate-700 text-white text-xs font-black flex items-center gap-1"><i data-lucide="camera" class="w-4 h-4"></i> Anexar foto</button>
+                    <input id="photoFile" type="file" accept="image/*" capture="environment" class="hidden" onchange="uploadPhoto(this)">
+                </div>
+                <div id="photosList" class="p-3 sm:p-5 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+            </div>
+        </section>
+    </section>
+</main>
+
+<div id="newVisitModal" class="modal-shell hidden">
+    <form onsubmit="createVisit(event)" class="modal-card max-w-lg">
+        <button type="button" onclick="toggleModal('newVisitModal', false)" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <h3 class="text-xl font-black text-slate-900 dark:text-white">Nova visita técnica</h3>
+        <p class="text-sm text-slate-500 mt-1 mb-5">Selecione um cliente mesmo que ainda não exista orçamento.</p>
+        <label class="form-label">Cliente *</label>
+        <input id="newClientId" type="hidden" value="">
+        <button id="clientSelectButton" type="button" onclick="openClientSearchModal()" class="client-select-btn mb-4">
+            <span class="flex items-center gap-3 min-w-0">
+                <span class="client-select-icon"><i data-lucide="user-round-search" class="w-5 h-5"></i></span>
+                <span class="min-w-0 text-left">
+                    <span id="selectedClientName" class="block text-sm font-black text-slate-700 dark:text-slate-200 truncate">Selecionar cliente</span>
+                    <span id="selectedClientCity" class="block text-xs font-medium text-slate-400 truncate mt-0.5">Toque para pesquisar entre os cadastrados</span>
+                </span>
+            </span>
+            <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400 shrink-0"></i>
+        </button>
+        <div class="grid grid-cols-2 gap-3 mb-4"><div><label class="form-label">Data *</label><input id="newVisitDate" type="date" required class="form-input"></div><div><label class="form-label">Horário</label><input id="newVisitTime" type="time" class="form-input"></div></div>
+        <label class="form-label">Observações iniciais</label><textarea id="newVisitNotes" rows="3" class="form-input"></textarea>
+        <button class="submit-btn mt-5">Criar e começar medição</button>
+    </form>
+</div>
+
+<div id="clientSearchModal" class="modal-shell client-search-shell hidden">
+    <div class="modal-card client-search-card max-w-2xl">
+        <div class="client-search-header">
+            <div class="pr-12">
+                <p class="text-[10px] font-black uppercase tracking-widest text-fuchsia-600 dark:text-fuchsia-400">Selecionar cliente</p>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white mt-1">Buscar cliente</h3>
+                <p class="text-xs text-slate-500 mt-1" th:text="${#lists.size(clients) + ' cliente(s) cadastrado(s)'}">Clientes cadastrados</p>
+            </div>
+            <button type="button" onclick="closeClientSearchModal()" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <div class="relative mt-4">
+                <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                <input id="clientSearchInput" type="search" autocomplete="off" placeholder="Pesquisar por nome ou cidade..." class="client-search-input" oninput="filterClientOptions()">
+                <button id="clearClientSearch" type="button" onclick="clearClientSearchInput()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+        </div>
+        <div id="clientSearchResults" class="client-search-results">
+            <button th:each="c : ${clients}" type="button" class="client-option" th:attr="data-client-id=${c.id},data-client-name=${c.name},data-client-city=${c.city != null ? c.city : ''}" onclick="selectClientFromModal(this)">
+                <span class="client-option-icon"><i data-lucide="user-round" class="w-5 h-5"></i></span>
+                <span class="min-w-0 flex-1 text-left">
+                    <span class="client-option-name" th:text="${c.name}">Nome do cliente</span>
+                    <span class="client-option-city" th:text="${c.city != null and !c.city.isBlank() ? c.city : 'Cidade não informada'}">Cidade</span>
+                </span>
+                <span class="client-option-check"><i data-lucide="check" class="w-4 h-4"></i></span>
+            </button>
+            <div id="clientSearchEmpty" class="hidden py-10 px-5 text-center">
+                <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center"><i data-lucide="user-round-x" class="w-6 h-6"></i></div>
+                <p class="mt-3 text-sm font-black text-slate-700 dark:text-slate-200">Nenhum cliente encontrado</p>
+                <p class="text-xs text-slate-500 mt-1">Tente pesquisar por outro nome ou cidade.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="visitEditorModal" class="modal-shell hidden">
+    <form onsubmit="saveVisit(event)" class="modal-card max-w-lg">
+        <button type="button" onclick="toggleModal('visitEditorModal', false)" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <h3 class="text-xl font-black text-slate-900 dark:text-white mb-5">Dados da visita</h3>
+        <div class="grid grid-cols-2 gap-3 mb-4"><div><label class="form-label">Data</label><input id="editVisitDate" type="date" class="form-input"></div><div><label class="form-label">Horário</label><input id="editVisitTime" type="time" class="form-input"></div></div>
+        <label class="form-label">Status</label><select id="editVisitStatus" class="form-input mb-4"><option value="AGENDADA">Agendada</option><option value="EM_ANDAMENTO">Em andamento</option><option value="CONCLUIDA">Concluída</option></select>
+        <label class="form-label">Observações</label><textarea id="editVisitNotes" rows="4" class="form-input"></textarea>
+        <button class="submit-btn mt-5">Salvar visita</button>
+    </form>
+</div>
+
+<div id="openingModal" class="modal-shell hidden">
+    <form onsubmit="saveOpening(event)" class="modal-card max-w-4xl">
+        <button type="button" onclick="toggleModal('openingModal', false)" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <input id="openingId" type="hidden">
+        <h3 id="openingModalTitle" class="text-xl font-black text-slate-900 dark:text-white">Adicionar vão</h3>
+        <p class="text-sm text-slate-500 mt-1 mb-5">Nomeie o vão e use medidas simples ou as quatro medidas brutas detalhadas.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div><label class="form-label">Tipo de serviço *</label><select id="openingServiceCategory" required class="form-input"><option value="">Selecione...</option><option th:each="category : ${serviceCategories}" th:value="${category}" th:text="${category.descricao}"></option></select></div>
+            <div><label class="form-label">Nome do vão *</label><input id="openingName" required maxlength="120" placeholder="Ex.: Vão para box do banheiro" class="form-input"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4"><div><label class="form-label">Largura (mm)</label><input id="openingWidth" type="number" min="0" step="0.01" class="form-input"></div><div><label class="form-label">Altura (mm)</label><input id="openingHeight" type="number" min="0" step="0.01" class="form-input"></div></div>
+        <details class="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5 mb-4">
+            <summary class="cursor-pointer p-3 text-xs font-black text-amber-800 dark:text-amber-300">Medidas detalhadas / fora de esquadro</summary>
+            <div class="grid grid-cols-2 gap-3 p-3 pt-0"><div><label class="form-label">Altura bruta esquerda</label><input id="openingHeightLeft" type="number" min="0" step="0.01" class="form-input"></div><div><label class="form-label">Altura bruta direita</label><input id="openingHeightRight" type="number" min="0" step="0.01" class="form-input"></div><div><label class="form-label">Largura bruta superior</label><input id="openingWidthTop" type="number" min="0" step="0.01" class="form-input"></div><div><label class="form-label">Largura bruta inferior</label><input id="openingWidthBottom" type="number" min="0" step="0.01" class="form-input"></div></div>
+        </details>
+        <label class="form-label">Observações do vão</label><textarea id="openingNotes" rows="2" class="form-input mb-5" placeholder="Parede fora de esquadro, acabamento, referência usada..."></textarea>
+
+        <div class="flex items-center justify-between gap-3 border-t border-slate-200 dark:border-slate-800 pt-5 mb-3"><div><h4 class="font-black">Furos e recortes</h4><p class="text-xs text-slate-500"> </p></div><button type="button" onclick="addFeatureRow()" class="px-3 py-2 rounded-lg border border-fuchsia-300 text-fuchsia-700 dark:text-fuchsia-300 text-xs font-black">+ Furo/recorte</button></div>
+        <div id="featuresEditor" class="space-y-3"></div>
+        <button class="submit-btn mt-6">Salvar medição completa</button>
+    </form>
+</div>
+
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+<script th:inline="javascript">
+    const VISITS = /*[[${visits}]]*/ [];
+    const INITIAL_VISIT_ID = /*[[${selectedVisitId}]]*/ null;
+    const SERVICE_LABELS = {ABRIGO_PIA:'Abrigo de Pia',PORTA_CORRER:'Porta de Correr',JANELA_PADRAO:'Janela Padrão',PORTA_ABRIR:'Porta de Abrir',VIDRO_FIXO_PERFIL_U:'Vidro Fixo',JANELA_BASCULANTE:'Janela Basculante',SACADA:'Sacada',ESPELHO:'Espelho',BOX_BANHEIRO_PADRAO:'Box de Banheiro Padrão'};
+    let currentVisit = null;
+
+    const $ = id => document.getElementById(id);
+    const csrfHeaders = json => { const h = json ? {'Content-Type':'application/json'} : {}; const t=document.querySelector('meta[name="_csrf"]')?.content; const n=document.querySelector('meta[name="_csrf_header"]')?.content||'X-CSRF-TOKEN'; if(t) h[n]=t; return h; };
+    const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    const num = value => value == null || value === '' ? null : Number(value);
+    const fmt = value => value == null ? '—' : new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(value)+' mm';
+    const fmtDate = d => d ? d.split('-').reverse().join('/') : 'Sem data';
+    function toggleModal(id, show){ const m=$(id); m.classList.toggle('hidden',!show); m.classList.toggle('flex',show); }
+    const normalizeSearch = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    function openClientSearchModal(){ $('clientSearchInput').value=''; filterClientOptions(); toggleModal('clientSearchModal',true); requestAnimationFrame(()=>$('clientSearchInput').focus()); }
+    function closeClientSearchModal(){ toggleModal('clientSearchModal',false); }
+    function clearClientSearchInput(){ $('clientSearchInput').value=''; filterClientOptions(); $('clientSearchInput').focus(); }
+    function filterClientOptions(){
+        const input=$('clientSearchInput');
+        const results=$('clientSearchResults');
+        const empty=$('clientSearchEmpty');
+        const clearBtn=$('clearClientSearch');
+        if(!input||!results)return;
+
+        const q=normalizeSearch(input.value);
+        let visible=0;
+
+        results.querySelectorAll('.client-option').forEach(option=>{
+            const name=option.dataset.clientName||option.querySelector('.client-option-name')?.textContent||'';
+            const city=option.dataset.clientCity||option.querySelector('.client-option-city')?.textContent||'';
+            const haystack=normalizeSearch(`${name} ${city}`);
+            const show=!q||haystack.includes(q);
+
+            option.classList.toggle('client-filter-hidden',!show);
+            if(show)visible++;
+        });
+
+        if(empty) empty.classList.toggle('hidden',visible!==0);
+        if(clearBtn){
+            clearBtn.classList.toggle('hidden',!q);
+            clearBtn.classList.toggle('flex',!!q);
+        }
+    }
+    function selectClientFromModal(option){ const id=option.dataset.clientId||''; const name=option.dataset.clientName||'Cliente'; const city=option.dataset.clientCity||''; $('newClientId').value=id; $('selectedClientName').textContent=name; $('selectedClientCity').textContent=city||'Cliente selecionado'; $('clientSelectButton').classList.add('has-client'); document.querySelectorAll('#clientSearchResults .client-option').forEach(item=>item.classList.toggle('is-selected',item.dataset.clientId===id)); closeClientSearchModal(); }
+    function statusMeta(s){ return ({AGENDADA:['Agendada','bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'],EM_ANDAMENTO:['Em andamento','bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'],CONCLUIDA:['Concluída','bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300']})[s]||[s,'bg-slate-100 text-slate-600']; }
+
+    function visitMatchesStatus(v,status){ if(status==='TODAS')return true; if(status==='PENDENTES')return v.status!=='CONCLUIDA'; return v.status===status; }
+    function filteredVisits(){ const q=normalizeSearch($('visitSearch').value); const status=$('visitStatusFilter').value; return VISITS.filter(v=>visitMatchesStatus(v,status)&&normalizeSearch(`${v.clientName} ${v.clientAddress} ${v.quoteNumber||''}`).includes(q)); }
+    function renderVisitList(){
+        const list=$('visitList'); list.innerHTML='';
+        filteredVisits().forEach(v=>{
+            const sm=statusMeta(v.status); const b=document.createElement('button'); b.type='button'; b.className='w-full text-left p-3 rounded-xl mb-1 border transition '+(currentVisit?.id===v.id?'border-fuchsia-300 bg-fuchsia-50 dark:bg-fuchsia-500/10':'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800');
+            b.innerHTML=`<div class="flex justify-between gap-2"><span class="text-sm font-black truncate">${esc(v.clientName)}</span><span class="text-[10px] text-slate-400 shrink-0">${fmtDate(v.visitDate)}</span></div><p class="text-[11px] text-slate-500 truncate mt-1">${esc(v.clientAddress)}</p><div class="flex items-center justify-between gap-2 mt-2"><span class="text-[9px] px-2 py-1 rounded-md font-black uppercase ${sm[1]}">${sm[0]}</span><span class="text-[10px] font-bold text-fuchsia-600">${v.openings.length} vão(ões) · ${v.photos.length} foto(s)</span></div>`;
+            b.onclick=()=>selectVisit(v.id); list.appendChild(b);
+        });
+        if(!list.children.length) list.innerHTML='<p class="p-5 text-sm text-center text-slate-400">Nenhuma visita encontrada neste filtro.</p>';
+    }
+    function selectVisit(id){ currentVisit=VISITS.find(v=>v.id===id); if(!currentVisit)return; $('emptyState').classList.add('hidden'); $('visitDetail').classList.remove('hidden'); const sm=statusMeta(currentVisit.status); $('detailStatus').textContent=sm[0]; $('detailStatus').className='px-2.5 py-1 rounded-lg text-[10px] font-black uppercase '+sm[1]; $('detailQuote').textContent=currentVisit.quoteNumber?'Orçamento '+currentVisit.quoteNumber:'Visita direta do cliente'; $('detailClient').textContent=currentVisit.clientName; $('detailAddress').textContent=currentVisit.clientAddress; $('detailWhen').textContent=fmtDate(currentVisit.visitDate)+(currentVisit.visitTime?' às '+currentVisit.visitTime.substring(0,5):''); $('detailNotes').textContent=currentVisit.notes||''; $('kpiOpenings').textContent=currentVisit.openings.length; $('kpiFeatures').textContent=currentVisit.openings.reduce((n,o)=>n+o.features.length,0); $('kpiPhotos').textContent=currentVisit.photos.length; renderOpenings(); renderPhotos(); renderVisitList(); if(innerWidth<1280) $('visitDetail').scrollIntoView({behavior:'smooth',block:'start'}); }
+    function openMaps(){ if(!currentVisit)return; window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(currentVisit.clientAddress),'_blank','noopener'); }
+
+    function renderOpenings(){ const wrap=$('openingsList'); wrap.innerHTML=''; currentVisit.openings.forEach(o=>{ const card=document.createElement('article'); card.className='rounded-xl border border-slate-200 dark:border-slate-700 p-4 min-w-0'; const dimensions=o.grossHeightLeftMm!=null?`<div class="grid grid-cols-2 gap-1 text-[11px] mt-3"><span>Alt. esq.: <b>${fmt(o.grossHeightLeftMm)}</b></span><span>Alt. dir.: <b>${fmt(o.grossHeightRightMm)}</b></span><span>Larg. sup.: <b>${fmt(o.grossWidthTopMm)}</b></span><span>Larg. inf.: <b>${fmt(o.grossWidthBottomMm)}</b></span></div>`:`<p class="text-sm mt-2"><b>${fmt(o.widthMm)}</b> × <b>${fmt(o.heightMm)}</b></p>`; card.innerHTML=`<div class="flex items-start justify-between gap-2"><div class="min-w-0"><h4 class="font-black text-slate-900 dark:text-white truncate">${esc(o.name)}</h4><div class="flex flex-wrap gap-1.5 mt-1"><span class="text-[9px] px-2 py-1 rounded-md bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 font-black uppercase">${esc(SERVICE_LABELS[o.serviceCategory]||'Serviço não informado')}</span><span class="text-[9px] px-2 py-1 text-emerald-600 font-black uppercase">Disponível no plano de corte</span></div></div><div class="flex"><button class="p-2" title="Editar" onclick="editOpening('${o.id}')"><i data-lucide="pencil" class="w-4 h-4"></i></button><button class="p-2 text-rose-500" title="Excluir" onclick="deleteOpening('${o.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>${dimensions}${o.notes?`<p class="text-xs text-slate-500 mt-2">${esc(o.notes)}</p>`:''}<div class="mt-3 space-y-1">${o.features.map(f=>`<div class="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-2 text-[11px]"><b>${esc(f.name||f.type)}</b> · ${esc(f.referenceHorizontal)} ${fmt(f.distanceHorizontalMm)} · ${esc(f.referenceVertical)} ${fmt(f.distanceVerticalMm)}${f.diameterMm?' · Ø '+fmt(f.diameterMm):''}${f.widthMm?' · '+fmt(f.widthMm)+' × '+fmt(f.heightMm):''}</div>`).join('')||'<p class="text-[11px] text-slate-400">Sem furos ou recortes.</p>'}</div>`; wrap.appendChild(card); }); if(!wrap.children.length) wrap.innerHTML='<p class="2xl:col-span-2 text-sm text-center text-slate-400 py-8">Nenhuma medição adicionada. Use “Adicionar vão”.</p>'; lucide.createIcons(); }
+    function renderPhotos(){ const wrap=$('photosList'); wrap.innerHTML=''; currentVisit.photos.forEach(p=>{ const d=document.createElement('figure'); d.className='relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 aspect-square'; d.innerHTML=`<a href="/technical-visits/${currentVisit.id}/photos/${p.id}" target="_blank"><img src="/technical-visits/${currentVisit.id}/photos/${p.id}" alt="${esc(p.caption||p.fileName)}" class="w-full h-full object-cover"></a><figcaption class="absolute inset-x-0 bottom-0 bg-slate-950/70 text-white text-[10px] p-2 truncate">${esc(p.caption||p.fileName)}</figcaption><button onclick="deletePhoto('${p.id}')" class="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>`; wrap.appendChild(d); }); if(!wrap.children.length) wrap.innerHTML='<p class="col-span-full text-sm text-center text-slate-400 py-8">Nenhuma foto anexada.</p>'; lucide.createIcons(); }
+
+    async function createVisit(e){ e.preventDefault(); const clientId=$('newClientId').value; if(!clientId){ openClientSearchModal(); return; } const payload={clientId,visitDate:$('newVisitDate').value,visitTime:$('newVisitTime').value||null,notes:$('newVisitNotes').value,status:'AGENDADA'}; const r=await fetch('/technical-visits/create',{method:'POST',headers:csrfHeaders(true),body:JSON.stringify(payload)}); const d=await r.json(); if(!r.ok){alert(d.error);return;} location.href='/technical-visits?visit='+d.id; }
+    function openVisitEditor(){ $('editVisitDate').value=currentVisit.visitDate||''; $('editVisitTime').value=currentVisit.visitTime?.substring(0,5)||''; $('editVisitStatus').value=currentVisit.status||'AGENDADA'; $('editVisitNotes').value=currentVisit.notes||''; toggleModal('visitEditorModal',true); }
+    async function saveVisit(e){ e.preventDefault(); const payload={visitDate:$('editVisitDate').value,visitTime:$('editVisitTime').value||null,status:$('editVisitStatus').value,notes:$('editVisitNotes').value}; await jsonAction(`/technical-visits/${currentVisit.id}`,'POST',payload); }
+
+    function openOpeningEditor(o=null){ $('openingModalTitle').textContent=o?'Editar vão':'Adicionar vão'; $('openingId').value=o?.id||''; $('openingServiceCategory').value=o?.serviceCategory||''; $('openingName').value=o?.name||''; $('openingWidth').value=o?.widthMm??''; $('openingHeight').value=o?.heightMm??''; $('openingHeightLeft').value=o?.grossHeightLeftMm??''; $('openingHeightRight').value=o?.grossHeightRightMm??''; $('openingWidthTop').value=o?.grossWidthTopMm??''; $('openingWidthBottom').value=o?.grossWidthBottomMm??''; $('openingNotes').value=o?.notes||''; $('featuresEditor').innerHTML=''; (o?.features||[]).forEach(addFeatureRow); toggleModal('openingModal',true); lucide.createIcons(); }
+    function editOpening(id){ openOpeningEditor(currentVisit.openings.find(o=>o.id===id)); }
+    function addFeatureRow(f={}){ const row=document.createElement('div'); row.className='feature-row rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3'; row.innerHTML=`<div class="flex justify-between gap-2 mb-3"><div class="grid grid-cols-2 sm:grid-cols-3 gap-2 flex-1"><select data-k="type" class="mini-input"><option value="FURO">Furo</option><option value="RECORTE">Recorte</option></select><input data-k="name" value="${esc(f.name||'')}" placeholder="Nome (ex.: tomada)" class="mini-input sm:col-span-2"></div><button type="button" onclick="this.closest('.feature-row').remove()" class="text-rose-500 p-2"><i data-lucide="x" class="w-4 h-4"></i></button></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2"><select data-k="referenceHorizontal" class="mini-input"><option value="ESQUERDA">Da esquerda</option><option value="CENTRO">Do centro</option><option value="DIREITA">Da direita</option></select><input data-k="distanceHorizontalMm" type="number" min="0" step="0.01" value="${f.distanceHorizontalMm??''}" placeholder="Distância X mm" class="mini-input"><select data-k="referenceVertical" class="mini-input"><option value="SUPERIOR">Do topo</option><option value="CENTRO">Do centro</option><option value="INFERIOR">Do chão/base</option></select><input data-k="distanceVerticalMm" type="number" min="0" step="0.01" value="${f.distanceVerticalMm??''}" placeholder="Distância Y mm" class="mini-input"><p class="col-span-2 sm:col-span-4 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 px-3 py-2 text-[11px] leading-relaxed font-semibold text-slate-500 dark:text-slate-400">Preencha somente as medidas necessárias: <span class="text-slate-700 dark:text-slate-200">Furo = diâmetro · Recorte = largura/altura</span></p><input data-k="diameterMm" type="number" min="0" step="0.01" value="${f.diameterMm??''}" placeholder="Diâmetro mm" class="mini-input"><input data-k="widthMm" type="number" min="0" step="0.01" value="${f.widthMm??''}" placeholder="Largura mm" class="mini-input"><input data-k="heightMm" type="number" min="0" step="0.01" value="${f.heightMm??''}" placeholder="Altura mm" class="mini-input"><input data-k="notes" value="${esc(f.notes||'')}" placeholder="Observação" class="mini-input col-span-2"></div>`; $('featuresEditor').appendChild(row); row.querySelector('[data-k=type]').value=f.type||'FURO'; row.querySelector('[data-k=referenceHorizontal]').value=f.referenceHorizontal||'ESQUERDA'; row.querySelector('[data-k=referenceVertical]').value=f.referenceVertical||'SUPERIOR'; lucide.createIcons(); }
+    function collectFeatures(){ return [...document.querySelectorAll('.feature-row')].map(row=>{ const o={}; row.querySelectorAll('[data-k]').forEach(i=>o[i.dataset.k]=['distanceHorizontalMm','distanceVerticalMm','diameterMm','widthMm','heightMm'].includes(i.dataset.k)?num(i.value):i.value); return o; }); }
+    async function saveOpening(e){ e.preventDefault(); const payload={id:$('openingId').value||null,serviceCategory:$('openingServiceCategory').value,name:$('openingName').value,widthMm:num($('openingWidth').value),heightMm:num($('openingHeight').value),grossHeightLeftMm:num($('openingHeightLeft').value),grossHeightRightMm:num($('openingHeightRight').value),grossWidthTopMm:num($('openingWidthTop').value),grossWidthBottomMm:num($('openingWidthBottom').value),notes:$('openingNotes').value,features:collectFeatures()}; await jsonAction(`/technical-visits/${currentVisit.id}/openings`,'POST',payload); }
+    async function deleteOpening(id){ if(confirm('Excluir esta medição e todos os furos/recortes?')) await jsonAction(`/technical-visits/${currentVisit.id}/openings/${id}`,'DELETE'); }
+    async function uploadPhoto(input){ if(!input.files[0])return; const caption=prompt('Legenda da foto (opcional):','')||''; const fd=new FormData(); fd.append('file',input.files[0]); fd.append('caption',caption); const r=await fetch(`/technical-visits/${currentVisit.id}/photos`,{method:'POST',headers:csrfHeaders(false),body:fd}); const d=await r.json(); if(!r.ok){alert(d.error||'Erro ao enviar foto');return;} location.href='/technical-visits?visit='+currentVisit.id; }
+    async function deletePhoto(id){ if(confirm('Excluir esta foto?')) await jsonAction(`/technical-visits/${currentVisit.id}/photos/${id}`,'DELETE'); }
+    async function jsonAction(url,method,payload){ const options={method,headers:csrfHeaders(payload!==undefined)}; if(payload!==undefined)options.body=JSON.stringify(payload); const r=await fetch(url,options); const d=await r.json().catch(()=>({})); if(!r.ok){alert(d.error||'Não foi possível salvar.');return;} location.href='/technical-visits?visit='+currentVisit.id; }
+
+    document.addEventListener('DOMContentLoaded',()=>{ $('visitSearch').addEventListener('input',renderVisitList); $('visitStatusFilter').addEventListener('change',renderVisitList); $('newVisitDate').value=new Date().toISOString().substring(0,10); $('clientSearchModal').addEventListener('click',e=>{ if(e.target===$('clientSearchModal'))closeClientSearchModal(); }); document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('clientSearchModal').classList.contains('hidden'))closeClientSearchModal(); }); filterClientOptions(); if(INITIAL_VISIT_ID){ const selected=VISITS.find(v=>v.id===String(INITIAL_VISIT_ID)); if(selected?.status==='CONCLUIDA')$('visitStatusFilter').value='CONCLUIDA'; } renderVisitList(); if(INITIAL_VISIT_ID)selectVisit(String(INITIAL_VISIT_ID)); else if(filteredVisits().length)selectVisit(filteredVisits()[0].id); });
+</script>
+<style>
+    .modal-shell{position:fixed;inset:0;z-index:80;background:rgb(2 6 23/.78);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;overflow-y:auto}
+    .modal-card{position:relative;width:100%;max-height:94vh;overflow-y:auto;border-radius:1rem;background:white;padding:1.25rem;box-shadow:0 24px 60px rgb(2 6 23/.35)}
+    .dark .modal-card{background:#131C2F;border:1px solid rgb(51 65 85)}
+    .modal-close{position:absolute;right:1rem;top:1rem;padding:.5rem;border-radius:.65rem;color:#94a3b8;background:#f8fafc}.dark .modal-close{background:#1e293b}
+    .form-label{display:block;font-size:.68rem;line-height:1rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin-bottom:.35rem}
+    .form-input,.mini-input{width:100%;border:1px solid #cbd5e1;border-radius:.7rem;background:#f8fafc;padding:.68rem .8rem;font-size:.875rem;outline:none}.mini-input{padding:.55rem .65rem;font-size:.75rem}.dark .form-input,.dark .mini-input{border-color:#334155;background:#0f172a;color:white}.form-input:focus,.mini-input:focus{border-color:#d946ef}
+    .submit-btn{width:100%;border-radius:.75rem;background:#c026d3;color:white;padding:.8rem 1rem;font-size:.875rem;font-weight:900}
+    .client-select-btn{width:100%;min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:.75rem;border:1px solid #cbd5e1;border-radius:.85rem;background:#f8fafc;padding:.65rem .8rem;outline:none;transition:border-color .18s,background-color .18s,box-shadow .18s}.client-select-btn:hover{border-color:#e879f9;background:#fdf4ff}.client-select-btn:focus-visible{border-color:#d946ef;box-shadow:0 0 0 3px rgb(217 70 239/.12)}.client-select-btn.has-client{border-color:#e879f9;background:#fdf4ff}.dark .client-select-btn{border-color:#334155;background:#0f172a}.dark .client-select-btn:hover,.dark .client-select-btn.has-client{border-color:#a855f7;background:rgb(168 85 247/.08)}
+    .client-select-icon{width:40px;height:40px;border-radius:.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fae8ff;color:#c026d3}.dark .client-select-icon{background:rgb(192 38 211/.14);color:#f0abfc}
+    .client-search-shell{z-index:95}.client-search-card{padding:0;display:flex;flex-direction:column;overflow:hidden;max-height:min(760px,90vh)}.client-search-header{padding:1.25rem;border-bottom:1px solid #e2e8f0;background:white;flex-shrink:0}.dark .client-search-header{border-color:#1e293b;background:#131C2F}.client-search-input{width:100%;height:48px;border:1px solid #cbd5e1;border-radius:.8rem;background:#f8fafc;padding:0 3rem 0 2.7rem;font-size:1rem;color:#0f172a;outline:none}.client-search-input:focus{border-color:#d946ef;box-shadow:0 0 0 3px rgb(217 70 239/.1)}.dark .client-search-input{border-color:#334155;background:#0f172a;color:white}.client-search-results{padding:.65rem;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.client-option{width:100%;min-height:66px;display:flex;align-items:center;gap:.75rem;padding:.7rem;border:1px solid transparent;border-radius:.85rem;color:#334155;transition:background-color .15s,border-color .15s}.client-option.client-filter-hidden{display:none!important}.client-option:hover{background:#f8fafc;border-color:#e2e8f0}.client-option.is-selected{background:#fdf4ff;border-color:#f0abfc}.dark .client-option{color:#e2e8f0}.dark .client-option:hover{background:#0f172a;border-color:#334155}.dark .client-option.is-selected{background:rgb(192 38 211/.08);border-color:rgb(217 70 239/.45)}.client-option-icon{width:42px;height:42px;border-radius:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#f1f5f9;color:#64748b}.client-option.is-selected .client-option-icon{background:#fae8ff;color:#c026d3}.dark .client-option-icon{background:#1e293b;color:#94a3b8}.dark .client-option.is-selected .client-option-icon{background:rgb(192 38 211/.14);color:#f0abfc}.client-option-name{display:block;font-size:.875rem;line-height:1.2rem;font-weight:900;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dark .client-option-name{color:white}.client-option-city{display:block;margin-top:.2rem;font-size:.75rem;line-height:1rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dark .client-option-city{color:#94a3b8}.client-option-check{width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:transparent;background:#f8fafc}.client-option.is-selected .client-option-check{color:white;background:#c026d3}.dark .client-option-check{background:#1e293b}.dark .client-option.is-selected .client-option-check{background:#c026d3}
+    @media(max-width:639px){.modal-shell{padding:.5rem;align-items:flex-end}.modal-card{max-height:94dvh;border-radius:1.1rem}.client-search-shell{padding:0;align-items:flex-end}.client-search-card{width:100%;max-width:none;max-height:92dvh;border-radius:1.25rem 1.25rem 0 0;border-bottom:0}.client-search-header{padding:1rem 1rem .85rem}.client-search-results{padding:.5rem}.client-option{min-height:70px;padding:.75rem}.client-option-name{font-size:.95rem}.client-option-city{font-size:.8rem}.client-select-btn{min-height:68px}.grid.grid-cols-2.gap-3.mb-4{grid-template-columns:1fr}}
+    @media(min-width:640px){.modal-card{padding:1.75rem}.client-search-card{padding:0}.client-search-header{padding:1.5rem}.client-search-results{padding:.75rem}}
+</style>
+</body>
+</html>

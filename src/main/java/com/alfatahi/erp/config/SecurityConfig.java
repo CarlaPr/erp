@@ -124,6 +124,7 @@ public class SecurityConfig {
                         .hasAnyAuthority("GESTAO", "VENDAS")
 
                         .requestMatchers("/agenda/**", "/login-success").hasAnyAuthority("GESTAO", "VENDAS", "TECNICO")
+                        .requestMatchers("/technical-visits/**").hasAnyAuthority("GESTAO", "VENDAS", "TECNICO")
 
                         .anyRequest().authenticated()
                 )

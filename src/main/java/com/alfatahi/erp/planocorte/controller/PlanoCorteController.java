@@ -3,6 +3,7 @@ package com.alfatahi.erp.planocorte.controller;
 import com.alfatahi.erp.entity.WorkOrder;
 import com.alfatahi.erp.planocorte.dto.CroquiVaoChunkDto;
 import com.alfatahi.erp.planocorte.dto.ElementoTecnicoForm;
+import com.alfatahi.erp.planocorte.dto.FuracaoForm;
 import com.alfatahi.erp.planocorte.dto.PlanoCorteForm;
 import com.alfatahi.erp.planocorte.dto.PlanoCorteItemForm;
 import com.alfatahi.erp.planocorte.dto.PlanoCorteVaoForm;
@@ -38,8 +39,6 @@ import java.util.Map;
 @RequestMapping("/cut-plans")
 public class PlanoCorteController {
 
-    // No detalhe do plano (tela), agrupamos até 6 folhas por croqui combinado;
-    // o restante é agrupado no(s) croqui(s) seguinte(s) abaixo para melhor visualização.
     private static final int MAX_FOLHAS_POR_CROQUI_DETALHE = 6;
 
     private final PlanoCorteService planoCorteService;
@@ -128,7 +127,10 @@ public class PlanoCorteController {
     @GetMapping("/{id}")
     public String detalhe(@PathVariable Long id, Model model) {
         model.addAttribute("currentPage", "cut-plans");
-        carregarDetalhe(id, model, new PlanoCorteItemForm(), new PlanoCorteVaoForm());
+        PlanoCorte plano = planoCorteService.buscarPorId(id);
+        PlanoCorteItemForm itemForm = new PlanoCorteItemForm(); itemForm.setCategoria(plano.getCategoria());
+        PlanoCorteVaoForm vaoForm = new PlanoCorteVaoForm(); vaoForm.setCategoria(plano.getCategoria());
+        carregarDetalhe(id, model, itemForm, vaoForm);
         return "planocorte/detalhe";
     }
 
@@ -147,6 +149,18 @@ public class PlanoCorteController {
             planoCorteService.adicionarItem(id, itemForm);
             redirectAttributes.addFlashAttribute("sucesso", "Peça adicionada.");
         } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/cut-plans/" + id;
+    }
+
+    @PostMapping("/{id}/itens/{itemId}/furacoes/{index}/editar")
+    public String editarFuracao(@PathVariable Long id, @PathVariable Long itemId, @PathVariable int index,
+                                 @ModelAttribute FuracaoForm form, RedirectAttributes redirectAttributes) {
+        try {
+            planoCorteService.editarFuracao(id, itemId, index, form);
+            redirectAttributes.addFlashAttribute("sucesso", "Furação atualizada.");
+        } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("erro", e.getMessage());
         }
         return "redirect:/cut-plans/" + id;
@@ -436,6 +450,9 @@ public class PlanoCorteController {
         model.addAttribute("referenciasHorizontais", ReferenciaHorizontal.values());
         model.addAttribute("referenciasVerticais", ReferenciaVertical.values());
         model.addAttribute("ferragens", ferragemRepository.findAll());
+        model.addAttribute("tiposFuracao", TipoFuracao.values());
+        model.addAttribute("visitOpenings", planoCorteService.listarMedicoesCliente(id));
+        model.addAttribute("categorias", CategoriaServico.values());
     }
 
     private void adicionarListasApoioNovo(Model model) {

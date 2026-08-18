@@ -37,6 +37,10 @@ public class PlanoCorteItem {
     @JoinColumn(name = "plano_corte_id", nullable = false)
     private PlanoCorte planoCorte;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 40)
+    private CategoriaServico categoria;
+
     @Column(name = "vidro_id")
     private Long vidroId;
 
@@ -199,6 +203,14 @@ public class PlanoCorteItem {
 
     public void setPlanoCorte(PlanoCorte planoCorte) {
         this.planoCorte = planoCorte;
+    }
+
+    public CategoriaServico getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(CategoriaServico categoria) {
+        this.categoria = categoria;
     }
 
     public Long getVidroId() {

@@ -161,12 +161,36 @@
             </div>
         </summary>
         <form th:action="@{/cut-plans/{id}/vaos(id=${plano.id})}" th:object="${vaoForm}" method="post" class="p-6 space-y-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div th:if="${!#lists.isEmpty(visitOpenings)}" class="rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 p-4">
+                <div class="flex items-start gap-3 mb-3">
+                    <i data-lucide="clipboard-check" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+                    <div><p class="text-xs font-black uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Buscar medição da visita técnica</p><p class="text-[11px] text-emerald-700 dark:text-emerald-400 mt-1">Ao selecionar, as medidas abaixo são preenchidas automaticamente e os furos/recortes registrados acompanham o vão.</p></div>
+                </div>
+                <select id="visitOpeningSelect" th:field="*{sourceOpeningId}" onchange="preencherMedicaoVisita(this)" class="form-input">
+                    <option value="">Preencher manualmente</option>
+                    <option th:each="o : ${visitOpenings}" th:value="${o.id}"
+                            th:text="${o.technicalVisit.client.name + ' · ' + o.name + ' · ' + #temporals.format(o.technicalVisit.visitDate, 'dd/MM/yyyy')}"
+                            th:attr="data-category=${o.serviceCategory},data-width=${o.widthMm},data-height=${o.heightMm},data-height-left=${o.grossHeightLeftMm},data-height-right=${o.grossHeightRightMm},data-width-top=${o.grossWidthTopMm},data-width-bottom=${o.grossWidthBottomMm},data-notes=${o.notes}"></option>
+                </select>
+            </div>
+            <div th:if="${#lists.isEmpty(visitOpenings)}" class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div><p class="text-xs font-bold text-slate-700 dark:text-slate-300">Nenhuma medição técnica encontrada para este cliente.</p><p class="text-[11px] text-slate-500">Você pode preencher manualmente ou registrar a visita primeiro.</p></div>
+                <a href="/technical-visits" class="text-xs font-black text-fuchsia-600 dark:text-fuchsia-400 whitespace-nowrap">Abrir visitas técnicas</a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="form-label">Tipo de serviço *</label>
+                    <select id="categoriaVao" th:field="*{categoria}" class="form-input" onchange="alternarCamposServico(this)">
+                        <option value="">Selecione...</option>
+                        <option th:each="c : ${categorias}" th:value="${c}" th:text="${c.descricao}"></option>
+                    </select>
+                    <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('categoria')}" th:errors="*{categoria}"></p>
+                </div>
                 <div>
                     <label class="form-label">
                         Vidro *
                     </label>
-                    <select th:field="*{vidroId}" class="form-input">
+                    <select th:field="*{vidroId}" class="form-input vidro-select">
                         <option value="">
                             Selecione...
                         </option>
@@ -186,7 +210,7 @@
                     </select>
                 </div>
             </div>
-            <div th:if="${plano.categoria.name() == 'ESPELHO'}" id="caixaBisote" style="display:none;" class="bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 rounded-xl p-4">
+            <div data-service-section="ESPELHO" id="caixaBisote" style="display:none;" class="bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 rounded-xl p-4">
                 <label class="form-label text-sky-800 dark:text-sky-300">
                     Quantos mm é o bisôte?
                 </label>
@@ -233,7 +257,7 @@
                 </div>
             </div>
 
-            <div th:if="${plano.categoria.name() == 'ESPELHO'}" class="flex items-center gap-2">
+            <div data-service-section="ESPELHO" class="flex items-center gap-2">
                 <input type="checkbox" id="espelhoRedondoFlag" th:field="*{espelhoRedondo}" onchange="alternarEspelhoRedondo(this)" class="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500">
                 <label for="espelhoRedondoFlag" class="text-xs font-bold text-slate-600 dark:text-slate-300">
                     Espelho redondo (informe apenas o diâmetro)
@@ -308,7 +332,7 @@
                     </div>
                 </div>
             </div>
-            <div th:if="${plano.categoria.name() == 'SACADA'}" class="rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-4">
+            <div data-service-section="SACADA" class="rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-4">
                 <label class="form-label">
                     Quantidade de folhas
                 </label>
@@ -317,7 +341,7 @@
                     Cada folha recebe -3 mm de desconto pelo espaço entre folhas.
                 </p>
             </div>
-            <div th:if="${plano.categoria.name() == 'BOX_BANHEIRO_PADRAO' or plano.categoria.name() == 'PORTA_CORRER' or plano.categoria.name() == 'JANELA_PADRAO'}" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div data-service-section="BOX_BANHEIRO_PADRAO PORTA_CORRER JANELA_PADRAO" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="form-label">
                         Folhas fixas
@@ -334,7 +358,16 @@
                     </p>
                 </div>
             </div>
-            <div th:if="${plano.categoria.name() == 'PORTA_ABRIR'}">
+            <div data-service-section="JANELA_PADRAO" class="rounded-xl border border-fuchsia-200 dark:border-fuchsia-500/20 bg-fuchsia-50 dark:bg-fuchsia-500/10 p-4">
+                <label class="form-label text-fuchsia-800 dark:text-fuchsia-300">Distância do Centro dos dois furos do bate-fecha até a base da janela (mm)</label>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <input type="number" min="26" step="0.01" th:field="*{alturaBateFechaMm}" placeholder="300" class="form-input sm:max-w-[220px]">
+                    <div class="text-[11px] text-fuchsia-700 dark:text-fuchsia-300 leading-relaxed">
+                        Ex.: <b>300 mm</b> mede da base até o centro geométrico entre os dois furos. Se ficar em branco, será usado 300 mm.
+                    </div>
+                </div>
+            </div>
+            <div data-service-section="PORTA_ABRIR">
                 <label class="form-label">
                     Lado dos recortes da Porta de Abrir
                 </label>
@@ -344,7 +377,7 @@
                     <option value="DIREITO">Direito</option>
                 </select>
             </div>
-            <div th:if="${plano.categoria.name() == 'VIDRO_FIXO_PERFIL_U'}" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div data-service-section="VIDRO_FIXO_PERFIL_U" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="form-label">
                         Desconto lateral (mm)
@@ -416,7 +449,7 @@
                         <div>
                             <p class="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Adicionar elemento técnico</p>
                             <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white mt-1">Selecione primeiro a folha que receberá o elemento</h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Somente a folha selecionada exibirá o formulário de furo, rasgo, recorte, chanfro ou boleado.</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Somente a folha selecionada exibirá o formulário de furo, recorte, chanfro.</p>
                         </div>
                         <div class="inline-flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 px-3 py-2 text-xs font-bold text-blue-700 dark:text-blue-300">
                             <i data-lucide="mouse-pointer-click" class="w-4 h-4 shrink-0"></i>
@@ -453,7 +486,8 @@
                             </span>
                             </div>
                             <div class="flex flex-wrap gap-1.5 mt-1.5">
-                            <span th:if="${item.tipoBorda != null}" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400" th:text="${item.tipoBorda.descricao}">
+                                <span th:if="${item.categoria != null}" class="text-[10px] font-black px-2 py-0.5 rounded-md bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300" th:text="${item.categoria.descricao}">Serviço</span>
+                                <span th:if="${item.tipoBorda != null}" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400" th:text="${item.tipoBorda.descricao}">
                                 Lapidado
                             </span>
                                 <span th:if="${item.tipoFolha != null and item.tipoFolha.name() != 'UNICA'}" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400" th:text="${item.tipoFolha.descricao}">
@@ -544,7 +578,7 @@
             <span class="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-sm shrink-0"><i data-lucide="plus" class="w-5 h-5"></i></span>
             <span class="min-w-0">
                 <span class="block text-sm sm:text-base font-black">Adicionar elemento técnico</span>
-                <span class="block text-[11px] sm:text-xs font-medium text-violet-600 dark:text-violet-300 mt-0.5">Furo, rasgo, recorte, chanfro ou boleado nesta folha</span>
+                <span class="block text-[11px] sm:text-xs font-medium text-violet-600 dark:text-violet-300 mt-0.5">Furo, recorte, chanfro nesta folha</span>
             </span>
         </span>
                             <span class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide text-violet-600 dark:text-violet-300 shrink-0">Abrir <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i></span>
@@ -868,6 +902,20 @@
                                                 </p>
                                             </div>
                                         </div>
+                                        <details th:if="${plano.status.name() != 'FINALIZADO'}" class="w-full sm:w-auto sm:min-w-[390px] rounded-lg border border-blue-200 dark:border-blue-500/20 bg-blue-50/50 dark:bg-blue-500/5">
+                                            <summary class="cursor-pointer px-3 py-2 text-[11px] font-black text-blue-700 dark:text-blue-300">Editar tipo, posição e diâmetro</summary>
+                                            <form th:action="@{/cut-plans/{id}/itens/{itemId}/furacoes/{index}/editar(id=${plano.id},itemId=${item.id},index=${iter.index})}" method="post" class="p-3 pt-1 grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                                <select name="tipo" class="input-tecnico col-span-2 sm:col-span-1">
+                                                    <option th:each="t : ${tiposFuracao}" th:value="${t}" th:text="${t.descricao}" th:selected="${t == f.tipo}"></option>
+                                                </select>
+                                                <input type="number" min="0" step="0.01" name="posicaoXMm" th:value="${f.posicaoXMm}" placeholder="X (mm)" class="input-tecnico">
+                                                <input type="number" min="0" step="0.01" name="posicaoYMm" th:value="${f.posicaoYMm}" placeholder="Y do topo (mm)" class="input-tecnico">
+                                                <input type="number" min="0" step="0.01" name="diametroMm" th:value="${f.diametroMm}" placeholder="Diâmetro" class="input-tecnico">
+                                                <button type="submit" class="rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-3 py-2">Salvar</button>
+                                                <input type="text" name="descricao" th:value="${f.descricao}" placeholder="Descrição" class="input-tecnico col-span-2 sm:col-span-5">
+                                                <p th:if="${f.tipo.name() == 'BATE_FECHA'}" class="col-span-2 sm:col-span-5 text-[10px] text-blue-700 dark:text-blue-300">Para ajustar a altura do bate-fecha em detalhe, edite o Y de cada furo. O Y é medido a partir do topo do vidro.</p>
+                                            </form>
+                                        </details>
                                         <form th:if="${plano.status.name() != 'FINALIZADO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/furacoes/{index}/excluir(id=${plano.id},itemId=${item.id},index=${iter.index})}" method="post" onsubmit="return confirm('Remover esta furação?');">
                                             <button type="submit" class="text-[11px] font-bold text-rose-500 hover:text-rose-700 px-2 py-1 rounded-md hover:bg-rose-50 transition">
                                                 Remover
@@ -879,13 +927,13 @@
                         </div>
                     </details>
                     <div th:if="${item.observacoes}" class="mb-3 flex items-start gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 px-3 py-2"><i data-lucide="message-square-text" class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5"></i><p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed"><span class="font-black text-slate-500 dark:text-slate-300">Obs.:</span> <span th:text="${item.observacoes}">Observação</span></p></div>
-                    <details th:if="${plano.status.name() != 'FINALIZADO' and item.tipoFolha.name() != 'FIXA' and (plano.categoria.name() == 'PORTA_CORRER' or plano.categoria.name() == 'PORTA_ABRIR' or plano.categoria.name() == 'JANELA_PADRAO' or plano.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="group mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 overflow-hidden">
+                    <details th:if="${plano.status.name() != 'FINALIZADO' and item.tipoFolha.name() != 'FIXA' and (item.categoria.name() == 'PORTA_CORRER' or item.categoria.name() == 'PORTA_ABRIR' or item.categoria.name() == 'JANELA_PADRAO' or item.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="group mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 overflow-hidden">
                         <summary class="cursor-pointer select-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
                             <span class="flex items-center gap-2"><i data-lucide="wand-sparkles" class="w-4 h-4 text-slate-400"></i><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Ferragens rápidas</span><span class="text-[10px] font-medium text-slate-400">Puxador H, puxador simples e fechadura</span></span>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"></i>
                         </summary>
                         <div class="border-t border-slate-100 dark:border-slate-800 p-4">
-                            <div th:if="${plano.status.name() != 'FINALIZADO' and item.tipoFolha.name() != 'FIXA' and (plano.categoria.name() == 'PORTA_CORRER' or plano.categoria.name() == 'PORTA_ABRIR' or plano.categoria.name() == 'JANELA_PADRAO' or plano.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="border-t border-slate-100 dark:border-slate-800 pt-5">
+                            <div th:if="${plano.status.name() != 'FINALIZADO' and item.tipoFolha.name() != 'FIXA' and (item.categoria.name() == 'PORTA_CORRER' or item.categoria.name() == 'PORTA_ABRIR' or item.categoria.name() == 'JANELA_PADRAO' or item.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="border-t border-slate-100 dark:border-slate-800 pt-5">
                                 <div class="flex items-start gap-3 mb-4">
                                     <div class="w-9 h-9 rounded-lg bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
                                         <i data-lucide="wand-sparkles" class="w-4 h-4"></i>
@@ -900,7 +948,7 @@
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <form th:if="${plano.categoria.name() != 'JANELA_PADRAO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/puxador-h(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
+                                    <form th:if="${item.categoria.name() != 'JANELA_PADRAO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/puxador-h(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
                                         <div class="flex items-center gap-2 mb-4">
                                             <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
                                                 <i data-lucide="grip-vertical" class="w-4 h-4"></i>
@@ -959,7 +1007,7 @@
                                             Adicionar puxador H
                                         </button>
                                     </form>
-                                    <form th:if="${plano.categoria.name() != 'JANELA_PADRAO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/puxador-simples(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
+                                    <form th:if="${item.categoria.name() != 'JANELA_PADRAO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/puxador-simples(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
                                         <div class="flex items-center gap-2 mb-4">
                                             <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 flex items-center justify-center shrink-0">
                                                 <i data-lucide="circle-dot" class="w-4 h-4"></i>
@@ -1059,12 +1107,20 @@
             </div>
         </div>
         <form th:action="@{/cut-plans/{id}/itens(id=${plano.id})}" th:object="${itemForm}" method="post" class="p-6 space-y-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="form-label">Tipo de serviço *</label>
+                    <select id="categoriaVao" th:field="*{categoria}" class="form-input" onchange="alternarCamposServico(this)">
+                        <option value="">Selecione...</option>
+                        <option th:each="c : ${categorias}" th:value="${c}" th:text="${c.descricao}"></option>
+                    </select>
+                    <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('categoria')}" th:errors="*{categoria}"></p>
+                </div>
                 <div>
                     <label class="form-label">
                         Vidro *
                     </label>
-                    <select th:field="*{vidroId}" class="form-input">
+                    <select th:field="*{vidroId}" class="form-input vidro-select">
                         <option value="">
                             Selecione...
                         </option>
@@ -2148,10 +2204,8 @@
         if (!select || !caixa) {
             return;
         }
-        caixa.style.display =
-            select.value === 'BISOTADO'
-                ? 'block'
-                : 'none';
+        var categoria = select.closest('form')?.querySelector('[name="categoria"]')?.value;
+        caixa.style.display = categoria === 'ESPELHO' && select.value === 'BISOTADO' ? 'block' : 'none';
     }
     document.addEventListener(
         'DOMContentLoaded',
@@ -2196,6 +2250,118 @@
             alternarCantoMoeda(select);
         });
     });
+
+    function normalizarTextoVidro(valor) {
+        return String(valor || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    }
+
+    function filtrarVidrosPorCategoria(form, categoria) {
+        if (!form) return;
+
+        var selectVidro = form.querySelector('select[name="vidroId"]');
+        if (!selectVidro) return;
+
+        // Guarda uma cópia completa das opções apenas na primeira execução.
+        if (!selectVidro._todasOpcoesVidro) {
+            selectVidro._todasOpcoesVidro = Array.from(selectVidro.options).map(function(option) {
+                return {
+                    value: option.value,
+                    text: option.textContent,
+                    selected: option.selected,
+                    disabled: option.disabled
+                };
+            });
+        }
+
+        var valorAtual = selectVidro.value;
+        var categoriaEspelho = categoria === 'ESPELHO';
+
+        selectVidro.innerHTML = '';
+
+        selectVidro._todasOpcoesVidro.forEach(function(item) {
+            // Mantém sempre a opção "Selecione..."
+            if (!item.value) {
+                var placeholder = new Option(item.text, item.value, false, false);
+                placeholder.disabled = item.disabled;
+                selectVidro.appendChild(placeholder);
+                return;
+            }
+
+            var ehEspelho = normalizarTextoVidro(item.text).includes('espelho');
+            var deveExibir = categoriaEspelho ? ehEspelho : !ehEspelho;
+
+            if (deveExibir) {
+                var option = new Option(item.text, item.value, false, item.value === valorAtual);
+                option.disabled = item.disabled;
+                selectVidro.appendChild(option);
+            }
+        });
+
+        // Se o vidro que estava selecionado não pertence à nova categoria,
+        // limpa a seleção para impedir envio de um vidro incompatível.
+        var valorAindaExiste = Array.from(selectVidro.options).some(function(option) {
+            return option.value === valorAtual && valorAtual !== '';
+        });
+
+        if (!valorAindaExiste) {
+            selectVidro.value = '';
+        }
+
+        // Se for espelho e não existir nenhum vidro de espelho cadastrado,
+        // deixa o select somente com o placeholder.
+        selectVidro.disabled = selectVidro.options.length <= 1;
+    }
+
+    function alternarCamposServico(select) {
+        var form = select?.closest('form');
+        if (!form) return;
+        var categoria = select.value;
+
+        filtrarVidrosPorCategoria(form, categoria);
+        form.querySelectorAll('[data-service-section]').forEach(function(section){
+            section.style.display = section.dataset.serviceSection.split(' ').includes(categoria) ? '' : 'none';
+        });
+        var redondo = form.querySelector('#espelhoRedondoFlag');
+        if (redondo && categoria !== 'ESPELHO') { redondo.checked=false; aplicarEstadoEspelhoRedondo(form,false); }
+        alternarBisote();
+    }
+    document.addEventListener('DOMContentLoaded',function(){
+        document.querySelectorAll('select[name="categoria"]').forEach(alternarCamposServico);
+    });
+
+    function preencherMedicaoVisita(select) {
+        var option = select.options[select.selectedIndex];
+        var form = select.closest('form');
+        if (!form || !option || !option.value) return;
+        var setValue = function (name, value) {
+            var input = form.querySelector('[name="' + name + '"]');
+            if (input) input.value = value || '';
+        };
+        setValue('categoria', option.dataset.category);
+        alternarCamposServico(form.querySelector('[name="categoria"]'));
+        var detailed = option.dataset.heightLeft && option.dataset.heightRight
+            && option.dataset.widthTop && option.dataset.widthBottom;
+        var flag = form.querySelector('.input-dimensoes-personalizadas-flag');
+        if (flag) {
+            flag.checked = !!detailed;
+            aplicarEstadoDimensoesPersonalizadas(form, !!detailed);
+        }
+        if (detailed) {
+            setValue('alturaBrutaEsquerdaMm', option.dataset.heightLeft);
+            setValue('alturaBrutaDireitaMm', option.dataset.heightRight);
+            setValue('larguraBrutaSuperiorMm', option.dataset.widthTop);
+            setValue('larguraBrutaInferiorMm', option.dataset.widthBottom);
+        } else {
+            setValue('larguraVaoMm', option.dataset.width);
+            setValue('alturaVaoMm', option.dataset.height);
+        }
+        var notes = form.querySelector('[name="observacoes"]');
+        if (notes && option.dataset.notes && !notes.value) notes.value = option.dataset.notes;
+    }
 
     function alternarDimensoesPersonalizadas(botao) {
         var form = botao.closest('form');

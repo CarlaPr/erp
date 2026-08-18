@@ -1,5 +1,6 @@
 package com.alfatahi.erp.planocorte.dto;
 
+import com.alfatahi.erp.planocorte.entity.CategoriaServico;
 import com.alfatahi.erp.planocorte.entity.TipoBorda;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -7,6 +8,9 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public class PlanoCorteItemForm {
+
+    @NotNull(message = "Selecione o tipo de serviço")
+    private CategoriaServico categoria;
 
     @NotNull(message = "Selecione o vidro")
     private Long vidroId;
@@ -37,6 +41,8 @@ public class PlanoCorteItemForm {
     private boolean cantoInferiorEsquerdo = false;
     private boolean cantoInferiorDireito = false;
 
+    public CategoriaServico getCategoria() { return categoria; }
+    public void setCategoria(CategoriaServico categoria) { this.categoria = categoria; }
     public Long getVidroId() {
         return vidroId;
     }

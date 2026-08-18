@@ -19,6 +19,9 @@ public class TechnicalVisitDto {
     private LocalDate visitDate;
     private LocalTime visitTime;
     private String notes;
+    private String status;
+    private long openingCount;
+    private long photoCount;
 
     private LocalDateTime createdAt;
 
@@ -48,6 +51,15 @@ public class TechnicalVisitDto {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public long getOpeningCount() { return openingCount; }
+    public void setOpeningCount(long openingCount) { this.openingCount = openingCount; }
+
+    public long getPhotoCount() { return photoCount; }
+    public void setPhotoCount(long photoCount) { this.photoCount = photoCount; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
