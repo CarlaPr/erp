@@ -12,6 +12,7 @@ import com.alfatahi.erp.planocorte.entity.TipoBorda;
 import com.alfatahi.erp.planocorte.entity.TipoElemento;
 import com.alfatahi.erp.planocorte.entity.TipoFolha;
 import com.alfatahi.erp.planocorte.entity.TipoFuracao;
+import com.alfatahi.erp.planocorte.dto.CroquiVaoChunkDto;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -81,6 +82,9 @@ public class CroquiService {
                 MARGEM_PX, FONTE, escapeXml(item.getCodigoPeca())));
 
         String titulo = item.getVidroNomeSnapshot() + " · " + formatarNumero(item.getEspessuraSnapshot()) + "mm";
+        if (item.isRedondo()) {
+            titulo += " · Redondo";
+        }
         if (item.getTipoFolha() != null && item.getTipoFolha() != TipoFolha.UNICA) {
             titulo += " · " + item.getTipoFolha().getDescricao();
         }
@@ -106,10 +110,23 @@ public class CroquiService {
 
 
     public String gerarSvgVao(List<PlanoCorteItem> folhas) {
+        return gerarSvgVao(folhas, 0, folhas != null ? folhas.size() : 0);
+    }
+
+    /**
+     * Gera o croqui combinado de um grupo de folhas (ou de um "pedaço" delas, quando o vão
+     * foi dividido em vários croquis para melhor visualização).
+     *
+     * @param folhas             folhas a desenhar neste croqui (pode ser um subconjunto do vão)
+     * @param offsetNumeroFolha  quantidade de folhas do vão que vêm ANTES deste subconjunto,
+     *                           usado para numerar corretamente "Folha N" (numeração global do vão)
+     * @param totalFolhasVao     total de folhas do vão inteiro (para exibir "N folhas" no título)
+     */
+    public String gerarSvgVao(List<PlanoCorteItem> folhas, int offsetNumeroFolha, int totalFolhasVao) {
         if (folhas == null || folhas.isEmpty()) {
             return "";
         }
-        if (folhas.size() == 1) {
+        if (folhas.size() == 1 && totalFolhasVao <= 1) {
             return gerarSvg(folhas.get(0));
         }
 
@@ -187,7 +204,7 @@ public class CroquiService {
                 "<text x=\"%.0f\" y=\"20\" font-family=\"%s\" font-size=\"16\" font-weight=\"700\" fill=\"#0f172a\" letter-spacing=\"0.4\">%s</text>",
                 margemEsquerda, FONTE, escapeXml(rotuloVao)));
 
-        String titulo = folhas.size() + " folhas · " + primeira.getVidroNomeSnapshot() + " · "
+        String titulo = totalFolhasVao + " folhas · " + primeira.getVidroNomeSnapshot() + " · "
                 + formatarNumero(primeira.getEspessuraSnapshot()) + "mm";
         svg.append(String.format(Locale.US,
                 "<text x=\"%.0f\" y=\"39\" font-family=\"%s\" font-size=\"13\" fill=\"#64748b\">%s</text>",
@@ -211,7 +228,7 @@ public class CroquiService {
 
             svg.append(String.format(Locale.US,
                     "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"11\" font-weight=\"700\" fill=\"#4338ca\" text-anchor=\"middle\">%s</text>",
-                    cursorX + larguraFolhaPx / 2, y0 - 24, FONTE, escapeXml("Folha " + (i + 1))));
+                    cursorX + larguraFolhaPx / 2, y0 - 24, FONTE, escapeXml("Folha " + (offsetNumeroFolha + i + 1))));
             svg.append(String.format(Locale.US,
                     "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"9\" fill=\"#94a3b8\" text-anchor=\"middle\">%s</text>",
                     cursorX + larguraFolhaPx / 2, y0 - 12, FONTE, escapeXml(folha.getCodigoPeca())));
@@ -245,13 +262,45 @@ public class CroquiService {
         return svg.toString();
     }
 
+    /**
+     * Divide as folhas de um vão em um ou mais croquis combinados, respeitando o número
+     * máximo de folhas por croqui (ex.: 3 no PDF, 6 no detalhe do plano). Se o vão tiver
+     * mais folhas que o máximo, o restante é agrupado no(s) croqui(s) seguinte(s) para
+     * manter a visualização legível, preservando a numeração global das folhas.
+     */
+    public List<CroquiVaoChunkDto> gerarSvgsVaoAgrupados(
+            List<PlanoCorteItem> folhas, int maxFolhasPorCroqui) {
+
+        List<CroquiVaoChunkDto> resultado = new ArrayList<>();
+        if (folhas == null || folhas.isEmpty()) {
+            return resultado;
+        }
+
+        int total = folhas.size();
+        int tamanhoChunk = maxFolhasPorCroqui > 0 ? maxFolhasPorCroqui : total;
+
+        for (int inicio = 0; inicio < total; inicio += tamanhoChunk) {
+            int fim = Math.min(inicio + tamanhoChunk, total);
+            List<PlanoCorteItem> chunk = folhas.subList(inicio, fim);
+            String svgChunk = gerarSvgVao(chunk, inicio, total);
+            resultado.add(new CroquiVaoChunkDto(svgChunk, inicio + 1, fim, total));
+        }
+
+        return resultado;
+    }
+
 
     private void desenharPeca(StringBuilder svg, PlanoCorteItem item, double x0, double y0,
                                double larguraPx, double alturaPx, double escala,
                                boolean desenharCotasPadrao, boolean desenharCotaAltura,
                                boolean contornoTrapezoidal) {
-        if (contornoTrapezoidal) {
+        boolean redondo = item.isRedondo();
+        if (redondo) {
+            desenharContornoRedondo(svg, item, x0, y0, larguraPx, alturaPx, escala);
+            desenharBisoteRedondo(svg, item, x0, y0, larguraPx, alturaPx, escala);
+        } else if (contornoTrapezoidal) {
             desenharContornoTrapezoidal(svg, item, x0, y0, larguraPx, alturaPx, escala);
+            desenharBisoteTrapezoidal(svg, item, x0, y0, larguraPx, alturaPx, escala);
         } else {
             desenharContornoPeca(svg, item, x0, y0, larguraPx, alturaPx, escala);
             desenharBisote(svg, item, x0, y0, larguraPx, alturaPx, escala);
@@ -268,6 +317,14 @@ public class CroquiService {
         }
 
         double cotaY = y0 + alturaPx + 26;
+        if (redondo) {
+            svg.append(linhaCota(x0, cotaY, x0 + larguraPx, cotaY));
+            svg.append(String.format(Locale.US,
+                    "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"13\" font-weight=\"600\" fill=\"#334155\" text-anchor=\"middle\">Ø %s mm</text>",
+                    x0 + larguraPx / 2, cotaY + 18, FONTE, formatarNumero(item.getLarguraFinalMm())));
+            return;
+        }
+
         svg.append(linhaCota(x0, cotaY, x0 + larguraPx, cotaY));
         svg.append(String.format(Locale.US,
                 "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"13\" font-weight=\"600\" fill=\"#334155\" text-anchor=\"middle\">%s mm</text>",
@@ -355,6 +412,92 @@ public class CroquiService {
         double xBL = xEsquerda;
         return String.format(Locale.US, "%.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f",
                 xTL, yTL, xTR, yTR, xBR, yBase, xBL, yBase);
+    }
+
+
+    /**
+     * Desenha a faixa de bisôte para uma peça de dimensões personalizadas (trapezoidal),
+     * inserindo uma versão "encolhida" do contorno de 4 lados a partir da espessura do bisôte —
+     * mesma ideia do bisôte retangular (desenharBisote), porém aplicada a todos os 4 cantos
+     * personalizados do vão, e não apenas às laterais de uma peça retangular.
+     */
+    private void desenharBisoteTrapezoidal(StringBuilder svg, PlanoCorteItem item, double x0, double y0,
+                                            double larguraPx, double alturaPx, double escala) {
+        if (item.getEspessuraBisoteMm() == null || item.getEspessuraBisoteMm().signum() <= 0) {
+            return;
+        }
+        double faixaPx = Math.max(item.getEspessuraBisoteMm().doubleValue() * escala, 2);
+
+        double yBase = y0 + alturaPx;
+        double alturaEsquerdaPx = valorFinalOuBruta(item.getAlturaFinalEsquerdaMm(), item.getAlturaBrutaEsquerdaMm()).doubleValue() * escala;
+        double alturaDireitaPx = valorFinalOuBruta(item.getAlturaFinalDireitaMm(), item.getAlturaBrutaDireitaMm()).doubleValue() * escala;
+        double larguraSuperiorPx = valorFinalOuBruta(item.getLarguraFinalSuperiorMm(), item.getLarguraBrutaSuperiorMm()).doubleValue() * escala;
+        double larguraInferiorPx = valorFinalOuBruta(item.getLarguraFinalInferiorMm(), item.getLarguraBrutaInferiorMm()).doubleValue() * escala;
+
+        double xTL = x0;
+        double yTL = yBase - alturaEsquerdaPx;
+        double xTR = x0 + larguraSuperiorPx;
+        double yTR = yBase - alturaDireitaPx;
+        double xBR = x0 + larguraInferiorPx;
+        double yBR = yBase;
+        double xBL = x0;
+        double yBL = yBase;
+
+        double xTLi = xTL + faixaPx;
+        double yTLi = yTL + faixaPx;
+        double xTRi = xTR - faixaPx;
+        double yTRi = yTR + faixaPx;
+        double xBRi = xBR - faixaPx;
+        double yBRi = yBR - faixaPx;
+        double xBLi = xBL + faixaPx;
+        double yBLi = yBL - faixaPx;
+
+        String pontosInternos = String.format(Locale.US, "%.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f",
+                xTLi, yTLi, xTRi, yTRi, xBRi, yBRi, xBLi, yBLi);
+        svg.append(String.format(Locale.US,
+                "<polygon points=\"%s\" fill=\"none\" stroke=\"#0ea5e9\" stroke-width=\"1.3\" stroke-dasharray=\"5 3\"/>", pontosInternos));
+
+        double cotaY = yTLi + Math.min(faixaPx, alturaPx / 4) + 15;
+        svg.append(linhaCota(xTL, cotaY, xTLi, cotaY));
+        svg.append(String.format(Locale.US,
+                "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" fill=\"#0369a1\" text-anchor=\"start\">Bisô %s mm (todos os cantos personalizados)</text>",
+                xTLi + 5, cotaY + 4, FONTE, formatarNumero(item.getEspessuraBisoteMm())));
+    }
+
+
+    private void desenharContornoRedondo(StringBuilder svg, PlanoCorteItem item, double x0, double y0,
+                                          double larguraPx, double alturaPx, double escala) {
+        double raio = Math.min(larguraPx, alturaPx) / 2;
+        double cx = x0 + larguraPx / 2;
+        double cy = y0 + alturaPx / 2;
+        svg.append(String.format(Locale.US,
+                "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\" fill=\"#eff6ff\" stroke=\"#1e293b\" stroke-width=\"2\"/>",
+                cx, cy, raio));
+    }
+
+
+    /**
+     * Bisôte de um espelho redondo: o usuário informa apenas a espessura em mm e ela é
+     * desenhada em volta de toda a circunferência (um círculo interno concêntrico), e não
+     * apenas em alguns lados como na peça retangular.
+     */
+    private void desenharBisoteRedondo(StringBuilder svg, PlanoCorteItem item, double x0, double y0,
+                                        double larguraPx, double alturaPx, double escala) {
+        if (item.getEspessuraBisoteMm() == null || item.getEspessuraBisoteMm().signum() <= 0) {
+            return;
+        }
+        double raioExterno = Math.min(larguraPx, alturaPx) / 2;
+        double faixaPx = Math.max(item.getEspessuraBisoteMm().doubleValue() * escala, 2);
+        double raioInterno = Math.max(raioExterno - faixaPx, 0);
+        double cx = x0 + larguraPx / 2;
+        double cy = y0 + alturaPx / 2;
+
+        svg.append(String.format(Locale.US,
+                "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\" fill=\"none\" stroke=\"#0ea5e9\" stroke-width=\"1.3\" stroke-dasharray=\"5 3\"/>",
+                cx, cy, raioInterno));
+        svg.append(String.format(Locale.US,
+                "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" fill=\"#0369a1\" text-anchor=\"middle\">Bisô %s mm (toda a circunferência)</text>",
+                cx, cy - raioInterno - 6, FONTE, formatarNumero(item.getEspessuraBisoteMm())));
     }
 
 
@@ -534,7 +677,8 @@ public class CroquiService {
 
         boolean ferragemPredefinida = furacao.getTipo() == TipoFuracao.ROLDANA
                 || furacao.getTipo() == TipoFuracao.FECHADURA
-                || furacao.getTipo() == TipoFuracao.PUXADOR;
+                || furacao.getTipo() == TipoFuracao.PUXADOR
+                || furacao.getTipo() == TipoFuracao.BATE_FECHA;
 
         if (furacao.getTipo() != TipoFuracao.ROLDANA
                 && furacao.getDescricao() != null && !furacao.getDescricao().isBlank()) {
@@ -646,8 +790,8 @@ public class CroquiService {
                 meioExtensaoH = largPx / 2;
                 meioExtensaoV = altPx / 2;
                 svg.append(String.format(Locale.US,
-                        "<rect x=\"%.1f\" y=\"%.1f\" width=\"%.1f\" height=\"%.1f\" fill=\"#fffbeb\" stroke=\"%s\" stroke-width=\"1.6\"/>",
-                        rectX, rectY, largPx, altPx, cor));
+                        "<rect x=\"%.1f\" y=\"%.1f\" width=\"%.1f\" height=\"%.1f\" fill=\"#ffffff\" stroke=\"#000000\" stroke-width=\"1.6\"/>",
+                        rectX, rectY, largPx, altPx));
                 labelCx = centroX;
                 topoY = rectY;
             }

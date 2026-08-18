@@ -25,6 +25,7 @@ import com.alfatahi.erp.planocorte.entity.StatusPlano;
 import com.alfatahi.erp.planocorte.entity.TipoAncoragem;
 import com.alfatahi.erp.planocorte.entity.TipoAnotacao;
 import com.alfatahi.erp.planocorte.entity.TipoBorda;
+import com.alfatahi.erp.planocorte.entity.TipoFolha;
 import com.alfatahi.erp.planocorte.entity.TipoFuracao;
 import com.alfatahi.erp.planocorte.entity.Vidro;
 import com.alfatahi.erp.planocorte.repository.FerragemRepository;
@@ -287,6 +288,14 @@ public class PlanoCorteService {
         Vidro vidro = vidroRepository.findById(form.getVidroId())
                 .orElseThrow(() -> new NoSuchElementException("Vidro não encontrado: " + form.getVidroId()));
 
+        boolean espelhoRedondo = plano.getCategoria() == CategoriaServico.ESPELHO && form.isEspelhoRedondo();
+        if (espelhoRedondo) {
+            // Espelho redondo: o usuário informa apenas a altura (diâmetro) — a largura
+            // acompanha automaticamente o mesmo valor, e dimensões personalizadas não se aplicam.
+            form.setLarguraVaoMm(form.getAlturaVaoMm());
+            form.setDimensoesPersonalizadas(false);
+        }
+
         DimensoesBrutas dimensoes = resolverDimensoesPersonalizadas(
                 form.isDimensoesPersonalizadas(),
                 form.getLarguraVaoMm(), form.getAlturaVaoMm(),
@@ -300,7 +309,9 @@ public class PlanoCorteService {
                 vidro.getTipo(),
                 form.getDescontoLateralPersonalizadoMm(), form.getDescontoAlturaPersonalizadoMm(),
                 form.getEspessuraBisoteMm(),
-                form.getComFechadura());
+                form.getComFechadura(),
+                espelhoRedondo,
+                form.getAlturaBateFechaMm());
         ResultadoCalculoServico resultado = calculadora.calcular(entrada);
 
 
@@ -356,6 +367,7 @@ public class PlanoCorteService {
             item.setFuracoes(mapearFuracoes(folha.furacoes()));
             item.getElementos().addAll(folha.elementos());
             item.setEspessuraBisoteMm(folha.espessuraBisoteMm());
+            item.setRedondo(folha.redondo());
             if (dimensoes.alturaEsquerdaMm() != null) {
                 aplicarDimensoesPersonalizadas(item, dimensoes,
                         alturaEsquerdaFinalMm, alturaDireitaFinalMm, larguraSuperiorFinalMm, larguraInferiorFinalMm);
@@ -659,6 +671,19 @@ public class PlanoCorteService {
 
 
 
+    /**
+     * Atalhos de ferragens (Puxador H, Puxador simples, Fechadura) não se aplicam a vidro fixo:
+     * em folhas fixas, ferragens de abertura (puxador, fechadura etc.) não fazem sentido — se
+     * for realmente necessário algum furo/recorte pontual, deve ser adicionado manualmente como
+     * Elemento Técnico.
+     */
+    private void garantirNaoVidroFixo(PlanoCorteItem item, String nomeAtalho) {
+        if (item.getTipoFolha() == TipoFolha.FIXA) {
+            throw new IllegalStateException(nomeAtalho + " não se aplica a vidro fixo — adicione um furo/recorte manualmente como Elemento Técnico, se necessário.");
+        }
+    }
+
+
     public void adicionarPuxadorH(Long planoCorteId, Long itemId, String lado, BigDecimal tamanhoEntreFurosMm) {
         adicionarPuxadorH(planoCorteId, itemId, lado, tamanhoEntreFurosMm, null);
     }
@@ -671,6 +696,7 @@ public class PlanoCorteService {
             throw new IllegalStateException("Espelho não usa Puxador H automático — adicione um furo/recorte como Elemento Técnico.");
         }
         PlanoCorteItem item = buscarItem(planoCorteId, itemId);
+        garantirNaoVidroFixo(item, "Puxador H");
         boolean direito = "DIREITO".equalsIgnoreCase(lado);
 
         BigDecimal distEntreFuros = tamanhoEntreFurosMm != null && tamanhoEntreFurosMm.signum() > 0
@@ -705,6 +731,7 @@ public class PlanoCorteService {
             throw new IllegalStateException("Espelho não usa Puxador automático — adicione um furo/recorte como Elemento Técnico.");
         }
         PlanoCorteItem item = buscarItem(planoCorteId, itemId);
+        garantirNaoVidroFixo(item, "Puxador");
         boolean direito = "DIREITO".equalsIgnoreCase(lado);
 
         BigDecimal x = direito
@@ -723,6 +750,7 @@ public class PlanoCorteService {
             throw new IllegalStateException("Espelho não usa Fechadura automática — adicione um furo/recorte como Elemento Técnico.");
         }
         PlanoCorteItem item = buscarItem(planoCorteId, itemId);
+        garantirNaoVidroFixo(item, "Fechadura");
         boolean direito = "DIREITO".equalsIgnoreCase(lado);
 
         BigDecimal xAlinhados = direito

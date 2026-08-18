@@ -20,6 +20,9 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
     @Query("UPDATE Quote q SET q.status = 'expired' WHERE q.status = 'pending' AND q.dateCreated < :limite")
     int expirePendingQuotes(@Param("limite") LocalDateTime limite);
 
+    @Query("SELECT q FROM Quote q WHERE q.status = 'expired' AND q.dateCreated < :limite")
+    List<Quote> findExpiredQuotesOlderThan(@Param("limite") LocalDateTime limite);
+
     @Query("""
     SELECT COALESCE(
     MAX(CAST(SUBSTRING(q.number, 5) AS integer)),

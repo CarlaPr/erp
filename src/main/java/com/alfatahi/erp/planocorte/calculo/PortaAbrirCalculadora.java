@@ -15,8 +15,8 @@ import java.util.List;
 @Component
 public class PortaAbrirCalculadora implements ServicoCalculadora {
 
-    private static final BigDecimal RECORTE_LARGURA_MM = BigDecimal.valueOf(55);
-    private static final BigDecimal RECORTE_ALTURA_MM = BigDecimal.valueOf(140);
+    private static final BigDecimal RECORTE_LARGURA_MM = BigDecimal.valueOf(129);
+    private static final BigDecimal RECORTE_ALTURA_MM = BigDecimal.valueOf(58);
 
     private final RegraTecnicaService regraTecnicaService;
 

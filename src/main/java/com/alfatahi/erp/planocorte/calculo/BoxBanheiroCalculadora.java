@@ -31,7 +31,7 @@ public class BoxBanheiroCalculadora implements ServicoCalculadora {
 
         BigDecimal arredondamento = parametroServicoService.valor(cat, "ARREDONDAMENTO_MM", BigDecimal.valueOf(50));
         BigDecimal transpasse = parametroServicoService.valor(cat, "TRANSPASSE_MM", BigDecimal.valueOf(50));
-        BigDecimal distBordaRoldana = parametroServicoService.valor(cat, "ROLDANA_DIST_BORDA_MM", BigDecimal.valueOf(125));
+        BigDecimal distBordaRoldana = parametroServicoService.valor(cat, "ROLDANA_DIST_BORDA_MM", BigDecimal.valueOf(85));
         BigDecimal distTopoRoldana = parametroServicoService.valor(cat, "ROLDANA_DIST_TOPO_MM", BigDecimal.valueOf(70));
         int roldanasPorFolhaMovel = parametroServicoService.valor(cat, "ROLDANA_QTD_POR_FOLHA_MOVEL", BigDecimal.valueOf(2)).intValue();
 

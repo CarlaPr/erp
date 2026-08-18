@@ -1,6 +1,7 @@
 package com.alfatahi.erp.planocorte.controller;
 
 import com.alfatahi.erp.entity.WorkOrder;
+import com.alfatahi.erp.planocorte.dto.CroquiVaoChunkDto;
 import com.alfatahi.erp.planocorte.dto.ElementoTecnicoForm;
 import com.alfatahi.erp.planocorte.dto.PlanoCorteForm;
 import com.alfatahi.erp.planocorte.dto.PlanoCorteItemForm;
@@ -36,6 +37,10 @@ import java.util.Map;
 @Controller
 @RequestMapping("/cut-plans")
 public class PlanoCorteController {
+
+    // No detalhe do plano (tela), agrupamos até 6 folhas por croqui combinado;
+    // o restante é agrupado no(s) croqui(s) seguinte(s) abaixo para melhor visualização.
+    private static final int MAX_FOLHAS_POR_CROQUI_DETALHE = 6;
 
     private final PlanoCorteService planoCorteService;
     private final VidroService vidroService;
@@ -393,7 +398,7 @@ public class PlanoCorteController {
             }
         }
 
-        Map<Integer, String> croquisVao = new LinkedHashMap<>();
+        Map<Integer, List<CroquiVaoChunkDto>> croquisVao = new LinkedHashMap<>();
         Map<Integer, Long> primeiroItemIdDoGrupo = new LinkedHashMap<>();
         Map<Long, Integer> folhaNumeroPorItem = new LinkedHashMap<>();
         for (Map.Entry<Integer, List<PlanoCorteItem>> entrada : itensPorGrupo.entrySet()) {
@@ -407,7 +412,7 @@ public class PlanoCorteController {
 
 
             if (folhas.size() > 1) {
-                croquisVao.put(entrada.getKey(), croquiService.gerarSvgVao(folhas));
+                croquisVao.put(entrada.getKey(), croquiService.gerarSvgsVaoAgrupados(folhas, MAX_FOLHAS_POR_CROQUI_DETALHE));
             }
         }
 

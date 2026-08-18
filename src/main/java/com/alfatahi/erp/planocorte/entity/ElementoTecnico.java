@@ -7,19 +7,11 @@ import jakarta.persistence.Enumerated;
 
 import java.math.BigDecimal;
 
-
-
-
-
-
-
-
-
 @Embeddable
 public class ElementoTecnico {
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo", length = 20)
+    @Column(name = "tipo", length = 50)
     private TipoElemento tipo;
 
     @Column(name = "nome", length = 80)
@@ -79,7 +71,7 @@ public class ElementoTecnico {
     @Column(name = "formato", length = 30)
     private String formato; // recorte (ex: "retangular", "circular", "oval")
 
-    @Column(name = "lado", length = 20)
+    @Column(name = "lado", length = 50)
     private String lado; // boleado, chanfro (ex: "superior esquerdo")
 
 

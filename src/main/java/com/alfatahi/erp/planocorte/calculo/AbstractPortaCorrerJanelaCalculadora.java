@@ -18,6 +18,14 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
     private final BigDecimal roldanaDistTopoPadraoMm;
     private final BigDecimal roldanaQtdPadrao;
 
+    // Furos de bate-fecha na folha móvel: distância fixa da borda de fechamento, diâmetro
+    // do furo, e distância (centro a centro) entre os dois furos.
+    private static final BigDecimal BATE_FECHA_DIST_BORDA_MM = BigDecimal.valueOf(33);
+    private static final BigDecimal BATE_FECHA_DIAMETRO_MM = BigDecimal.valueOf(20);
+    private static final BigDecimal BATE_FECHA_DIST_ENTRE_FUROS_MM = BigDecimal.valueOf(50);
+    // Distância padrão do centro entre os furos até o pé do vidro, usada quando o usuário não informa.
+    private static final BigDecimal BATE_FECHA_DIST_PE_VIDRO_PADRAO_MM = BigDecimal.valueOf(300);
+
     protected AbstractPortaCorrerJanelaCalculadora(ParametroServicoService parametroServicoService) {
         this(parametroServicoService, null, null, null);
     }
@@ -55,6 +63,9 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
         BigDecimal larguraPorFolha = CalculoUtil.dividir(entrada.larguraVaoMm(), totalFolhas);
         BigDecimal alturaFixo = CalculoUtil.descontar(entrada.alturaVaoMm(), descontoAlturaFixo);
         BigDecimal alturaMovel = CalculoUtil.descontar(entrada.alturaVaoMm(), descontoAlturaMovel);
+        BigDecimal distanciaPeVidro = entrada.alturaBateFechaMm() != null && entrada.alturaBateFechaMm().signum() > 0
+                ? entrada.alturaBateFechaMm()
+                : BATE_FECHA_DIST_PE_VIDRO_PADRAO_MM;
 
         List<FolhaCalculada> folhas = new ArrayList<>();
         int numero = 1;
@@ -71,6 +82,11 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
             BigDecimal larguraFabricacao = larguraPorFolha.add(transpasse);
             List<FuracaoCalculada> furos = gerarFuracoesRoldana(larguraFabricacao, distBordaRoldana, distTopoRoldana, roldanaQtd);
 
+            boolean ladoDireito = (i % 2 == 0);
+            List<FuracaoCalculada> furosBateFecha = gerarFuracoesBateFecha(larguraFabricacao, alturaMovel, ladoDireito, distanciaPeVidro);
+            int qtdRoldanas = furos.size();
+            furos.addAll(furosBateFecha);
+
             String observacao = "Folha " + numero + " de " + totalFolhas + " (Vidro móvel) — " + cat.getDescricao() + "\n "
                     + "vão " + entrada.larguraVaoMm().stripTrailingZeros().toPlainString() + "mm ÷ " + totalFolhas
                     + " = " + larguraPorFolha.stripTrailingZeros().toPlainString() + "mm + transpasse "
@@ -78,11 +94,14 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
                     + larguraFabricacao.stripTrailingZeros().toPlainString() + "mm de fabricação  \n · "
                     + "altura " + entrada.alturaVaoMm().stripTrailingZeros().toPlainString() + "mm − "
                     + descontoAlturaMovel.stripTrailingZeros().toPlainString() + "mm = " + alturaMovel.stripTrailingZeros().toPlainString() + "mm"
-                    + (furos.isEmpty()
+                    + (qtdRoldanas == 0
                             ? " \n"
-                            : " \n· " + furos.size() + " furo(s) de roldana a " + distBordaRoldana.stripTrailingZeros().toPlainString()
+                            : " \n· " + qtdRoldanas + " furo(s) de roldana a " + distBordaRoldana.stripTrailingZeros().toPlainString()
                                     + "mm da borda lateral (um em cada canto)"
-                                    + (distTopoRoldana != null ? " e " + distTopoRoldana.stripTrailingZeros().toPlainString() + "mm do topo." : "."));
+                                    + (distTopoRoldana != null ? " e " + distTopoRoldana.stripTrailingZeros().toPlainString() + "mm do topo." : "."))
+                    + (furosBateFecha.isEmpty()
+                            ? ""
+                            : " \n· Bate-fecha");
 
             folhas.add(new FolhaCalculada(TipoFolha.MOVEL, larguraFabricacao, alturaMovel, furos, List.of(), observacao));
             numero++;
@@ -99,6 +118,24 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
 
 
 
+    private List<FuracaoCalculada> gerarFuracoesBateFecha(BigDecimal larguraFolha, BigDecimal alturaFolha,
+                                                            boolean ladoDireito, BigDecimal distanciaPeVidroMm) {
+        List<FuracaoCalculada> furos = new ArrayList<>();
+        BigDecimal x = ladoDireito
+                ? larguraFolha.subtract(BATE_FECHA_DIST_BORDA_MM)
+                : BATE_FECHA_DIST_BORDA_MM;
+
+        BigDecimal centroY = alturaFolha.subtract(distanciaPeVidroMm);
+        BigDecimal metadeGap = BATE_FECHA_DIST_ENTRE_FUROS_MM.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+        BigDecimal yFuro1 = centroY.subtract(metadeGap);
+        BigDecimal yFuro2 = centroY.add(metadeGap);
+
+        String lado = ladoDireito ? "direito" : "esquerdo";
+        furos.add(new FuracaoCalculada(TipoFuracao.BATE_FECHA, x, yFuro1, BATE_FECHA_DIAMETRO_MM, "Bate-fecha"));
+        furos.add(new FuracaoCalculada(TipoFuracao.BATE_FECHA, x, yFuro2, BATE_FECHA_DIAMETRO_MM, ""));
+        return furos;
+    }
+
     private List<FuracaoCalculada> gerarFuracoesRoldana(BigDecimal larguraFolha, BigDecimal distBorda, BigDecimal distTopo, BigDecimal quantidade) {
         List<FuracaoCalculada> furos = new ArrayList<>();
         BigDecimal diametroRoldana = BigDecimal.valueOf(30);
@@ -108,20 +145,20 @@ public abstract class AbstractPortaCorrerJanelaCalculadora implements ServicoCal
         int qtd = quantidade.intValue();
         if (qtd == 1) {
             BigDecimal centro = larguraFolha.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
-            furos.add(new FuracaoCalculada(TipoFuracao.ROLDANA, centro, distTopo, diametroRoldana, "Roldana central"));
+            furos.add(new FuracaoCalculada(TipoFuracao.ROLDANA, centro, distTopo, diametroRoldana, "Roldana"));
             return furos;
         }
         BigDecimal xEsquerda = distBorda;
         BigDecimal xDireita = larguraFolha.subtract(distBorda);
-        furos.add(new FuracaoCalculada(TipoFuracao.ROLDANA, xEsquerda, distTopo, diametroRoldana, "Roldana canto esquerdo"));
-        furos.add(new FuracaoCalculada(TipoFuracao.ROLDANA, xDireita, distTopo, diametroRoldana, "Roldana canto direito"));
+        furos.add(new FuracaoCalculada(TipoFuracao.ROLDANA, xEsquerda, distTopo, diametroRoldana, "Roldana"));
+        furos.add(new FuracaoCalculada(TipoFuracao.ROLDANA, xDireita, distTopo, diametroRoldana, "Roldana"));
         if (qtd > 2) {
             BigDecimal vao = xDireita.subtract(xEsquerda);
             int espacos = qtd - 1;
             for (int i = 1; i < espacos; i++) {
                 BigDecimal x = xEsquerda.add(vao.multiply(BigDecimal.valueOf(i))
                         .divide(BigDecimal.valueOf(espacos), 2, RoundingMode.HALF_UP));
-                furos.add(new FuracaoCalculada(TipoFuracao.ROLDANA, x, distTopo, diametroRoldana, "Roldana " + (i + 2)));
+                furos.add(new FuracaoCalculada(TipoFuracao.ROLDANA, x, distTopo, diametroRoldana, "Roldana"));
             }
         }
         return furos;

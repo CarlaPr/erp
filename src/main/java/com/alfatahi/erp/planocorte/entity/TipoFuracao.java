@@ -6,6 +6,7 @@ public enum TipoFuracao {
     PUXADOR("Puxador"),
     DOBRADICA("Dobradiça"),
     FECHADURA("Fechadura"),
+    BATE_FECHA("Bate e fecha"),
     RECORTE("Recorte"),
     OUTRO("Outro");
 

@@ -86,6 +86,9 @@ public class PlanoCorteItem {
     @Column(name = "espessura_bisote_mm", precision = 8, scale = 2)
     private BigDecimal espessuraBisoteMm;
 
+    @Column(name = "redondo", nullable = false)
+    private boolean redondo = false;
+
     @Column(name = "canto_moeda_sup_esquerdo", nullable = false)
     private boolean cantoMoedaSuperiorEsquerdo = false;
 
@@ -324,6 +327,14 @@ public class PlanoCorteItem {
 
     public void setEspessuraBisoteMm(BigDecimal espessuraBisoteMm) {
         this.espessuraBisoteMm = espessuraBisoteMm;
+    }
+
+    public boolean isRedondo() {
+        return redondo;
+    }
+
+    public void setRedondo(boolean redondo) {
+        this.redondo = redondo;
     }
 
     public boolean isCantoMoedaSuperiorEsquerdo() {

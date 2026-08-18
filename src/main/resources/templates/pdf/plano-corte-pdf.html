@@ -696,18 +696,23 @@
     Observações do plano.
 </div>
 <th:block th:each="item, stat : ${itens}">
-    <div class="vao-croqui" th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null and primeiroItemIdDoGrupo.get(item.grupoVao).equals(item.id)}">
-        <div class="vao-croqui-header">
-            <div class="vao-croqui-title">
-                Croqui do vão
+    <th:block th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null and primeiroItemIdDoGrupo.get(item.grupoVao).equals(item.id)}">
+        <div class="vao-croqui" th:each="chunk : ${croquisVao.get(item.grupoVao)}">
+            <div class="vao-croqui-header">
+                <div class="vao-croqui-title">
+                    Croqui do vão
+                </div>
+                <div class="vao-croqui-subtitle"
+                     th:text="${chunk.chunkUnico}
+                        ? ('Vão ' + ${item.grupoVao} + ' — ' + ${chunk.totalFolhas} + ' folhas')
+                        : ('Vão ' + ${item.grupoVao} + ' — folhas ' + ${chunk.folhaInicio} + '-' + ${chunk.folhaFim} + ' de ' + ${chunk.totalFolhas})">
+                    Vão 1 — 3 folhas
+                </div>
             </div>
-            <div class="vao-croqui-subtitle" th:text="'Vão ' + ${item.grupoVao} + ' — ' + ${#lists.size(itensPorGrupo.get(item.grupoVao))} + ' folhas'">
-                Vão 1 — 3 folhas
+            <div class="vao-croqui-box" th:utext="${chunk.svg}">
             </div>
         </div>
-        <div class="vao-croqui-box" th:utext="${croquisVao.get(item.grupoVao)}">
-        </div>
-    </div>
+    </th:block>
     <div class="piece">
         <table class="piece-header">
 

@@ -16,9 +16,15 @@ public record EntradaCalculoServico(
         BigDecimal descontoLateralPersonalizadoMm,
         BigDecimal descontoAlturaPersonalizadoMm,
         BigDecimal espessuraBisoteMm,
-        Boolean comFechadura) {
+        Boolean comFechadura,
+        Boolean redondo,
+        BigDecimal alturaBateFechaMm) {
 
     public boolean temFechadura() {
         return Boolean.TRUE.equals(comFechadura);
+    }
+
+    public boolean isRedondo() {
+        return Boolean.TRUE.equals(redondo);
     }
 }

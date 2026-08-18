@@ -11,6 +11,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -152,5 +153,29 @@ public class QuoteService {
             technicalVisitService.onQuoteDeleted(quoteId);
             quoteRepo.delete(quote);
         }
+    }
+
+    /**
+     * Exclui definitivamente os orçamentos já marcados como "expired" cuja data de emissão
+     * (dateCreated) seja anterior ao limite informado. Reaproveita deleteQuote para garantir
+     * que vínculos (OS, agenda, visitas técnicas) sejam desfeitos de forma consistente.
+     *
+     * IMPORTANTE: somente orçamentos NÃO aprovados (status "expired") podem ser excluídos por
+     * esta rotina. Orçamentos aprovados devem permanecer no sistema indefinidamente — por isso,
+     * além da consulta já filtrar por status = 'expired', o laço abaixo ignora explicitamente
+     * qualquer registro com status "approved" como segunda camada de proteção.
+     */
+    @Transactional
+    public int purgeExpiredQuotesOlderThan(LocalDateTime limite) {
+        List<Quote> expiradosParaExcluir = quoteRepo.findExpiredQuotesOlderThan(limite);
+        int excluidos = 0;
+        for (Quote quote : expiradosParaExcluir) {
+            if ("approved".equals(quote.getStatus())) {
+                continue;
+            }
+            deleteQuote(quote.getId());
+            excluidos++;
+        }
+        return excluidos;
     }
 }

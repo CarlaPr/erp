@@ -2,6 +2,7 @@ package com.alfatahi.erp.planocorte.service;
 
 import com.alfatahi.erp.entity.Profile;
 import com.alfatahi.erp.repository.ProfileRepository;
+import com.alfatahi.erp.planocorte.dto.CroquiVaoChunkDto;
 import com.alfatahi.erp.planocorte.entity.PlanoCorte;
 import com.alfatahi.erp.planocorte.entity.PlanoCorteItem;
 import com.alfatahi.erp.planocorte.entity.TipoFuracao;
@@ -23,6 +24,9 @@ import java.util.Map;
 
 @Service
 public class PdfService {
+
+    // No PDF, agrupamos no máximo 3 folhas por croqui combinado para melhor visualização.
+    private static final int MAX_FOLHAS_POR_CROQUI_PDF = 3;
 
     private final TemplateEngine templateEngine;
     private final CroquiService croquiService;
@@ -62,7 +66,7 @@ public class PdfService {
             }
         }
 
-        Map<Integer, String> croquisVao = new LinkedHashMap<>();
+        Map<Integer, List<CroquiVaoChunkDto>> croquisVao = new LinkedHashMap<>();
         Map<Integer, Long> primeiroItemIdDoGrupo = new LinkedHashMap<>();
         for (Map.Entry<Integer, List<PlanoCorteItem>> entrada : itensPorGrupo.entrySet()) {
             List<PlanoCorteItem> folhas = entrada.getValue();
@@ -71,7 +75,7 @@ public class PdfService {
 
 
             if (folhas.size() > 1) {
-                croquisVao.put(entrada.getKey(), croquiService.gerarSvgVao(folhas));
+                croquisVao.put(entrada.getKey(), croquiService.gerarSvgsVaoAgrupados(folhas, MAX_FOLHAS_POR_CROQUI_PDF));
             }
         }
 

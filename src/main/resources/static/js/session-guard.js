@@ -25,6 +25,17 @@
 
         return nativeFetch(input, init).then(function (response) {
             if (response.status === 401) {
+                // A modal de "sessão expirada" só existe para não deixar o usuário perder
+                // o que estava preenchendo em uma ação de gravação (salvar/gerar). Requisições
+                // de leitura (GET/HEAD) — ex.: carregar dados em segundo plano ao abrir/focar
+                // a página — não têm nada "não salvo" para proteger, então não devem interromper
+                // o usuário com esse aviso (ex.: abrir o site após o computador acordar).
+                const method = ((init && init.method) || 'GET').toUpperCase();
+                const isMutatingRequest = method !== 'GET' && method !== 'HEAD';
+                if (!isMutatingRequest) {
+                    return response;
+                }
+
                 return response.clone().json()
                     .then(function (payload) {
                         if (payload && payload.error === 'SESSION_EXPIRED') {

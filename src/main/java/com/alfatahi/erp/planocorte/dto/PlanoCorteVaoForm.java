@@ -52,6 +52,10 @@ public class PlanoCorteVaoForm {
 
     private BigDecimal espessuraBisoteMm;
 
+    private boolean espelhoRedondo = false;
+
+    private BigDecimal alturaBateFechaMm;
+
     private String observacoes;
 
 
@@ -202,6 +206,22 @@ public class PlanoCorteVaoForm {
 
     public void setEspessuraBisoteMm(BigDecimal espessuraBisoteMm) {
         this.espessuraBisoteMm = espessuraBisoteMm;
+    }
+
+    public boolean isEspelhoRedondo() {
+        return espelhoRedondo;
+    }
+
+    public void setEspelhoRedondo(boolean espelhoRedondo) {
+        this.espelhoRedondo = espelhoRedondo;
+    }
+
+    public BigDecimal getAlturaBateFechaMm() {
+        return alturaBateFechaMm;
+    }
+
+    public void setAlturaBateFechaMm(BigDecimal alturaBateFechaMm) {
+        this.alturaBateFechaMm = alturaBateFechaMm;
     }
 
     public String getObservacoes() {

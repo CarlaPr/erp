@@ -145,723 +145,9 @@
             </span>
         </div>
     </section>
-    <div class="flex items-end justify-between gap-4 mb-4">
-        <div>
-            <p class="text-[11px] font-black uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-1">
-                Produção
-            </p>
-            <h2 class="text-xl font-black text-slate-900 dark:text-white">
-                Peças do plano
-            </h2>
-        </div>
-        <div class="text-xs font-bold text-slate-400" th:text="${#lists.size(itens) + ' peça(s)'}">
-            0 peças
-        </div>
-    </div>
-    <div class="space-y-6 mb-10">
-        <th:block th:each="item, stat : ${itens}">
-            <div th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null and primeiroItemIdDoGrupo.get(item.grupoVao).equals(item.id)}" class="bg-gradient-to-br from-blue-50 to-white dark:from-blue-500/10 dark:to-[#101827] border border-blue-200 dark:border-blue-500/20 rounded-2xl shadow-sm overflow-hidden">
-                <div class="px-5 sm:px-7 py-4 border-b border-blue-100 dark:border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-blue-500">
-                            Croqui do vão
-                        </p>
-                        <p class="text-sm font-black text-slate-900 dark:text-white" th:text="'Vão ' + ${item.grupoVao} + ' — ' + ${#lists.size(itensPorGrupo.get(item.grupoVao))} + ' folhas'">
-                            Vão 1 — 3 folhas
-                        </p>
-                    </div>
-                </div>
-                <div class="relative bg-slate-50 dark:bg-[#0B1220] px-4 sm:px-8 py-8 sm:py-10">
-                    <div class="croqui-wrap croqui-wrap-grupo mx-auto pt-1" th:utext="${croquisVao.get(item.grupoVao)}">
-                    </div>
-                </div>
-                <div class="px-5 sm:px-7 py-4">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">
-                        Adicionar um elemento técnico — escolha a folha
-                    </p>
-                    <div class="flex flex-wrap gap-2">
-                        <a th:each="folha, folhaStat : ${itensPorGrupo.get(item.grupoVao)}" th:href="'#peca-' + ${folha.id}" th:text="'Folha ' + ${folhaStat.count}" th:onclick="'abrirFolha(' + ${folha.id} + '); return false;'" class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-500/30 rounded-lg px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition">
-                            Folha 1
-                        </a>
-                    </div>
-                    <p class="text-[10px] text-slate-400 mt-2.5">
-                        Ao clicar, a página desce até a folha escolhida e já abre o
-                        formulário "Adicionar elemento técnico" dela — o recorte/furo
-                        será adicionado somente naquela folha.
-                    </p>
-                </div>
-            </div>
-            <article th:id="'peca-' + ${item.id}" class="bg-white dark:bg-[#101827] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
-                <div class="px-5 sm:px-7 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center text-xs font-black shrink-0" th:text="${stat.count}">
-                            1
-                        </div>
-                        <div class="min-w-0">
-                            <div class="flex flex-wrap items-center gap-2">
-                            <span class="font-mono text-xs font-black text-violet-600 dark:text-violet-400" th:text="${item.codigoPeca}">
-                                VID-0001
-                            </span>
-                                <span class="text-slate-300 dark:text-slate-700">
-                                •
-                            </span>
-                                <span class="text-sm font-black text-slate-900 dark:text-white" th:text="${item.vidroNomeSnapshot}">
-                                Vidro
-                            </span>
-                            </div>
-                            <div class="flex flex-wrap gap-1.5 mt-1.5">
-                            <span th:if="${item.tipoBorda != null}" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400" th:text="${item.tipoBorda.descricao}">
-                                Lapidado
-                            </span>
-                                <span th:if="${item.tipoFolha != null and item.tipoFolha.name() != 'UNICA'}" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400" th:text="${item.tipoFolha.descricao}">
-                                Móvel
-                            </span>
-                                <span th:if="${item.grupoVao != null}" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400" th:text="|Vão ${item.grupoVao}${folhaNumeroPorItem.get(item.id) != null ? ' · Folha ' + folhaNumeroPorItem.get(item.id) + ' de ' + #lists.size(itensPorGrupo.get(item.grupoVao)) : ''}|">
-                                Vão 1 · Folha 2 de 3
-                            </span>
-                            </div>
-                        </div>
-                    </div>
-                    <form th:if="${plano.status.name() != 'FINALIZADO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/excluir(id=${plano.id},itemId=${item.id})}" method="post" onsubmit="return confirm('Remover esta peça?');">
-                        <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 px-3 py-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            Remover
-                        </button>
-                    </form>
-                </div>
-                <div th:unless="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}" class="relative bg-slate-50 dark:bg-[#0B1220] border-b border-slate-100 dark:border-slate-800 px-4 sm:px-8 py-8 sm:py-10">
-                    <div class="absolute top-4 left-5 text-[9px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-700">
-                        Croqui técnico
-                    </div>
-                    <div class="croqui-wrap croqui-wrap-peca mx-auto pt-3" th:utext="${croquis.get(item.id)}">
-                    </div>
-                    <div th:if="${plano.status.name() != 'FINALIZADO'}" class="mt-4 max-w-[980px] mx-auto">
-                        <div class="flex flex-wrap items-center justify-center gap-2">
-                            <button type="button" class="anotacao-toggle inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-violet-300 dark:hover:border-violet-500/40 transition-colors" th:attr="data-item-id=${item.id}">
-                                <i data-lucide="pen-line" class="w-3.5 h-3.5"></i>
-                                Adicionar anotação
-                            </button>
-                            <div class="anotacao-toolbar hidden items-center gap-1.5 flex-wrap justify-center" th:attr="data-item-id=${item.id}">
-                                <button type="button" class="anotacao-tipo-btn" data-tipo="TEXTO">
-                                    <i data-lucide="type" class="w-3 h-3"></i> Texto
-                                </button>
-                                <button type="button" class="anotacao-tipo-btn" data-tipo="SETA">
-                                    <i data-lucide="move-up-right" class="w-3 h-3"></i> Seta
-                                </button>
-                                <button type="button" class="anotacao-tipo-btn" data-tipo="LINHA">
-                                    <i data-lucide="minus" class="w-3 h-3"></i> Linha
-                                </button>
-                                <span class="anotacao-hint text-[11px] text-violet-500 dark:text-violet-400 font-semibold ml-1">
-                                Selecione o tipo e clique no croqui
-                            </span>
-                                <button type="button" class="anotacao-cancelar text-[11px] text-slate-400 hover:text-rose-500 ml-1 font-semibold">
-                                    Cancelar
-                                </button>
-                            </div>
-                        </div>
-                        <form class="anotacao-form hidden" th:attr="data-item-id=${item.id}" th:action="@{/cut-plans/{id}/itens/{itemId}/anotacoes(id=${plano.id},itemId=${item.id})}" method="post">
-                            <input type="hidden" name="tipo" class="anotacao-input-tipo">
-                            <input type="hidden" name="x1Mm" class="anotacao-input-x1">
-                            <input type="hidden" name="y1Mm" class="anotacao-input-y1">
-                            <input type="hidden" name="x2Mm" class="anotacao-input-x2">
-                            <input type="hidden" name="y2Mm" class="anotacao-input-y2">
-                            <input type="hidden" name="texto" class="anotacao-input-texto">
-                        </form>
-                        <div th:if="${not #lists.isEmpty(item.anotacoes)}" class="mt-3 space-y-1.5">
-                            <div th:each="anot, iter : ${item.anotacoes}" class="flex items-center justify-between gap-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-3 py-1.5 text-xs">
-                            <span class="text-slate-600 dark:text-slate-300 truncate">
-                                <span class="font-bold" th:text="${anot.tipo.descricao}">Texto</span>
-                                <span th:if="${anot.texto != null and !anot.texto.isEmpty()}" th:text="' — ' + ${anot.texto}"></span>
-                            </span>
-                                <form th:action="@{/cut-plans/{id}/itens/{itemId}/anotacoes/{index}/excluir(id=${plano.id},itemId=${item.id},index=${iter.index})}" method="post">
-                                    <button type="submit" class="text-slate-300 hover:text-rose-500 transition-colors">
-                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}" class="px-5 sm:px-7 py-3 border-b border-slate-100 dark:border-slate-800 bg-blue-50/40 dark:bg-blue-500/5 flex items-center gap-2">
-                    <i data-lucide="arrow-up" class="w-3.5 h-3.5 text-blue-400 shrink-0"></i>
-                    <p class="text-xs text-blue-600 dark:text-blue-300">
-                        O croqui desta folha já aparece no <strong>croqui combinado do vão</strong>, no topo da lista.
-                    </p>
-                </div>
-                <div class="p-5 sm:p-7">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
-                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 p-4">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i data-lucide="maximize" class="w-4 h-4 text-slate-400"></i>
-                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                    Medida bruta
-                                </p>
-                            </div>
-                            <p class="text-lg font-black text-slate-700 dark:text-slate-300" th:text="${item.larguraBrutaMm + ' × ' + item.alturaBrutaMm + ' mm'}">
-                                1000 × 1900 mm
-                            </p>
-                        </div>
-                        <div class="rounded-xl bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20 p-4">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i data-lucide="ruler" class="w-4 h-4 text-violet-500"></i>
-                                <p class="text-[10px] font-black uppercase tracking-widest text-violet-500">
-                                    Medida final
-                                </p>
-                            </div>
-                            <p class="text-lg font-black text-violet-700 dark:text-violet-300" th:text="${item.larguraFinalMm + ' × ' + item.alturaFinalMm + ' mm'}">
-                                995 × 1895 mm
-                            </p>
-                        </div>
-                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 p-4">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i data-lucide="layers-3" class="w-4 h-4 text-slate-400"></i>
-                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                    Quantidade
-                                </p>
-                            </div>
-                            <p class="text-lg font-black text-slate-900 dark:text-white" th:text="${item.quantidade}">
-                                1
-                            </p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                        <div class="p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <p class="text-[9px] uppercase tracking-wider font-black text-slate-400">
-                                Espessura
-                            </p>
-                            <p class="text-sm font-bold text-slate-800 dark:text-white mt-1" th:text="${item.espessuraSnapshot != null ? #numbers.formatDecimal(item.espessuraSnapshot,1,1) + ' mm' : '-'}">
-                                8 mm
-                            </p>
-                        </div>
-                        <div class="p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <p class="text-[9px] uppercase tracking-wider font-black text-slate-400">
-                                Área
-                            </p>
-                            <p class="text-sm font-bold text-slate-800 dark:text-white mt-1" th:text="${#numbers.formatDecimal(item.areaM2, 1, 3)} + ' m²'">
-                                1,900 m²
-                            </p>
-                        </div>
-                        <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
-                            <p class="text-[9px] uppercase tracking-wider font-black text-emerald-600 dark:text-emerald-400">
-                                Valor Estimado
-                            </p>
-                            <p class="text-sm font-black text-emerald-700 dark:text-emerald-300 mt-1" th:text="'R$ ' + ${#numbers.formatDecimal(item.valorTotal, 1, 2)}">
-                                R$ 850,00
-                            </p>
-                        </div>
-                    </div>
-                    <div th:if="${item.espessuraBisoteMm}" class="flex items-center gap-3 bg-sky-50 dark:bg-sky-500/10 border border-sky-100 dark:border-sky-500/20 rounded-xl px-4 py-3 mb-5">
-                        <i data-lucide="scan-line" class="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0"></i>
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest font-black text-sky-600 dark:text-sky-400">
-                                Bisôte
-                            </p>
-                            <p class="text-sm font-bold text-sky-800 dark:text-sky-300" th:text="${item.espessuraBisoteMm + ' mm — todas as laterais'}">
-                                25 mm — todas as laterais
-                            </p>
-                        </div>
-                    </div>
-                    <div th:if="${item.tipoBorda != null and item.tipoBorda.name() == 'CANTO_MOEDA' and item.temCantoArredondado}" class="flex items-center gap-3 bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20 rounded-xl px-4 py-3 mb-5">
-                        <i data-lucide="circle-dot" class="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0"></i>
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest font-black text-violet-600 dark:text-violet-400">
-                                Canto Moeda
-                            </p>
-                            <p class="text-sm font-bold text-violet-800 dark:text-violet-300" th:text="${item.descricaoCantosArredondados}">
-                                Superior esquerdo, Inferior direito
-                            </p>
-                        </div>
-                    </div>
-                    <div th:if="${!#lists.isEmpty(item.furacoes)}" class="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700/60 mb-5">
-                        <div class="px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700/60 flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                                <i data-lucide="circle-dot" class="w-3.5 h-3.5"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-black uppercase tracking-wide text-slate-700 dark:text-slate-300">
-                                    Furações
-                                </p>
-                                <p class="text-[10px] text-slate-400">
-                                    Posições e diâmetros
-                                </p>
-                            </div>
-                        </div>
-                        <div>
-                            <div th:each="f, iter : ${item.furacoes}" class="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                                <div class="flex items-start gap-3">
-                                <span class="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-500 shrink-0" th:text="${iter.count}">
-                                    1
-                                </span>
-                                    <div>
-                                        <p class="text-sm font-bold text-slate-700 dark:text-slate-300" th:text="${f.tipo.descricao}">
-                                            Roldana
-                                        </p>
-                                        <p class="text-xs text-slate-400 mt-0.5">
-                                        <span th:if="${f.descricao}" th:text="${f.descricao}">
-                                            Superior
-                                        </span>
-                                            <span th:if="${f.descricao}">
-                                            ·
-                                        </span>
-                                            <span th:text="|X ${f.posicaoXMm != null ? #numbers.formatDecimal(f.posicaoXMm, 1, 0) : '?'} mm &middot; Y ${f.posicaoYMm != null ? #numbers.formatDecimal(f.posicaoYMm, 1, 0) : '?'} mm|">
-                                            X 125 mm · Y 70 mm
-                                        </span>
-                                            <span th:if="${f.diametroMm != null}" th:text="' · Ø ' + ${#numbers.formatDecimal(f.diametroMm,1,1)} + ' mm'">
-                                            · Ø 30 mm
-                                        </span>
-                                        </p>
-                                    </div>
-                                </div>
-                                <form th:if="${plano.status.name() != 'FINALIZADO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/furacoes/{index}/excluir(id=${plano.id},itemId=${item.id},index=${iter.index})}" method="post" onsubmit="return confirm('Remover esta furação?');">
-                                    <button type="submit" class="text-[11px] font-bold text-rose-500 hover:text-rose-700 px-2 py-1 rounded-md hover:bg-rose-50 transition">
-                                        Remover
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div th:if="${!#lists.isEmpty(item.elementos)}" class="rounded-xl overflow-hidden border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5 mb-5">
-                        <div class="px-4 py-3 bg-amber-50 dark:bg-amber-500/10 border-b border-amber-200 dark:border-amber-500/20 flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center">
-                                <i data-lucide="wrench" class="w-3.5 h-3.5"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-black uppercase tracking-wide text-amber-800 dark:text-amber-300">
-                                    Elementos técnicos
-                                </p>
-                                <p class="text-[10px] text-amber-600/70 dark:text-amber-400/70">
-                                    Ferragens, recortes e componentes
-                                </p>
-                            </div>
-                        </div>
-                        <div>
-                            <div th:each="e, iter : ${item.elementos}" class="px-4 py-3 border-b border-amber-100 dark:border-amber-500/10 last:border-0">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="flex items-start gap-3">
-                                    <span class="w-6 h-6 rounded-md bg-amber-100 dark:bg-amber-500/10 flex items-center justify-center text-[10px] font-black text-amber-700 dark:text-amber-400 shrink-0" th:text="${iter.count}">
-                                        1
-                                    </span>
-                                        <div>
-                                            <p class="text-sm font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5 flex-wrap" >
-                                            <span th:text="${e.nome != null and !#strings.isEmpty(e.nome) ? e.nome : (e.ferragemNomeSnapshot != null ? e.ferragemNomeSnapshot : (e.tipo != null ? e.tipo.descricao : 'Elemento'))}">
-                                                Fechadura
-                                            </span>
-                                                <span th:if="${e.nome != null and !#strings.isEmpty(e.nome) and e.tipo != null}" class="text-[9px] font-bold uppercase tracking-wide text-amber-500 dark:text-amber-400/80 bg-amber-100 dark:bg-amber-500/10 rounded px-1.5 py-0.5" th:text="${e.tipo.descricao}">
-                                                Recorte
-                                            </span>
-                                            </p>
-                                            <p class="text-xs text-amber-700/70 dark:text-amber-400/70 mt-0.5">
-                                            <span th:if="${e.lado}" th:text="${e.lado}">
-                                                DIREITO
-                                            </span>
-                                                <span th:if="${e.lado}">
-                                                ·
-                                            </span>
-                                                <span th:text="|${e.referenciaHorizontal != null ? e.referenciaHorizontal.descricao : '?'}: ${e.distanciaHorizontalMm != null ? #numbers.formatDecimal(e.distanciaHorizontalMm, 1, 0) + ' mm' : '?'}|">
-                                                    Esquerda: 50 mm
-                                                </span>
-                                                <span> · </span>
-                                                <span th:text="|${e.referenciaVertical != null ? e.referenciaVertical.descricao : '?'}: ${e.distanciaVerticalMm != null ? #numbers.formatDecimal(e.distanciaVerticalMm, 1, 0) + ' mm' : '?'}|">
-                                                Superior: 1000 mm
-                                            </span>
-                                                <span th:if="${e.ancoragem != null and e.ancoragem.name() == 'CANTO'}" class="ml-1 font-bold text-amber-800 dark:text-amber-300">
-                                                · encostado no canto
-                                            </span>
-                                            </p>
-                                            <p th:if="${e.observacao}" class="text-xs text-amber-700 dark:text-amber-400 mt-1" th:text="${e.observacao}">
-                                                Observação
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div th:if="${plano.status.name() != 'FINALIZADO'}" class="flex items-center gap-2 shrink-0">
-                                        <a href="javascript:void(0)" th:attr="onclick=|document.getElementById('editar-elemento-${item.id}-${iter.index}').open=true;|" class="text-[11px] font-bold text-slate-500 hover:text-slate-700 underline">
-                                            Editar
-                                        </a>
-                                        <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos/{index}/excluir(id=${plano.id},itemId=${item.id},index=${iter.index})}" method="post" onsubmit="return confirm('Remover este elemento?');">
-                                            <button type="submit" class="text-[11px] font-bold text-rose-500 hover:text-rose-700">
-                                                Remover
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                                <details th:if="${plano.status.name() != 'FINALIZADO'}" th:id="'editar-elemento-' + ${item.id} + '-' + ${iter.index}" class="mt-3">
-                                    <summary class="cursor-pointer select-none text-[11px] font-bold text-slate-500 hover:text-slate-700">
-                                        Ajustar medidas deste elemento
-                                    </summary>
-                                    <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos/{index}/editar(id=${plano.id},itemId=${item.id},index=${iter.index})}" method="post" class="mt-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3">
-                                        <input type="hidden" name="ferragemNomeSnapshot" th:value="${e.ferragemNomeSnapshot}">
-                                        <input type="hidden" name="ancoragem" class="campo-ancoragem" th:value="${e.ancoragem != null ? e.ancoragem : 'CENTRO'}">
-                                        <div class="grid grid-cols-2 gap-3">
-                                            <select name="tipo" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
-                                                <option th:each="t : ${tiposElemento}" th:value="${t}" th:text="${t.descricao}" th:selected="${t == e.tipo}">
-                                                </option>
-                                            </select>
-                                            <input type="text" name="lado" th:value="${e.lado}" placeholder="Lado / orientação" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
-                                        </div>
-                                        <div>
-                                            <label class="form-label">
-                                                Nome do elemento (opcional)
-                                            </label>
-                                            <input type="text" name="nome" th:value="${e.nome}" maxlength="80" placeholder="Ex: Tomada, Caixa condensadora, Buraco" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
-                                        </div>
-                                        <div class="rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-3">
-                                            <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-2">
-                                                Posição rápida no canto (recortes)
-                                            </p>
-                                            <div class="flex flex-wrap gap-1.5">
-                                                <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'SUPERIOR_ESQUERDO')">↖ Sup. esquerdo</button>
-                                                <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'SUPERIOR_DIREITO')">↗ Sup. direito</button>
-                                                <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'INFERIOR_ESQUERDO')">↙ Inf. esquerdo</button>
-                                                <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'INFERIOR_DIREITO')">↘ Inf. direito</button>
-                                                <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'CENTRO')">Centralizado</button>
-                                            </div>
-                                        </div>
-                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                            <select name="referenciaHorizontal" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
-                                                <option th:each="r : ${referenciasHorizontais}" th:value="${r}" th:text="${r.descricao}" th:selected="${r == e.referenciaHorizontal}">
-                                                </option>
-                                            </select>
-                                            <input type="number" step="0.1" name="distanciaHorizontalMm" th:value="${e.distanciaHorizontalMm}" placeholder="X (mm)" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
-                                            <select name="referenciaVertical" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
-                                                <option th:each="r : ${referenciasVerticais}" th:value="${r}" th:text="${r.descricao}" th:selected="${r == e.referenciaVertical}">
-                                                </option>
-                                            </select>
-                                            <input type="number" step="0.1" name="distanciaVerticalMm" th:value="${e.distanciaVerticalMm}" placeholder="Y (mm)" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
-                                        </div>
-                                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                                            <input type="number" step="0.1" name="diametroMm" th:value="${e.diametroMm}" placeholder="Diâmetro" class="input-tecnico">
-                                            <input type="number" step="0.1" name="larguraMm" th:value="${e.larguraMm}" placeholder="Largura" class="input-tecnico">
-                                            <input type="number" step="0.1" name="alturaMm" th:value="${e.alturaMm}" placeholder="Altura" class="input-tecnico">
-                                            <input type="number" step="0.1" name="comprimentoMm" th:value="${e.comprimentoMm}" placeholder="Comprimento" class="input-tecnico">
-                                            <input type="number" step="0.1" name="anguloGraus" th:value="${e.anguloGraus}" placeholder="Ângulo" class="input-tecnico">
-                                        </div>
-                                        <input type="text" name="observacao" th:value="${e.observacao}" placeholder="Observação" class="input-tecnico w-full">
-                                        <div class="flex justify-end">
-                                            <button type="submit" class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-lg px-4 py-2 transition">
-                                                Salvar alterações
-                                            </button>
-                                        </div>
-                                    </form>
-                                </details>
-                            </div>
-                        </div>
-                    </div>
-                    <div th:if="${item.observacoes}" class="flex gap-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50 rounded-xl p-4 mb-5">
-                        <i data-lucide="message-square-text" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
-                        <div>
-                            <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
-                                Observações
-                            </p>
-                            <p class="text-sm text-slate-600 dark:text-slate-400 " th:text="${item.observacoes}">
-                                Observação
-                            </p>
-                        </div>
-                    </div><div th:if="${plano.status.name() != 'FINALIZADO' and (plano.categoria.name() == 'PORTA_CORRER' or plano.categoria.name() == 'PORTA_ABRIR' or plano.categoria.name() == 'JANELA_PADRAO' or plano.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="border-t border-slate-100 dark:border-slate-800 pt-5">
-                    <div class="flex items-start gap-3 mb-4">
-                        <div class="w-9 h-9 rounded-lg bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
-                            <i data-lucide="wand-sparkles" class="w-4 h-4"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-black text-slate-900 dark:text-white">
-                                Adicionar ferragens
-                            </h3>
-                            <p class="text-xs text-slate-400 mt-0.5">
-                                Escolha uma ferragem abaixo. Os dados serão aplicados diretamente nesta folha.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <form th:if="${plano.categoria.name() != 'JANELA_PADRAO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/puxador-h(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
-                            <div class="flex items-center gap-2 mb-4">
-                                <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
-                                    <i data-lucide="grip-vertical" class="w-4 h-4"></i>
-                                </div>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-black text-slate-800 dark:text-white">
-                                        Puxador H
-                                    </p>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">
-                                        Puxador H com medida personalizada
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="space-y-3 flex-1">
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
-                                        Lado
-                                    </label>
-                                    <select name="lado" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500">
-                                        <option value="ESQUERDO">
-                                            Lado esquerdo
-                                        </option>
-                                        <option value="DIREITO">
-                                            Lado direito
-                                        </option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
-                                        Comprimento do Puxador
-                                    </label>
-                                    <div class="relative">
-                                        <input type="number" step="1" min="1" name="tamanhoMm" placeholder="300mm padrão" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 pr-10 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"/>
-                                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                                         mm
-                                    </span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
-                                        Distância da borda
-                                    </label>
-                                    <div class="relative">
-                                        <input type="number" step="1" min="1" name="distanciaBordaMm" placeholder="300mm padrão" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 pr-10 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"/>
-                                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                                         mm
-                                    </span>
-                                    </div>
-                                    <p class="text-[10px] text-slate-400 mt-1">
-                                        Deixe em branco para usar a distância padrão do sistema (300mm da lateral).
-                                    </p>
-                                </div>
-                            </div>
-                            <button type="submit" class="mt-4 w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white rounded-lg px-3 py-2.5 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors">
-                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                Adicionar puxador H
-                            </button>
-                        </form>
-                        <form th:if="${plano.categoria.name() != 'JANELA_PADRAO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/puxador-simples(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
-                            <div class="flex items-center gap-2 mb-4">
-                                <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 flex items-center justify-center shrink-0">
-                                    <i data-lucide="circle-dot" class="w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-black text-slate-800 dark:text-white">
-                                        Puxador simples
-                                    </p>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">
-                                        Puxador simples padrão
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="flex-1">
-                                <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
-                                    Lado
-                                </label>
-                                <select name="lado" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500">
-                                    <option value="ESQUERDO">
-                                        Lado esquerdo
-                                    </option>
-                                    <option value="DIREITO">
-                                        Lado direito
-                                    </option>
-                                </select>
-                            </div>
-                            <button type="submit" class="mt-4 w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white rounded-lg px-3 py-2.5 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors">
-                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                Adicionar puxador simples
-                            </button>
-                        </form>
-                        <form th:action="@{/cut-plans/{id}/itens/{itemId}/fechadura(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
-                            <div class="flex items-center gap-2 mb-4">
-                                <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                                    <i data-lucide="lock-keyhole" class="w-4 h-4"></i>
-                                </div>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-black text-slate-800 dark:text-white">
-                                        Fechadura
-                                    </p>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">
-                                        Fechadura para a folha
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="flex-1">
-                                <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
-                                    Lado
-                                </label>
-                                <select name="lado" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500">
-                                    <option value="ESQUERDO">
-                                        Lado esquerdo
-                                    </option>
-                                    <option value="DIREITO">
-                                        Lado direito
-                                    </option>
-                                </select>
-                            </div>
-                            <button type="submit" class="mt-4 w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white rounded-lg px-3 py-2.5 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors">
-                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                Adicionar fechadura
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                    <details th:if="${plano.status.name() != 'FINALIZADO'}" th:id="'add-elemento-' + ${item.id}" class="mt-5 border-t border-slate-100 dark:border-slate-800 pt-5">
-                        <summary class="cursor-pointer select-none flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-violet-600 transition">
-                        <span class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </span>
-                            Adicionar elemento técnico
-                            <span class="text-xs font-normal text-slate-400">
-                            furo, rasgo, recorte, chanfro ou boleado
-                        </span>
-                        </summary>
-                        <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos(id=${plano.id},itemId=${item.id})}" th:object="${elementoForm}" method="post" class="mt-4 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 space-y-5">
-                            <div class="rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-3">
-                                <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                                    <strong>Como funciona:</strong>
-                                    escolha a referência horizontal e vertical
-                                    e informe as distâncias em milímetros — ou,
-                                    para um recorte que encosta no canto da peça,
-                                    use um dos botões de "posição rápida" abaixo.
-                                    Ao escolher uma ferragem cadastrada,
-                                    as medidas são preenchidas automaticamente.
-                                </p>
-                            </div>
-                            <input type="hidden" th:field="*{ancoragem}" class="campo-ancoragem">
-                            <div class="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="form-label">
-                                        Tipo *
-                                    </label>
-                                    <select th:field="*{tipo}" class="form-input">
-                                        <option th:each="t : ${tiposElemento}" th:value="${t}" th:text="${t.descricao}">
-                                        </option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">
-                                        Nome do elemento (opcional)
-                                    </label>
-                                    <input type="text" th:field="*{nome}" maxlength="80" placeholder="Ex: Tomada, Caixa condensadora, Buraco" class="form-input">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="form-label">
-                                    Ferragem do catálogo
-                                </label>
-                                <select th:field="*{ferragemId}" onchange="preencherElementoDaFerragem(this)" class="form-input">
-                                    <option value="">
-                                        — nenhuma / preencher manualmente —
-                                    </option>
-                                    <option th:each="f : ${ferragens}" th:value="${f.id}" th:text="${f.categoria + ' · ' + f.produto}" th:attr=" data-tipo=${f.tipoElementoPadrao}, data-diametro=${f.diametroFuracaoMm}, data-largura=${f.larguraMm}, data-altura=${f.alturaMm}, data-comprimento=${f.comprimentoMm}, data-angulo=${f.anguloGraus}, data-distborda=${f.distanciaBordaMm}, data-disttopo=${f.distanciaTopoMm}">
-                                    </option>
-                                </select>
-                                <p class="preenchido-ferragem-aviso text-xs text-emerald-700 dark:text-emerald-400 mt-2" style="display:none;">
-                                    ✓ Campos preenchidos automaticamente.
-                                    Confira antes de adicionar.
-                                </p>
-                            </div>
-                            <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4">
-                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">
-                                    Posição rápida no canto (para recortes que encostam na borda)
-                                </p>
-                                <div class="flex flex-wrap gap-2">
-                                    <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'SUPERIOR_ESQUERDO')">↖ Canto superior esquerdo</button>
-                                    <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'SUPERIOR_DIREITO')">↗ Canto superior direito</button>
-                                    <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'INFERIOR_ESQUERDO')">↙ Canto inferior esquerdo</button>
-                                    <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'INFERIOR_DIREITO')">↘ Canto inferior direito</button>
-                                    <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'CENTRO')">Centralizado</button>
-                                </div>
-                                <p class="text-[10px] text-slate-400 mt-2.5">
-                                    Um clique preenche referência e distância automaticamente —
-                                    depois é só informar largura e altura do recorte.
-                                </p>
-                            </div>
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                <div>
-                                    <label class="form-label">
-                                        Ref. horizontal
-                                    </label>
-                                    <select th:field="*{referenciaHorizontal}" class="form-input">
-                                        <option th:each="r : ${referenciasHorizontais}" th:value="${r}" th:text="${r.descricao}">
-                                        </option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">
-                                        Distância X (mm)
-                                    </label>
-                                    <input type="number" step="0.1" th:field="*{distanciaHorizontalMm}" class="form-input">
-                                </div>
-                                <div>
-                                    <label class="form-label">
-                                        Ref. vertical
-                                    </label>
-                                    <select th:field="*{referenciaVertical}" class="form-input">
-                                        <option th:each="r : ${referenciasVerticais}" th:value="${r}" th:text="${r.descricao}">
-                                        </option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">
-                                        Distância Y (mm)
-                                    </label>
-                                    <input type="number" step="0.1" th:field="*{distanciaVerticalMm}" class="form-input">
-                                </div>
-                            </div>
-                            <div class="rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-3">
-                                <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                                    Abaixo preencha só os campos do tipo escolhido (o resto pode ficar em branco):<br>
-                                    Furo → diâmetro.<br>
-                                    Recorte → largura/altura.<br>
-                                    Chanfro → comprimento/ângulo.
-                                </p>
-                            </div>
-                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                                <div>
-                                    <label class="form-label">Diâmetro</label>
-                                    <input type="number" step="0.1" th:field="*{diametroMm}" class="form-input">
-                                </div>
-                                <div>
-                                    <label class="form-label">Largura</label>
-                                    <input type="number" step="0.1" th:field="*{larguraMm}" class="form-input">
-                                </div>
-                                <div>
-                                    <label class="form-label">Altura</label>
-                                    <input type="number" step="0.1" th:field="*{alturaMm}" class="form-input">
-                                </div>
-                                <div>
-                                    <label class="form-label">Comprimento</label>
-                                    <input type="number" step="0.1" th:field="*{comprimentoMm}" class="form-input">
-                                </div>
-                                <div>
-                                    <label class="form-label">Ângulo</label>
-                                    <input type="number" step="0.1" th:field="*{anguloGraus}" class="form-input">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="form-label">
-                                    Observação
-                                </label>
-                                <input type="text" th:field="*{observacao}" class="form-input">
-                            </div>
-                            <div class="flex justify-end">
-                                <button type="submit" class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold rounded-xl px-5 py-2.5 transition shadow-sm">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                    Adicionar elemento
-                                </button>
-                            </div>
-                        </form>
-                    </details>
-                </div>
-            </article>
-        </th:block>
-        <div th:if="${#lists.isEmpty(itens)}" class="bg-white dark:bg-[#101827] border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl py-14 text-center">
-            <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-4">
-                <i data-lucide="layers-3" class="w-7 h-7"></i>
-            </div>
-            <h3 class="text-sm font-black text-slate-700 dark:text-slate-300">
-                Nenhuma peça adicionada
-            </h3>
-            <p class="text-xs text-slate-400 mt-1">
-                Utilize o formulário abaixo para começar o plano.
-            </p>
-        </div>
-    </div>
-    <section th:if="${plano.status.name() != 'FINALIZADO' and usaCalculoAutomatico}" class="bg-white dark:bg-[#101827] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden mb-6">
-        <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-3">
+    <details th:if="${plano.status.name() != 'FINALIZADO' and usaCalculoAutomatico}" id="secao-adicionar-vao" th:attr="open=${#lists.isEmpty(itens) ? 'open' : null}" class="adicionar-vao-details bg-white dark:bg-[#101827] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden mb-7">
+        <summary class="adicionar-vao-summary px-5 sm:px-6 py-5 cursor-pointer select-none">
+            <div class="flex items-center gap-3 pr-8">
                 <div class="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center">
                     <i data-lucide="calculator" class="w-5 h-5"></i>
                 </div>
@@ -869,13 +155,11 @@
                     <h2 class="text-base font-black text-slate-900 dark:text-white">
                         Adicionar vão
                     </h2>
-                    <p class="text-xs text-slate-400 mt-0.5">
-                        O sistema calcula automaticamente as folhas,
-                        descontos, transpasse e algumas furações.
-                    </p>
+                    <p th:if="${#lists.isEmpty(itens)}" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Preencha os dados para criar o primeiro vão e gerar as folhas automaticamente.</p>
+                    <p th:unless="${#lists.isEmpty(itens)}" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Clique para abrir e adicionar outro vão ao plano.</p>
                 </div>
             </div>
-        </div>
+        </summary>
         <form th:action="@{/cut-plans/{id}/vaos(id=${plano.id})}" th:object="${vaoForm}" method="post" class="p-6 space-y-5">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -901,6 +185,15 @@
                         </option>
                     </select>
                 </div>
+            </div>
+            <div th:if="${plano.categoria.name() == 'ESPELHO'}" id="caixaBisote" style="display:none;" class="bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 rounded-xl p-4">
+                <label class="form-label text-sky-800 dark:text-sky-300">
+                    Quantos mm é o bisôte?
+                </label>
+                <input type="number" step="0.1" th:field="*{espessuraBisoteMm}" placeholder="Ex.: 25" class="form-input max-w-[200px]">
+                <p class="text-xs text-sky-700 dark:text-sky-300 mt-2 texto-ajuda-bisote">
+                    Será desenhado em todas as laterais.
+                </p>
             </div>
             <div class="caixa-canto-moeda bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4" style="display:none;">
                 <label class="form-label text-violet-800 dark:text-violet-300">
@@ -940,7 +233,13 @@
                 </div>
             </div>
 
-            <div class="flex flex-col gap-2">
+            <div th:if="${plano.categoria.name() == 'ESPELHO'}" class="flex items-center gap-2">
+                <input type="checkbox" id="espelhoRedondoFlag" th:field="*{espelhoRedondo}" onchange="alternarEspelhoRedondo(this)" class="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500">
+                <label for="espelhoRedondoFlag" class="text-xs font-bold text-slate-600 dark:text-slate-300">
+                    Espelho redondo (informe apenas o diâmetro)
+                </label>
+            </div>
+            <div class="flex flex-col gap-2 campo-btn-dimensoes-toggle">
                 <p class="text-[11px] font-black uppercase tracking-widest text-slate-400">
                     Dimensões
                 </p>
@@ -951,7 +250,7 @@
             </div>
             <input type="checkbox" th:field="*{dimensoesPersonalizadas}" class="input-dimensoes-personalizadas-flag" style="display:none;">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="campo-dimensao-simples">
+                <div class="campo-dimensao-simples campo-largura-vao">
                     <label class="form-label">
                         Largura do vão (mm) *
                     </label>
@@ -960,7 +259,7 @@
                     </p>
                 </div>
                 <div class="campo-dimensao-simples">
-                    <label class="form-label">
+                    <label class="form-label label-altura-vao">
                         Altura do vão (mm) *
                     </label>
                     <input type="number" step="0.01" th:field="*{alturaVaoMm}" class="form-input">
@@ -1059,15 +358,7 @@
                     <input type="number" step="0.01" th:field="*{descontoAlturaPersonalizadoMm}" placeholder="15mm Padrão" class="form-input">
                 </div>
             </div>
-            <div th:if="${plano.categoria.name() == 'ESPELHO'}" id="caixaBisote" style="display:none;" class="bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 rounded-xl p-4">
-                <label class="form-label text-sky-800 dark:text-sky-300">
-                    Quantos mm é o bisôte?
-                </label>
-                <input type="number" step="0.1" th:field="*{espessuraBisoteMm}" placeholder="Ex.: 25" class="form-input max-w-[200px]">
-                <p class="text-xs text-sky-700 dark:text-sky-300 mt-2">
-                    Será desenhado em todas as laterais.
-                </p>
-            </div>
+
 
             <div>
                 <label class="form-label">
@@ -1082,7 +373,675 @@
                 </button>
             </div>
         </form>
-    </section>
+    </details>
+
+    <div class="flex items-end justify-between gap-4 mb-4">
+        <div>
+            <p class="text-[11px] font-black uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-1">
+                Produção
+            </p>
+            <h2 class="text-xl font-black text-slate-900 dark:text-white">
+                Peças do plano
+            </h2>
+        </div>
+        <div class="text-xs font-bold text-slate-400" th:text="${#lists.size(itens) + ' peça(s)'}">
+            0 peças
+        </div>
+    </div>
+    <div class="space-y-6 mb-10">
+        <th:block th:each="item, stat : ${itens}">
+            <div th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null and primeiroItemIdDoGrupo.get(item.grupoVao).equals(item.id)}" class="bg-gradient-to-br from-blue-50 to-white dark:from-blue-500/10 dark:to-[#101827] border border-blue-200 dark:border-blue-500/20 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-5 sm:px-7 py-4 border-b border-blue-100 dark:border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-blue-500">
+                            Croqui do vão
+                        </p>
+                        <p class="text-sm font-black text-slate-900 dark:text-white" th:text="'Vão ' + ${item.grupoVao} + ' — ' + ${#lists.size(itensPorGrupo.get(item.grupoVao))} + ' folhas'">
+                            Vão 1 — 3 folhas
+                        </p>
+                    </div>
+                </div>
+                <div th:each="chunk, chunkStat : ${croquisVao.get(item.grupoVao)}"
+                     class="relative bg-slate-50 dark:bg-[#0B1220] px-4 sm:px-8 py-8 sm:py-10"
+                     th:classappend="${!chunkStat.first ? 'border-t border-slate-100 dark:border-slate-800' : ''}">
+                    <p th:unless="${chunk.chunkUnico}" class="text-[11px] font-bold text-slate-400 mb-3 text-center"
+                       th:text="'Folhas ' + ${chunk.folhaInicio} + '–' + ${chunk.folhaFim} + ' de ' + ${chunk.totalFolhas}">
+                        Folhas 1–6 de 8
+                    </p>
+                    <div class="croqui-wrap croqui-wrap-grupo mx-auto pt-1" th:utext="${chunk.svg}">
+                    </div>
+                </div>
+                <div th:if="${#lists.size(itensPorGrupo.get(item.grupoVao)) > 1}" class="px-5 sm:px-7 py-5 bg-white/80 dark:bg-slate-900/40">
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 mb-4">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Adicionar elemento técnico</p>
+                            <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white mt-1">Selecione primeiro a folha que receberá o elemento</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Somente a folha selecionada exibirá o formulário de furo, rasgo, recorte, chanfro ou boleado.</p>
+                        </div>
+                        <div class="inline-flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 px-3 py-2 text-xs font-bold text-blue-700 dark:text-blue-300">
+                            <i data-lucide="mouse-pointer-click" class="w-4 h-4 shrink-0"></i>
+                            Escolha uma folha abaixo
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2.5" role="group" th:attr="aria-label=|Folhas do vão ${item.grupoVao}|">
+                        <button th:each="folha, folhaStat : ${itensPorGrupo.get(item.grupoVao)}" type="button" class="folha-seletor" th:attr="data-item-id=${folha.id},data-grupo-vao=${item.grupoVao},aria-controls=|add-elemento-${folha.id}|,aria-label=|Selecionar folha ${folhaStat.count} para adicionar elemento técnico|" aria-pressed="false" onclick="selecionarFolhaTecnica(this)">
+                            <span class="folha-seletor-numero" th:text="${folhaStat.count}">1</span>
+                            <span class="min-w-0 text-left">
+                                <span class="block text-xs font-black text-slate-800 dark:text-white" th:text="'Folha ' + ${folhaStat.count}">Folha 1</span>
+                                <span class="block text-[10px] text-slate-500 dark:text-slate-400 truncate" th:text="${folha.tipoFolha != null ? folha.tipoFolha.descricao : 'Peça'}">Móvel</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <article th:id="'peca-' + ${item.id}" th:attr="data-item-id=${item.id},data-grupo-vao=${item.grupoVao}" th:classappend="${item.grupoVao != null and itensPorGrupo.get(item.grupoVao) != null and #lists.size(itensPorGrupo.get(item.grupoVao)) > 1 ? (folhaNumeroPorItem.get(item.id) != null and folhaNumeroPorItem.get(item.id) % 2 == 0 ? ' peca-selecionavel peca-card-alternada' : ' peca-selecionavel peca-card-base') : ' peca-card-base'}" class="peca-card border rounded-2xl shadow-sm overflow-hidden transition-all duration-200">
+                <div class="peca-card-header px-5 sm:px-7 py-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center text-xs font-black shrink-0" th:text="${stat.count}">
+                            1
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-mono text-xs font-black text-violet-600 dark:text-violet-400" th:text="${item.codigoPeca}">
+                                VID-0001
+                            </span>
+                                <span class="text-slate-300 dark:text-slate-700">
+                                •
+                            </span>
+                                <span class="text-sm font-black text-slate-900 dark:text-white" th:text="${item.vidroNomeSnapshot}">
+                                Vidro
+                            </span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 mt-1.5">
+                            <span th:if="${item.tipoBorda != null}" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400" th:text="${item.tipoBorda.descricao}">
+                                Lapidado
+                            </span>
+                                <span th:if="${item.tipoFolha != null and item.tipoFolha.name() != 'UNICA'}" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400" th:text="${item.tipoFolha.descricao}">
+                                Móvel
+                            </span>
+                                <span th:if="${item.grupoVao != null}" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400" th:text="|Vão ${item.grupoVao}${folhaNumeroPorItem.get(item.id) != null ? ' · Folha ' + folhaNumeroPorItem.get(item.id) + ' de ' + #lists.size(itensPorGrupo.get(item.grupoVao)) : ''}|">
+                                Vão 1 · Folha 2 de 3
+                            </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <button th:if="${plano.status.name() != 'FINALIZADO' and item.grupoVao != null and itensPorGrupo.get(item.grupoVao) != null and #lists.size(itensPorGrupo.get(item.grupoVao)) > 1}" type="button" class="btn-selecionar-folha" th:attr="data-item-id=${item.id},data-grupo-vao=${item.grupoVao},aria-controls=|add-elemento-${item.id}|" aria-pressed="false" onclick="selecionarFolhaTecnica(this)">
+                            <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5"></i>
+                            Selecionar folha
+                        </button>
+                        <form th:if="${plano.status.name() != 'FINALIZADO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/excluir(id=${plano.id},itemId=${item.id})}" method="post" onsubmit="return confirm('Remover esta peça?');">
+                            <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 px-3 py-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                Remover
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div th:unless="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}" class="relative bg-slate-50 dark:bg-[#0B1220] border-b border-slate-100 dark:border-slate-800 px-4 sm:px-8 py-8 sm:py-10">
+                    <div class="absolute top-4 left-5 text-[9px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-700">
+                        Croqui técnico
+                    </div>
+                    <div class="croqui-wrap croqui-wrap-peca mx-auto pt-3" th:utext="${croquis.get(item.id)}">
+                    </div>
+                    <div th:if="${plano.status.name() != 'FINALIZADO'}" class="mt-4 max-w-[980px] mx-auto">
+                        <div class="flex flex-wrap items-center justify-center gap-2">
+                            <button type="button" class="anotacao-toggle inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-violet-300 dark:hover:border-violet-500/40 transition-colors" th:attr="data-item-id=${item.id}">
+                                <i data-lucide="pen-line" class="w-3.5 h-3.5"></i>
+                                Adicionar anotação
+                            </button>
+                            <div class="anotacao-toolbar hidden items-center gap-1.5 flex-wrap justify-center" th:attr="data-item-id=${item.id}">
+                                <button type="button" class="anotacao-tipo-btn" data-tipo="TEXTO">
+                                    <i data-lucide="type" class="w-3 h-3"></i> Texto
+                                </button>
+                                <button type="button" class="anotacao-tipo-btn" data-tipo="SETA">
+                                    <i data-lucide="move-up-right" class="w-3 h-3"></i> Seta
+                                </button>
+                                <button type="button" class="anotacao-tipo-btn" data-tipo="LINHA">
+                                    <i data-lucide="minus" class="w-3 h-3"></i> Linha
+                                </button>
+                                <span class="anotacao-hint text-[11px] text-violet-500 dark:text-violet-400 font-semibold ml-1">
+                                Selecione o tipo e clique no croqui
+                            </span>
+                                <button type="button" class="anotacao-cancelar text-[11px] text-slate-400 hover:text-rose-500 ml-1 font-semibold">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                        <form class="anotacao-form hidden" th:attr="data-item-id=${item.id}" th:action="@{/cut-plans/{id}/itens/{itemId}/anotacoes(id=${plano.id},itemId=${item.id})}" method="post">
+                            <input type="hidden" name="tipo" class="anotacao-input-tipo">
+                            <input type="hidden" name="x1Mm" class="anotacao-input-x1">
+                            <input type="hidden" name="y1Mm" class="anotacao-input-y1">
+                            <input type="hidden" name="x2Mm" class="anotacao-input-x2">
+                            <input type="hidden" name="y2Mm" class="anotacao-input-y2">
+                            <input type="hidden" name="texto" class="anotacao-input-texto">
+                        </form>
+                        <div th:if="${not #lists.isEmpty(item.anotacoes)}" class="mt-3 space-y-1.5">
+                            <div th:each="anot, iter : ${item.anotacoes}" class="flex items-center justify-between gap-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-3 py-1.5 text-xs">
+                            <span class="text-slate-600 dark:text-slate-300 truncate">
+                                <span class="font-bold" th:text="${anot.tipo.descricao}">Texto</span>
+                                <span th:if="${anot.texto != null and !anot.texto.isEmpty()}" th:text="' — ' + ${anot.texto}"></span>
+                            </span>
+                                <form th:action="@{/cut-plans/{id}/itens/{itemId}/anotacoes/{index}/excluir(id=${plano.id},itemId=${item.id},index=${iter.index})}" method="post">
+                                    <button type="submit" class="text-slate-300 hover:text-rose-500 transition-colors">
+                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}" class="peca-croqui-aviso px-5 sm:px-7 py-3 border-b flex items-center gap-2">
+                    <i data-lucide="arrow-up" class="w-3.5 h-3.5 text-blue-400 shrink-0"></i>
+                    <p class="text-xs text-blue-600 dark:text-blue-300">
+                        O croqui desta folha já aparece no <strong>croqui combinado do vão</strong>, no topo da lista.
+                    </p>
+                </div>
+                <div class="peca-card-body p-4 sm:p-5">
+                    <details th:if="${plano.status.name() != 'FINALIZADO'}" th:id="'add-elemento-' + ${item.id}" th:attr="data-item-id=${item.id},data-grupo-vao=${item.grupoVao}" th:classappend="${item.grupoVao != null and itensPorGrupo.get(item.grupoVao) != null and #lists.size(itensPorGrupo.get(item.grupoVao)) > 1 ? ' elemento-tecnico-seletivo' : ''}" class="elemento-tecnico-details group mb-4 overflow-hidden rounded-2xl border-2 border-violet-300 dark:border-violet-500/40 bg-violet-50/60 dark:bg-violet-500/5 shadow-sm">
+                        <summary class="elemento-tecnico-summary cursor-pointer select-none flex items-center justify-between gap-4 px-4 sm:px-5 py-4 text-slate-900 dark:text-white hover:bg-violet-100/70 dark:hover:bg-violet-500/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-inset">
+        <span class="flex items-center gap-3 min-w-0">
+            <span class="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-sm shrink-0"><i data-lucide="plus" class="w-5 h-5"></i></span>
+            <span class="min-w-0">
+                <span class="block text-sm sm:text-base font-black">Adicionar elemento técnico</span>
+                <span class="block text-[11px] sm:text-xs font-medium text-violet-600 dark:text-violet-300 mt-0.5">Furo, rasgo, recorte, chanfro ou boleado nesta folha</span>
+            </span>
+        </span>
+                            <span class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide text-violet-600 dark:text-violet-300 shrink-0">Abrir <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i></span>
+                        </summary>
+                        <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos(id=${plano.id},itemId=${item.id})}" th:object="${elementoForm}" method="post" class="border-t border-violet-200 dark:border-violet-500/20 bg-white dark:bg-[#0D1524] p-4 sm:p-5 space-y-4">
+                            <div class="flex items-start gap-2 rounded-lg bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20 px-3 py-2"><i data-lucide="info" class="w-3.5 h-3.5 text-violet-500 shrink-0 mt-0.5"></i><p class="text-[11px] text-violet-700 dark:text-violet-300"><strong>Informe o tipo e a posição.</strong> Para recortes encostados na borda, use uma posição rápida.</p></div>
+                            <input type="hidden" th:field="*{ancoragem}" class="campo-ancoragem">
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="form-label">
+                                        Tipo *
+                                    </label>
+                                    <select th:field="*{tipo}" class="form-input">
+                                        <option th:each="t : ${tiposElemento}" th:value="${t}" th:text="${t.descricao}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">
+                                        Nome do elemento (opcional)
+                                    </label>
+                                    <input type="text" th:field="*{nome}" maxlength="80" placeholder="Ex: Tomada, Caixa condensadora, Buraco" class="form-input">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label">
+                                    Ferragem do catálogo
+                                </label>
+                                <select th:field="*{ferragemId}" onchange="preencherElementoDaFerragem(this)" class="form-input">
+                                    <option value="">
+                                        — nenhuma / preencher manualmente —
+                                    </option>
+                                    <option th:each="f : ${ferragens}" th:value="${f.id}" th:text="${f.categoria + ' · ' + f.produto}" th:attr=" data-tipo=${f.tipoElementoPadrao}, data-diametro=${f.diametroFuracaoMm}, data-largura=${f.larguraMm}, data-altura=${f.alturaMm}, data-comprimento=${f.comprimentoMm}, data-angulo=${f.anguloGraus}, data-distborda=${f.distanciaBordaMm}, data-disttopo=${f.distanciaTopoMm}">
+                                    </option>
+                                </select>
+                                <p class="preenchido-ferragem-aviso text-xs text-emerald-700 dark:text-emerald-400 mt-2" style="display:none;">
+                                    ✓ Campos preenchidos automaticamente.
+                                    Confira antes de adicionar.
+                                </p>
+                            </div>
+                            <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">
+                                    Posição rápida no canto (para recortes que encostam na borda)
+                                </p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'SUPERIOR_ESQUERDO')">↖ Canto superior esquerdo</button>
+                                    <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'SUPERIOR_DIREITO')">↗ Canto superior direito</button>
+                                    <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'INFERIOR_ESQUERDO')">↙ Canto inferior esquerdo</button>
+                                    <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'INFERIOR_DIREITO')">↘ Canto inferior direito</button>
+                                    <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'CENTRO')">Centralizado</button>
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-2.5">
+                                    Um clique preenche referência e distância automaticamente —
+                                    depois é só informar largura e altura do recorte.
+                                </p>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div>
+                                    <label class="form-label">
+                                        Ref. horizontal
+                                    </label>
+                                    <select th:field="*{referenciaHorizontal}" class="form-input">
+                                        <option th:each="r : ${referenciasHorizontais}" th:value="${r}" th:text="${r.descricao}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">
+                                        Distância X (mm)
+                                    </label>
+                                    <input type="number" step="0.1" th:field="*{distanciaHorizontalMm}" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="form-label">
+                                        Ref. vertical
+                                    </label>
+                                    <select th:field="*{referenciaVertical}" class="form-input">
+                                        <option th:each="r : ${referenciasVerticais}" th:value="${r}" th:text="${r.descricao}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">
+                                        Distância Y (mm)
+                                    </label>
+                                    <input type="number" step="0.1" th:field="*{distanciaVerticalMm}" class="form-input">
+                                </div>
+                            </div>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Preencha somente as medidas necessárias: <span class="text-slate-700 dark:text-slate-200"><br>· Furo = diâmetro <br>· Recorte = largura/altura <br>· Chanfro = comprimento/ângulo.</span></p>
+                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                <div>
+                                    <label class="form-label">Diâmetro</label>
+                                    <input type="number" step="0.1" th:field="*{diametroMm}" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="form-label">Largura</label>
+                                    <input type="number" step="0.1" th:field="*{larguraMm}" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="form-label">Altura</label>
+                                    <input type="number" step="0.1" th:field="*{alturaMm}" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="form-label">Comprimento</label>
+                                    <input type="number" step="0.1" th:field="*{comprimentoMm}" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="form-label">Ângulo</label>
+                                    <input type="number" step="0.1" th:field="*{anguloGraus}" class="form-input">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label">
+                                    Observação
+                                </label>
+                                <input type="text" th:field="*{observacao}" class="form-input">
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-black rounded-xl px-5 py-3 transition shadow-sm min-w-[190px]">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    Adicionar elemento
+                                </button>
+                            </div>
+                        </form>
+                    </details>
+                    <details class="group mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 overflow-hidden">
+                        <summary class="cursor-pointer select-none flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                            <span class="flex items-center gap-2 min-w-0"><i data-lucide="ruler" class="w-4 h-4 text-slate-400 shrink-0"></i><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Dados da peça</span></span>
+                            <span class="flex items-center gap-3 shrink-0"><span class="text-xs font-black text-violet-700 dark:text-violet-300" th:text="${item.larguraFinalMm + ' × ' + item.alturaFinalMm + ' mm'}">995 × 1895 mm</span><i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"></i></span>
+                        </summary>
+                        <div class="border-t border-slate-100 dark:border-slate-800 px-4 py-3">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-3">
+                                <div><p class="text-[8px] font-black uppercase tracking-wider text-slate-400">Medida bruta</p><p class="mt-0.5 text-xs font-bold text-slate-600 dark:text-slate-300" th:text="${item.larguraBrutaMm + ' × ' + item.alturaBrutaMm + ' mm'}">1000 × 1900 mm</p></div>
+                                <div><p class="text-[8px] font-black uppercase tracking-wider text-violet-500">Medida final</p><p class="mt-0.5 text-xs font-black text-violet-700 dark:text-violet-300" th:text="${item.larguraFinalMm + ' × ' + item.alturaFinalMm + ' mm'}">995 × 1895 mm</p></div>
+                                <div><p class="text-[8px] font-black uppercase tracking-wider text-slate-400">Quantidade</p><p class="mt-0.5 text-xs font-bold text-slate-700 dark:text-slate-200" th:text="${item.quantidade}">1</p></div>
+                                <div><p class="text-[8px] font-black uppercase tracking-wider text-slate-400">Espessura</p><p class="mt-0.5 text-xs font-bold text-slate-700 dark:text-slate-200" th:text="${item.espessuraSnapshot != null ? #numbers.formatDecimal(item.espessuraSnapshot,1,1) + ' mm' : '-'}">8 mm</p></div>
+                                <div><p class="text-[8px] font-black uppercase tracking-wider text-slate-400">Área</p><p class="mt-0.5 text-xs font-bold text-slate-700 dark:text-slate-200" th:text="${#numbers.formatDecimal(item.areaM2, 1, 3)} + ' m²'">1,900 m²</p></div>
+                                <div><p class="text-[8px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Valor estimado</p><p class="mt-0.5 text-xs font-black text-emerald-700 dark:text-emerald-300" th:text="'R$ ' + ${#numbers.formatDecimal(item.valorTotal, 1, 2)}">R$ 850,00</p></div>
+                            </div>
+                            <div th:if="${item.espessuraBisoteMm}" class="mt-3 flex items-center gap-2 rounded-lg bg-sky-50 dark:bg-sky-500/10 border border-sky-100 dark:border-sky-500/20 px-3 py-2"><i data-lucide="scan-line" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0"></i><span class="text-[11px] font-bold text-sky-800 dark:text-sky-300" th:text="'Bisôte: ' + ${item.espessuraBisoteMm} + ' mm — todas as laterais'">Bisôte: 25 mm — todas as laterais</span></div>
+                            <div th:if="${item.tipoBorda != null and item.tipoBorda.name() == 'CANTO_MOEDA' and item.temCantoArredondado}" class="mt-2 flex items-center gap-2 rounded-lg bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20 px-3 py-2"><i data-lucide="circle-dot" class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 shrink-0"></i><span class="text-[11px] font-bold text-violet-800 dark:text-violet-300" th:text="'Canto moeda: ' + ${item.descricaoCantosArredondados}">Canto moeda: Superior esquerdo, Inferior direito</span></div>
+                        </div>
+                    </details>
+                    <details th:if="${!#lists.isEmpty(item.elementos)}" class="group mb-3 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/30 dark:bg-amber-500/5 overflow-hidden">
+                        <summary class="cursor-pointer select-none flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition">
+                            <span class="flex items-center gap-2"><i data-lucide="wrench" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i><span class="text-xs font-bold text-amber-800 dark:text-amber-300">Elementos já adicionados</span><span class="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-md bg-amber-100 dark:bg-amber-500/10 text-[9px] font-black text-amber-700 dark:text-amber-300" th:text="${#lists.size(item.elementos)}">1</span></span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-amber-500 transition-transform group-open:rotate-180"></i>
+                        </summary>
+                        <div class="border-t border-amber-100 dark:border-amber-500/10 p-3">
+                            <div th:if="${!#lists.isEmpty(item.elementos)}" class="rounded-xl overflow-hidden border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5">
+                                <div class="px-4 py-3 bg-amber-50 dark:bg-amber-500/10 border-b border-amber-200 dark:border-amber-500/20 flex items-center gap-2">
+                                    <div class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center">
+                                        <i data-lucide="wrench" class="w-3.5 h-3.5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-black uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                                            Elementos técnicos
+                                        </p>
+                                        <p class="text-[10px] text-amber-600/70 dark:text-amber-400/70">
+                                            Ferragens, recortes e componentes
+                                        </p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div th:each="e, iter : ${item.elementos}" class="px-4 py-3 border-b border-amber-100 dark:border-amber-500/10 last:border-0">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="flex items-start gap-3">
+                            <span class="w-6 h-6 rounded-md bg-amber-100 dark:bg-amber-500/10 flex items-center justify-center text-[10px] font-black text-amber-700 dark:text-amber-400 shrink-0" th:text="${iter.count}">
+                                1
+                            </span>
+                                                <div>
+                                                    <p class="text-sm font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5 flex-wrap" >
+                                    <span th:text="${e.nome != null and !#strings.isEmpty(e.nome) ? e.nome : (e.ferragemNomeSnapshot != null ? e.ferragemNomeSnapshot : (e.tipo != null ? e.tipo.descricao : 'Elemento'))}">
+                                        Fechadura
+                                    </span>
+                                                        <span th:if="${e.nome != null and !#strings.isEmpty(e.nome) and e.tipo != null}" class="text-[9px] font-bold uppercase tracking-wide text-amber-500 dark:text-amber-400/80 bg-amber-100 dark:bg-amber-500/10 rounded px-1.5 py-0.5" th:text="${e.tipo.descricao}">
+                                        Recorte
+                                    </span>
+                                                    </p>
+                                                    <p class="text-xs text-amber-700/70 dark:text-amber-400/70 mt-0.5">
+                                    <span th:if="${e.lado}" th:text="${e.lado}">
+                                        DIREITO
+                                    </span>
+                                                        <span th:if="${e.lado}">
+                                        ·
+                                    </span>
+                                                        <span th:text="|${e.referenciaHorizontal != null ? e.referenciaHorizontal.descricao : '?'}: ${e.distanciaHorizontalMm != null ? #numbers.formatDecimal(e.distanciaHorizontalMm, 1, 0) + ' mm' : '?'}|">
+                                            Esquerda: 50 mm
+                                        </span>
+                                                        <span> · </span>
+                                                        <span th:text="|${e.referenciaVertical != null ? e.referenciaVertical.descricao : '?'}: ${e.distanciaVerticalMm != null ? #numbers.formatDecimal(e.distanciaVerticalMm, 1, 0) + ' mm' : '?'}|">
+                                        Superior: 1000 mm
+                                    </span>
+                                                        <span th:if="${e.ancoragem != null and e.ancoragem.name() == 'CANTO'}" class="ml-1 font-bold text-amber-800 dark:text-amber-300">
+                                        · encostado no canto
+                                    </span>
+                                                    </p>
+                                                    <p th:if="${e.observacao}" class="text-xs text-amber-700 dark:text-amber-400 mt-1" th:text="${e.observacao}">
+                                                        Observação
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div th:if="${plano.status.name() != 'FINALIZADO'}" class="flex items-center gap-2 shrink-0">
+                                                <a href="javascript:void(0)" th:attr="onclick=|document.getElementById('editar-elemento-${item.id}-${iter.index}').open=true;|" class="text-[11px] font-bold text-slate-500 hover:text-slate-700 underline">
+                                                    Editar
+                                                </a>
+                                                <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos/{index}/excluir(id=${plano.id},itemId=${item.id},index=${iter.index})}" method="post" onsubmit="return confirm('Remover este elemento?');">
+                                                    <button type="submit" class="text-[11px] font-bold text-rose-500 hover:text-rose-700">
+                                                        Remover
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <details th:if="${plano.status.name() != 'FINALIZADO'}" th:id="'editar-elemento-' + ${item.id} + '-' + ${iter.index}" class="mt-3">
+                                            <summary class="cursor-pointer select-none text-[11px] font-bold text-slate-500 hover:text-slate-700">
+                                                Ajustar medidas deste elemento
+                                            </summary>
+                                            <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos/{index}/editar(id=${plano.id},itemId=${item.id},index=${iter.index})}" method="post" class="mt-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3">
+                                                <input type="hidden" name="ferragemNomeSnapshot" th:value="${e.ferragemNomeSnapshot}">
+                                                <input type="hidden" name="ancoragem" class="campo-ancoragem" th:value="${e.ancoragem != null ? e.ancoragem : 'CENTRO'}">
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <select name="tipo" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
+                                                        <option th:each="t : ${tiposElemento}" th:value="${t}" th:text="${t.descricao}" th:selected="${t == e.tipo}">
+                                                        </option>
+                                                    </select>
+                                                    <input type="text" name="lado" th:value="${e.lado}" placeholder="Lado / orientação" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
+                                                </div>
+                                                <div>
+                                                    <label class="form-label">
+                                                        Nome do elemento (opcional)
+                                                    </label>
+                                                    <input type="text" name="nome" th:value="${e.nome}" maxlength="80" placeholder="Ex: Tomada, Caixa condensadora, Buraco" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
+                                                </div>
+                                                <div class="rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-3">
+                                                    <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-2">
+                                                        Posição rápida no canto (recortes)
+                                                    </p>
+                                                    <div class="flex flex-wrap gap-1.5">
+                                                        <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'SUPERIOR_ESQUERDO')">↖ Sup. esquerdo</button>
+                                                        <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'SUPERIOR_DIREITO')">↗ Sup. direito</button>
+                                                        <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'INFERIOR_ESQUERDO')">↙ Inf. esquerdo</button>
+                                                        <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'INFERIOR_DIREITO')">↘ Inf. direito</button>
+                                                        <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'CENTRO')">Centralizado</button>
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                                    <select name="referenciaHorizontal" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
+                                                        <option th:each="r : ${referenciasHorizontais}" th:value="${r}" th:text="${r.descricao}" th:selected="${r == e.referenciaHorizontal}">
+                                                        </option>
+                                                    </select>
+                                                    <input type="number" step="0.1" name="distanciaHorizontalMm" th:value="${e.distanciaHorizontalMm}" placeholder="X (mm)" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
+                                                    <select name="referenciaVertical" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
+                                                        <option th:each="r : ${referenciasVerticais}" th:value="${r}" th:text="${r.descricao}" th:selected="${r == e.referenciaVertical}">
+                                                        </option>
+                                                    </select>
+                                                    <input type="number" step="0.1" name="distanciaVerticalMm" th:value="${e.distanciaVerticalMm}" placeholder="Y (mm)" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">
+                                                </div>
+                                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                                    <input type="number" step="0.1" name="diametroMm" th:value="${e.diametroMm}" placeholder="Diâmetro" class="input-tecnico">
+                                                    <input type="number" step="0.1" name="larguraMm" th:value="${e.larguraMm}" placeholder="Largura" class="input-tecnico">
+                                                    <input type="number" step="0.1" name="alturaMm" th:value="${e.alturaMm}" placeholder="Altura" class="input-tecnico">
+                                                    <input type="number" step="0.1" name="comprimentoMm" th:value="${e.comprimentoMm}" placeholder="Comprimento" class="input-tecnico">
+                                                    <input type="number" step="0.1" name="anguloGraus" th:value="${e.anguloGraus}" placeholder="Ângulo" class="input-tecnico">
+                                                </div>
+                                                <input type="text" name="observacao" th:value="${e.observacao}" placeholder="Observação" class="input-tecnico w-full">
+                                                <div class="flex justify-end">
+                                                    <button type="submit" class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-lg px-4 py-2 transition">
+                                                        Salvar alterações
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </details>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                    <details th:if="${!#lists.isEmpty(item.furacoes)}" class="group mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 overflow-hidden">
+                        <summary class="cursor-pointer select-none flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                            <span class="flex items-center gap-2"><i data-lucide="circle-dot" class="w-4 h-4 text-blue-500"></i><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Furações existentes</span><span class="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-md bg-blue-50 dark:bg-blue-500/10 text-[9px] font-black text-blue-600 dark:text-blue-300" th:text="${#lists.size(item.furacoes)}">2</span></span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"></i>
+                        </summary>
+                        <div class="border-t border-slate-100 dark:border-slate-800 p-3">
+                            <div th:if="${!#lists.isEmpty(item.furacoes)}" class="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700/60">
+                                <div class="px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700/60 flex items-center gap-2">
+                                    <div class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                        <i data-lucide="circle-dot" class="w-3.5 h-3.5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-black uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                                            Furações
+                                        </p>
+                                        <p class="text-[10px] text-slate-400">
+                                            Posições e diâmetros
+                                        </p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div th:each="f, iter : ${item.furacoes}" class="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                                        <div class="flex items-start gap-3">
+                        <span class="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-500 shrink-0" th:text="${iter.count}">
+                            1
+                        </span>
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-700 dark:text-slate-300" th:text="${f.tipo.descricao}">
+                                                    Roldana
+                                                </p>
+                                                <p class="text-xs text-slate-400 mt-0.5">
+                                <span th:if="${f.descricao}" th:text="${f.descricao}">
+                                    Superior
+                                </span>
+                                                    <span th:if="${f.descricao}">
+                                    ·
+                                </span>
+                                                    <span th:text="|X ${f.posicaoXMm != null ? #numbers.formatDecimal(f.posicaoXMm, 1, 0) : '?'} mm &middot; Y ${f.posicaoYMm != null ? #numbers.formatDecimal(f.posicaoYMm, 1, 0) : '?'} mm|">
+                                    X 125 mm · Y 70 mm
+                                </span>
+                                                    <span th:if="${f.diametroMm != null}" th:text="' · Ø ' + ${#numbers.formatDecimal(f.diametroMm,1,1)} + ' mm'">
+                                    · Ø 30 mm
+                                </span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <form th:if="${plano.status.name() != 'FINALIZADO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/furacoes/{index}/excluir(id=${plano.id},itemId=${item.id},index=${iter.index})}" method="post" onsubmit="return confirm('Remover esta furação?');">
+                                            <button type="submit" class="text-[11px] font-bold text-rose-500 hover:text-rose-700 px-2 py-1 rounded-md hover:bg-rose-50 transition">
+                                                Remover
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                    <div th:if="${item.observacoes}" class="mb-3 flex items-start gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 px-3 py-2"><i data-lucide="message-square-text" class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5"></i><p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed"><span class="font-black text-slate-500 dark:text-slate-300">Obs.:</span> <span th:text="${item.observacoes}">Observação</span></p></div>
+                    <details th:if="${plano.status.name() != 'FINALIZADO' and item.tipoFolha.name() != 'FIXA' and (plano.categoria.name() == 'PORTA_CORRER' or plano.categoria.name() == 'PORTA_ABRIR' or plano.categoria.name() == 'JANELA_PADRAO' or plano.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="group mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 overflow-hidden">
+                        <summary class="cursor-pointer select-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                            <span class="flex items-center gap-2"><i data-lucide="wand-sparkles" class="w-4 h-4 text-slate-400"></i><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Ferragens rápidas</span><span class="text-[10px] font-medium text-slate-400">Puxador H, puxador simples e fechadura</span></span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"></i>
+                        </summary>
+                        <div class="border-t border-slate-100 dark:border-slate-800 p-4">
+                            <div th:if="${plano.status.name() != 'FINALIZADO' and item.tipoFolha.name() != 'FIXA' and (plano.categoria.name() == 'PORTA_CORRER' or plano.categoria.name() == 'PORTA_ABRIR' or plano.categoria.name() == 'JANELA_PADRAO' or plano.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="border-t border-slate-100 dark:border-slate-800 pt-5">
+                                <div class="flex items-start gap-3 mb-4">
+                                    <div class="w-9 h-9 rounded-lg bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                                        <i data-lucide="wand-sparkles" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-black text-slate-900 dark:text-white">
+                                            Adicionar ferragens
+                                        </h3>
+                                        <p class="text-xs text-slate-400 mt-0.5">
+                                            Escolha uma ferragem abaixo. Os dados serão aplicados diretamente nesta folha.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <form th:if="${plano.categoria.name() != 'JANELA_PADRAO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/puxador-h(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
+                                        <div class="flex items-center gap-2 mb-4">
+                                            <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                                                <i data-lucide="grip-vertical" class="w-4 h-4"></i>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-black text-slate-800 dark:text-white">
+                                                    Puxador H
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    Puxador H com medida personalizada
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="space-y-3 flex-1">
+                                            <div>
+                                                <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
+                                                    Lado
+                                                </label>
+                                                <select name="lado" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500">
+                                                    <option value="ESQUERDO">
+                                                        Lado esquerdo
+                                                    </option>
+                                                    <option value="DIREITO">
+                                                        Lado direito
+                                                    </option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
+                                                    Comprimento do Puxador
+                                                </label>
+                                                <div class="relative">
+                                                    <input type="number" step="1" min="1" name="tamanhoMm" placeholder="300mm padrão" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 pr-10 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"/>
+                                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
+                                 mm
+                            </span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
+                                                    Distância da borda
+                                                </label>
+                                                <div class="relative">
+                                                    <input type="number" step="1" min="1" name="distanciaBordaMm" placeholder="300mm padrão" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 pr-10 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"/>
+                                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
+                                 mm
+                            </span>
+                                                </div>
+                                                <p class="text-[10px] text-slate-400 mt-1">
+                                                    Deixe em branco para usar a distância padrão do sistema (300mm da lateral).
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="mt-4 w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white rounded-lg px-3 py-2.5 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors">
+                                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                            Adicionar puxador H
+                                        </button>
+                                    </form>
+                                    <form th:if="${plano.categoria.name() != 'JANELA_PADRAO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/puxador-simples(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
+                                        <div class="flex items-center gap-2 mb-4">
+                                            <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 flex items-center justify-center shrink-0">
+                                                <i data-lucide="circle-dot" class="w-4 h-4"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-black text-slate-800 dark:text-white">
+                                                    Puxador simples
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    Puxador simples padrão
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
+                                                Lado
+                                            </label>
+                                            <select name="lado" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500">
+                                                <option value="ESQUERDO">
+                                                    Lado esquerdo
+                                                </option>
+                                                <option value="DIREITO">
+                                                    Lado direito
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="mt-4 w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white rounded-lg px-3 py-2.5 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors">
+                                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                            Adicionar puxador simples
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/cut-plans/{id}/itens/{itemId}/fechadura(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
+                                        <div class="flex items-center gap-2 mb-4">
+                                            <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                                <i data-lucide="lock-keyhole" class="w-4 h-4"></i>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-black text-slate-800 dark:text-white">
+                                                    Fechadura
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    Fechadura para a folha
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
+                                                Lado
+                                            </label>
+                                            <select name="lado" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500">
+                                                <option value="ESQUERDO">
+                                                    Lado esquerdo
+                                                </option>
+                                                <option value="DIREITO">
+                                                    Lado direito
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="mt-4 w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white rounded-lg px-3 py-2.5 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors">
+                                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                            Adicionar fechadura
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </article>
+        </th:block>
+        <div th:if="${#lists.isEmpty(itens)}" class="bg-white dark:bg-[#101827] border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl py-14 text-center">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-4">
+                <i data-lucide="layers-3" class="w-7 h-7"></i>
+            </div>
+            <h3 class="text-sm font-black text-slate-700 dark:text-slate-300">
+                Nenhuma peça adicionada
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+                Use o formulário "Adicionar vão" acima para gerar as primeiras folhas.
+            </p>
+        </div>
+    </div>
     <section th:if="${plano.status.name() != 'FINALIZADO' and !usaCalculoAutomatico}" class="bg-white dark:bg-[#101827] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
         <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800">
             <div class="flex items-center gap-3">
@@ -1617,6 +1576,570 @@
             max-height: 60vh;
         }
     }
+
+    /* Estados de seleção e acessibilidade */
+    .folha-seletor {
+        min-height: 58px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #1e3a8a;
+        cursor: pointer;
+        transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+    .folha-seletor:hover {
+        border-color: #60a5fa;
+        background: #eff6ff;
+        box-shadow: 0 4px 14px rgba(37,99,235,.08);
+        transform: translateY(-1px);
+    }
+    .folha-seletor:focus-visible,
+    .btn-selecionar-folha:focus-visible,
+    .adicionar-vao-summary:focus-visible,
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        outline: 3px solid rgba(124,58,237,.35);
+        outline-offset: 2px;
+    }
+    .folha-seletor.is-selected,
+    .folha-seletor[aria-pressed="true"] {
+        border-color: #2563eb;
+        background: #dbeafe;
+        box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+    .folha-seletor-numero {
+        width: 30px;
+        height: 30px;
+        flex: 0 0 30px;
+        border-radius: 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 900;
+    }
+    .folha-seletor.is-selected .folha-seletor-numero,
+    .folha-seletor[aria-pressed="true"] .folha-seletor-numero {
+        background: #2563eb;
+        color: #ffffff;
+    }
+    .dark .folha-seletor {
+        background: #0f172a;
+        border-color: #1e3a5f;
+        color: #bfdbfe;
+    }
+    .dark .folha-seletor:hover {
+        background: #13223a;
+        border-color: #3b82f6;
+    }
+    .dark .folha-seletor.is-selected,
+    .dark .folha-seletor[aria-pressed="true"] {
+        background: rgba(37,99,235,.18);
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(96,165,250,.12);
+    }
+    .dark .folha-seletor-numero {
+        background: rgba(37,99,235,.16);
+        color: #93c5fd;
+    }
+    .btn-selecionar-folha {
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 11px;
+        border-radius: 9px;
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all .15s ease;
+    }
+    .btn-selecionar-folha:hover,
+    .btn-selecionar-folha[aria-pressed="true"] {
+        border-color: #2563eb;
+        background: #2563eb;
+        color: #ffffff;
+    }
+    .dark .btn-selecionar-folha {
+        border-color: #1e40af;
+        background: rgba(37,99,235,.10);
+        color: #bfdbfe;
+    }
+    .dark .btn-selecionar-folha:hover,
+    .dark .btn-selecionar-folha[aria-pressed="true"] {
+        border-color: #60a5fa;
+        background: #2563eb;
+        color: #ffffff;
+    }
+    .peca-selecionavel {
+        scroll-margin-top: 96px;
+    }
+    .peca-selecionada {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59,130,246,.12), 0 10px 30px rgba(15,23,42,.08) !important;
+    }
+    .dark .peca-selecionada {
+        border-color: #60a5fa !important;
+        box-shadow: 0 0 0 3px rgba(96,165,250,.14), 0 10px 30px rgba(0,0,0,.22) !important;
+    }
+    .elemento-tecnico-details {
+        scroll-margin-top: 96px;
+    }
+    .elemento-tecnico-details[open] {
+        padding-bottom: 2px;
+    }
+    .elemento-tecnico-summary {
+        min-height: 44px;
+        padding: 8px 10px;
+        margin: -8px -10px 0;
+    }
+    .elemento-tecnico-details[open] > .elemento-tecnico-summary {
+        background: #f5f3ff;
+        color: #6d28d9;
+    }
+    .dark .elemento-tecnico-details[open] > .elemento-tecnico-summary {
+        background: rgba(124,58,237,.12);
+        color: #ddd6fe !important;
+    }
+    .elemento-tecnico-seletivo[hidden] {
+        display: none !important;
+    }
+    .adicionar-vao-details {
+        scroll-margin-top: 92px;
+    }
+    .adicionar-vao-summary {
+        position: relative;
+        list-style: none;
+        background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+        transition: background-color .18s ease;
+    }
+    .adicionar-vao-summary:hover {
+        background: #faf5ff;
+    }
+    .adicionar-vao-details[open] > .adicionar-vao-summary {
+        border-bottom: 1px solid #e2e8f0;
+        background: #faf5ff;
+    }
+    .dark .adicionar-vao-summary {
+        background: #101827;
+    }
+    .dark .adicionar-vao-summary:hover,
+    .dark .adicionar-vao-details[open] > .adicionar-vao-summary {
+        background: #151e30;
+    }
+    .dark .adicionar-vao-details[open] > .adicionar-vao-summary {
+        border-bottom-color: #334155;
+    }
+    .adicionar-vao-details > .adicionar-vao-summary::after {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    .adicionar-vao-details[open] > .adicionar-vao-summary::after {
+        transform: translateY(-50%);
+    }
+    .form-input,
+    .input-tecnico {
+        font-size: 14px;
+        line-height: 20px;
+        min-height: 44px;
+    }
+    @media (max-width: 640px) {
+        .folha-seletor {
+            min-height: 64px;
+            padding: 11px;
+        }
+        .btn-selecionar-folha {
+            width: 100%;
+            justify-content: center;
+        }
+        .adicionar-vao-summary {
+            padding-right: 52px !important;
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            scroll-behavior: auto !important;
+            transition-duration: .01ms !important;
+            animation-duration: .01ms !important;
+            animation-iteration-count: 1 !important;
+        }
+    }
+
+
+    /* =========================================================
+       VISIBILIDADE GLOBAL + ALTERNÂNCIA DAS FOLHAS
+       ========================================================= */
+    body {
+        background-color: #f8fafc;
+        color: #1e293b;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+    .dark body {
+        background-color: #080d18;
+        color: #e2e8f0;
+    }
+
+    /* Texto secundário com contraste suficiente nos dois temas */
+    .text-slate-300 { color: #94a3b8 !important; }
+    .text-slate-400 { color: #64748b !important; }
+    .text-slate-500 { color: #475569 !important; }
+    .dark .text-slate-300 { color: #94a3b8 !important; }
+    .dark .text-slate-400 { color: #a8b5c7 !important; }
+    .dark .text-slate-500 { color: #cbd5e1 !important; }
+    .dark .text-slate-600 { color: #e2e8f0 !important; }
+    .dark .text-slate-700 { color: #f1f5f9 !important; }
+
+    /* Bordas não desaparecem sobre fundos claros ou escuros */
+    .border-slate-100 { border-color: #e2e8f0 !important; }
+    .border-slate-200 { border-color: #cbd5e1 !important; }
+    .border-slate-300 { border-color: #b6c2d1 !important; }
+    .dark .border-slate-100 { border-color: #2b3a50 !important; }
+    .dark .border-slate-200 { border-color: #3c4d65 !important; }
+    .dark .border-slate-300 { border-color: #52647d !important; }
+
+    /* Superfícies gerais */
+    .dark .bg-white { background-color: #101827 !important; }
+    .dark .bg-slate-50 { background-color: #111a2a !important; }
+    .dark .bg-slate-800 { background-color: #1b273a !important; }
+    .dark .bg-slate-900 { background-color: #0d1524 !important; }
+
+    /* Inputs/selects: contraste, placeholder e estados */
+    .form-input,
+    .input-tecnico,
+    input[type="text"],
+    input[type="number"],
+    input[type="search"],
+    select,
+    textarea {
+        border-color: #b8c4d3;
+    }
+    .form-input:hover,
+    .input-tecnico:hover,
+    input[type="text"]:hover,
+    input[type="number"]:hover,
+    input[type="search"]:hover,
+    select:hover,
+    textarea:hover {
+        border-color: #94a3b8;
+    }
+    .dark .form-input,
+    .dark .input-tecnico,
+    .dark input[type="text"],
+    .dark input[type="number"],
+    .dark input[type="search"],
+    .dark select,
+    .dark textarea {
+        background-color: #0b1423 !important;
+        border-color: #465873 !important;
+        color: #f8fafc !important;
+    }
+    .dark .form-input:hover,
+    .dark .input-tecnico:hover,
+    .dark input[type="text"]:hover,
+    .dark input[type="number"]:hover,
+    .dark input[type="search"]:hover,
+    .dark select:hover,
+    .dark textarea:hover {
+        border-color: #64748b !important;
+    }
+    input:disabled,
+    select:disabled,
+    textarea:disabled {
+        cursor: not-allowed;
+        opacity: .72;
+    }
+    .dark input:disabled,
+    .dark select:disabled,
+    .dark textarea:disabled {
+        opacity: .65;
+    }
+
+    /* Alternância visual dos cards de folha */
+    .peca-card {
+        position: relative;
+        isolation: isolate;
+        border-width: 1px;
+        border-style: solid;
+        scroll-margin-top: 96px;
+    }
+    .peca-card-base {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+    }
+    .peca-card-alternada {
+        background: #eef2f7 !important;
+        border-color: #b8c4d3 !important;
+    }
+    .peca-card-base .peca-card-header {
+        background: #ffffff;
+        border-color: #e2e8f0;
+    }
+    .peca-card-alternada .peca-card-header {
+        background: #e8edf4;
+        border-color: #cbd5e1;
+    }
+    .peca-card-base .peca-card-body {
+        background: #ffffff;
+    }
+    .peca-card-alternada .peca-card-body {
+        background: #f4f6f9;
+    }
+    .peca-card-base .peca-croqui-aviso,
+    .peca-card-alternada .peca-croqui-aviso {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+
+    /* Tema escuro: duas superfícies distintas, ambas legíveis */
+    .dark .peca-card-base {
+        background: #0f1827 !important;
+        border-color: #34455d !important;
+    }
+    .dark .peca-card-alternada {
+        background: #182336 !important;
+        border-color: #4a5d77 !important;
+    }
+    .dark .peca-card-base .peca-card-header {
+        background: #111b2b;
+        border-color: #2f4058;
+    }
+    .dark .peca-card-alternada .peca-card-header {
+        background: #202d42;
+        border-color: #4a5d77;
+    }
+    .dark .peca-card-base .peca-card-body {
+        background: #0f1827;
+    }
+    .dark .peca-card-alternada .peca-card-body {
+        background: #172235;
+    }
+    .dark .peca-card-base .peca-croqui-aviso,
+    .dark .peca-card-alternada .peca-croqui-aviso {
+        background: rgba(37, 99, 235, .10);
+        border-color: rgba(96, 165, 250, .28);
+    }
+
+    /* Linha lateral reforça visualmente a alternância sem depender só da cor */
+    .peca-card-base::before,
+    .peca-card-alternada::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 4px;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .peca-card-base::before { background: #cbd5e1; }
+    .peca-card-alternada::before { background: #94a3b8; }
+    .dark .peca-card-base::before { background: #475569; }
+    .dark .peca-card-alternada::before { background: #718198; }
+
+    /* Folha selecionada sempre vence a alternância visual */
+    .peca-card.peca-selecionada {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 3px rgba(37,99,235,.16), 0 12px 30px rgba(15,23,42,.10) !important;
+    }
+    .peca-card.peca-selecionada::before {
+        width: 5px;
+        background: #2563eb !important;
+    }
+    .dark .peca-card.peca-selecionada {
+        border-color: #60a5fa !important;
+        box-shadow: 0 0 0 3px rgba(96,165,250,.18), 0 14px 34px rgba(0,0,0,.28) !important;
+    }
+    .dark .peca-card.peca-selecionada::before {
+        background: #60a5fa !important;
+    }
+
+    /* Ação principal: adicionar elemento técnico permanece acima das superfícies alternadas */
+    .elemento-tecnico-details {
+        background: #f5f3ff !important;
+        border-color: #a78bfa !important;
+        box-shadow: 0 4px 16px rgba(109,40,217,.07);
+    }
+    .elemento-tecnico-details > .elemento-tecnico-summary {
+        background: #f5f3ff !important;
+        color: #4c1d95 !important;
+    }
+    .elemento-tecnico-details[open] > .elemento-tecnico-summary {
+        background: #ede9fe !important;
+    }
+    .elemento-tecnico-details > form {
+        background: #ffffff !important;
+        border-color: #c4b5fd !important;
+    }
+    .dark .elemento-tecnico-details {
+        background: rgba(124,58,237,.12) !important;
+        border-color: #8b5cf6 !important;
+        box-shadow: 0 5px 18px rgba(0,0,0,.18);
+    }
+    .dark .elemento-tecnico-details > .elemento-tecnico-summary,
+    .dark .elemento-tecnico-details[open] > .elemento-tecnico-summary {
+        background: rgba(124,58,237,.14) !important;
+        color: #f5f3ff !important;
+    }
+    .dark .elemento-tecnico-details > form {
+        background: #0b1423 !important;
+        border-color: rgba(167,139,250,.34) !important;
+    }
+
+    /* Details secundários: claramente clicáveis e legíveis */
+    .peca-card-body > details:not(.elemento-tecnico-details) {
+        background: rgba(255,255,255,.82);
+        border-color: #cbd5e1 !important;
+    }
+    .peca-card-alternada .peca-card-body > details:not(.elemento-tecnico-details) {
+        background: #ffffff;
+    }
+    .peca-card-body > details:not(.elemento-tecnico-details) > summary {
+        color: #334155 !important;
+    }
+    .peca-card-body > details:not(.elemento-tecnico-details) > summary:hover {
+        background: #f8fafc !important;
+    }
+    .dark .peca-card-body > details:not(.elemento-tecnico-details) {
+        background: rgba(11,20,35,.78) !important;
+        border-color: #40526b !important;
+    }
+    .dark .peca-card-alternada .peca-card-body > details:not(.elemento-tecnico-details) {
+        background: #101b2d !important;
+    }
+    .dark .peca-card-body > details:not(.elemento-tecnico-details) > summary {
+        color: #e2e8f0 !important;
+    }
+    .dark .peca-card-body > details:not(.elemento-tecnico-details) > summary:hover {
+        background: #1b2940 !important;
+    }
+
+    /* Cabeçalhos e badges */
+    .peca-card-header .font-mono {
+        letter-spacing: .01em;
+    }
+    .peca-card-header button,
+    .peca-card-header a {
+        position: relative;
+        z-index: 3;
+    }
+
+    /* Seletores das folhas acompanham a alternância visual */
+    .folha-seletor:nth-child(even):not(.is-selected):not([aria-pressed="true"]) {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+    .dark .folha-seletor:nth-child(even):not(.is-selected):not([aria-pressed="true"]) {
+        background: #182336;
+        border-color: #40526b;
+    }
+
+    /* Estados de hover/foco não dependem só de mudança de cor */
+    button,
+    a,
+    summary,
+    input,
+    select,
+    textarea {
+        transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+        transition-duration: .15s;
+        transition-timing-function: ease;
+    }
+    summary:focus-visible,
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        outline: 3px solid rgba(124,58,237,.42) !important;
+        outline-offset: 2px !important;
+    }
+    .dark summary:focus-visible,
+    .dark button:focus-visible,
+    .dark a:focus-visible,
+    .dark input:focus-visible,
+    .dark select:focus-visible,
+    .dark textarea:focus-visible {
+        outline-color: rgba(196,181,253,.65) !important;
+    }
+
+    /* Mensagens de status */
+    .dark .text-rose-400 { color: #fda4af !important; }
+    .dark .text-emerald-400 { color: #6ee7b7 !important; }
+    .dark .text-amber-400 { color: #fbbf24 !important; }
+    .dark .text-blue-300 { color: #93c5fd !important; }
+    .dark .text-violet-300 { color: #c4b5fd !important; }
+
+
+    /* Croquis técnicos permanecem como uma prancheta clara mesmo no tema escuro.
+       Isso evita que linhas pretas/cinzas do SVG desapareçam sobre o fundo escuro. */
+    .croqui-wrap {
+        border-radius: 14px;
+    }
+    .dark .croqui-wrap {
+        background: #f8fafc;
+        border: 1px solid #52647d;
+        box-shadow: inset 0 0 0 1px rgba(15,23,42,.04), 0 8px 24px rgba(0,0,0,.12);
+    }
+
+    /* Os accordions que já possuem chevron próprio não recebem também o +/− genérico. */
+    .peca-card-body summary:has(i[data-lucide="chevron-down"])::after {
+        display: none !important;
+        content: none !important;
+    }
+
+    /* Linhas e superfícies internas preservam separação dentro das folhas cinzas. */
+    .peca-card-alternada .bg-white:not(.elemento-tecnico-details),
+    .peca-card-alternada .bg-slate-50 {
+        border-color: #cbd5e1;
+    }
+    .dark .peca-card-alternada .bg-white:not(.elemento-tecnico-details),
+    .dark .peca-card-alternada .bg-slate-50,
+    .dark .peca-card-base .bg-white:not(.elemento-tecnico-details),
+    .dark .peca-card-base .bg-slate-50 {
+        border-color: #40526b !important;
+    }
+
+    /* Mobile: separação mais evidente e alvo de toque confortável */
+    @media (max-width: 640px) {
+        .peca-card-base::before,
+        .peca-card-alternada::before {
+            width: 3px;
+        }
+        .peca-card-header {
+            padding-left: 18px !important;
+            padding-right: 16px !important;
+        }
+        .peca-card-body {
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+        }
+        .elemento-tecnico-summary {
+            min-height: 58px;
+        }
+        .form-input,
+        .input-tecnico,
+        button,
+        select {
+            min-height: 44px;
+        }
+    }
+
 </style>
 <script th:inline="javascript">
     function alternarBisote() {
@@ -1713,6 +2236,56 @@
             var form = flag.closest('form');
             if (form) {
                 aplicarEstadoDimensoesPersonalizadas(form, flag.checked);
+            }
+        });
+    });
+
+    function alternarEspelhoRedondo(checkbox) {
+        var form = checkbox.closest('form');
+        if (!form) {
+            return;
+        }
+        aplicarEstadoEspelhoRedondo(form, checkbox.checked);
+    }
+    function aplicarEstadoEspelhoRedondo(form, ligado) {
+        var campoLargura = form.querySelector('.campo-largura-vao');
+        if (campoLargura) {
+            campoLargura.style.display = ligado ? 'none' : 'block';
+        }
+        var labelAltura = form.querySelector('.label-altura-vao');
+        if (labelAltura) {
+            labelAltura.textContent = ligado ? 'Diâmetro do espelho (mm) *' : 'Altura do vão (mm) *';
+        }
+        var campoBtnDimensoes = form.querySelector('.campo-btn-dimensoes-toggle');
+        if (campoBtnDimensoes) {
+            campoBtnDimensoes.style.display = ligado ? 'none' : 'flex';
+        }
+        var textoAjudaBisote = form.querySelector('.texto-ajuda-bisote');
+        if (textoAjudaBisote) {
+            textoAjudaBisote.textContent = ligado
+                ? 'Será desenhado em volta de toda a circunferência.'
+                : 'Será desenhado em todas as laterais.';
+        }
+        if (ligado) {
+            // redondo e dimensões fora de esquadro são mutuamente exclusivos
+            var flagPersonalizada = form.querySelector('.input-dimensoes-personalizadas-flag');
+            if (flagPersonalizada && flagPersonalizada.checked) {
+                flagPersonalizada.checked = false;
+                aplicarEstadoDimensoesPersonalizadas(form, false);
+            }
+            if (campoLargura) {
+                var larguraInput = campoLargura.querySelector('input');
+                if (larguraInput) {
+                    larguraInput.removeAttribute('required');
+                }
+            }
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('#espelhoRedondoFlag').forEach(function (flag) {
+            var form = flag.closest('form');
+            if (form) {
+                aplicarEstadoEspelhoRedondo(form, flag.checked);
             }
         });
     });
@@ -1857,16 +2430,82 @@
         });
         botao.classList.add('btn-canto-ativo');
     }
-    function abrirFolha(itemId) {
-        var peca = document.getElementById('peca-' + itemId);
-        if (peca) {
-            peca.scrollIntoView({behavior: 'smooth', block: 'start'});
+    function selecionarFolhaTecnica(botao) {
+        if (!botao) {
+            return;
         }
+        var itemId = botao.getAttribute('data-item-id');
+        var grupoVao = botao.getAttribute('data-grupo-vao');
+        if (!itemId) {
+            return;
+        }
+        abrirFolha(itemId, grupoVao);
+    }
+
+    function abrirFolha(itemId, grupoVao) {
+        itemId = String(itemId);
+        grupoVao = grupoVao !== undefined && grupoVao !== null && String(grupoVao) !== '' ? String(grupoVao) : null;
+
+        if (grupoVao) {
+            document.querySelectorAll('.elemento-tecnico-seletivo[data-grupo-vao="' + grupoVao + '"]').forEach(function (detalhes) {
+                detalhes.open = false;
+                detalhes.hidden = true;
+            });
+            document.querySelectorAll('.peca-card[data-grupo-vao="' + grupoVao + '"]').forEach(function (pecaGrupo) {
+                pecaGrupo.classList.remove('peca-selecionada');
+            });
+            document.querySelectorAll('[data-grupo-vao="' + grupoVao + '"][aria-pressed]').forEach(function (controle) {
+                controle.setAttribute('aria-pressed', 'false');
+                controle.classList.remove('is-selected');
+            });
+        }
+
+        var peca = document.getElementById('peca-' + itemId);
         var detalhesAdicionar = document.getElementById('add-elemento-' + itemId);
+
+        if (peca) {
+            peca.classList.add('peca-selecionada');
+        }
+
+        document.querySelectorAll('[data-item-id="' + itemId + '"][aria-pressed]').forEach(function (controleSelecionado) {
+            controleSelecionado.setAttribute('aria-pressed', 'true');
+            controleSelecionado.classList.add('is-selected');
+        });
+
         if (detalhesAdicionar) {
+            detalhesAdicionar.hidden = false;
             detalhesAdicionar.open = true;
+            window.requestAnimationFrame(function () {
+                detalhesAdicionar.scrollIntoView({
+                    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                    block: 'center'
+                });
+                var primeiroCampo = detalhesAdicionar.querySelector('select:not([disabled]), input:not([type="hidden"]):not([disabled]), textarea:not([disabled])');
+                if (primeiroCampo) {
+                    window.setTimeout(function () {
+                        primeiroCampo.focus({preventScroll: true});
+                    }, 350);
+                }
+            });
+        } else if (peca) {
+            peca.scrollIntoView({
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                block: 'start'
+            });
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.elemento-tecnico-seletivo').forEach(function (detalhes) {
+            detalhes.open = false;
+            detalhes.hidden = true;
+        });
+
+        var secaoAdicionarVao = document.getElementById('secao-adicionar-vao');
+        if (secaoAdicionarVao && secaoAdicionarVao.querySelector('.text-red-600')) {
+            secaoAdicionarVao.open = true;
+        }
+    });
 
     (function () {
         var estadoPorItem = {};
