@@ -14,9 +14,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -26,6 +40,9 @@ import java.util.UUID;
 @Transactional
 public class TechnicalVisitDataService {
     private static final long MAX_PHOTO_BYTES = 12L * 1024 * 1024;
+    private static final long MAX_STORED_PHOTO_BYTES = 2L * 1024 * 1024;
+    private static final int MAX_PHOTO_DIMENSION = 1920;
+    private static final long MAX_PHOTO_PIXELS = 40_000_000L;
     private static final Set<String> VALID_STATUSES = Set.of("AGENDADA", "EM_ANDAMENTO", "CONCLUIDA");
 
     private final TechnicalVisitRepository visitRepository;
@@ -127,13 +144,14 @@ public class TechnicalVisitDataService {
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new IllegalArgumentException("O arquivo enviado precisa ser uma imagem.");
         }
+        ProcessedPhoto processed = processPhoto(file);
         TechnicalVisitPhoto photo = new TechnicalVisitPhoto();
         photo.setTechnicalVisit(visit);
-        photo.setFileName(file.getOriginalFilename() != null ? file.getOriginalFilename() : "foto-visita");
-        photo.setContentType(contentType);
-        photo.setFileSize(file.getSize());
+        photo.setFileName(optimizedFileName(file.getOriginalFilename()));
+        photo.setContentType(processed.contentType());
+        photo.setFileSize((long) processed.content().length);
         photo.setCaption(trimToNull(caption));
-        photo.setContent(file.getBytes());
+        photo.setContent(processed.content());
         return photoRepository.saveAndFlush(photo).getId();
     }
 
@@ -185,20 +203,126 @@ public class TechnicalVisitDataService {
                 visit.getVisitDate(), visit.getVisitTime(), visit.getNotes(), visit.getStatus(), openings, photos);
     }
 
+    private ProcessedPhoto processPhoto(MultipartFile file) throws IOException {
+        byte[] original = file.getBytes();
+        BufferedImage source;
+        try (ImageInputStream input = ImageIO.createImageInputStream(new ByteArrayInputStream(original))) {
+            if (input == null) {
+                throw new IllegalArgumentException("Nao foi possivel ler a imagem enviada.");
+            }
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+            if (!readers.hasNext()) {
+                throw new IllegalArgumentException("Formato de imagem nao suportado. Use JPG ou PNG.");
+            }
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(input, true, true);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                if (width <= 0 || height <= 0 || (long) width * height > MAX_PHOTO_PIXELS) {
+                    throw new IllegalArgumentException("A resolucao da foto e muito alta.");
+                }
+                source = reader.read(0);
+            } finally {
+                reader.dispose();
+            }
+        }
+
+        if (source == null) {
+            throw new IllegalArgumentException("O arquivo enviado nao contem uma imagem valida.");
+        }
+        double scale = Math.min(1d, (double) MAX_PHOTO_DIMENSION / Math.max(source.getWidth(), source.getHeight()));
+        int width = Math.max(1, (int) Math.round(source.getWidth() * scale));
+        int height = Math.max(1, (int) Math.round(source.getHeight() * scale));
+        BufferedImage current = resizeToRgb(source, width, height);
+        byte[] encoded = encodeJpeg(current, 0.82f);
+
+        while (encoded.length > MAX_STORED_PHOTO_BYTES && Math.max(current.getWidth(), current.getHeight()) > 960) {
+            int nextWidth = Math.max(1, (int) Math.round(current.getWidth() * 0.82));
+            int nextHeight = Math.max(1, (int) Math.round(current.getHeight() * 0.82));
+            current = resizeToRgb(current, nextWidth, nextHeight);
+            encoded = encodeJpeg(current, 0.76f);
+        }
+        for (float quality = 0.68f; encoded.length > MAX_STORED_PHOTO_BYTES && quality >= 0.48f; quality -= 0.10f) {
+            encoded = encodeJpeg(current, quality);
+        }
+        if (encoded.length > MAX_STORED_PHOTO_BYTES) {
+            throw new IllegalArgumentException("Nao foi possivel otimizar a foto para menos de 2 MB.");
+        }
+        return new ProcessedPhoto(encoded, "image/jpeg");
+    }
+
+    private BufferedImage resizeToRgb(BufferedImage source, int width, int height) {
+        BufferedImage target = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = target.createGraphics();
+        try {
+            graphics.setColor(Color.WHITE);
+            graphics.fillRect(0, 0, width, height);
+            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            graphics.drawImage(source, 0, 0, width, height, null);
+        } finally {
+            graphics.dispose();
+        }
+        return target;
+    }
+
+    private byte[] encodeJpeg(BufferedImage image, float quality) throws IOException {
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
+        if (!writers.hasNext()) {
+            throw new IOException("Codificador JPEG indisponivel.");
+        }
+        ImageWriter writer = writers.next();
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream();
+             ImageOutputStream imageOutput = ImageIO.createImageOutputStream(output)) {
+            writer.setOutput(imageOutput);
+            ImageWriteParam params = writer.getDefaultWriteParam();
+            if (params.canWriteCompressed()) {
+                params.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                params.setCompressionQuality(Math.max(0.1f, Math.min(1f, quality)));
+            }
+            writer.write(null, new IIOImage(image, null, null), params);
+            imageOutput.flush();
+            return output.toByteArray();
+        } finally {
+            writer.dispose();
+        }
+    }
+
+    private String optimizedFileName(String originalName) {
+        if (originalName == null || originalName.isBlank()) {
+            return "foto-visita.jpg";
+        }
+        int slash = Math.max(originalName.lastIndexOf('/'), originalName.lastIndexOf('\\'));
+        String baseName = slash >= 0 ? originalName.substring(slash + 1) : originalName;
+        int extension = baseName.lastIndexOf('.');
+        if (extension > 0) {
+            baseName = baseName.substring(0, extension);
+        }
+        return (baseName.isBlank() ? "foto-visita" : baseName) + ".jpg";
+    }
+
+    private record ProcessedPhoto(byte[] content, String contentType) {
+    }
+
     private TechnicalVisit findVisit(UUID id) {
         return visitRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Visita técnica não encontrada."));
     }
 
     private void validateDimensions(TechnicalVisitOpeningRequest r) {
         boolean simple = positive(r.getWidthMm()) && positive(r.getHeightMm());
-        boolean detailed = positive(r.getGrossHeightLeftMm()) && positive(r.getGrossHeightRightMm())
-                && positive(r.getGrossWidthTopMm()) && positive(r.getGrossWidthBottomMm());
+        boolean detailed = nonNegativePresent(r.getGrossHeightLeftMm()) && nonNegativePresent(r.getGrossHeightRightMm())
+                && nonNegativePresent(r.getGrossWidthTopMm()) && nonNegativePresent(r.getGrossWidthBottomMm())
+                && r.getGrossHeightLeftMm().max(r.getGrossHeightRightMm()).signum() > 0
+                && r.getGrossWidthTopMm().max(r.getGrossWidthBottomMm()).signum() > 0;
         if (!simple && !detailed) {
             throw new IllegalArgumentException("Informe largura e altura ou as quatro medidas brutas detalhadas do vão.");
         }
     }
 
     private boolean positive(BigDecimal value) { return value != null && value.signum() > 0; }
+    private boolean nonNegativePresent(BigDecimal value) { return value != null && value.signum() >= 0; }
     private BigDecimal nonNegative(BigDecimal value, String field) {
         if (value != null && value.signum() < 0) throw new IllegalArgumentException(field + " não pode ser negativa.");
         return value;

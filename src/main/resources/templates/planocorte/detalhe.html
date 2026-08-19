@@ -504,6 +504,25 @@
                             <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5"></i>
                             Selecionar folha
                         </button>
+                        <details th:if="${plano.status.name() != 'FINALIZADO' and item.grupoVao != null and primeiroItemIdDoGrupo.get(item.grupoVao).equals(item.id)}" class="relative group/editarvao">
+                            <summary class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer"><i data-lucide="ruler" class="w-3.5 h-3.5"></i> Editar medidas do vao</summary>
+                            <form th:action="@{/cut-plans/{id}/vaos/{grupoVao}/dimensoes(id=${plano.id},grupoVao=${item.grupoVao})}" method="post" class="absolute z-30 right-0 mt-2 w-[min(88vw,360px)] rounded-xl border border-blue-200 dark:border-blue-500/30 bg-white dark:bg-slate-900 p-4 shadow-xl space-y-3">
+                                <input type="hidden" name="dimensoesPersonalizadas" th:value="${item.dimensoesPersonalizadas}">
+                                <p class="text-xs font-black text-slate-700 dark:text-white">Medidas brutas do vao</p>
+                                <div th:unless="${item.dimensoesPersonalizadas}" class="grid grid-cols-2 gap-2">
+                                    <input type="number" min="0" step="0.01" name="larguraVaoMm" th:value="${item.larguraBrutaMm}" placeholder="Largura mm" class="input-tecnico" required>
+                                    <input type="number" min="0" step="0.01" name="alturaVaoMm" th:value="${item.alturaBrutaMm}" placeholder="Altura mm" class="input-tecnico" required>
+                                </div>
+                                <div th:if="${item.dimensoesPersonalizadas}" class="grid grid-cols-2 gap-2">
+                                    <input type="number" min="0" step="0.01" name="alturaBrutaEsquerdaMm" th:value="${item.alturaBrutaEsquerdaMm}" placeholder="Altura esquerda" class="input-tecnico" required>
+                                    <input type="number" min="0" step="0.01" name="alturaBrutaDireitaMm" th:value="${item.alturaBrutaDireitaMm}" placeholder="Altura direita" class="input-tecnico" required>
+                                    <input type="number" min="0" step="0.01" name="larguraBrutaSuperiorMm" th:value="${item.larguraBrutaSuperiorMm}" placeholder="Largura superior" class="input-tecnico" required>
+                                    <input type="number" min="0" step="0.01" name="larguraBrutaInferiorMm" th:value="${item.larguraBrutaInferiorMm}" placeholder="Largura inferior" class="input-tecnico" required>
+                                </div>
+                                <p class="text-[10px] text-slate-500">Ao salvar, folhas, furos, recortes, custos e o croqui sao atualizados automaticamente.</p>
+                                <button type="submit" class="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-3 py-2">Salvar medidas</button>
+                            </form>
+                        </details>
                         <form th:if="${plano.status.name() != 'FINALIZADO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/excluir(id=${plano.id},itemId=${item.id})}" method="post" onsubmit="return confirm('Remover esta peça?');">
                             <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 px-3 py-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -634,6 +653,14 @@
                                     Um clique preenche referência e distância automaticamente —
                                     depois é só informar largura e altura do recorte.
                                 </p>
+                            </div>
+                            <div>
+                                <label class="form-label">Posicionar a partir de</label>
+                                <select th:field="*{referenciaElementoIndice}" class="form-input">
+                                    <option value="">Borda da peca</option>
+                                    <option th:each="base, baseIter : ${item.elementos}" th:value="${baseIter.index}" th:text="|Elemento ${baseIter.count} - ${base.nome != null and !#strings.isEmpty(base.nome) ? base.nome : base.tipo.descricao}|">Elemento 1</option>
+                                </select>
+                                <p class="text-[10px] text-slate-500 mt-1">Quando um elemento-base for escolhido, X e Y partem do centro dele. Use esquerda/direita e superior/inferior para indicar a direcao.</p>
                             </div>
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 <div>
@@ -823,6 +850,14 @@
                                                         <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'INFERIOR_DIREITO')">↘ Inf. direito</button>
                                                         <button type="button" class="btn-canto" onclick="aplicarPosicaoCanto(this,'CENTRO')">Centralizado</button>
                                                     </div>
+                                                </div>
+                                                <div>
+                                                    <label class="form-label">Posicionar a partir de</label>
+                                                    <select name="referenciaElementoIndice" class="input-tecnico w-full">
+                                                        <option value="">Borda da peca</option>
+                                                        <option th:each="base, baseIter : ${item.elementos}" th:value="${baseIter.index}" th:text="|Elemento ${baseIter.count} - ${base.nome != null and !#strings.isEmpty(base.nome) ? base.nome : base.tipo.descricao}|" th:selected="${baseIter.index == e.referenciaElementoIndice}" th:disabled="${baseIter.index == iter.index}">Elemento 1</option>
+                                                    </select>
+                                                    <p class="text-[10px] text-slate-500 mt-1">A distancia passa a ser contada do centro do elemento selecionado.</p>
                                                 </div>
                                                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                                     <select name="referenciaHorizontal" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white px-3 py-2 text-xs">

@@ -307,8 +307,11 @@ public class CroquiService {
         }
 
         desenharFuracoes(svg, item.getFuracoes(), x0, y0, escala);
-        for (ElementoTecnico elemento : item.getElementos()) {
-            desenharElemento(svg, elemento, x0, y0, larguraPx, alturaPx, escala);
+        for (int indice = 0; indice < item.getElementos().size(); indice++) {
+            ElementoTecnico elemento = item.getElementos().get(indice);
+            Integer referenciaIndice = elemento.getReferenciaElementoIndice();
+            ElementoTecnico referencia = referenciaIndice != null && referenciaIndice >= 0 && referenciaIndice < item.getElementos().size() ? item.getElementos().get(referenciaIndice) : null;
+            desenharElemento(svg, elemento, referencia, indice, x0, y0, larguraPx, alturaPx, escala);
         }
         desenharAnotacoes(svg, item.getAnotacoes(), x0, y0, escala);
 
@@ -675,18 +678,15 @@ public class CroquiService {
 
 
 
-        boolean ferragemPredefinida = furacao.getTipo() == TipoFuracao.ROLDANA
-                || furacao.getTipo() == TipoFuracao.FECHADURA
-                || furacao.getTipo() == TipoFuracao.PUXADOR
-                || furacao.getTipo() == TipoFuracao.BATE_FECHA;
-
-        if (furacao.getTipo() != TipoFuracao.ROLDANA
-                && furacao.getDescricao() != null && !furacao.getDescricao().isBlank()) {
+        if (furacao.getDiametroMm() != null) {
+        String rotuloPermitido = rotuloFuracaoPermitido(furacao);
+        if (rotuloPermitido != null) {
             svg.append(String.format(Locale.US,
-                    "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" font-weight=\"600\" fill=\"#475569\" text-anchor=\"middle\">%s</text>",
-                    cx, cy - raio - 5, FONTE, escapeXml(furacao.getDescricao())));
+                    "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" font-weight=\"700\" fill=\"#0f172a\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" text-anchor=\"middle\">%s</text>",
+                    cx, cy - raio - 7, FONTE, rotuloPermitido));
         }
-        if (!ferragemPredefinida && furacao.getDiametroMm() != null) {
+
+
             svg.append(String.format(Locale.US,
                     "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"9\" fill=\"#94a3b8\" text-anchor=\"middle\">Ø%smm</text>",
                     cx, cy + raio + 12, FONTE, formatarNumero(furacao.getDiametroMm())));
@@ -714,11 +714,30 @@ public class CroquiService {
                 "<text x=\"0\" y=\"0\" font-family=\"%s\" font-size=\"10\" fill=\"#475569\" text-anchor=\"middle\" transform=\"translate(%.1f %.1f) rotate(-90)\">%s mm</text>",
                 FONTE, cx + 30, (cySuperior + cyInferior) / 2, formatarNumero(comprimentoMm)));
         svg.append(String.format(Locale.US,
-                "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"11\" font-weight=\"700\" fill=\"#0f172a\" text-anchor=\"middle\">PUXADOR H</text>",
-                cx, cySuperior - 13, FONTE));
+                "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" font-weight=\"700\" fill=\"#0f172a\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" text-anchor=\"middle\">PUXADOR H</text>",
+                cx, cySuperior - 27, FONTE));
+        if (a.getDiametroMm() != null) {
+            svg.append(String.format(Locale.US,
+                    "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" fill=\"#475569\" text-anchor=\"middle\">&#216;%smm</text>",
+                    cx, cySuperior - 13, FONTE, formatarNumero(a.getDiametroMm())));
+        }
     }
 
-    private void desenharElemento(StringBuilder svg, ElementoTecnico elemento, double x0, double y0,
+    private String rotuloFuracaoPermitido(Furacao furacao) {
+        if (furacao.getTipo() == null) {
+            return null;
+        }
+        String descricao = furacao.getDescricao();
+        return switch (furacao.getTipo()) {
+            case PUXADOR -> descricao != null && descricao.toLowerCase(Locale.ROOT).contains("simples")
+                    ? "PUXADOR SIMPLES" : null;
+            case FECHADURA -> descricao != null && !descricao.isBlank() ? "FECHADURA" : null;
+            case BATE_FECHA -> descricao != null && !descricao.isBlank() ? "BATE E FECHA" : null;
+            default -> null;
+        };
+    }
+
+    private void desenharElemento(StringBuilder svg, ElementoTecnico elemento, ElementoTecnico referencia, int indice, double x0, double y0,
                                    double larguraPecaPx, double alturaPecaPx, double escala) {
         if (elemento.getPosicaoXMm() == null || elemento.getPosicaoYMm() == null || elemento.getTipo() == null) {
             return;
@@ -726,7 +745,6 @@ public class CroquiService {
         double cx = x0 + elemento.getPosicaoXMm().doubleValue() * escala;
         double cy = y0 + elemento.getPosicaoYMm().doubleValue() * escala;
         String cor = "#b45309";
-        String rotulo = rotuloElemento(elemento);
         String medida = medidaElemento(elemento);
 
 
@@ -820,59 +838,70 @@ public class CroquiService {
 
 
 
-        boolean rotuloPersonalizado = elemento.getRotuloCroqui() != null;
-        String linha1;
-        if (rotuloPersonalizado) {
-            linha1 = elemento.getRotuloCroqui().isBlank() ? null : elemento.getRotuloCroqui();
-        } else {
-            linha1 = medida != null ? (rotulo != null ? rotulo + " " + medida : medida) : rotulo;
-        }
-        if (linha1 != null) {
+        if (medida != null) {
             svg.append(String.format(Locale.US,
-                    "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" font-weight=\"600\" fill=\"#92400e\" text-anchor=\"middle\">%s</text>",
-                    labelCx, topoY - 9, FONTE, escapeXml(linha1)));
+                    "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" font-weight=\"600\" fill=\"#92400e\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" text-anchor=\"middle\">%s</text>",
+                    labelCx, topoY - 9 + faixaCota(indice) / 2, FONTE, escapeXml(medida)));
         }
 
-        if (!rotuloPersonalizado) {
-            desenharCotasElemento(svg, centroX, centroY, x0, y0, larguraPecaPx, alturaPecaPx,
-                    meioExtensaoH, meioExtensaoV, elemento.getReferenciaHorizontal(), elemento.getReferenciaVertical(), escala);
-        }
+        Double referenciaX = referencia != null && referencia.getPosicaoXMm() != null ? referencia.getPosicaoXMm().doubleValue() : null;
+        Double referenciaY = referencia != null && referencia.getPosicaoYMm() != null ? referencia.getPosicaoYMm().doubleValue() : null;
+        desenharCotasElemento(svg, centroX, centroY, x0, y0, larguraPecaPx, alturaPecaPx,
+                meioExtensaoH, meioExtensaoV, elemento.getReferenciaHorizontal(), elemento.getReferenciaVertical(), escala, referenciaX, referenciaY, indice);
     }
 
 
     private void desenharCotasElemento(StringBuilder svg, double centroX, double centroY,
                                         double x0, double y0, double larguraPecaPx, double alturaPecaPx,
                                         double meioExtensaoH, double meioExtensaoV,
-                                        ReferenciaHorizontal refH, ReferenciaVertical refV, double escala) {
-        if (refH != null && refH != ReferenciaHorizontal.CENTRO) {
-            boolean direita = refH == ReferenciaHorizontal.DIREITA;
-            double xBorda = direita ? x0 + larguraPecaPx : x0;
-            double yLinha = centroY;
-            if (Math.abs(xBorda - centroX) > 3) {
-                svg.append(linhaCota(xBorda, yLinha, centroX, yLinha));
-                double faceProxima = direita ? centroX + meioExtensaoH : centroX - meioExtensaoH;
-                double labelX = (xBorda + faceProxima) / 2;
-                double distanciaMm = Math.abs(xBorda - centroX) / escala;
+                                        ReferenciaHorizontal refH, ReferenciaVertical refV, double escala,
+                                        Double referenciaXMm, Double referenciaYMm, int indice) {
+        double faixa = faixaCota(indice);
+        if (refH != null) {
+            double xOrigem = referenciaXMm != null
+                    ? x0 + referenciaXMm * escala
+                    : switch (refH) {
+                        case ESQUERDA -> x0;
+                        case DIREITA -> x0 + larguraPecaPx;
+                        case CENTRO -> x0 + larguraPecaPx / 2;
+                    };
+            double yLinha = centroY + faixa;
+            if (Math.abs(xOrigem - centroX) > 3) {
+                svg.append(linhaCota(xOrigem, yLinha, centroX, yLinha));
+                double labelX = (xOrigem + centroX) / 2;
+                double distanciaMm = Math.abs(xOrigem - centroX) / escala;
                 svg.append(String.format(Locale.US,
-                        "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"9\" fill=\"#92400e\" text-anchor=\"middle\">%s mm</text>",
+                        "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"9\" fill=\"#92400e\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" text-anchor=\"middle\">%s mm</text>",
                         labelX, yLinha - 7, FONTE, formatarNumeroMm(distanciaMm)));
             }
         }
 
-        if (refV != null && refV != ReferenciaVertical.CENTRO) {
-            boolean inferior = refV == ReferenciaVertical.INFERIOR;
-            double yBorda = inferior ? y0 + alturaPecaPx : y0;
-            double xLinha = centroX;
-            if (Math.abs(yBorda - centroY) > 3) {
-                svg.append(linhaCota(xLinha, yBorda, xLinha, centroY));
-                double faceProxima = inferior ? centroY + meioExtensaoV : centroY - meioExtensaoV;
-                double labelY = (yBorda + faceProxima) / 2;
-                double distanciaMm = Math.abs(yBorda - centroY) / escala;
+        if (refV != null) {
+            double yOrigem = referenciaYMm != null
+                    ? y0 + referenciaYMm * escala
+                    : switch (refV) {
+                        case SUPERIOR -> y0;
+                        case INFERIOR -> y0 + alturaPecaPx;
+                        case CENTRO -> y0 + alturaPecaPx / 2;
+                    };
+            double xLinha = centroX + faixa * 1.8;
+            if (Math.abs(yOrigem - centroY) > 3) {
+                svg.append(linhaCota(xLinha, yOrigem, xLinha, centroY));
+                double labelY = (yOrigem + centroY) / 2;
+                double distanciaMm = Math.abs(yOrigem - centroY) / escala;
                 svg.append(String.format(Locale.US,
-                        "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"9\" fill=\"#92400e\" text-anchor=\"start\">%s mm</text>",
+                        "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"9\" fill=\"#92400e\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" text-anchor=\"start\">%s mm</text>",
                         xLinha + 10, labelY + 3, FONTE, formatarNumeroMm(distanciaMm)));
             }
         }
+    }
+
+    private double faixaCota(int indice) {
+        if (indice == 0) {
+            return 0;
+        }
+        int nivel = (indice + 1) / 2;
+        return (indice % 2 == 1 ? 1 : -1) * nivel * 18.0;
     }
 
     private String medidaElemento(ElementoTecnico elemento) {

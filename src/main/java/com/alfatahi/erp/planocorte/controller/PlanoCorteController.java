@@ -187,6 +187,19 @@ public class PlanoCorteController {
         return "redirect:/cut-plans/" + id;
     }
 
+    @PostMapping("/{id}/vaos/{grupoVao}/dimensoes")
+    public String editarDimensoesVao(@PathVariable Long id, @PathVariable Integer grupoVao,
+                                     @ModelAttribute PlanoCorteVaoForm vaoForm,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            planoCorteService.editarDimensoesVao(id, grupoVao, vaoForm);
+            redirectAttributes.addFlashAttribute("sucesso", "Medidas do vao atualizadas e croqui recalculado.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/cut-plans/" + id;
+    }
+
     @PostMapping("/{id}/itens/{itemId}/elementos")
     public String adicionarElemento(@PathVariable Long id, @PathVariable Long itemId,
                                      @Valid @ModelAttribute("elementoForm") ElementoTecnicoForm elementoForm,

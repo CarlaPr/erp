@@ -260,13 +260,16 @@ public class PlanoCorteService {
             throw new IllegalStateException(
                     "Informe a altura bruta dos dois lados (esquerdo e direito) e a largura bruta de cima e de baixo.");
         }
-        if (alturaEsquerdaMm.signum() <= 0 || alturaDireitaMm.signum() <= 0
-                || larguraSuperiorMm.signum() <= 0 || larguraInferiorMm.signum() <= 0) {
-            throw new IllegalStateException("As dimensões personalizadas devem ser maiores que zero.");
+        if (alturaEsquerdaMm.signum() < 0 || alturaDireitaMm.signum() < 0
+                || larguraSuperiorMm.signum() < 0 || larguraInferiorMm.signum() < 0) {
+            throw new IllegalStateException("As dimensoes personalizadas nao podem ser negativas.");
         }
 
         BigDecimal larguraEfetiva = larguraSuperiorMm.max(larguraInferiorMm);
         BigDecimal alturaEfetiva = alturaEsquerdaMm.max(alturaDireitaMm);
+        if (larguraEfetiva.signum() <= 0 || alturaEfetiva.signum() <= 0) {
+            throw new IllegalStateException("Ao menos uma largura e uma altura devem ser maiores que zero.");
+        }
         return new DimensoesBrutas(larguraEfetiva, alturaEfetiva,
                 alturaEsquerdaMm, alturaDireitaMm, larguraSuperiorMm, larguraInferiorMm);
     }
@@ -407,6 +410,92 @@ public class PlanoCorteService {
 
         recalcularTotaisPlano(plano);
         return criados;
+    }
+
+    public void editarDimensoesVao(Long planoCorteId, Integer grupoVao, PlanoCorteVaoForm form) {
+        PlanoCorte plano = buscarPorId(planoCorteId);
+        garantirRascunho(plano);
+        List<PlanoCorteItem> itensVao = listarItens(planoCorteId).stream()
+                .filter(item -> Objects.equals(grupoVao, item.getGrupoVao()))
+                .toList();
+        if (itensVao.isEmpty()) {
+            throw new NoSuchElementException("Vao nao encontrado neste plano.");
+        }
+
+        DimensoesBrutas novas = resolverDimensoesPersonalizadas(
+                form.isDimensoesPersonalizadas(), form.getLarguraVaoMm(), form.getAlturaVaoMm(),
+                form.getAlturaBrutaEsquerdaMm(), form.getAlturaBrutaDireitaMm(),
+                form.getLarguraBrutaSuperiorMm(), form.getLarguraBrutaInferiorMm());
+        PlanoCorteItem primeiro = itensVao.get(0);
+        BigDecimal larguraAntiga = primeiro.getLarguraBrutaMm();
+        BigDecimal alturaAntiga = primeiro.getAlturaBrutaMm();
+        BigDecimal deltaLarguraPorFolha = novas.larguraMm().subtract(larguraAntiga)
+                .divide(BigDecimal.valueOf(itensVao.size()), 4, RoundingMode.HALF_UP);
+        BigDecimal deltaAltura = novas.alturaMm().subtract(alturaAntiga);
+
+        for (PlanoCorteItem item : itensVao) {
+            BigDecimal larguraFinalAntiga = item.getLarguraFinalMm();
+            BigDecimal alturaFinalAntiga = item.getAlturaFinalMm();
+            BigDecimal larguraFinalNova = semNegativo(larguraFinalAntiga.add(deltaLarguraPorFolha));
+            BigDecimal alturaFinalNova = semNegativo(alturaFinalAntiga.add(deltaAltura));
+            item.setLarguraBrutaMm(novas.larguraMm());
+            item.setAlturaBrutaMm(novas.alturaMm());
+            item.setLarguraFinalMm(larguraFinalNova);
+            item.setAlturaFinalMm(alturaFinalNova);
+
+            if (novas.alturaEsquerdaMm() != null) {
+                aplicarDimensoesPersonalizadas(item, novas,
+                        ajustarLadoFinal(novas.alturaEsquerdaMm(), novas.alturaMm(), alturaFinalNova),
+                        ajustarLadoFinal(novas.alturaDireitaMm(), novas.alturaMm(), alturaFinalNova),
+                        ajustarLadoFinal(novas.larguraSuperiorMm(), novas.larguraMm(), larguraFinalNova),
+                        ajustarLadoFinal(novas.larguraInferiorMm(), novas.larguraMm(), larguraFinalNova));
+            } else {
+                limparDimensoesPersonalizadas(item);
+            }
+
+            for (Furacao furacao : item.getFuracoes()) {
+                furacao.setPosicaoXMm(escalar(furacao.getPosicaoXMm(), larguraFinalAntiga, larguraFinalNova));
+                furacao.setPosicaoYMm(escalar(furacao.getPosicaoYMm(), alturaFinalAntiga, alturaFinalNova));
+            }
+            for (Anotacao anotacao : item.getAnotacoes()) {
+                anotacao.setX1Mm(escalar(anotacao.getX1Mm(), larguraFinalAntiga, larguraFinalNova));
+                anotacao.setY1Mm(escalar(anotacao.getY1Mm(), alturaFinalAntiga, alturaFinalNova));
+                anotacao.setX2Mm(escalar(anotacao.getX2Mm(), larguraFinalAntiga, larguraFinalNova));
+                anotacao.setY2Mm(escalar(anotacao.getY2Mm(), alturaFinalAntiga, alturaFinalNova));
+            }
+            for (ElementoTecnico elemento : item.getElementos()) {
+                if (elemento.getReferenciaElementoIndice() == null) {
+                    elemento.setPosicaoXMm(resolverX(larguraFinalNova, elemento.getReferenciaHorizontal(), elemento.getDistanciaHorizontalMm()));
+                    elemento.setPosicaoYMm(resolverY(alturaFinalNova, elemento.getReferenciaVertical(), elemento.getDistanciaVerticalMm()));
+                }
+            }
+            recalcularPosicoesRelativas(item);
+            calcularCustoItem(item);
+            itemRepository.save(item);
+        }
+        recalcularTotaisPlano(plano);
+    }
+
+    private BigDecimal ajustarLadoFinal(BigDecimal ladoBruto, BigDecimal efetivaBruta, BigDecimal efetivaFinal) {
+        return semNegativo(efetivaFinal.add(ladoBruto.subtract(efetivaBruta)));
+    }
+
+    private BigDecimal escalar(BigDecimal valor, BigDecimal dimensaoAntiga, BigDecimal dimensaoNova) {
+        if (valor == null || dimensaoAntiga == null || dimensaoAntiga.signum() == 0) {
+            return valor;
+        }
+        return valor.multiply(dimensaoNova).divide(dimensaoAntiga, 2, RoundingMode.HALF_UP);
+    }
+
+    private void limparDimensoesPersonalizadas(PlanoCorteItem item) {
+        item.setAlturaBrutaEsquerdaMm(null);
+        item.setAlturaBrutaDireitaMm(null);
+        item.setLarguraBrutaSuperiorMm(null);
+        item.setLarguraBrutaInferiorMm(null);
+        item.setAlturaFinalEsquerdaMm(null);
+        item.setAlturaFinalDireitaMm(null);
+        item.setLarguraFinalSuperiorMm(null);
+        item.setLarguraFinalInferiorMm(null);
     }
 
     private TechnicalVisitOpening aplicarMedicaoVisita(PlanoCorte plano, PlanoCorteVaoForm form) {
@@ -590,6 +679,7 @@ public class PlanoCorteService {
 
 
         elemento.setDistanciaVerticalMm(valorOuPadrao(form.getDistanciaVerticalMm(), ferragem != null ? ferragem.getDistanciaTopoMm() : null));
+        elemento.setReferenciaElementoIndice(form.getReferenciaElementoIndice());
         elemento.setDiametroMm(valorOuPadrao(form.getDiametroMm(), ferragem != null ? ferragem.getDiametroFuracaoMm() : null));
         elemento.setLarguraMm(valorOuPadrao(form.getLarguraMm(), ferragem != null ? ferragem.getLarguraMm() : null));
         elemento.setAlturaMm(valorOuPadrao(form.getAlturaMm(), ferragem != null ? ferragem.getAlturaMm() : null));
@@ -603,8 +693,13 @@ public class PlanoCorteService {
         elemento.setFerragemNomeSnapshot(ferragem != null ? ferragem.getProduto() : form.getFerragemNomeSnapshot());
         elemento.setObservacao(form.getObservacao());
 
-        BigDecimal x = resolverX(item.getLarguraFinalMm(), elemento.getReferenciaHorizontal(), elemento.getDistanciaHorizontalMm());
-        BigDecimal y = resolverY(item.getAlturaFinalMm(), elemento.getReferenciaVertical(), elemento.getDistanciaVerticalMm());
+        ElementoTecnico referencia = buscarElementoReferencia(item, elemento.getReferenciaElementoIndice());
+        BigDecimal x = referencia == null
+                ? resolverX(item.getLarguraFinalMm(), elemento.getReferenciaHorizontal(), elemento.getDistanciaHorizontalMm())
+                : resolverXRelativo(referencia, elemento.getReferenciaHorizontal(), elemento.getDistanciaHorizontalMm());
+        BigDecimal y = referencia == null
+                ? resolverY(item.getAlturaFinalMm(), elemento.getReferenciaVertical(), elemento.getDistanciaVerticalMm())
+                : resolverYRelativo(referencia, elemento.getReferenciaVertical(), elemento.getDistanciaVerticalMm());
         elemento.setPosicaoXMm(x);
         elemento.setPosicaoYMm(y);
         return elemento;
@@ -632,6 +727,62 @@ public class PlanoCorteService {
         };
     }
 
+    private ElementoTecnico buscarElementoReferencia(PlanoCorteItem item, Integer indice) {
+        if (indice == null) {
+            return null;
+        }
+        verificarIndice(item.getElementos(), indice, "Elemento de referencia");
+        ElementoTecnico referencia = item.getElementos().get(indice);
+        if (referencia.getPosicaoXMm() == null || referencia.getPosicaoYMm() == null) {
+            throw new IllegalStateException("O elemento selecionado como referencia ainda nao possui posicao valida.");
+        }
+        return referencia;
+    }
+
+    private BigDecimal resolverXRelativo(ElementoTecnico referencia, ReferenciaHorizontal direcao, BigDecimal distancia) {
+        BigDecimal dist = distancia != null ? distancia : BigDecimal.ZERO;
+        return switch (direcao) {
+            case ESQUERDA -> referencia.getPosicaoXMm().subtract(dist);
+            case DIREITA -> referencia.getPosicaoXMm().add(dist);
+            case CENTRO -> referencia.getPosicaoXMm();
+        };
+    }
+
+    private BigDecimal resolverYRelativo(ElementoTecnico referencia, ReferenciaVertical direcao, BigDecimal distancia) {
+        BigDecimal dist = distancia != null ? distancia : BigDecimal.ZERO;
+        return switch (direcao) {
+            case SUPERIOR -> referencia.getPosicaoYMm().subtract(dist);
+            case INFERIOR -> referencia.getPosicaoYMm().add(dist);
+            case CENTRO -> referencia.getPosicaoYMm();
+        };
+    }
+
+    private void validarReferenciaSemCiclo(PlanoCorteItem item, int indiceAtual, Integer indiceReferencia) {
+        Integer cursor = indiceReferencia;
+        int passos = 0;
+        while (cursor != null) {
+            if (cursor == indiceAtual) {
+                throw new IllegalStateException("Um elemento nao pode depender dele mesmo, direta ou indiretamente.");
+            }
+            verificarIndice(item.getElementos(), cursor, "Elemento de referencia");
+            cursor = item.getElementos().get(cursor).getReferenciaElementoIndice();
+            if (++passos > item.getElementos().size()) {
+                throw new IllegalStateException("Foi detectado um ciclo entre as referencias dos elementos.");
+            }
+        }
+    }
+
+    private void recalcularPosicoesRelativas(PlanoCorteItem item) {
+        for (int passo = 0; passo < item.getElementos().size(); passo++) {
+            for (ElementoTecnico elemento : item.getElementos()) {
+                ElementoTecnico referencia = buscarElementoReferencia(item, elemento.getReferenciaElementoIndice());
+                if (referencia != null) {
+                    elemento.setPosicaoXMm(resolverXRelativo(referencia, elemento.getReferenciaHorizontal(), elemento.getDistanciaHorizontalMm()));
+                    elemento.setPosicaoYMm(resolverYRelativo(referencia, elemento.getReferenciaVertical(), elemento.getDistanciaVerticalMm()));
+                }
+            }
+        }
+    }
     public record ResultadoElemento(List<ElementoTecnico> elementos, List<String> avisos) {
     }
 
@@ -647,10 +798,12 @@ public class PlanoCorteService {
                         .orElseThrow(() -> new NoSuchElementException("Ferragem não encontrada: " + form.getFerragemId()))
                 : null;
 
+        validarReferenciaSemCiclo(item, index, form.getReferenciaElementoIndice());
         ElementoTecnico atualizado = construirElemento(item, form, ferragem, form.getReferenciaHorizontal(), form.getDistanciaHorizontalMm());
         List<String> avisos = validacaoElementoService.validar(item, atualizado, item.getCategoria());
 
         item.getElementos().set(index, atualizado);
+        recalcularPosicoesRelativas(item);
         itemRepository.save(item);
         return new ResultadoElemento(List.of(atualizado), avisos);
     }
@@ -662,6 +815,21 @@ public class PlanoCorteService {
         garantirRascunho(plano);
         PlanoCorteItem item = buscarItem(planoCorteId, itemId);
         verificarIndice(item.getElementos(), index, "Elemento técnico");
+        for (ElementoTecnico elemento : item.getElementos()) {
+            Integer referencia = elemento.getReferenciaElementoIndice();
+            if (referencia == null) {
+                continue;
+            }
+            if (referencia == index) {
+                elemento.setReferenciaElementoIndice(null);
+                elemento.setReferenciaHorizontal(ReferenciaHorizontal.ESQUERDA);
+                elemento.setDistanciaHorizontalMm(elemento.getPosicaoXMm());
+                elemento.setReferenciaVertical(ReferenciaVertical.SUPERIOR);
+                elemento.setDistanciaVerticalMm(elemento.getPosicaoYMm());
+            } else if (referencia > index) {
+                elemento.setReferenciaElementoIndice(referencia - 1);
+            }
+        }
         item.getElementos().remove(index);
         itemRepository.save(item);
     }

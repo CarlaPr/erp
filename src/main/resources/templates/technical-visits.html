@@ -81,7 +81,7 @@
                 <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
                     <div><h3 class="font-black text-slate-900 dark:text-white">Fotos da visita</h3><p class="text-xs text-slate-500 mt-0.5">No celular, use a câmera diretamente.</p></div>
                     <button type="button" onclick="document.getElementById('photoFile').click()" class="px-3 py-2 rounded-lg bg-slate-800 dark:bg-slate-700 text-white text-xs font-black flex items-center gap-1"><i data-lucide="camera" class="w-4 h-4"></i> Anexar foto</button>
-                    <input id="photoFile" type="file" accept="image/*" capture="environment" class="hidden" onchange="uploadPhoto(this)">
+                    <input id="photoFile" type="file" accept="image/*" capture="environment" class="hidden" onchange="openPhotoEditor(this)">
                 </div>
                 <div id="photosList" class="p-3 sm:p-5 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3"></div>
             </div>
@@ -179,12 +179,45 @@
     </form>
 </div>
 
+<div id="photoEditorModal" class="modal-shell photo-editor-shell hidden">
+    <div class="modal-card photo-editor-card max-w-6xl">
+        <div class="flex items-start justify-between gap-3 mb-4">
+            <div><h3 class="text-xl font-black text-slate-900 dark:text-white">Editar foto</h3><p class="text-xs text-slate-500 mt-1">Desenhe livremente ou toque na foto para inserir o texto informado.</p></div>
+            <button type="button" onclick="closePhotoEditor()" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="photo-editor-toolbar">
+            <button id="photoDrawMode" type="button" onclick="setPhotoMode('draw')" class="photo-tool is-active"><i data-lucide="pencil" class="w-4 h-4"></i> Desenhar</button>
+            <button id="photoTextMode" type="button" onclick="setPhotoMode('text')" class="photo-tool"><i data-lucide="type" class="w-4 h-4"></i> Texto</button>
+            <label class="photo-tool photo-color-label" title="Cor"><input id="photoColor" type="color" value="#ef4444" aria-label="Cor da anotacao"></label>
+            <label class="photo-tool gap-2">Traco <input id="photoLineWidth" type="range" min="2" max="18" value="6" aria-label="Espessura do traco"></label>
+            <button type="button" onclick="rotatePhoto(-90)" class="photo-tool" title="Girar para a esquerda"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+            <button type="button" onclick="rotatePhoto(90)" class="photo-tool" title="Girar para a direita"><i data-lucide="rotate-cw" class="w-4 h-4"></i></button>
+            <button type="button" onclick="undoPhotoCommand()" class="photo-tool"><i data-lucide="undo-2" class="w-4 h-4"></i> Desfazer</button>
+            <button type="button" onclick="clearPhotoCommands()" class="photo-tool text-rose-600"><i data-lucide="eraser" class="w-4 h-4"></i> Limpar</button>
+        </div>
+        <div id="photoTextControls" class="hidden mt-3">
+            <label class="form-label" for="photoAnnotationText">Texto para inserir</label>
+            <input id="photoAnnotationText" maxlength="100" placeholder="Ex.: Medida conferida: 850 mm" class="form-input">
+            <p class="text-[11px] text-slate-500 mt-1">Depois de digitar, toque na posicao desejada da foto.</p>
+        </div>
+        <div class="photo-canvas-stage mt-4"><canvas id="photoEditorCanvas" aria-label="Editor de anotacoes da foto"></canvas></div>
+        <label class="form-label mt-4" for="photoCaption">Legenda da foto</label>
+        <input id="photoCaption" maxlength="180" placeholder="Legenda opcional" class="form-input">
+        <div class="grid grid-cols-2 gap-3 mt-4">
+            <button type="button" onclick="closePhotoEditor()" class="rounded-xl border border-slate-300 dark:border-slate-700 py-3 text-sm font-black">Cancelar</button>
+            <button id="saveEditedPhotoButton" type="button" onclick="saveEditedPhoto()" class="rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-3 text-sm font-black">Salvar foto otimizada</button>
+        </div>
+    </div>
+</div>
+
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 <script th:inline="javascript">
     const VISITS = /*[[${visits}]]*/ [];
     const INITIAL_VISIT_ID = /*[[${selectedVisitId}]]*/ null;
     const SERVICE_LABELS = {ABRIGO_PIA:'Abrigo de Pia',PORTA_CORRER:'Porta de Correr',JANELA_PADRAO:'Janela Padrão',PORTA_ABRIR:'Porta de Abrir',VIDRO_FIXO_PERFIL_U:'Vidro Fixo',JANELA_BASCULANTE:'Janela Basculante',SACADA:'Sacada',ESPELHO:'Espelho',BOX_BANHEIRO_PADRAO:'Box de Banheiro Padrão'};
     let currentVisit = null;
+    const photoEditor = {file:null,image:null,objectUrl:null,rotation:0,commands:[],activePath:null,mode:'draw'};
+
 
     const $ = id => document.getElementById(id);
     const csrfHeaders = json => { const h = json ? {'Content-Type':'application/json'} : {}; const t=document.querySelector('meta[name="_csrf"]')?.content; const n=document.querySelector('meta[name="_csrf_header"]')?.content||'X-CSRF-TOKEN'; if(t) h[n]=t; return h; };
@@ -253,7 +286,112 @@
     function collectFeatures(){ return [...document.querySelectorAll('.feature-row')].map(row=>{ const o={}; row.querySelectorAll('[data-k]').forEach(i=>o[i.dataset.k]=['distanceHorizontalMm','distanceVerticalMm','diameterMm','widthMm','heightMm'].includes(i.dataset.k)?num(i.value):i.value); return o; }); }
     async function saveOpening(e){ e.preventDefault(); const payload={id:$('openingId').value||null,serviceCategory:$('openingServiceCategory').value,name:$('openingName').value,widthMm:num($('openingWidth').value),heightMm:num($('openingHeight').value),grossHeightLeftMm:num($('openingHeightLeft').value),grossHeightRightMm:num($('openingHeightRight').value),grossWidthTopMm:num($('openingWidthTop').value),grossWidthBottomMm:num($('openingWidthBottom').value),notes:$('openingNotes').value,features:collectFeatures()}; await jsonAction(`/technical-visits/${currentVisit.id}/openings`,'POST',payload); }
     async function deleteOpening(id){ if(confirm('Excluir esta medição e todos os furos/recortes?')) await jsonAction(`/technical-visits/${currentVisit.id}/openings/${id}`,'DELETE'); }
-    async function uploadPhoto(input){ if(!input.files[0])return; const caption=prompt('Legenda da foto (opcional):','')||''; const fd=new FormData(); fd.append('file',input.files[0]); fd.append('caption',caption); const r=await fetch(`/technical-visits/${currentVisit.id}/photos`,{method:'POST',headers:csrfHeaders(false),body:fd}); const d=await r.json(); if(!r.ok){alert(d.error||'Erro ao enviar foto');return;} location.href='/technical-visits?visit='+currentVisit.id; }
+    function setupPhotoCanvas(){
+        const canvas=$('photoEditorCanvas');
+        if(!canvas||canvas.dataset.ready)return;
+        canvas.dataset.ready='true';
+        const point=e=>{ const rect=canvas.getBoundingClientRect(); return {x:(e.clientX-rect.left)*canvas.width/rect.width,y:(e.clientY-rect.top)*canvas.height/rect.height}; };
+        canvas.addEventListener('pointerdown',e=>{
+            if(!photoEditor.image)return;
+            const p=point(e);
+            if(photoEditor.mode==='text'){
+                const value=$('photoAnnotationText').value.trim();
+                if(!value){ alert('Digite o texto antes de tocar na foto.'); $('photoAnnotationText').focus(); return; }
+                photoEditor.commands.push({type:'text',x:p.x,y:p.y,text:value,color:$('photoColor').value,size:Math.max(26,Math.round(Math.min(canvas.width,canvas.height)*0.045))});
+                renderPhotoEditor();
+                return;
+            }
+            e.preventDefault();
+            canvas.setPointerCapture(e.pointerId);
+            photoEditor.activePath={type:'path',color:$('photoColor').value,width:Number($('photoLineWidth').value),points:[p]};
+            photoEditor.commands.push(photoEditor.activePath);
+        });
+        canvas.addEventListener('pointermove',e=>{
+            const path=photoEditor.activePath;
+            if(!path)return;
+            e.preventDefault();
+            const p=point(e); const previous=path.points[path.points.length-1]; path.points.push(p);
+            const ctx=canvas.getContext('2d'); ctx.strokeStyle=path.color; ctx.lineWidth=path.width; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(previous.x,previous.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+        });
+        const finish=e=>{ if(photoEditor.activePath&&canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId); photoEditor.activePath=null; };
+        canvas.addEventListener('pointerup',finish); canvas.addEventListener('pointercancel',finish);
+    }
+
+    function setPhotoMode(mode){
+        photoEditor.mode=mode;
+        $('photoDrawMode').classList.toggle('is-active',mode==='draw');
+        $('photoTextMode').classList.toggle('is-active',mode==='text');
+        $('photoTextControls').classList.toggle('hidden',mode!=='text');
+        $('photoEditorCanvas').classList.toggle('text-mode',mode==='text');
+        if(mode==='text')$('photoAnnotationText').focus();
+    }
+
+    function openPhotoEditor(input){
+        const file=input.files?.[0]; if(!file)return;
+        if(!file.type.startsWith('image/')){ alert('Selecione um arquivo de imagem.'); input.value=''; return; }
+        if(file.size>12*1024*1024){ alert('A foto deve ter no maximo 12 MB.'); input.value=''; return; }
+        if(photoEditor.objectUrl)URL.revokeObjectURL(photoEditor.objectUrl);
+        photoEditor.file=file; photoEditor.objectUrl=URL.createObjectURL(file); photoEditor.commands=[]; photoEditor.rotation=0; photoEditor.activePath=null;
+        const image=new Image();
+        image.onload=()=>{ photoEditor.image=image; $('photoCaption').value=''; $('photoAnnotationText').value=''; setPhotoMode('draw'); renderPhotoEditor(); toggleModal('photoEditorModal',true); lucide.createIcons(); };
+        image.onerror=()=>{ alert('Nao foi possivel abrir esta imagem. Tente JPG ou PNG.'); closePhotoEditor(); };
+        image.src=photoEditor.objectUrl;
+    }
+
+    function closePhotoEditor(){
+        toggleModal('photoEditorModal',false);
+        if(photoEditor.objectUrl)URL.revokeObjectURL(photoEditor.objectUrl);
+        Object.assign(photoEditor,{file:null,image:null,objectUrl:null,rotation:0,commands:[],activePath:null,mode:'draw'});
+        $('photoFile').value='';
+    }
+
+    function renderPhotoEditor(){
+        const image=photoEditor.image; if(!image)return;
+        const canvas=$('photoEditorCanvas'); const ctx=canvas.getContext('2d');
+        const baseScale=Math.min(1,1920/Math.max(image.naturalWidth,image.naturalHeight));
+        const imageWidth=Math.max(1,Math.round(image.naturalWidth*baseScale)); const imageHeight=Math.max(1,Math.round(image.naturalHeight*baseScale));
+        const sideways=Math.abs(photoEditor.rotation)%180===90;
+        canvas.width=sideways?imageHeight:imageWidth; canvas.height=sideways?imageWidth:imageHeight;
+        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.save(); ctx.translate(canvas.width/2,canvas.height/2); ctx.rotate(photoEditor.rotation*Math.PI/180); ctx.drawImage(image,-imageWidth/2,-imageHeight/2,imageWidth,imageHeight); ctx.restore();
+        drawPhotoCommands(ctx);
+    }
+
+    function drawPhotoCommands(ctx){
+        for(const command of photoEditor.commands){
+            if(command.type==='path'){
+                if(!command.points.length)continue;
+                ctx.strokeStyle=command.color; ctx.fillStyle=command.color; ctx.lineWidth=command.width; ctx.lineCap='round'; ctx.lineJoin='round';
+                if(command.points.length===1){ const p=command.points[0]; ctx.beginPath(); ctx.arc(p.x,p.y,command.width/2,0,Math.PI*2); ctx.fill(); continue; }
+                ctx.beginPath(); ctx.moveTo(command.points[0].x,command.points[0].y); command.points.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.stroke();
+            }else if(command.type==='text'){
+                ctx.font=`900 ${command.size}px Arial, sans-serif`; ctx.textBaseline='middle'; ctx.lineJoin='round'; ctx.strokeStyle='rgba(255,255,255,.95)'; ctx.lineWidth=Math.max(4,command.size*.16); ctx.strokeText(command.text,command.x,command.y,Math.max(40,ctx.canvas.width-command.x-12)); ctx.fillStyle=command.color; ctx.fillText(command.text,command.x,command.y,Math.max(40,ctx.canvas.width-command.x-12));
+            }
+        }
+    }
+
+    function rotatePhoto(degrees){
+        if(photoEditor.commands.length&&!confirm('Girar a foto removera as anotacoes atuais. Continuar?'))return;
+        photoEditor.commands=[]; photoEditor.rotation=(photoEditor.rotation+degrees+360)%360; renderPhotoEditor();
+    }
+    function undoPhotoCommand(){ photoEditor.commands.pop(); renderPhotoEditor(); }
+    function clearPhotoCommands(){ if(photoEditor.commands.length&&confirm('Remover todos os textos e desenhos?')){ photoEditor.commands=[]; renderPhotoEditor(); } }
+
+    async function saveEditedPhoto(){
+        if(!currentVisit||!photoEditor.image)return;
+        const button=$('saveEditedPhotoButton'); button.disabled=true; button.textContent='Otimizando e enviando...';
+        const canvas=$('photoEditorCanvas');
+        canvas.toBlob(async blob=>{
+            if(!blob){ alert('Nao foi possivel gerar a foto editada.'); button.disabled=false; button.textContent='Salvar foto otimizada'; return; }
+            const fd=new FormData(); fd.append('file',blob,'foto-visita.jpg'); fd.append('caption',$('photoCaption').value.trim());
+            try{
+                const response=await fetch(`/technical-visits/${currentVisit.id}/photos`,{method:'POST',headers:csrfHeaders(false),body:fd}); const data=await response.json();
+                if(!response.ok)throw new Error(data.error||'Erro ao enviar foto');
+                location.href='/technical-visits?visit='+currentVisit.id;
+            }catch(error){ alert(error.message||'Erro ao enviar foto'); button.disabled=false; button.textContent='Salvar foto otimizada'; }
+        },'image/jpeg',0.82);
+    }
+
+    setupPhotoCanvas();
     async function deletePhoto(id){ if(confirm('Excluir esta foto?')) await jsonAction(`/technical-visits/${currentVisit.id}/photos/${id}`,'DELETE'); }
     async function jsonAction(url,method,payload){ const options={method,headers:csrfHeaders(payload!==undefined)}; if(payload!==undefined)options.body=JSON.stringify(payload); const r=await fetch(url,options); const d=await r.json().catch(()=>({})); if(!r.ok){alert(d.error||'Não foi possível salvar.');return;} location.href='/technical-visits?visit='+currentVisit.id; }
 
@@ -270,6 +408,14 @@
     .client-select-btn{width:100%;min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:.75rem;border:1px solid #cbd5e1;border-radius:.85rem;background:#f8fafc;padding:.65rem .8rem;outline:none;transition:border-color .18s,background-color .18s,box-shadow .18s}.client-select-btn:hover{border-color:#e879f9;background:#fdf4ff}.client-select-btn:focus-visible{border-color:#d946ef;box-shadow:0 0 0 3px rgb(217 70 239/.12)}.client-select-btn.has-client{border-color:#e879f9;background:#fdf4ff}.dark .client-select-btn{border-color:#334155;background:#0f172a}.dark .client-select-btn:hover,.dark .client-select-btn.has-client{border-color:#a855f7;background:rgb(168 85 247/.08)}
     .client-select-icon{width:40px;height:40px;border-radius:.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fae8ff;color:#c026d3}.dark .client-select-icon{background:rgb(192 38 211/.14);color:#f0abfc}
     .client-search-shell{z-index:95}.client-search-card{padding:0;display:flex;flex-direction:column;overflow:hidden;max-height:min(760px,90vh)}.client-search-header{padding:1.25rem;border-bottom:1px solid #e2e8f0;background:white;flex-shrink:0}.dark .client-search-header{border-color:#1e293b;background:#131C2F}.client-search-input{width:100%;height:48px;border:1px solid #cbd5e1;border-radius:.8rem;background:#f8fafc;padding:0 3rem 0 2.7rem;font-size:1rem;color:#0f172a;outline:none}.client-search-input:focus{border-color:#d946ef;box-shadow:0 0 0 3px rgb(217 70 239/.1)}.dark .client-search-input{border-color:#334155;background:#0f172a;color:white}.client-search-results{padding:.65rem;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.client-option{width:100%;min-height:66px;display:flex;align-items:center;gap:.75rem;padding:.7rem;border:1px solid transparent;border-radius:.85rem;color:#334155;transition:background-color .15s,border-color .15s}.client-option.client-filter-hidden{display:none!important}.client-option:hover{background:#f8fafc;border-color:#e2e8f0}.client-option.is-selected{background:#fdf4ff;border-color:#f0abfc}.dark .client-option{color:#e2e8f0}.dark .client-option:hover{background:#0f172a;border-color:#334155}.dark .client-option.is-selected{background:rgb(192 38 211/.08);border-color:rgb(217 70 239/.45)}.client-option-icon{width:42px;height:42px;border-radius:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#f1f5f9;color:#64748b}.client-option.is-selected .client-option-icon{background:#fae8ff;color:#c026d3}.dark .client-option-icon{background:#1e293b;color:#94a3b8}.dark .client-option.is-selected .client-option-icon{background:rgb(192 38 211/.14);color:#f0abfc}.client-option-name{display:block;font-size:.875rem;line-height:1.2rem;font-weight:900;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dark .client-option-name{color:white}.client-option-city{display:block;margin-top:.2rem;font-size:.75rem;line-height:1rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dark .client-option-city{color:#94a3b8}.client-option-check{width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:transparent;background:#f8fafc}.client-option.is-selected .client-option-check{color:white;background:#c026d3}.dark .client-option-check{background:#1e293b}.dark .client-option.is-selected .client-option-check{background:#c026d3}
+    .photo-editor-shell{z-index:100}.photo-editor-card{display:flex;flex-direction:column;overflow:hidden;max-height:96dvh}
+    .photo-editor-toolbar{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}.photo-tool{min-height:40px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #cbd5e1;border-radius:.65rem;background:#fff;padding:.5rem .7rem;font-size:.72rem;font-weight:800;color:#475569}.photo-tool.is-active{border-color:#c026d3;background:#fae8ff;color:#a21caf}.dark .photo-tool{border-color:#334155;background:#0f172a;color:#cbd5e1}.dark .photo-tool.is-active{border-color:#d946ef;background:rgb(192 38 211/.16);color:#f5d0fe}
+    .photo-color-label{padding:.28rem}.photo-color-label input{width:32px;height:30px;border:0;padding:0;background:transparent;cursor:pointer}.photo-tool input[type=range]{width:88px;accent-color:#c026d3}
+    .photo-canvas-stage{min-height:180px;flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;border:1px solid #334155;border-radius:.85rem;background:#020617;padding:.5rem;overscroll-behavior:contain}
+    #photoEditorCanvas{display:block;max-width:100%;height:auto;max-height:58dvh;touch-action:none;cursor:crosshair;box-shadow:0 8px 28px rgb(2 6 23/.45)}#photoEditorCanvas.text-mode{cursor:text}
+    #saveEditedPhotoButton:disabled{opacity:.65;cursor:wait}
+    @media(max-width:639px){.photo-editor-shell{padding:0;align-items:flex-end}.photo-editor-card{max-width:none;max-height:98dvh;border-radius:1rem 1rem 0 0;padding:.9rem}.photo-editor-toolbar{flex-wrap:nowrap;overflow-x:auto;padding-bottom:.25rem}.photo-tool{flex:0 0 auto}.photo-canvas-stage{padding:.25rem}#photoEditorCanvas{max-height:51dvh}}
+
     @media(max-width:639px){.modal-shell{padding:.5rem;align-items:flex-end}.modal-card{max-height:94dvh;border-radius:1.1rem}.client-search-shell{padding:0;align-items:flex-end}.client-search-card{width:100%;max-width:none;max-height:92dvh;border-radius:1.25rem 1.25rem 0 0;border-bottom:0}.client-search-header{padding:1rem 1rem .85rem}.client-search-results{padding:.5rem}.client-option{min-height:70px;padding:.75rem}.client-option-name{font-size:.95rem}.client-option-city{font-size:.8rem}.client-select-btn{min-height:68px}.grid.grid-cols-2.gap-3.mb-4{grid-template-columns:1fr}}
     @media(min-width:640px){.modal-card{padding:1.75rem}.client-search-card{padding:0}.client-search-header{padding:1.5rem}.client-search-results{padding:.75rem}}
 </style>

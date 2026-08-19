@@ -204,4 +204,14 @@ public class ElementoTecnicoForm {
     public void setObservacao(String observacao) {
         this.observacao = observacao;
     }
+    private Integer referenciaElementoIndice;
+
+    public Integer getReferenciaElementoIndice() {
+        return referenciaElementoIndice;
+    }
+
+    public void setReferenciaElementoIndice(Integer referenciaElementoIndice) {
+        this.referenciaElementoIndice = referenciaElementoIndice;
+    }
+
 }

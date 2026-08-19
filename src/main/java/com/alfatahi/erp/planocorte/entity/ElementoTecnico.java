@@ -264,4 +264,15 @@ public class ElementoTecnico {
     public void setRotuloCroqui(String rotuloCroqui) {
         this.rotuloCroqui = rotuloCroqui;
     }
+    @Column(name = "referencia_elemento_indice")
+    private Integer referenciaElementoIndice;
+
+    public Integer getReferenciaElementoIndice() {
+        return referenciaElementoIndice;
+    }
+
+    public void setReferenciaElementoIndice(Integer referenciaElementoIndice) {
+        this.referenciaElementoIndice = referenciaElementoIndice;
+    }
+
 }
