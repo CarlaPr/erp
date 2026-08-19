@@ -305,6 +305,9 @@
                     esquadro): informe a altura medida em cada lateral e a largura
                     medida em cima e embaixo, separadamente.
                 </p>
+                    <span class="block mt-1 font-semibold">
+                        Espelho triangular: informe 0 no lado inexistente; as outras três medidas serão usadas como comprimentos reais das bordas.
+                    </span>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="form-label">
@@ -514,15 +517,26 @@
                                     <input type="number" min="0" step="0.01" name="alturaVaoMm" th:value="${item.alturaBrutaMm}" placeholder="Altura mm" class="input-tecnico" required>
                                 </div>
                                 <div th:if="${item.dimensoesPersonalizadas}" class="grid grid-cols-2 gap-2">
-                                    <input type="number" min="0" step="0.01" name="alturaBrutaEsquerdaMm" th:value="${item.alturaBrutaEsquerdaMm}" placeholder="Altura esquerda" class="input-tecnico" required>
-                                    <input type="number" min="0" step="0.01" name="alturaBrutaDireitaMm" th:value="${item.alturaBrutaDireitaMm}" placeholder="Altura direita" class="input-tecnico" required>
-                                    <input type="number" min="0" step="0.01" name="larguraBrutaSuperiorMm" th:value="${item.larguraBrutaSuperiorMm}" placeholder="Largura superior" class="input-tecnico" required>
-                                    <input type="number" min="0" step="0.01" name="larguraBrutaInferiorMm" th:value="${item.larguraBrutaInferiorMm}" placeholder="Largura inferior" class="input-tecnico" required>
+                                    <label class="text-[10px] font-bold text-slate-500">Altura/lado esquerdo
+                                        <input type="number" min="0" step="0.01" name="alturaBrutaEsquerdaMm" th:value="${item.alturaBrutaEsquerdaMm}" class="input-tecnico mt-1" required>
+                                    </label>
+                                    <label class="text-[10px] font-bold text-slate-500">Altura/lado direito
+                                        <input type="number" min="0" step="0.01" name="alturaBrutaDireitaMm" th:value="${item.alturaBrutaDireitaMm}" class="input-tecnico mt-1" required>
+                                    </label>
+                                    <label class="text-[10px] font-bold text-slate-500">Largura/lado superior
+                                        <input type="number" min="0" step="0.01" name="larguraBrutaSuperiorMm" th:value="${item.larguraBrutaSuperiorMm}" class="input-tecnico mt-1" required>
+                                    </label>
+                                    <label class="text-[10px] font-bold text-slate-500">Largura/lado inferior
+                                        <input type="number" min="0" step="0.01" name="larguraBrutaInferiorMm" th:value="${item.larguraBrutaInferiorMm}" class="input-tecnico mt-1" required>
+                                    </label>
                                 </div>
                                 <p class="text-[10px] text-slate-500">Ao salvar, folhas, furos, recortes, custos e o croqui sao atualizados automaticamente.</p>
                                 <button type="submit" class="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-3 py-2">Salvar medidas</button>
                             </form>
                         </details>
+                                <p th:if="${item.dimensoesPersonalizadas}" class="text-[10px] text-amber-600">
+                                    Triangular: deixe somente o lado inexistente com valor 0.
+                                </p>
                         <form th:if="${plano.status.name() != 'FINALIZADO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/excluir(id=${plano.id},itemId=${item.id})}" method="post" onsubmit="return confirm('Remover esta peça?');">
                             <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 px-3 py-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>

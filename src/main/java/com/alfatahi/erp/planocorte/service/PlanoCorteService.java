@@ -265,6 +265,25 @@ public class PlanoCorteService {
             throw new IllegalStateException("As dimensoes personalizadas nao podem ser negativas.");
         }
 
+        List<BigDecimal> medidasPersonalizadas = List.of(
+                alturaEsquerdaMm, alturaDireitaMm, larguraSuperiorMm, larguraInferiorMm);
+        long medidasZeradas = medidasPersonalizadas.stream()
+                .filter(medida -> medida.signum() == 0)
+                .count();
+        if (medidasZeradas > 1) {
+            throw new IllegalStateException(
+                    "Para formar um triângulo, informe exatamente uma medida como zero e as outras três como comprimentos dos lados.");
+        }
+        if (medidasZeradas == 1) {
+            List<BigDecimal> ladosTriangulo = medidasPersonalizadas.stream()
+                    .filter(medida -> medida.signum() > 0)
+                    .toList();
+            if (!formaTrianguloValido(ladosTriangulo)) {
+                throw new IllegalStateException(
+                        "As três medidas informadas não formam um triângulo válido.");
+            }
+        }
+
         BigDecimal larguraEfetiva = larguraSuperiorMm.max(larguraInferiorMm);
         BigDecimal alturaEfetiva = alturaEsquerdaMm.max(alturaDireitaMm);
         if (larguraEfetiva.signum() <= 0 || alturaEfetiva.signum() <= 0) {
@@ -273,6 +292,18 @@ public class PlanoCorteService {
         return new DimensoesBrutas(larguraEfetiva, alturaEfetiva,
                 alturaEsquerdaMm, alturaDireitaMm, larguraSuperiorMm, larguraInferiorMm);
     }
+    private boolean formaTrianguloValido(List<BigDecimal> lados) {
+        if (lados.size() != 3) {
+            return false;
+        }
+        BigDecimal primeiro = lados.get(0);
+        BigDecimal segundo = lados.get(1);
+        BigDecimal terceiro = lados.get(2);
+        return primeiro.add(segundo).compareTo(terceiro) > 0
+                && primeiro.add(terceiro).compareTo(segundo) > 0
+                && segundo.add(terceiro).compareTo(primeiro) > 0;
+    }
+
 
 
     private void aplicarDimensoesPersonalizadas(PlanoCorteItem item, DimensoesBrutas dimensoes,

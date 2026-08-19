@@ -39,6 +39,12 @@ public class CroquiService {
         double larguraMm = item.getLarguraFinalMm().doubleValue();
         double alturaMm = item.getAlturaFinalMm().doubleValue();
 
+        if (item.isDimensoesPersonalizadas()) {
+            GeometriaPersonalizada geometria = calcularGeometriaPersonalizada(item);
+            larguraMm = geometria.larguraMm();
+            alturaMm = geometria.alturaMm();
+        }
+
         double escalaLargura = larguraMm > 0 ? CANVAS_LARGURA_PX / larguraMm : 1;
         double escalaAltura = alturaMm > 0 ? CANVAS_ALTURA_PX / alturaMm : 1;
         double escala = Math.min(escalaLargura, escalaAltura);
@@ -77,7 +83,7 @@ public class CroquiService {
 
         desenharPeca(svg, item, x0, y0, larguraPx, alturaPx, escala, !trapezoidal, true, trapezoidal);
         if (trapezoidal) {
-            desenharCotasTrapezoidais(svg, item, x0, y0, y0 + alturaPx);
+            desenharCotasPersonalizadas(svg, item, x0, y0 + alturaPx, escala);
         }
 
         if (item.getObservacoes() != null && !item.getObservacoes().isBlank()) {
@@ -196,7 +202,7 @@ public class CroquiService {
         }
         if (trapezoidal) {
             desenharContornoTrapezoidalVao(svg, primeira, xInicio, y0 + alturaPecaPx, escala);
-            desenharCotasTrapezoidais(svg, primeira, xInicio, y0, y0 + alturaPecaPx);
+            desenharCotasPersonalizadas(svg, primeira, xInicio, y0 + alturaPecaPx, escala);
         } else if (!alturasDiferentes) {
 
 
@@ -289,47 +295,20 @@ public class CroquiService {
                 FONTE, corTexto, cotaX + offsetLabelPx, y0 + alturaPx / 2, formatarNumero(valorMm)));
     }
 
-    private void desenharCotasTrapezoidais(StringBuilder svg, PlanoCorteItem item,
-                                            double xEsquerda, double yTopo, double yBase) {
-        double larguraSuperiorMm = valorFinalOuBruta(item.getLarguraFinalSuperiorMm(), item.getLarguraBrutaSuperiorMm()).doubleValue();
-        double larguraInferiorMm = valorFinalOuBruta(item.getLarguraFinalInferiorMm(), item.getLarguraBrutaInferiorMm()).doubleValue();
-
-        double escalaReal = calcularEscalaTrapezoidal(item, yBase - yTopo);
-
-        double larguraSuperiorPx = larguraSuperiorMm * escalaReal;
-        double larguraInferiorPx = larguraInferiorMm * escalaReal;
-
-        double xTL = xEsquerda;
-        double yTL = yBase - valorFinalOuBruta(item.getAlturaFinalEsquerdaMm(), item.getAlturaBrutaEsquerdaMm()).doubleValue() * escalaReal;
-        double xTR = xEsquerda + larguraSuperiorPx;
-        double yTR = yBase - valorFinalOuBruta(item.getAlturaFinalDireitaMm(), item.getAlturaBrutaDireitaMm()).doubleValue() * escalaReal;
-        double xBR = xEsquerda + larguraInferiorPx;
-        double yBR = yBase;
-        double xBL = xEsquerda;
-        double yBL = yBase;
-
+    private void desenharCotasPersonalizadas(StringBuilder svg, PlanoCorteItem item,
+                                              double xEsquerda, double yBase, double escala) {
+        GeometriaPersonalizada geometria = calcularGeometriaPersonalizada(item);
+        List<Ponto> pontos = converterParaPixels(geometria, xEsquerda, yBase, escala);
         double offsetCota = 30;
-        double centroX = (xTL + xTR + xBL + xBR) / 4;
-        double centroY = (yTL + yTR + yBL + yBR) / 4;
+        double centroX = pontos.stream().mapToDouble(Ponto::x).average().orElse(xEsquerda);
+        double centroY = pontos.stream().mapToDouble(Ponto::y).average().orElse(yBase);
 
-        desenharCotaLado(svg, xTL, yTL, xBL, yBL, offsetCota, centroX, centroY,
-                valorFinalOuBruta(item.getAlturaFinalEsquerdaMm(), item.getAlturaBrutaEsquerdaMm()));
-
-        desenharCotaLado(svg, xTR, yTR, xBR, yBR, offsetCota, centroX, centroY,
-                valorFinalOuBruta(item.getAlturaFinalDireitaMm(), item.getAlturaBrutaDireitaMm()));
-
-        desenharCotaLado(svg, xTL, yTL, xTR, yTR, offsetCota, centroX, centroY,
-                valorFinalOuBruta(item.getLarguraFinalSuperiorMm(), item.getLarguraBrutaSuperiorMm()));
-
-        desenharCotaLado(svg, xBL, yBL, xBR, yBR, offsetCota, centroX, centroY,
-                valorFinalOuBruta(item.getLarguraFinalInferiorMm(), item.getLarguraBrutaInferiorMm()));
-    }
-
-    private double calcularEscalaTrapezoidal(PlanoCorteItem item, double alturaPx) {
-        double alturaEsquerdaMm = valorFinalOuBruta(item.getAlturaFinalEsquerdaMm(), item.getAlturaBrutaEsquerdaMm()).doubleValue();
-        double alturaDireitaMm = valorFinalOuBruta(item.getAlturaFinalDireitaMm(), item.getAlturaBrutaDireitaMm()).doubleValue();
-        double maiorAlturaMm = Math.max(alturaEsquerdaMm, alturaDireitaMm);
-        return maiorAlturaMm > 0 ? alturaPx / maiorAlturaMm : 1;
+        for (int i = 0; i < pontos.size(); i++) {
+            Ponto inicio = pontos.get(i);
+            Ponto fim = pontos.get((i + 1) % pontos.size());
+            desenharCotaLado(svg, inicio.x(), inicio.y(), fim.x(), fim.y(),
+                    offsetCota, centroX, centroY, geometria.medidasLadosMm().get(i));
+        }
     }
 
     private void desenharCotaLado(StringBuilder svg, double x1, double y1, double x2, double y2,
@@ -395,27 +374,19 @@ public class CroquiService {
     private void desenharContornoTrapezoidal(StringBuilder svg, PlanoCorteItem item, double x0, double y0,
                                               double larguraPx, double alturaPx, double escala) {
         double yBase = y0 + alturaPx;
-        double alturaEsquerdaPx = valorFinalOuBruta(item.getAlturaFinalEsquerdaMm(), item.getAlturaBrutaEsquerdaMm()).doubleValue() * escala;
-        double alturaDireitaPx = valorFinalOuBruta(item.getAlturaFinalDireitaMm(), item.getAlturaBrutaDireitaMm()).doubleValue() * escala;
-        double larguraSuperiorPx = valorFinalOuBruta(item.getLarguraFinalSuperiorMm(), item.getLarguraBrutaSuperiorMm()).doubleValue() * escala;
-        double larguraInferiorPx = valorFinalOuBruta(item.getLarguraFinalInferiorMm(), item.getLarguraBrutaInferiorMm()).doubleValue() * escala;
-
-        String pontos = pontosTrapezio(x0, yBase, alturaEsquerdaPx, alturaDireitaPx, larguraSuperiorPx, larguraInferiorPx);
+        List<Ponto> pontos = converterParaPixels(calcularGeometriaPersonalizada(item), x0, yBase, escala);
         svg.append(String.format(Locale.US,
-                "<polygon points=\"%s\" fill=\"#eff6ff\" stroke=\"#1e293b\" stroke-width=\"2\"/>", pontos));
+                "<polygon points=\"%s\" fill=\"#eff6ff\" stroke=\"#1e293b\" stroke-width=\"2\"/>",
+                formatarPontos(pontos)));
     }
 
 
     private void desenharContornoTrapezoidalVao(StringBuilder svg, PlanoCorteItem primeira,
                                                  double xEsquerda, double yBase, double escala) {
-        double alturaEsquerdaPx = valorFinalOuBruta(primeira.getAlturaFinalEsquerdaMm(), primeira.getAlturaBrutaEsquerdaMm()).doubleValue() * escala;
-        double alturaDireitaPx = valorFinalOuBruta(primeira.getAlturaFinalDireitaMm(), primeira.getAlturaBrutaDireitaMm()).doubleValue() * escala;
-        double larguraSuperiorPx = valorFinalOuBruta(primeira.getLarguraFinalSuperiorMm(), primeira.getLarguraBrutaSuperiorMm()).doubleValue() * escala;
-        double larguraInferiorPx = valorFinalOuBruta(primeira.getLarguraFinalInferiorMm(), primeira.getLarguraBrutaInferiorMm()).doubleValue() * escala;
-
-        String pontos = pontosTrapezio(xEsquerda, yBase, alturaEsquerdaPx, alturaDireitaPx, larguraSuperiorPx, larguraInferiorPx);
+        List<Ponto> pontos = converterParaPixels(calcularGeometriaPersonalizada(primeira), xEsquerda, yBase, escala);
         svg.append(String.format(Locale.US,
-                "<polygon points=\"%s\" fill=\"none\" stroke=\"#7c3aed\" stroke-width=\"2\" stroke-dasharray=\"7 5\"/>", pontos));
+                "<polygon points=\"%s\" fill=\"none\" stroke=\"#7c3aed\" stroke-width=\"2\" stroke-dasharray=\"7 5\"/>",
+                formatarPontos(pontos)));
     }
 
     private String pontosTrapezio(double xEsquerda, double yBase,
@@ -431,6 +402,143 @@ public class CroquiService {
                 xTL, yTL, xTR, yTR, xBR, yBase, xBL, yBase);
     }
 
+    private GeometriaPersonalizada calcularGeometriaPersonalizada(PlanoCorteItem item) {
+        BigDecimal alturaEsquerda = valorFinalOuBruta(
+                item.getAlturaFinalEsquerdaMm(), item.getAlturaBrutaEsquerdaMm());
+        BigDecimal alturaDireita = valorFinalOuBruta(
+                item.getAlturaFinalDireitaMm(), item.getAlturaBrutaDireitaMm());
+        BigDecimal larguraSuperior = valorFinalOuBruta(
+                item.getLarguraFinalSuperiorMm(), item.getLarguraBrutaSuperiorMm());
+        BigDecimal larguraInferior = valorFinalOuBruta(
+                item.getLarguraFinalInferiorMm(), item.getLarguraBrutaInferiorMm());
+
+        int medidasZeradas = contarZeros(
+                alturaEsquerda, alturaDireita, larguraSuperior, larguraInferior);
+        if (medidasZeradas == 1) {
+            GeometriaPersonalizada triangulo = calcularGeometriaTriangular(
+                    alturaEsquerda, alturaDireita, larguraSuperior, larguraInferior);
+            if (triangulo != null) {
+                return triangulo;
+            }
+        }
+
+        return criarGeometria(
+                List.of(
+                        new Ponto(0, alturaEsquerda.doubleValue()),
+                        new Ponto(larguraSuperior.doubleValue(), alturaDireita.doubleValue()),
+                        new Ponto(larguraInferior.doubleValue(), 0),
+                        new Ponto(0, 0)
+                ),
+                List.of(larguraSuperior, alturaDireita, larguraInferior, alturaEsquerda));
+    }
+
+    private GeometriaPersonalizada calcularGeometriaTriangular(
+            BigDecimal alturaEsquerda, BigDecimal alturaDireita,
+            BigDecimal larguraSuperior, BigDecimal larguraInferior) {
+        if (ehZero(alturaEsquerda)) {
+            return criarTrianguloBaseInferior(
+                    larguraSuperior, alturaDireita, larguraInferior, TipoVerticeTriangular.BASE_ESQUERDA);
+        }
+        if (ehZero(larguraSuperior)) {
+            return criarTrianguloBaseInferior(
+                    alturaEsquerda, alturaDireita, larguraInferior, TipoVerticeTriangular.APICE);
+        }
+        if (ehZero(alturaDireita)) {
+            return criarTrianguloBaseInferior(
+                    alturaEsquerda, larguraSuperior, larguraInferior, TipoVerticeTriangular.APICE);
+        }
+        if (ehZero(larguraInferior)) {
+            Ponto apiceInferior = calcularApice(alturaEsquerda, alturaDireita, larguraSuperior);
+            if (apiceInferior == null) {
+                return null;
+            }
+            double altura = apiceInferior.y();
+            return criarGeometria(
+                    List.of(
+                            new Ponto(0, altura),
+                            new Ponto(larguraSuperior.doubleValue(), altura),
+                            new Ponto(apiceInferior.x(), 0)
+                    ),
+                    List.of(larguraSuperior, alturaDireita, alturaEsquerda));
+        }
+        return null;
+    }
+
+    private GeometriaPersonalizada criarTrianguloBaseInferior(
+            BigDecimal ladoEsquerdo, BigDecimal ladoDireito, BigDecimal base,
+            TipoVerticeTriangular primeiroVertice) {
+        Ponto apice = calcularApice(ladoEsquerdo, ladoDireito, base);
+        if (apice == null) {
+            return null;
+        }
+
+        Ponto baseEsquerda = new Ponto(0, 0);
+        Ponto baseDireita = new Ponto(base.doubleValue(), 0);
+        if (primeiroVertice == TipoVerticeTriangular.BASE_ESQUERDA) {
+            return criarGeometria(
+                    List.of(baseEsquerda, apice, baseDireita),
+                    List.of(ladoEsquerdo, ladoDireito, base));
+        }
+        return criarGeometria(
+                List.of(apice, baseDireita, baseEsquerda),
+                List.of(ladoDireito, base, ladoEsquerdo));
+    }
+
+    private Ponto calcularApice(BigDecimal ladoEsquerdo, BigDecimal ladoDireito, BigDecimal base) {
+        if (!formaTrianguloValido(ladoEsquerdo, ladoDireito, base)) {
+            return null;
+        }
+        double esquerdo = ladoEsquerdo.doubleValue();
+        double direito = ladoDireito.doubleValue();
+        double baseMm = base.doubleValue();
+        double x = (esquerdo * esquerdo - direito * direito + baseMm * baseMm) / (2 * baseMm);
+        double alturaAoQuadrado = esquerdo * esquerdo - x * x;
+        return new Ponto(x, Math.sqrt(Math.max(alturaAoQuadrado, 0)));
+    }
+
+    private boolean formaTrianguloValido(BigDecimal primeiro, BigDecimal segundo, BigDecimal terceiro) {
+        return primeiro.signum() > 0 && segundo.signum() > 0 && terceiro.signum() > 0
+                && primeiro.add(segundo).compareTo(terceiro) > 0
+                && primeiro.add(terceiro).compareTo(segundo) > 0
+                && segundo.add(terceiro).compareTo(primeiro) > 0;
+    }
+
+    private int contarZeros(BigDecimal... medidas) {
+        int quantidade = 0;
+        for (BigDecimal medida : medidas) {
+            if (ehZero(medida)) {
+                quantidade++;
+            }
+        }
+        return quantidade;
+    }
+
+    private boolean ehZero(BigDecimal medida) {
+        return medida.signum() == 0;
+    }
+
+    private GeometriaPersonalizada criarGeometria(
+            List<Ponto> vertices, List<BigDecimal> medidasLadosMm) {
+        double minX = vertices.stream().mapToDouble(Ponto::x).min().orElse(0);
+        double minY = vertices.stream().mapToDouble(Ponto::y).min().orElse(0);
+        double maxX = vertices.stream().mapToDouble(Ponto::x).max().orElse(0);
+        double maxY = vertices.stream().mapToDouble(Ponto::y).max().orElse(0);
+        List<Ponto> normalizados = vertices.stream()
+                .map(ponto -> new Ponto(ponto.x() - minX, ponto.y() - minY))
+                .toList();
+        return new GeometriaPersonalizada(
+                normalizados, medidasLadosMm, maxX - minX, maxY - minY);
+    }
+
+    private List<Ponto> converterParaPixels(
+            GeometriaPersonalizada geometria, double xEsquerda, double yBase, double escala) {
+        return geometria.verticesMm().stream()
+                .map(ponto -> new Ponto(
+                        xEsquerda + ponto.x() * escala,
+                        yBase - ponto.y() * escala))
+                .toList();
+    }
+
     private void desenharBisoteTrapezoidal(StringBuilder svg, PlanoCorteItem item, double x0, double y0,
                                             double larguraPx, double alturaPx, double escala) {
         if (item.getEspessuraBisoteMm() == null || item.getEspessuraBisoteMm().signum() <= 0) {
@@ -439,26 +547,8 @@ public class CroquiService {
         double faixaPx = Math.max(item.getEspessuraBisoteMm().doubleValue() * escala, 2);
 
         double yBase = y0 + alturaPx;
-        double alturaEsquerdaPx = valorFinalOuBruta(item.getAlturaFinalEsquerdaMm(), item.getAlturaBrutaEsquerdaMm()).doubleValue() * escala;
-        double alturaDireitaPx = valorFinalOuBruta(item.getAlturaFinalDireitaMm(), item.getAlturaBrutaDireitaMm()).doubleValue() * escala;
-        double larguraSuperiorPx = valorFinalOuBruta(item.getLarguraFinalSuperiorMm(), item.getLarguraBrutaSuperiorMm()).doubleValue() * escala;
-        double larguraInferiorPx = valorFinalOuBruta(item.getLarguraFinalInferiorMm(), item.getLarguraBrutaInferiorMm()).doubleValue() * escala;
-
-        double xTL = x0;
-        double yTL = yBase - alturaEsquerdaPx;
-        double xTR = x0 + larguraSuperiorPx;
-        double yTR = yBase - alturaDireitaPx;
-        double xBR = x0 + larguraInferiorPx;
-        double yBR = yBase;
-        double xBL = x0;
-        double yBL = yBase;
-
-        List<Ponto> pontosInternos = calcularContornoInterno(List.of(
-                new Ponto(xTL, yTL),
-                new Ponto(xTR, yTR),
-                new Ponto(xBR, yBR),
-                new Ponto(xBL, yBL)
-        ), faixaPx);
+        List<Ponto> pontosExternos = converterParaPixels(calcularGeometriaPersonalizada(item), x0, yBase, escala);
+        List<Ponto> pontosInternos = calcularContornoInterno(pontosExternos, faixaPx);
         if (pontosInternos.size() < 3) {
             return;
         }
@@ -469,7 +559,7 @@ public class CroquiService {
 
         Ponto primeiroPontoInterno = pontosInternos.get(0);
         double cotaY = primeiroPontoInterno.y() + Math.min(faixaPx, alturaPx / 4) + 15;
-        svg.append(linhaCota(xTL, cotaY, primeiroPontoInterno.x(), cotaY));
+        svg.append(linhaCota(pontosExternos.get(0).x(), cotaY, primeiroPontoInterno.x(), cotaY));
         svg.append(String.format(Locale.US,
                 "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" fill=\"#0369a1\" text-anchor=\"start\">Bisô %s mm</text>",
                 primeiroPontoInterno.x() + 5, cotaY + 4, FONTE, formatarNumero(item.getEspessuraBisoteMm())));
@@ -569,6 +659,15 @@ public class CroquiService {
         return resultado.toString();
     }
 
+
+    private record GeometriaPersonalizada(
+            List<Ponto> verticesMm, List<BigDecimal> medidasLadosMm,
+            double larguraMm, double alturaMm) {
+    }
+
+    private enum TipoVerticeTriangular {
+        BASE_ESQUERDA, APICE
+    }
 
     private record Ponto(double x, double y) {
     }
