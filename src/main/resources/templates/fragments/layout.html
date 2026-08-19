@@ -5,10 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#0284c7">
+    <meta name="apple-mobile-web-app-title" content="Tahi Glass">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <title th:text="${title}">Tahi Glass ERP</title>
+    <title th:text="${title}">Tahi Glass</title>
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
@@ -62,8 +73,8 @@
         <div class="p-6 shrink-0">
             <div class="flex items-center justify-between pl-2">
                 <div class="flex items-center gap-4">
-                    <div class="bg-brand-50 dark:bg-gradient-to-br dark:from-cyan-400 dark:to-blue-500 p-2.5 rounded-xl shadow-sm border border-brand-100 dark:border-none">
-                        <i data-lucide="layers" class="text-brand-600 dark:text-slate-900 w-7 h-7"></i>
+                    <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0">
+                        <img src="/favicon.svg" alt="Tahi Glass" class="w-full h-full object-cover block">
                     </div>
                     <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Tahi Glass</h1>
                 </div>
@@ -174,8 +185,8 @@
         <i data-lucide="menu" class="w-6 h-6"></i>
     </button>
     <div class="flex items-center gap-2">
-        <div class="bg-brand-50 dark:bg-gradient-to-br dark:from-cyan-400 dark:to-blue-500 p-1.5 rounded-lg border border-brand-100 dark:border-none">
-            <i data-lucide="layers" class="text-brand-600 dark:text-slate-900 w-5 h-5"></i>
+        <div class="w-8 h-8 rounded-lg overflow-hidden shrink-0">
+            <img src="/favicon.svg" alt="Tahi Glass" class="w-full h-full object-cover block">
         </div>
         <span class="font-extrabold text-slate-900 dark:text-white text-lg tracking-tight">Tahi Glass</span>
     </div>
