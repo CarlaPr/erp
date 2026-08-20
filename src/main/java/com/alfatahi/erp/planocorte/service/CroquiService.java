@@ -255,11 +255,14 @@ public class CroquiService {
         }
 
         desenharFuracoes(svg, item.getFuracoes(), x0, y0, escala);
+        List<GeometriaElemento> geometriasElementos = item.getElementos().stream()
+                .map(elemento -> calcularGeometriaElemento(elemento, x0, y0, escala))
+                .toList();
+        List<LayoutCotaElemento> layoutsCotas = planejarCotasElementos(
+                item.getElementos(), geometriasElementos, x0, y0, larguraPx, alturaPx, escala);
         for (int indice = 0; indice < item.getElementos().size(); indice++) {
-            ElementoTecnico elemento = item.getElementos().get(indice);
-            Integer referenciaIndice = elemento.getReferenciaElementoIndice();
-            ElementoTecnico referencia = referenciaIndice != null && referenciaIndice >= 0 && referenciaIndice < item.getElementos().size() ? item.getElementos().get(referenciaIndice) : null;
-            desenharElemento(svg, elemento, referencia, indice, x0, y0, larguraPx, alturaPx, escala);
+            desenharElemento(svg, item.getElementos().get(indice), geometriasElementos.get(indice),
+                    layoutsCotas.get(indice), escala);
         }
         desenharAnotacoes(svg, item.getAnotacoes(), x0, y0, escala);
 
@@ -936,13 +939,13 @@ public class CroquiService {
         };
     }
 
-    private void desenharElemento(StringBuilder svg, ElementoTecnico elemento, ElementoTecnico referencia, int indice, double x0, double y0,
-                                   double larguraPecaPx, double alturaPecaPx, double escala) {
-        if (elemento.getPosicaoXMm() == null || elemento.getPosicaoYMm() == null || elemento.getTipo() == null) {
+    private void desenharElemento(StringBuilder svg, ElementoTecnico elemento, GeometriaElemento geometria,
+                                  LayoutCotaElemento layout, double escala) {
+        if (geometria == null) {
             return;
         }
-        double cx = x0 + elemento.getPosicaoXMm().doubleValue() * escala;
-        double cy = y0 + elemento.getPosicaoYMm().doubleValue() * escala;
+        double cx = geometria.posicaoX();
+        double cy = geometria.posicaoY();
         String cor = "#b45309";
         String medida = medidaElemento(elemento);
 
@@ -1018,19 +1021,295 @@ public class CroquiService {
             }
         }
 
+        if (elemento.getTipo() == TipoElemento.FURO
+                || elemento.getTipo() == TipoElemento.RECORTE
+                || elemento.getTipo() == TipoElemento.RASGO) {
+            desenharMarcaCentro(svg, centroX, centroY);
+        }
 
         if (medida != null) {
             svg.append(String.format(Locale.US,
                     "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" font-weight=\"600\" fill=\"#92400e\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" text-anchor=\"middle\">%s</text>",
-                    labelCx, topoY - 9 + faixaCota(indice) / 2, FONTE, escapeXml(medida)));
+                    labelCx, layout.labelY(), FONTE, escapeXml(medida)));
         }
 
-        Double referenciaX = referencia != null && referencia.getPosicaoXMm() != null ? referencia.getPosicaoXMm().doubleValue() : null;
-        Double referenciaY = referencia != null && referencia.getPosicaoYMm() != null ? referencia.getPosicaoYMm().doubleValue() : null;
-        desenharCotasElemento(svg, centroX, centroY, x0, y0, larguraPecaPx, alturaPecaPx,
-                meioExtensaoH, meioExtensaoV, elemento.getReferenciaHorizontal(), elemento.getReferenciaVertical(), escala, referenciaX, referenciaY, indice);
+        desenharCotasElemento(svg, geometria, layout, escala);
     }
 
+
+    private GeometriaElemento calcularGeometriaElemento(ElementoTecnico elemento, double x0, double y0,
+                                                         double escala) {
+        if (elemento == null || elemento.getPosicaoXMm() == null || elemento.getPosicaoYMm() == null
+                || elemento.getTipo() == null) {
+            return null;
+        }
+        double posicaoX = x0 + elemento.getPosicaoXMm().doubleValue() * escala;
+        double posicaoY = y0 + elemento.getPosicaoYMm().doubleValue() * escala;
+        double centroX = posicaoX;
+        double centroY = posicaoY;
+        double meiaLargura = 10;
+        double meiaAltura = 10;
+        double labelX = posicaoX;
+        double topoY = posicaoY;
+
+        switch (elemento.getTipo()) {
+            case FURO -> {
+                double raio = elemento.getDiametroMm() != null
+                        ? Math.max(elemento.getDiametroMm().doubleValue() * escala / 2, 4) : 5;
+                meiaLargura = raio;
+                meiaAltura = raio;
+                topoY = centroY - raio;
+            }
+            case RASGO -> {
+                meiaLargura = Math.max(
+                        (elemento.getComprimentoMm() != null ? elemento.getComprimentoMm().doubleValue() : 20)
+                                * escala, 14) / 2;
+                meiaAltura = Math.max(
+                        (elemento.getLarguraMm() != null ? elemento.getLarguraMm().doubleValue() : 6)
+                                * escala, 6) / 2;
+                topoY = centroY - meiaAltura;
+            }
+            case RECORTE -> {
+                meiaLargura = Math.max(
+                        (elemento.getLarguraMm() != null ? elemento.getLarguraMm().doubleValue() : 20)
+                                * escala, 10) / 2;
+                meiaAltura = Math.max(
+                        (elemento.getAlturaMm() != null ? elemento.getAlturaMm().doubleValue() : 20)
+                                * escala, 10) / 2;
+                boolean ancorado = elemento.getAncoragem() == TipoAncoragem.CANTO;
+                if (ancorado && elemento.getReferenciaHorizontal() == ReferenciaHorizontal.ESQUERDA) {
+                    centroX += meiaLargura;
+                } else if (ancorado && elemento.getReferenciaHorizontal() == ReferenciaHorizontal.DIREITA) {
+                    centroX -= meiaLargura;
+                }
+                if (ancorado && elemento.getReferenciaVertical() == ReferenciaVertical.SUPERIOR) {
+                    centroY += meiaAltura;
+                } else if (ancorado && elemento.getReferenciaVertical() == ReferenciaVertical.INFERIOR) {
+                    centroY -= meiaAltura;
+                }
+                labelX = centroX;
+                topoY = centroY - meiaAltura;
+            }
+            case CHANFRO -> {
+                double metade = Math.max(
+                        (elemento.getComprimentoMm() != null ? elemento.getComprimentoMm().doubleValue() : 15)
+                                * escala, 8) / 2;
+                meiaLargura = metade;
+                meiaAltura = metade;
+                topoY = centroY - metade;
+            }
+            case BOLEADO -> {
+                double raio = Math.max(
+                        (elemento.getRaioMm() != null ? elemento.getRaioMm().doubleValue() : 10)
+                                * escala, 7);
+                meiaLargura = raio;
+                meiaAltura = raio;
+                topoY = centroY - raio;
+            }
+        }
+        return new GeometriaElemento(posicaoX, posicaoY, centroX, centroY,
+                meiaLargura, meiaAltura, labelX, topoY);
+    }
+
+    private List<LayoutCotaElemento> planejarCotasElementos(List<ElementoTecnico> elementos,
+                                                            List<GeometriaElemento> geometrias,
+                                                            double x0, double y0, double larguraPecaPx,
+                                                            double alturaPecaPx, double escala) {
+        List<LayoutCotaElemento> layouts = new ArrayList<>();
+        List<FaixaCota> horizontais = new ArrayList<>();
+        List<FaixaCota> verticais = new ArrayList<>();
+        List<FaixaCota> rotulos = new ArrayList<>();
+        for (int indice = 0; indice < elementos.size(); indice++) {
+            ElementoTecnico elemento = elementos.get(indice);
+            GeometriaElemento geometria = geometrias.get(indice);
+            if (geometria == null) {
+                layouts.add(new LayoutCotaElemento(null, null, null, null, false, y0));
+                continue;
+            }
+            GeometriaElemento referencia = null;
+            Integer referenciaIndice = elemento.getReferenciaElementoIndice();
+            if (referenciaIndice != null && referenciaIndice >= 0 && referenciaIndice < geometrias.size()) {
+                referencia = geometrias.get(referenciaIndice);
+            }
+            Double origemX = referencia != null ? referencia.centroX()
+                    : origemHorizontal(elemento.getReferenciaHorizontal(), x0, larguraPecaPx);
+            Double origemY = referencia != null ? referencia.centroY()
+                    : origemVertical(elemento.getReferenciaVertical(), y0, alturaPecaPx);
+
+            Double linhaH = null;
+            if (elemento.getReferenciaHorizontal() != null && origemX != null
+                    && Math.abs(origemX - geometria.centroX()) > 3) {
+                linhaH = escolherLinhaLivre(true, geometria, origemX, geometrias, horizontais,
+                        y0, alturaPecaPx);
+                horizontais.add(new FaixaCota(Math.min(origemX, geometria.centroX()),
+                        Math.max(origemX, geometria.centroX()), linhaH));
+            }
+            Double linhaV = null;
+            if (elemento.getReferenciaVertical() != null && origemY != null
+                    && Math.abs(origemY - geometria.centroY()) > 3) {
+                linhaV = escolherLinhaLivre(false, geometria, origemY, geometrias, verticais,
+                        x0, larguraPecaPx);
+                verticais.add(new FaixaCota(Math.min(origemY, geometria.centroY()),
+                        Math.max(origemY, geometria.centroY()), linhaV));
+            }
+            String medida = medidaElemento(elemento);
+            double meiaLarguraRotulo = Math.max(16, medida != null ? medida.length() * 3.1 : 16);
+            double labelY = geometria.topoY() - 9;
+            while (interceptaFaixa(geometria.labelX() - meiaLarguraRotulo,
+                    geometria.labelX() + meiaLarguraRotulo, labelY, rotulos, 12)
+                    && labelY > y0 + 12) {
+                labelY -= 13;
+            }
+            labelY = limitar(labelY, y0 + 10, y0 + alturaPecaPx - 6);
+            rotulos.add(new FaixaCota(geometria.labelX() - meiaLarguraRotulo,
+                    geometria.labelX() + meiaLarguraRotulo, labelY));
+            layouts.add(new LayoutCotaElemento(origemX, origemY, linhaH, linhaV,
+                    referencia != null, labelY));
+        }
+        return layouts;
+    }
+
+    private Double origemHorizontal(ReferenciaHorizontal referencia, double inicio, double tamanho) {
+        if (referencia == null) return null;
+        return switch (referencia) {
+            case ESQUERDA -> inicio;
+            case DIREITA -> inicio + tamanho;
+            case CENTRO -> inicio + tamanho / 2;
+        };
+    }
+
+    private Double origemVertical(ReferenciaVertical referencia, double inicio, double tamanho) {
+        if (referencia == null) return null;
+        return switch (referencia) {
+            case SUPERIOR -> inicio;
+            case INFERIOR -> inicio + tamanho;
+            case CENTRO -> inicio + tamanho / 2;
+        };
+    }
+
+    private double escolherLinhaLivre(boolean horizontal, GeometriaElemento alvo, double origem,
+                                      List<GeometriaElemento> geometrias, List<FaixaCota> ocupadas,
+                                      double inicioPeca, double tamanhoPeca) {
+        double centro = horizontal ? alvo.centroY() : alvo.centroX();
+        double meio = horizontal ? alvo.meiaAltura() : alvo.meiaLargura();
+        double intervaloFim = horizontal ? alvo.centroX() : alvo.centroY();
+        double minimo = Math.min(origem, intervaloFim);
+        double maximo = Math.max(origem, intervaloFim);
+        double direcaoPreferida = centro < inicioPeca + tamanhoPeca / 2 ? 1 : -1;
+        double passo = horizontal ? 18 : 24;
+        double base = meio + passo;
+
+        for (int nivel = 0; nivel < 8; nivel++) {
+            for (int lado = 0; lado < 2; lado++) {
+                double direcao = lado == 0 ? direcaoPreferida : -direcaoPreferida;
+                double candidato = centro + direcao * (base + nivel * passo);
+                if (candidato < inicioPeca + 12 || candidato > inicioPeca + tamanhoPeca - 12) continue;
+                if (!interceptaElemento(horizontal, minimo, maximo, candidato, geometrias)
+                        && !interceptaFaixa(minimo, maximo, candidato, ocupadas, horizontal ? 15 : 22)) {
+                    return candidato;
+                }
+            }
+        }
+        return limitar(centro + direcaoPreferida * base,
+                inicioPeca + 12, inicioPeca + tamanhoPeca - 12);
+    }
+
+    private boolean interceptaElemento(boolean horizontal, double minimo, double maximo,
+                                       double coordenada, List<GeometriaElemento> geometrias) {
+        for (GeometriaElemento geometria : geometrias) {
+            if (geometria == null) continue;
+            double inicio = horizontal ? geometria.centroX() - geometria.meiaLargura() - 8
+                    : geometria.centroY() - geometria.meiaAltura() - 8;
+            double fim = horizontal ? geometria.centroX() + geometria.meiaLargura() + 8
+                    : geometria.centroY() + geometria.meiaAltura() + 8;
+            double centro = horizontal ? geometria.centroY() : geometria.centroX();
+            double meio = horizontal ? geometria.meiaAltura() : geometria.meiaLargura();
+            if (intervalosSobrepostos(minimo, maximo, inicio, fim)
+                    && Math.abs(coordenada - centro) <= meio + 10) return true;
+        }
+        return false;
+    }
+
+    private boolean interceptaFaixa(double minimo, double maximo, double coordenada,
+                                     List<FaixaCota> faixas, double afastamento) {
+        return faixas.stream().anyMatch(faixa -> intervalosSobrepostos(
+                minimo, maximo, faixa.inicio(), faixa.fim())
+                && Math.abs(coordenada - faixa.coordenada()) < afastamento);
+    }
+
+    private boolean intervalosSobrepostos(double inicioA, double fimA, double inicioB, double fimB) {
+        return inicioA <= fimB && inicioB <= fimA;
+    }
+
+    private double limitar(double valor, double minimo, double maximo) {
+        return Math.max(minimo, Math.min(maximo, valor));
+    }
+
+    private record GeometriaElemento(double posicaoX, double posicaoY, double centroX, double centroY,
+                                     double meiaLargura, double meiaAltura, double labelX, double topoY) {
+    }
+
+    private record LayoutCotaElemento(Double origemX, Double origemY, Double yLinhaHorizontal,
+                                      Double xLinhaVertical, boolean origemElemento, double labelY) {
+    }
+
+    private record FaixaCota(double inicio, double fim, double coordenada) {
+    }
+
+    private void desenharCotasElemento(StringBuilder svg, GeometriaElemento geometria,
+                                        LayoutCotaElemento layout, double escala) {
+        if (layout.yLinhaHorizontal() != null && layout.origemX() != null) {
+            double yLinha = layout.yLinhaHorizontal();
+            svg.append(linhaCotaElemento(layout.origemX(), yLinha,
+                    geometria.centroX(), yLinha, "horizontal"));
+            svg.append(linhaAuxiliarCota(geometria.centroX(), geometria.centroY(),
+                    geometria.centroX(), yLinha));
+            if (layout.origemElemento()) {
+                svg.append(linhaAuxiliarCota(layout.origemX(), layout.origemY(),
+                        layout.origemX(), yLinha));
+            }
+            double labelX = (layout.origemX() + geometria.centroX()) / 2;
+            double distanciaMm = Math.abs(layout.origemX() - geometria.centroX()) / escala;
+            svg.append(String.format(Locale.US,
+                    "<text class=\"rotulo-cota-elemento\" x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"9\" fill=\"#92400e\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" text-anchor=\"middle\">%s mm</text>",
+                    labelX, yLinha - 7, FONTE, formatarNumeroMm(distanciaMm)));
+        }
+
+        if (layout.xLinhaVertical() != null && layout.origemY() != null) {
+            double xLinha = layout.xLinhaVertical();
+            svg.append(linhaCotaElemento(xLinha, layout.origemY(),
+                    xLinha, geometria.centroY(), "vertical"));
+            svg.append(linhaAuxiliarCota(geometria.centroX(), geometria.centroY(),
+                    xLinha, geometria.centroY()));
+            if (layout.origemElemento()) {
+                svg.append(linhaAuxiliarCota(layout.origemX(), layout.origemY(),
+                        xLinha, layout.origemY()));
+            }
+            double labelY = (layout.origemY() + geometria.centroY()) / 2;
+            double distanciaMm = Math.abs(layout.origemY() - geometria.centroY()) / escala;
+            svg.append(String.format(Locale.US,
+                    "<text class=\"rotulo-cota-elemento\" x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"9\" fill=\"#92400e\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" text-anchor=\"start\">%s mm</text>",
+                    xLinha + 10, labelY + 3, FONTE, formatarNumeroMm(distanciaMm)));
+        }
+    }
+
+    private void desenharMarcaCentro(StringBuilder svg, double centroX, double centroY) {
+        svg.append(String.format(Locale.US,
+                "<path class=\"marca-centro-elemento\" d=\"M %.1f %.1f H %.1f M %.1f %.1f V %.1f\" fill=\"none\" stroke=\"#b45309\" stroke-width=\"0.9\"/>",
+                centroX - 3, centroY, centroX + 3, centroX, centroY - 3, centroY + 3));
+    }
+
+    private String linhaCotaElemento(double x1, double y1, double x2, double y2, String orientacao) {
+        return String.format(Locale.US,
+                "<line class=\"cota-elemento cota-elemento-%s\" x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\" stroke=\"#94a3b8\" stroke-width=\"1.3\" marker-start=\"url(#seta-inicio)\" marker-end=\"url(#seta-fim)\"/>",
+                orientacao, x1, y1, x2, y2);
+    }
+
+    private String linhaAuxiliarCota(double x1, double y1, double x2, double y2) {
+        return String.format(Locale.US,
+                "<line class=\"linha-auxiliar-cota\" x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\" stroke=\"#d97706\" stroke-width=\"0.9\" stroke-dasharray=\"3 2\"/>",
+                x1, y1, x2, y2);
+    }
 
     private void desenharCotasElemento(StringBuilder svg, double centroX, double centroY,
                                         double x0, double y0, double larguraPecaPx, double alturaPecaPx,
