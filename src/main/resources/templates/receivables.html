@@ -138,7 +138,7 @@
                 <th class="p-5 text-right">Recebido</th>
                 <th class="p-5 text-right">Pendente</th>
                 <th class="p-5 text-center">Data Recebimento</th>
-                <th class="p-5 text-center">Estágio</th>
+                <th class="p-5 text-center">Etapa Pgto.</th>
                 <th class="p-5 text-center">Status</th>
                 <th class="p-5 text-center">Ações</th>
             </tr>
@@ -171,18 +171,6 @@
                     <div class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5" th:text="${r.description}">Desc</div>
                     <div th:if="${r.paymentMethod != null}"
                          class="text-xs text-slate-400 dark:text-slate-500 font-bold mt-1" th:text="${r.paymentMethod}"></div>
-                    <span th:if="${r.paymentStage == 'entrada'}"
-                          class="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">
-                        ⬆ Entrada
-                    </span>
-                    <span th:if="${r.paymentStage == 'entrega'}"
-                          class="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400">
-                        ✅ Entrega
-                    </span>
-                    <span th:if="${r.paymentStage == null or r.paymentStage == 'unico'}"
-                          class="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
-                        ✅ Recebimento Total
-                    </span>
                     <span th:if="${r.referenceMonth != null}"
                           class="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 uppercase tracking-wide">
                         📅 Compet. <span th:text="${#temporals.format(r.referenceMonth, 'MM/yyyy')}"></span>
@@ -210,18 +198,18 @@
                 </td>
 
                 <td class="p-5 text-center">
-                    <span class="inline-block px-3 py-1 rounded-lg font-bold text-xs"
-                          th:classappend="${r.paymentStage == 'entrada' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                                  : (r.paymentStage == 'entrega' ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300'
-                                  : (r.paymentStage == 'recebimento_total' ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                                  : (r.paymentStage == 'competencia' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
-                                  : 'bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300')))}"
-                          th:text="${r.paymentStage == 'entrada' ? '⬆ Entrada'
-                                    : (r.paymentStage == 'entrega' ? '✅ Entrega'
-                                    : (r.paymentStage == 'recebimento_total' ? '✅ Recebimento Total'
-                                    : (r.paymentStage == 'competencia' ? '📅 Compet.'
-                                    : 'Único')))}">
-                    </span>
+                    <div th:if="${r.paymentStage == 'entrada'}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20 font-black text-xs uppercase tracking-wide whitespace-nowrap" title="Entrada / sinal do serviço">
+                        <i data-lucide="circle-dollar-sign" class="w-4 h-4"></i>
+                        <span>Entrada</span>
+                    </div>
+                    <div th:if="${r.paymentStage == 'entrega'}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:border-violet-500/20 font-black text-xs uppercase tracking-wide whitespace-nowrap" title="Saldo a receber na entrega / conclusão">
+                        <i data-lucide="package-check" class="w-4 h-4"></i>
+                        <span>Entrega</span>
+                    </div>
+                    <div th:unless="${r.paymentStage == 'entrada' or r.paymentStage == 'entrega'}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20 font-black text-xs uppercase tracking-wide whitespace-nowrap" title="Pagamento integral em uma única cobrança">
+                        <i data-lucide="badge-check" class="w-4 h-4"></i>
+                        <span>Total</span>
+                    </div>
                 </td>
 
                 <td class="p-5 text-center">
@@ -340,17 +328,17 @@
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Taxa Cartão (%)</label>
                         <input type="number" step="0.01" min="0" th:field="*{cardFeePercentage}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
                     </div>
-                    <div class="lg:col-span-2">
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <select id="uiDiscountType" onchange="calculateDiscountPreview()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none transition-all text-base">
-                                <option value="percent">% Porcentagem</option>
-                                <option value="money">R$ Dinheiro</option>
-                            </select>
-                            <input type="number" step="0.01" id="uiDiscountValue" onkeyup="calculateDiscountPreview()" onchange="calculateDiscountPreview()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none transition-all text-base">
-                        </div>
-                        <input type="hidden" th:field="*{discount}" id="realDiscountField">
-                    </div>
+<!--                    <div class="lg:col-span-2">-->
+<!--                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto</label>-->
+<!--                        <div class="grid grid-cols-2 gap-2">-->
+<!--                            <select id="uiDiscountType" onchange="calculateDiscountPreview()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none transition-all text-base">-->
+<!--                                <option value="percent">% Porcentagem</option>-->
+<!--                                <option value="money">R$ Dinheiro</option>-->
+<!--                            </select>-->
+<!--                            <input type="number" step="0.01" id="uiDiscountValue" onkeyup="calculateDiscountPreview()" onchange="calculateDiscountPreview()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none transition-all text-base">-->
+<!--                        </div>-->
+<!--                        <input type="hidden" th:field="*{discount}" id="realDiscountField">-->
+<!--                    </div>-->
 
                     <div class="lg:col-span-3 mb-2 hidden" id="discountPreviewAlert">
                         <div class="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400 px-4 py-3 rounded-xl flex items-center font-bold text-sm">
@@ -358,19 +346,52 @@
                         </div>
                     </div>
                     <div class="lg:col-span-3">
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Estágio de Pagamento *</label>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="radio" name="paymentStage" value="entrada" class="w-4 h-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">⬆ Entrada</span>
+                        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-3">
+                            <div>
+                                <label class="block text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Estágio do Pagamento *</label>
+                                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Indique qual parte do serviço esta conta representa.</p>
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500">Entrada • Entrega • Total</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <label class="block cursor-pointer group">
+                                <input type="radio" name="paymentStage" value="entrada" required class="peer sr-only">
+                                <div class="h-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 p-4 transition-all group-hover:border-blue-300 dark:group-hover:border-blue-500/40 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:ring-4 peer-checked:ring-blue-500/10 dark:peer-checked:border-blue-400 dark:peer-checked:bg-blue-500/10">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300 flex items-center justify-center shrink-0"><i data-lucide="circle-dollar-sign" class="w-5 h-5"></i></span>
+                                        <div class="min-w-0">
+                                            <span class="block text-sm font-black text-slate-900 dark:text-white">Entrada</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sinal / primeira parte</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">Use quando esta cobrança for a entrada para iniciar a produção ou o serviço.</p>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="radio" name="paymentStage" value="entrega" class="w-4 h-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">✅ Entrega</span>
+                            <label class="block cursor-pointer group">
+                                <input type="radio" name="paymentStage" value="entrega" required class="peer sr-only">
+                                <div class="h-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 p-4 transition-all group-hover:border-violet-300 dark:group-hover:border-violet-500/40 peer-checked:border-violet-500 peer-checked:bg-violet-50 peer-checked:ring-4 peer-checked:ring-violet-500/10 dark:peer-checked:border-violet-400 dark:peer-checked:bg-violet-500/10">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-10 h-10 rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300 flex items-center justify-center shrink-0"><i data-lucide="package-check" class="w-5 h-5"></i></span>
+                                        <div class="min-w-0">
+                                            <span class="block text-sm font-black text-slate-900 dark:text-white">Entrega</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Saldo final do serviço</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">Use para o valor restante que será cobrado na conclusão ou instalação.</p>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="radio" name="paymentStage" value="recebimento_total" class="w-4 h-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">✅ Recebimento Total</span>
+                            <label class="block cursor-pointer group">
+                                <input type="radio" name="paymentStage" value="recebimento_total" required checked class="peer sr-only">
+                                <div class="h-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 p-4 transition-all group-hover:border-emerald-300 dark:group-hover:border-emerald-500/40 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:ring-4 peer-checked:ring-emerald-500/10 dark:peer-checked:border-emerald-400 dark:peer-checked:bg-emerald-500/10">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300 flex items-center justify-center shrink-0"><i data-lucide="badge-check" class="w-5 h-5"></i></span>
+                                        <div class="min-w-0">
+                                            <span class="block text-sm font-black text-slate-900 dark:text-white">Total</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">100% em uma cobrança</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">Use quando esta conta representar o valor integral do serviço, sem divisão entre entrada e entrega.</p>
+                                </div>
                             </label>
                         </div>
                     </div>
@@ -589,33 +610,50 @@
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Taxa Cartão (%)</label>
                         <input type="number" step="0.01" name="cardFeePercentage" id="editCardFee" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto (R$)</label>
-                        <input type="number" step="0.01" name="discount" id="editDiscount" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
-                    </div>
+<!--                    <div>-->
+<!--                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Desconto (R$)</label>-->
+<!--                        <input type="number" step="0.01" name="discount" id="editDiscount" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">-->
+<!--                    </div>-->
 
                     <div>
                         <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">Valor Já Recebido (R$)</label>
                         <input type="number" step="0.01" name="receivedAmount" id="editReceivedAmount" class="w-full bg-slate-50 dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700/50 rounded-xl px-4 py-3 text-emerald-700 dark:text-emerald-400 font-black focus:border-emerald-500 outline-none transition-all text-base">
                     </div>
                     <div class="lg:col-span-3">
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Estágio de Pagamento *</label>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="radio" name="paymentStage" value="entrada" id="editPaymentStage_entrada" class="w-4 h-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">⬆ Entrada</span>
+                        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-3">
+                            <div>
+                                <label class="block text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Estágio do Pagamento *</label>
+                                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Altere somente se esta cobrança estiver vinculada ao estágio incorreto.</p>
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500">Entrada • Entrega • Total</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <label class="block cursor-pointer group">
+                                <input type="radio" name="paymentStage" value="entrada" id="editPaymentStage_entrada" required class="peer sr-only">
+                                <div class="h-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 p-4 transition-all group-hover:border-blue-300 dark:group-hover:border-blue-500/40 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:ring-4 peer-checked:ring-blue-500/10 dark:peer-checked:border-blue-400 dark:peer-checked:bg-blue-500/10">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300 flex items-center justify-center shrink-0"><i data-lucide="circle-dollar-sign" class="w-5 h-5"></i></span>
+                                        <div><span class="block text-sm font-black text-slate-900 dark:text-white">Entrada</span><span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sinal / primeira parte</span></div>
+                                    </div>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="radio" name="paymentStage" value="entrega" id="editPaymentStage_entrega" class="w-4 h-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">✅ Entrega</span>
+                            <label class="block cursor-pointer group">
+                                <input type="radio" name="paymentStage" value="entrega" id="editPaymentStage_entrega" required class="peer sr-only">
+                                <div class="h-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 p-4 transition-all group-hover:border-violet-300 dark:group-hover:border-violet-500/40 peer-checked:border-violet-500 peer-checked:bg-violet-50 peer-checked:ring-4 peer-checked:ring-violet-500/10 dark:peer-checked:border-violet-400 dark:peer-checked:bg-violet-500/10">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-10 h-10 rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300 flex items-center justify-center shrink-0"><i data-lucide="package-check" class="w-5 h-5"></i></span>
+                                        <div><span class="block text-sm font-black text-slate-900 dark:text-white">Entrega</span><span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Saldo final do serviço</span></div>
+                                    </div>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="radio" name="paymentStage" value="recebimento_total" id="editPaymentStage_recebimento" class="w-4 h-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">✅ Recebimento Total</span>
-                            </label>
-                            <label class="hidden flex items-center gap-3 cursor-pointer">
-                                <input type="radio" name="paymentStage" value="competencia" id="editPaymentStage_competencia" class="w-4 h-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">📅 Compet.</span>
+                            <label class="block cursor-pointer group">
+                                <input type="radio" name="paymentStage" value="recebimento_total" id="editPaymentStage_recebimento" required class="peer sr-only">
+                                <div class="h-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 p-4 transition-all group-hover:border-emerald-300 dark:group-hover:border-emerald-500/40 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:ring-4 peer-checked:ring-emerald-500/10 dark:peer-checked:border-emerald-400 dark:peer-checked:bg-emerald-500/10">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300 flex items-center justify-center shrink-0"><i data-lucide="badge-check" class="w-5 h-5"></i></span>
+                                        <div><span class="block text-sm font-black text-slate-900 dark:text-white">Total</span><span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">100% em uma cobrança</span></div>
+                                    </div>
+                                </div>
                             </label>
                         </div>
                     </div>
@@ -818,7 +856,7 @@
         }
 
         .receivables-table tbody td:nth-child(9)::before {
-            content: "Estágio";
+            content: "Etapa Pgto.";
         }
 
         .receivables-table tbody td:nth-child(10)::before {
@@ -1250,6 +1288,15 @@
         }
     }
 
+    function normalizePaymentStage(stage) {
+        const value = (stage || '').toString().trim().toLowerCase();
+        if (value === 'entrada') return 'entrada';
+        if (value === 'entrega') return 'entrega';
+        // Compatibilidade com registros antigos: null, vazio, "unico", "competencia" e "recebimento_total"
+        // passam a ser tratados visualmente como pagamento Total.
+        return 'recebimento_total';
+    }
+
     function openEditModal(id, description, total, dueDate, installments, notes, client, workOrder, receivedAmount, referenceMonth, paymentStageArg){
         document.getElementById("editForm").action = "/receivables/edit/" + id;
         document.getElementById("editDescription").value = description || "";
@@ -1280,8 +1327,8 @@
             document.getElementById("editWorkOrderDisplay").value = "";
         }
 
-        const paymentStage = paymentStageArg || 'unico';
-        document.querySelectorAll('input[name="paymentStage"]').forEach(radio => {
+        const paymentStage = normalizePaymentStage(paymentStageArg);
+        document.querySelectorAll('#editModal input[name="paymentStage"]').forEach(radio => {
             radio.checked = radio.value === paymentStage;
         });
 

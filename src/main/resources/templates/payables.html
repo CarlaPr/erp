@@ -483,15 +483,6 @@
 
             <form th:action="@{/payables/save}" th:object="${newPayable}" method="POST" class="p-8 space-y-6">
 
-                <datalist id="costCenterOptions">
-                    <option value="Administrativo"></option>
-                    <option value="Comercial"></option>
-                    <option value="Produção"></option>
-                    <option value="Financeiro"></option>
-                    <option value="Obra/O.S."></option>
-                    <option value="Loja"></option>
-                </datalist>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2">
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Descrição *</label>
@@ -543,11 +534,6 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Núm. Documento</label>
-                        <input type="text" th:field="*{documentNumber}" placeholder="NF, Recibo..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
-                    </div>
-
-                    <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Forma de Pagamento</label>
                         <select th:field="*{paymentMethod}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
                             <option value="PIX">PIX</option>
@@ -559,78 +545,118 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Tipo da Despesa</label>
-                        <select th:field="*{expenseType}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
-                            <option value="">Automático (pela categoria)</option>
-                            <option value="FIXA">Fixa</option>
-                            <option value="VARIAVEL">Variável</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Natureza da Despesa</label>
-                        <select th:field="*{expenseNature}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
-                            <option value="">Selecione...</option>
-                            <option value="OPERACIONAL">Operacional</option>
-                            <option value="ADMINISTRATIVA">Administrativa</option>
-                            <option value="FINANCEIRA">Financeira</option>
-                            <option value="TRIBUTARIA">Tributária</option>
-                            <option value="PESSOAL">Pessoal</option>
-                            <option value="INVESTIMENTO">Investimento</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Centro de Custo</label>
-                        <input type="text" th:field="*{costCenter}" list="costCenterOptions" placeholder="Ex: Administrativo, Produção, O.S. 123" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
-                    </div>
-
-                    <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Competência</label>
                         <input type="month" id="competenciaMonth" onchange="syncCompetencia('competenciaMonth','competenciaHidden')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-rose-500 outline-none transition-all text-base">
                         <input type="hidden" id="competenciaHidden" th:field="*{competencia}">
                     </div>
 
-                    <div class="lg:col-span-3 flex items-center gap-3 border-t border-slate-100 dark:border-slate-800 pt-6">
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" id="recurrenceEnabled" name="recurrenceEnabled" value="true" onchange="toggleRecurrencePanel('recurrencePanel', this.checked)" class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 accent-rose-600">
-                            <span class="text-base font-bold text-slate-700 dark:text-slate-300">Conta Recorrente</span>
+                    <div class="lg:col-span-3 pt-2">
+                        <label for="recurrenceEnabled" class="group flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900/80 dark:to-slate-800/50 p-4 sm:p-5 cursor-pointer hover:border-rose-300 dark:hover:border-rose-500/40 hover:shadow-sm transition-all">
+                            <div class="flex items-center gap-4 min-w-0">
+                                <span class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-100 dark:border-rose-500/20">
+                                    <i data-lucide="repeat-2" class="w-5 h-5"></i>
+                                </span>
+                                <span class="min-w-0">
+                                    <span class="block text-sm sm:text-base font-black text-slate-800 dark:text-white">Conta recorrente</span>
+                                    <span class="block text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">Gere automaticamente os próximos vencimentos desta despesa.</span>
+                                </span>
+                            </div>
+                            <span class="relative inline-flex items-center shrink-0">
+                                <input type="checkbox" id="recurrenceEnabled" name="recurrenceEnabled" value="true" onchange="toggleRecurrencePanel('recurrencePanel', this.checked)" class="peer sr-only">
+                                <span class="w-12 h-7 rounded-full bg-slate-300 dark:bg-slate-700 peer-checked:bg-rose-600 transition-colors shadow-inner"></span>
+                                <span class="absolute left-1 top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5"></span>
+                            </span>
                         </label>
                     </div>
 
-                    <div id="recurrencePanel" class="hidden lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Frequência</label>
-                            <select name="recurrenceFrequency" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none text-base">
-                                <option value="DAILY">Diária</option>
-                                <option value="WEEKLY">Semanal</option>
-                                <option value="BIWEEKLY">Quinzenal</option>
-                                <option value="MONTHLY" selected>Mensal</option>
-                                <option value="BIMONTHLY">Bimestral</option>
-                                <option value="QUARTERLY">Trimestral</option>
-                                <option value="SEMIANNUAL">Semestral</option>
-                                <option value="ANNUAL">Anual</option>
-                            </select>
+                    <div id="recurrencePanel" class="hidden lg:col-span-3 overflow-hidden rounded-2xl border border-rose-200/80 dark:border-rose-500/20 bg-white dark:bg-slate-900/50 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 bg-rose-50/80 dark:bg-rose-500/10 border-b border-rose-100 dark:border-rose-500/20">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 flex items-center justify-center shadow-sm border border-rose-100 dark:border-rose-500/20">
+                                    <i data-lucide="calendar-sync" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-black text-slate-800 dark:text-white">Configuração da recorrência</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Escolha a frequência e quando a série deve terminar.</p>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Duração</label>
-                            <div class="flex flex-wrap items-center gap-5">
-                                <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                    <input type="radio" name="recurrenceEndType" value="COUNT" checked onchange="toggleRecurrenceEndType(this.value)" class="accent-rose-600"> Quantidade de repetições
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                    <input type="radio" name="recurrenceEndType" value="DATE" onchange="toggleRecurrenceEndType(this.value)" class="accent-rose-600"> Até uma data
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                    <input type="radio" name="recurrenceEndType" value="INFINITE" onchange="toggleRecurrenceEndType(this.value)" class="accent-rose-600"> Infinita (até cancelamento)
-                                </label>
+                        <div class="p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+                            <div class="lg:col-span-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                                    </span>
+                                    <label class="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Frequência</label>
+                                </div>
+                                <select name="recurrenceFrequency" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 text-sm font-bold transition-colors">
+                                    <option value="DAILY">Diária</option>
+                                    <option value="WEEKLY">Semanal</option>
+                                    <option value="BIWEEKLY">Quinzenal</option>
+                                    <option value="MONTHLY" selected>Mensal</option>
+                                    <option value="BIMONTHLY">Bimestral</option>
+                                    <option value="QUARTERLY">Trimestral</option>
+                                    <option value="SEMIANNUAL">Semestral</option>
+                                    <option value="ANNUAL">Anual</option>
+                                </select>
+                                <p class="mt-2 text-[11px] leading-relaxed text-slate-400 dark:text-slate-500">A primeira conta usa o vencimento informado acima; as próximas seguem esta frequência.</p>
                             </div>
-                            <div class="flex gap-4 mt-3">
-                                <input type="number" min="1" name="recurrenceCount" id="recurrenceCount" value="12" placeholder="Nº de vezes" class="w-40 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none text-sm">
-                                <input type="date" name="recurrenceEndDate" id="recurrenceEndDate" disabled class="w-48 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white outline-none text-sm">
+
+                            <div class="lg:col-span-8 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                                        <i data-lucide="flag" class="w-3.5 h-3.5"></i>
+                                    </span>
+                                    <span class="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Término da série</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                    <label class="relative cursor-pointer">
+                                        <input type="radio" name="recurrenceEndType" value="COUNT" checked onchange="toggleRecurrenceEndType(this.value)" class="peer sr-only">
+                                        <span class="flex h-full items-start gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 peer-checked:border-rose-500 peer-checked:ring-2 peer-checked:ring-rose-500/10 transition-all">
+                                            <span class="mt-0.5 w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600 peer-checked:border-rose-500 flex items-center justify-center shrink-0"><span class="w-2 h-2 rounded-full bg-rose-500 opacity-0 peer-checked:opacity-100"></span></span>
+                                            <span><strong class="block text-xs font-black text-slate-700 dark:text-slate-200">Quantidade</strong><small class="block mt-0.5 text-[10px] leading-tight text-slate-400">Ex.: 12 lançamentos</small></span>
+                                        </span>
+                                    </label>
+                                    <label class="relative cursor-pointer">
+                                        <input type="radio" name="recurrenceEndType" value="DATE" onchange="toggleRecurrenceEndType(this.value)" class="peer sr-only">
+                                        <span class="flex h-full items-start gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 peer-checked:border-rose-500 peer-checked:ring-2 peer-checked:ring-rose-500/10 transition-all">
+                                            <span class="mt-0.5 w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600 peer-checked:border-rose-500 flex items-center justify-center shrink-0"><span class="w-2 h-2 rounded-full bg-rose-500 opacity-0 peer-checked:opacity-100"></span></span>
+                                            <span><strong class="block text-xs font-black text-slate-700 dark:text-slate-200">Data final</strong><small class="block mt-0.5 text-[10px] leading-tight text-slate-400">Gerar até uma data</small></span>
+                                        </span>
+                                    </label>
+                                    <label class="relative cursor-pointer">
+                                        <input type="radio" name="recurrenceEndType" value="INFINITE" onchange="toggleRecurrenceEndType(this.value)" class="peer sr-only">
+                                        <span class="flex h-full items-start gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 peer-checked:border-rose-500 peer-checked:ring-2 peer-checked:ring-rose-500/10 transition-all">
+                                            <span class="mt-0.5 w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600 peer-checked:border-rose-500 flex items-center justify-center shrink-0"><span class="w-2 h-2 rounded-full bg-rose-500 opacity-0 peer-checked:opacity-100"></span></span>
+                                            <span><strong class="block text-xs font-black text-slate-700 dark:text-slate-200">Sem término</strong><small class="block mt-0.5 text-[10px] leading-tight text-slate-400">Até cancelar a série</small></span>
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div id="recurrenceCountWrap">
+                                        <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Quantidade de lançamentos</label>
+                                        <div class="relative">
+                                            <i data-lucide="list-ordered" class="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                                            <input type="number" min="1" name="recurrenceCount" id="recurrenceCount" value="12" placeholder="Ex.: 12" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-rose-500 text-sm font-bold transition-colors">
+                                        </div>
+                                    </div>
+                                    <div id="recurrenceEndDateWrap" class="hidden">
+                                        <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Última data da recorrência</label>
+                                        <div class="relative">
+                                            <i data-lucide="calendar" class="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                                            <input type="date" name="recurrenceEndDate" id="recurrenceEndDate" disabled class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-rose-500 text-sm font-bold transition-colors">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <p class="text-xs text-slate-400 mt-2">As parcelas geradas são registros independentes, vinculados por uma série. Você pode editar ou excluir cada uma isoladamente, ou em lote, depois de criadas.</p>
+                        </div>
+
+                        <div class="mx-5 mb-5 flex items-start gap-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-3.5">
+                            <i data-lucide="info" class="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0"></i>
+                            <p class="text-[11px] sm:text-xs leading-relaxed text-blue-700 dark:text-blue-300">Cada vencimento será criado como um registro independente, mas todos permanecerão vinculados à mesma série recorrente para facilitar futuras edições ou cancelamentos.</p>
                         </div>
                     </div>
 
@@ -788,10 +814,10 @@
                         <input type="date" name="dueDate" id="editDueDate" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Núm. Documento</label>
-                        <input type="text" name="documentNumber" id="editDocumentNumber" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
-                    </div>
+                    <input type="hidden" name="documentNumber" id="editDocumentNumber">
+                    <input type="hidden" name="expenseType" id="editExpenseType">
+                    <input type="hidden" name="expenseNature" id="editExpenseNature">
+                    <input type="hidden" name="costCenter" id="editCostCenter">
 
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Forma de Pagamento</label>
@@ -802,33 +828,6 @@
                             <option value="CASH">Dinheiro</option>
                             <option value="TRANSFER">Transferência</option>
                         </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Tipo da Despesa</label>
-                        <select name="expenseType" id="editExpenseType" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
-                            <option value="">Automático (pela categoria)</option>
-                            <option value="FIXA">Fixa</option>
-                            <option value="VARIAVEL">Variável</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Natureza da Despesa</label>
-                        <select name="expenseNature" id="editExpenseNature" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
-                            <option value="">Selecione...</option>
-                            <option value="OPERACIONAL">Operacional</option>
-                            <option value="ADMINISTRATIVA">Administrativa</option>
-                            <option value="FINANCEIRA">Financeira</option>
-                            <option value="TRIBUTARIA">Tributária</option>
-                            <option value="PESSOAL">Pessoal</option>
-                            <option value="INVESTIMENTO">Investimento</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Centro de Custo</label>
-                        <input type="text" name="costCenter" id="editCostCenter" list="costCenterOptions" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
                     </div>
 
                     <div>
@@ -849,14 +848,34 @@
                         <input type="number" step="0.01" name="paidAmount" id="editPaidAmount" class="w-full bg-slate-50 dark:bg-slate-900 border border-emerald-300 rounded-xl px-4 py-3 text-emerald-700 font-black outline-none">
                     </div>
 
-                    <div id="editScopePanel" class="hidden lg:col-span-3 bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 rounded-xl p-5">
-                        <p class="text-sm font-bold text-amber-800 dark:text-amber-400 mb-3 flex items-center gap-2"><i data-lucide="repeat" class="w-4 h-4"></i> Esta conta faz parte de uma série recorrente</p>
-                        <div class="flex flex-wrap gap-5">
-                            <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                <input type="radio" name="editScope" value="single" checked class="accent-brand-600"> Aplicar somente a este registro
+                    <div id="editScopePanel" class="hidden lg:col-span-3 overflow-hidden rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/5">
+                        <div class="flex items-start gap-3 p-4 sm:p-5 border-b border-amber-200/70 dark:border-amber-500/20">
+                            <span class="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-500/20 shadow-sm">
+                                <i data-lucide="repeat-2" class="w-4 h-4"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-black text-amber-900 dark:text-amber-300">Esta conta faz parte de uma série recorrente</p>
+                                <p class="text-xs text-amber-700/80 dark:text-amber-400/80 mt-1 leading-relaxed">Escolha o alcance das alterações antes de salvar.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 sm:p-5">
+                            <label class="cursor-pointer">
+                                <span class="flex items-start gap-3 h-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 hover:border-brand-300 dark:hover:border-cyan-500/40 transition-colors">
+                                    <input type="radio" name="editScope" value="single" checked class="mt-0.5 w-4 h-4 accent-brand-600 shrink-0">
+                                    <span>
+                                        <strong class="block text-sm font-black text-slate-800 dark:text-white">Somente este lançamento</strong>
+                                        <small class="block mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">Altera apenas esta conta, sem modificar os demais vencimentos da série.</small>
+                                    </span>
+                                </span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                <input type="radio" name="editScope" value="series" class="accent-brand-600"> Aplicar a todos os registros da série (não pagos)
+                            <label class="cursor-pointer">
+                                <span class="flex items-start gap-3 h-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 hover:border-brand-300 dark:hover:border-cyan-500/40 transition-colors">
+                                    <input type="radio" name="editScope" value="series" class="mt-0.5 w-4 h-4 accent-brand-600 shrink-0">
+                                    <span>
+                                        <strong class="block text-sm font-black text-slate-800 dark:text-white">Toda a série não paga</strong>
+                                        <small class="block mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">Replica as alterações para os lançamentos vinculados que ainda não foram pagos.</small>
+                                    </span>
+                                </span>
                             </label>
                         </div>
                     </div>
@@ -1162,12 +1181,24 @@
 
     function toggleRecurrencePanel(panelId, show) {
         const panel = document.getElementById(panelId);
-        if (show) panel.classList.remove('hidden'); else panel.classList.add('hidden');
+        if (!panel) return;
+        panel.classList.toggle('hidden', !show);
+        if (show) {
+            const selectedEndType = document.querySelector('input[name="recurrenceEndType"]:checked');
+            toggleRecurrenceEndType(selectedEndType ? selectedEndType.value : 'COUNT');
+            if (window.lucide) lucide.createIcons();
+        }
     }
 
     function toggleRecurrenceEndType(value) {
-        document.getElementById('recurrenceCount').disabled = (value !== 'COUNT');
-        document.getElementById('recurrenceEndDate').disabled = (value !== 'DATE');
+        const countInput = document.getElementById('recurrenceCount');
+        const dateInput = document.getElementById('recurrenceEndDate');
+        const countWrap = document.getElementById('recurrenceCountWrap');
+        const dateWrap = document.getElementById('recurrenceEndDateWrap');
+        if (countInput) countInput.disabled = (value !== 'COUNT');
+        if (dateInput) dateInput.disabled = (value !== 'DATE');
+        if (countWrap) countWrap.classList.toggle('hidden', value !== 'COUNT');
+        if (dateWrap) dateWrap.classList.toggle('hidden', value !== 'DATE');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
