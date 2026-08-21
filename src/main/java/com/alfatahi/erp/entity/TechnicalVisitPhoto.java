@@ -18,6 +18,11 @@ public class TechnicalVisitPhoto {
     @JsonIgnore
     private TechnicalVisit technicalVisit;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "opening_id")
+    @JsonIgnore
+    private TechnicalVisitOpening opening;
+
     @Column(name = "file_name", nullable = false)
     private String fileName;
     @Column(name = "content_type", nullable = false, length = 100)
@@ -38,6 +43,8 @@ public class TechnicalVisitPhoto {
     public UUID getId() { return id; }
     public TechnicalVisit getTechnicalVisit() { return technicalVisit; }
     public void setTechnicalVisit(TechnicalVisit value) { this.technicalVisit = value; }
+    public TechnicalVisitOpening getOpening() { return opening; }
+    public void setOpening(TechnicalVisitOpening value) { this.opening = value; }
     public String getFileName() { return fileName; }
     public void setFileName(String value) { this.fileName = value; }
     public String getContentType() { return contentType; }

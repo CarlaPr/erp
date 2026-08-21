@@ -38,6 +38,9 @@ public class TechnicalVisit {
     @Column(nullable = false, length = 20)
     private String status = "AGENDADA";
 
+    @Column(name = "completed_date")
+    private LocalDate completedDate;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -69,6 +72,9 @@ public class TechnicalVisit {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public LocalDate getCompletedDate() { return completedDate; }
+    public void setCompletedDate(LocalDate completedDate) { this.completedDate = completedDate; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

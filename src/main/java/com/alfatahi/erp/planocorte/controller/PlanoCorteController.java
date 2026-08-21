@@ -358,6 +358,20 @@ public class PlanoCorteController {
         return "redirect:/cut-plans/" + id;
     }
 
+    @PostMapping("/{id}/itens/{itemId}/bate-fecha")
+    public String adicionarBateFecha(@PathVariable Long id, @PathVariable Long itemId,
+                                      @RequestParam String lado,
+                                      @RequestParam(required = false) BigDecimal distanciaBaseMm,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            planoCorteService.adicionarBateFecha(id, itemId, lado, distanciaBaseMm);
+            redirectAttributes.addFlashAttribute("sucesso", "Bate e fecha adicionado à folha.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/cut-plans/" + id;
+    }
+
     @PostMapping("/{id}/finalizar")
     public String finalizar(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         planoCorteService.finalizar(id);

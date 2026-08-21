@@ -40,6 +40,7 @@ import java.util.UUID;
 @Transactional
 public class TechnicalVisitDataService {
     private static final long MAX_PHOTO_BYTES = 12L * 1024 * 1024;
+    private static final long MAX_VIDEO_BYTES = 12L * 1024 * 1024;
     private static final long MAX_STORED_PHOTO_BYTES = 2L * 1024 * 1024;
     private static final int MAX_PHOTO_DIMENSION = 1920;
     private static final long MAX_PHOTO_PIXELS = 40_000_000L;
@@ -69,7 +70,7 @@ public class TechnicalVisitDataService {
         visit.setVisitDate(request.getVisitDate() != null ? request.getVisitDate() : LocalDate.now());
         visit.setVisitTime(request.getVisitTime());
         visit.setNotes(request.getNotes());
-        visit.setStatus(normalizeStatus(request.getStatus()));
+        applyStatus(visit, request.getStatus());
         return visitRepository.saveAndFlush(visit).getId();
     }
 
@@ -78,7 +79,7 @@ public class TechnicalVisitDataService {
         if (request.getVisitDate() != null) visit.setVisitDate(request.getVisitDate());
         visit.setVisitTime(request.getVisitTime());
         visit.setNotes(request.getNotes());
-        visit.setStatus(normalizeStatus(request.getStatus()));
+        applyStatus(visit, request.getStatus());
         visitRepository.save(visit);
     }
 
@@ -137,17 +138,36 @@ public class TechnicalVisitDataService {
     }
 
     public UUID addPhoto(UUID visitId, MultipartFile file, String caption) throws IOException {
+        return addMedia(visitId, file, caption, null);
+    }
+
+    public UUID addMedia(UUID visitId, MultipartFile file, String caption, UUID openingId) throws IOException {
         TechnicalVisit visit = findVisit(visitId);
-        if (file == null || file.isEmpty()) throw new IllegalArgumentException("Selecione uma foto.");
-        if (file.getSize() > MAX_PHOTO_BYTES) throw new IllegalArgumentException("A foto deve ter no máximo 12 MB.");
+        if (file == null || file.isEmpty()) throw new IllegalArgumentException("Selecione uma foto ou vídeo.");
         String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("O arquivo enviado precisa ser uma imagem.");
+        boolean image = contentType != null && contentType.startsWith("image/");
+        boolean video = isSupportedVideo(contentType);
+        if (!image && !video) {
+            throw new IllegalArgumentException("Use uma imagem ou vídeo MP4, WebM ou MOV.");
         }
-        ProcessedPhoto processed = processPhoto(file);
+        if (image && file.getSize() > MAX_PHOTO_BYTES) {
+            throw new IllegalArgumentException("A foto deve ter no máximo 12 MB.");
+        }
+        if (video && file.getSize() > MAX_VIDEO_BYTES) {
+            throw new IllegalArgumentException("O vídeo deve ter no máximo 12 MB para não sobrecarregar o sistema.");
+        }
+        TechnicalVisitOpening opening = null;
+        if (openingId != null) {
+            opening = openingRepository.findByIdAndTechnicalVisitId(openingId, visitId)
+                    .orElseThrow(() -> new IllegalArgumentException("O vão selecionado não pertence a esta visita."));
+        }
+        ProcessedPhoto processed = image
+                ? processPhoto(file)
+                : new ProcessedPhoto(file.getBytes(), contentType);
         TechnicalVisitPhoto photo = new TechnicalVisitPhoto();
         photo.setTechnicalVisit(visit);
-        photo.setFileName(optimizedFileName(file.getOriginalFilename()));
+        photo.setOpening(opening);
+        photo.setFileName(image ? optimizedFileName(file.getOriginalFilename()) : safeOriginalFileName(file.getOriginalFilename()));
         photo.setContentType(processed.contentType());
         photo.setFileSize((long) processed.content().length);
         photo.setCaption(trimToNull(caption));
@@ -195,12 +215,15 @@ public class TechnicalVisitDataService {
                                 f.getReferenceVertical(), f.getDistanceVerticalMm(), f.getDiameterMm(), f.getWidthMm(),
                                 f.getHeightMm(), f.getDepthMm(), f.getRadiusMm(), f.getCorner(), f.getNotes())).toList())).toList();
         List<TechnicalVisitDetailsDto.PhotoDto> photos = photoRepository.findByTechnicalVisitIdOrderByCreatedAtAsc(visit.getId()).stream()
-                .map(p -> new TechnicalVisitDetailsDto.PhotoDto(p.getId(), p.getFileName(), p.getContentType(), p.getFileSize(), p.getCaption())).toList();
+                .map(p -> new TechnicalVisitDetailsDto.PhotoDto(p.getId(), p.getFileName(), p.getContentType(), p.getFileSize(), p.getCaption(),
+                        p.getOpening() != null ? p.getOpening().getId() : null,
+                        p.getOpening() != null ? p.getOpening().getName() : null,
+                        p.getContentType() != null && p.getContentType().startsWith("video/"))).toList();
         return new TechnicalVisitDetailsDto(visit.getId(), client != null ? client.getId() : null,
                 client != null ? client.getName() : "Cliente não informado", address,
                 visit.getQuote() != null ? visit.getQuote().getId() : null,
                 visit.getQuote() != null ? visit.getQuote().getNumber() : null,
-                visit.getVisitDate(), visit.getVisitTime(), visit.getNotes(), visit.getStatus(), openings, photos);
+                visit.getVisitDate(), visit.getVisitTime(), visit.getNotes(), visit.getStatus(), visit.getCompletedDate(), openings, photos);
     }
 
     private ProcessedPhoto processPhoto(MultipartFile file) throws IOException {
@@ -303,6 +326,17 @@ public class TechnicalVisitDataService {
         return (baseName.isBlank() ? "foto-visita" : baseName) + ".jpg";
     }
 
+    private boolean isSupportedVideo(String contentType) {
+        return Set.of("video/mp4", "video/webm", "video/quicktime").contains(contentType);
+    }
+
+    private String safeOriginalFileName(String originalName) {
+        if (originalName == null || originalName.isBlank()) return "video-visita.mp4";
+        int slash = Math.max(originalName.lastIndexOf('/'), originalName.lastIndexOf('\\'));
+        String name = slash >= 0 ? originalName.substring(slash + 1) : originalName;
+        return name.replaceAll("[^a-zA-Z0-9._ -]", "_");
+    }
+
     private record ProcessedPhoto(byte[] content, String contentType) {
     }
 
@@ -331,6 +365,15 @@ public class TechnicalVisitDataService {
         String normalized = value == null || value.isBlank() ? "AGENDADA" : value.toUpperCase();
         if (!VALID_STATUSES.contains(normalized)) throw new IllegalArgumentException("Status da visita inválido.");
         return normalized;
+    }
+    private void applyStatus(TechnicalVisit visit, String value) {
+        String normalized = normalizeStatus(value);
+        if ("CONCLUIDA".equals(normalized)) {
+            if (visit.getCompletedDate() == null) visit.setCompletedDate(LocalDate.now());
+        } else {
+            visit.setCompletedDate(null);
+        }
+        visit.setStatus(normalized);
     }
     private String trimToNull(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private String joinAddress(String address, String city) {

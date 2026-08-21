@@ -32,8 +32,6 @@ public class ParametroServicoService {
                 .orElseThrow(() -> new NoSuchElementException("Parâmetro não encontrado: " + id));
     }
 
-
-
     @Transactional(readOnly = true)
     public BigDecimal valor(CategoriaServico categoria, String codigo, BigDecimal valorPadrao) {
         return parametroServicoRepository.findByCategoriaAndCodigoAndAtivoTrue(categoria, codigo)

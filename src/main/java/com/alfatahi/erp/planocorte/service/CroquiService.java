@@ -880,7 +880,6 @@ public class CroquiService {
                 "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"1.6\"/>",
                 cx, cy, raio));
 
-        if (furacao.getDiametroMm() != null) {
         String rotuloPermitido = rotuloFuracaoPermitido(furacao);
         if (rotuloPermitido != null) {
             svg.append(String.format(Locale.US,
@@ -889,6 +888,7 @@ public class CroquiService {
         }
 
 
+        if (furacao.getDiametroMm() != null && !ocultarDiametroNoCroqui(furacao)) {
             svg.append(String.format(Locale.US,
                     "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"9\" fill=\"#94a3b8\" text-anchor=\"middle\">Ø%smm</text>",
                     cx, cy + raio + 12, FONTE, formatarNumero(furacao.getDiametroMm())));
@@ -931,12 +931,22 @@ public class CroquiService {
         }
         String descricao = furacao.getDescricao();
         return switch (furacao.getTipo()) {
+            case ROLDANA -> "ROLDANA";
             case PUXADOR -> descricao != null && descricao.toLowerCase(Locale.ROOT).contains("simples")
                     ? "PUXADOR SIMPLES" : null;
             case FECHADURA -> descricao != null && !descricao.isBlank() ? "FECHADURA" : null;
             case BATE_FECHA -> descricao != null && !descricao.isBlank() ? "BATE E FECHA" : null;
             default -> null;
         };
+    }
+
+    private boolean ocultarDiametroNoCroqui(Furacao furacao) {
+        return furacao.getTipo() == TipoFuracao.ROLDANA
+                || furacao.getTipo() == TipoFuracao.FECHADURA
+                || furacao.getTipo() == TipoFuracao.BATE_FECHA
+                || (furacao.getTipo() == TipoFuracao.PUXADOR
+                    && furacao.getDescricao() != null
+                    && furacao.getDescricao().toLowerCase(Locale.ROOT).contains("simples"));
     }
 
     private void desenharElemento(StringBuilder svg, ElementoTecnico elemento, GeometriaElemento geometria,
@@ -1131,10 +1141,15 @@ public class CroquiService {
             if (referenciaIndice != null && referenciaIndice >= 0 && referenciaIndice < geometrias.size()) {
                 referencia = geometrias.get(referenciaIndice);
             }
-            Double origemX = referencia != null ? referencia.centroX()
-                    : origemHorizontal(elemento.getReferenciaHorizontal(), x0, larguraPecaPx);
-            Double origemY = referencia != null ? referencia.centroY()
-                    : origemVertical(elemento.getReferenciaVertical(), y0, alturaPecaPx);
+            Double origemX;
+            Double origemY;
+            if (referencia != null) {
+                origemX = referencia.centroX();
+                origemY = referencia.centroY();
+            } else {
+                origemX = origemHorizontal(elemento.getReferenciaHorizontal(), x0, larguraPecaPx);
+                origemY = origemVertical(elemento.getReferenciaVertical(), y0, alturaPecaPx);
+            }
 
             Double linhaH = null;
             if (elemento.getReferenciaHorizontal() != null && origemX != null
@@ -1365,6 +1380,9 @@ public class CroquiService {
     }
 
     private String medidaElemento(ElementoTecnico elemento) {
+        if (elemento.getRotuloCroqui() != null) {
+            return elemento.getRotuloCroqui().isBlank() ? null : elemento.getRotuloCroqui();
+        }
         return switch (elemento.getTipo()) {
             case FURO -> "Ø" + (elemento.getDiametroMm() != null ? formatarNumero(elemento.getDiametroMm()) : "?") + "mm";
             case RECORTE, RASGO ->

@@ -361,15 +361,6 @@
                     </p>
                 </div>
             </div>
-            <div data-service-section="JANELA_PADRAO" class="rounded-xl border border-fuchsia-200 dark:border-fuchsia-500/20 bg-fuchsia-50 dark:bg-fuchsia-500/10 p-4">
-                <label class="form-label text-fuchsia-800 dark:text-fuchsia-300">Distância do Centro dos dois furos do bate-fecha até a base da janela (mm)</label>
-                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <input type="number" min="26" step="0.01" th:field="*{alturaBateFechaMm}" placeholder="300" class="form-input sm:max-w-[220px]">
-                    <div class="text-[11px] text-fuchsia-700 dark:text-fuchsia-300 leading-relaxed">
-                        Ex.: <b>300 mm</b> mede da base até o centro geométrico entre os dois furos. Se ficar em branco, será usado 300 mm.
-                    </div>
-                </div>
-            </div>
             <div data-service-section="PORTA_ABRIR">
                 <label class="form-label">
                     Lado dos recortes da Porta de Abrir
@@ -616,7 +607,7 @@
         </span>
                             <span class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide text-violet-600 dark:text-violet-300 shrink-0">Abrir <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i></span>
                         </summary>
-                        <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos(id=${plano.id},itemId=${item.id})}" th:object="${elementoForm}" method="post" class="border-t border-violet-200 dark:border-violet-500/20 bg-white dark:bg-[#0D1524] p-4 sm:p-5 space-y-4">
+                        <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos(id=${plano.id},itemId=${item.id})}" th:object="${elementoForm}" method="post" th:attr="data-fixed-glass=${item.tipoFolha != null and item.tipoFolha.name() == 'FIXA'}" class="fixed-glass-element-form border-t border-violet-200 dark:border-violet-500/20 bg-white dark:bg-[#0D1524] p-4 sm:p-5 space-y-4">
                             <div class="flex items-start gap-2 rounded-lg bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20 px-3 py-2"><i data-lucide="info" class="w-3.5 h-3.5 text-violet-500 shrink-0 mt-0.5"></i><p class="text-[11px] text-violet-700 dark:text-violet-300"><strong>Informe o tipo e a posição.</strong> Para recortes encostados na borda, use uma posição rápida.</p></div>
                             <input type="hidden" th:field="*{ancoragem}" class="campo-ancoragem">
                             <div class="grid sm:grid-cols-2 gap-4">
@@ -978,7 +969,7 @@
                     <div th:if="${item.observacoes}" class="mb-3 flex items-start gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 px-3 py-2"><i data-lucide="message-square-text" class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5"></i><p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed"><span class="font-black text-slate-500 dark:text-slate-300">Obs.:</span> <span th:text="${item.observacoes}">Observação</span></p></div>
                     <details th:if="${plano.status.name() != 'FINALIZADO' and item.tipoFolha.name() != 'FIXA' and (item.categoria.name() == 'PORTA_CORRER' or item.categoria.name() == 'PORTA_ABRIR' or item.categoria.name() == 'JANELA_PADRAO' or item.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="group mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 overflow-hidden">
                         <summary class="cursor-pointer select-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
-                            <span class="flex items-center gap-2"><i data-lucide="wand-sparkles" class="w-4 h-4 text-slate-400"></i><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Ferragens rápidas</span><span class="text-[10px] font-medium text-slate-400">Puxador H, puxador simples e fechadura</span></span>
+                            <span class="flex items-center gap-2"><i data-lucide="wand-sparkles" class="w-4 h-4 text-slate-400"></i><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Ferragens rápidas</span><span class="text-[10px] font-medium text-slate-400">Puxadores, fechadura e bate-fecha</span></span>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"></i>
                         </summary>
                         <div class="border-t border-slate-100 dark:border-slate-800 p-4">
@@ -996,7 +987,7 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
                                     <form th:if="${item.categoria.name() != 'JANELA_PADRAO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/puxador-h(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-sm">
                                         <div class="flex items-center gap-2 mb-4">
                                             <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
@@ -1119,6 +1110,17 @@
                                             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                                             Adicionar fechadura
                                         </button>
+                                    </form>
+                                    <form th:if="${item.categoria.name() == 'JANELA_PADRAO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/bate-fecha(id=${plano.id},itemId=${item.id})}" method="post" class="group rounded-xl border border-fuchsia-200 dark:border-fuchsia-500/30 bg-fuchsia-50/40 dark:bg-fuchsia-500/5 p-4 flex flex-col transition-all duration-200 hover:shadow-sm">
+                                        <div class="flex items-center gap-2 mb-4">
+                                            <div class="w-8 h-8 rounded-lg bg-fuchsia-100 dark:bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center shrink-0"><i data-lucide="panel-top" class="w-4 h-4"></i></div>
+                                            <div><p class="text-xs font-black text-slate-800 dark:text-white">Bate e fecha</p><p class="text-[10px] text-slate-400 mt-0.5">Par de furos da janela</p></div>
+                                        </div>
+                                        <div class="space-y-3 flex-1">
+                                            <div><label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Lado</label><select name="lado" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 text-xs"><option value="ESQUERDO">Lado esquerdo</option><option value="DIREITO">Lado direito</option></select></div>
+                                            <div><label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Centro dos furos até a base</label><div class="relative"><input type="number" min="26" step="0.01" name="distanciaBaseMm" placeholder="300" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 pr-10 text-xs"><span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">mm</span></div></div>
+                                        </div>
+                                        <button type="submit" class="mt-4 w-full bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-lg px-3 py-2.5 text-xs font-bold inline-flex items-center justify-center gap-1.5"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Adicionar bate e fecha</button>
                                     </form>
                                 </div>
                             </div>
@@ -1317,6 +1319,14 @@
         line-height: 14px;
         font-weight: 800;
         color: #475569;
+<div id="fixedGlassWarningModal" class="fixed inset-0 z-[120] hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="fixedGlassWarningTitle">
+    <div class="w-full max-w-md rounded-2xl border border-amber-300 dark:border-amber-500/30 bg-white dark:bg-[#101827] p-6 shadow-2xl">
+        <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4"><i data-lucide="triangle-alert" class="w-6 h-6"></i></div>
+        <h3 id="fixedGlassWarningTitle" class="text-lg font-black text-slate-900 dark:text-white">Elemento em vidro fixo</h3>
+        <p class="text-sm text-slate-600 dark:text-slate-300 mt-2">Você adicionou um recorte, furo ou elemento técnico em uma folha <strong>FIXA</strong>. Confirme que esta escolha é intencional antes de salvar.</p>
+        <div class="grid grid-cols-2 gap-3 mt-6"><button type="button" onclick="cancelFixedGlassElement()" class="rounded-xl border border-slate-300 dark:border-slate-700 px-4 py-3 text-sm font-black">Voltar e revisar</button><button type="button" onclick="confirmFixedGlassElement()" class="rounded-xl bg-amber-600 hover:bg-amber-700 text-white px-4 py-3 text-sm font-black">Confirmar escolha</button></div>
+    </div>
+</div>
     }
     .dark .form-label {
         color: #94a3b8;
@@ -2247,6 +2257,23 @@
 
 </style>
 <script th:inline="javascript">
+    var pendingFixedGlassForm = null;
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.fixed-glass-element-form[data-fixed-glass="true"]').forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (form.dataset.fixedGlassConfirmed === 'true') return;
+                event.preventDefault(); pendingFixedGlassForm = form;
+                var modal = document.getElementById('fixedGlassWarningModal'); modal.classList.remove('hidden'); modal.classList.add('flex');
+                if (window.lucide) window.lucide.createIcons();
+            });
+        });
+    });
+    function cancelFixedGlassElement() { var modal=document.getElementById('fixedGlassWarningModal'); modal.classList.add('hidden'); modal.classList.remove('flex'); pendingFixedGlassForm=null; }
+    function confirmFixedGlassElement() {
+        if (!pendingFixedGlassForm) return; var form=pendingFixedGlassForm; pendingFixedGlassForm=null; form.dataset.fixedGlassConfirmed='true';
+        var modal=document.getElementById('fixedGlassWarningModal'); modal.classList.add('hidden'); modal.classList.remove('flex'); form.requestSubmit();
+    }
+
     function alternarBisote() {
         var select = document.getElementById('acabamentoVao');
         var caixa = document.getElementById('caixaBisote');

@@ -74,20 +74,40 @@ public class TechnicalVisitPageController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> uploadPhoto(@PathVariable UUID visitId,
                                                             @RequestPart("file") MultipartFile file,
-                                                            @RequestParam(required = false) String caption) {
-        try { return ok("id", dataService.addPhoto(visitId, file, caption)); }
+                                                            @RequestParam(required = false) String caption,
+                                                            @RequestParam(required = false) UUID openingId) {
+        try { return ok("id", dataService.addMedia(visitId, file, caption, openingId)); }
         catch (Exception e) { return bad(e); }
     }
 
     @GetMapping("/{visitId}/photos/{photoId}")
-    public ResponseEntity<byte[]> photo(@PathVariable UUID visitId, @PathVariable UUID photoId) {
+    public ResponseEntity<byte[]> photo(@PathVariable UUID visitId, @PathVariable UUID photoId,
+                                        @RequestHeader(value = HttpHeaders.RANGE, required = false) String range) {
         TechnicalVisitPhoto photo = dataService.getPhoto(visitId, photoId);
         MediaType mediaType;
         try { mediaType = MediaType.parseMediaType(photo.getContentType()); }
         catch (Exception ignored) { mediaType = MediaType.APPLICATION_OCTET_STREAM; }
-        return ResponseEntity.ok().cacheControl(CacheControl.noCache()).contentType(mediaType)
+        byte[] content = photo.getContent();
+        ResponseEntity.BodyBuilder response = ResponseEntity.ok();
+        if (range != null && range.startsWith("bytes=") && content.length > 0) {
+            String[] bounds = range.substring(6).split("-", 2);
+            try {
+                int start = Integer.parseInt(bounds[0]);
+                int end = bounds.length > 1 && !bounds[1].isBlank()
+                        ? Math.min(Integer.parseInt(bounds[1]), content.length - 1)
+                        : Math.min(start + 1024 * 1024 - 1, content.length - 1);
+                if (start >= 0 && start <= end && start < content.length) {
+                    content = java.util.Arrays.copyOfRange(content, start, end + 1);
+                    response = ResponseEntity.status(206)
+                            .header(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + photo.getContent().length);
+                }
+            } catch (NumberFormatException ignored) { }
+        }
+        return response.cacheControl(CacheControl.noCache()).contentType(mediaType)
+                .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                .contentLength(content.length)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + photo.getFileName().replace("\"", "") + "\"")
-                .body(photo.getContent());
+                .body(content);
     }
 
     @DeleteMapping("/{visitId}/photos/{photoId}")

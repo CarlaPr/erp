@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head(title='Visitas Técnicas - Tahi Glass')}"></head>
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 <div th:replace="~{fragments/layout :: sidebar}"></div>
@@ -12,7 +12,7 @@
             <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">Visitas Técnicas</h1>
             <p class="text-sm text-slate-500 mt-1">Registre cada vão, fotos, furos e recortes e reaproveite tudo no plano de corte.</p>
         </div>
-        <button type="button" onclick="toggleModal('newVisitModal', true)" class="w-full sm:w-auto px-5 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-500/20">
+        <button sec:authorize="hasAuthority('GESTAO')" type="button" onclick="toggleModal('newVisitModal', true)" class="w-full sm:w-auto px-5 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-500/20">
             <i data-lucide="calendar-plus" class="w-4 h-4"></i> Nova visita por cliente
         </button>
     </header>
@@ -33,6 +33,9 @@
                     <option value="CONCLUIDA">Concluídas</option>
                     <option value="TODAS">Todas</option>
                 </select>
+                <label for="visitMonthFilter" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mt-3">Mês agendado/concluído</label>
+                <input id="visitMonthFilter" type="month" class="w-full mt-1.5 px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm font-bold outline-none focus:border-fuchsia-500">
+                <button id="clearVisitMonth" type="button" class="hidden mt-2 text-[11px] font-black text-fuchsia-600" onclick="clearVisitMonthFilter()">Ver todos os meses</button>
             </div>
             <div id="visitList" class="max-h-[55vh] xl:max-h-[72vh] overflow-y-auto p-2"></div>
         </aside>
@@ -78,10 +81,14 @@
             </div>
 
             <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
-                <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-                    <div><h3 class="font-black text-slate-900 dark:text-white">Fotos da visita</h3><p class="text-xs text-slate-500 mt-0.5">No celular, use a câmera diretamente.</p></div>
-                    <button type="button" onclick="document.getElementById('photoFile').click()" class="px-3 py-2 rounded-lg bg-slate-800 dark:bg-slate-700 text-white text-xs font-black flex items-center gap-1"><i data-lucide="camera" class="w-4 h-4"></i> Anexar foto</button>
+                <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div><h3 class="font-black text-slate-900 dark:text-white">Fotos e vídeos da visita</h3><p class="text-xs text-slate-500 mt-0.5">Informe o vão de referência. Vídeos são carregados somente ao abrir.</p></div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="document.getElementById('photoFile').click()" class="px-3 py-2 rounded-lg bg-slate-800 dark:bg-slate-700 text-white text-xs font-black flex items-center gap-1"><i data-lucide="camera" class="w-4 h-4"></i> Foto</button>
+                        <button type="button" onclick="document.getElementById('videoFile').click()" class="px-3 py-2 rounded-lg bg-fuchsia-600 text-white text-xs font-black flex items-center gap-1"><i data-lucide="video" class="w-4 h-4"></i> Vídeo</button>
+                    </div>
                     <input id="photoFile" type="file" accept="image/*" capture="environment" class="hidden" onchange="openPhotoEditor(this)">
+                    <input id="videoFile" type="file" accept="video/mp4,video/webm,video/quicktime" class="hidden" onchange="openVideoUploader(this)">
                 </div>
                 <div id="photosList" class="p-3 sm:p-5 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3"></div>
             </div>
@@ -203,9 +210,44 @@
         <div class="photo-canvas-stage mt-4"><canvas id="photoEditorCanvas" aria-label="Editor de anotacoes da foto"></canvas></div>
         <label class="form-label mt-4" for="photoCaption">Legenda da foto</label>
         <input id="photoCaption" maxlength="180" placeholder="Legenda opcional" class="form-input">
+        <label class="form-label mt-3" for="photoOpeningId">Vão a que esta foto se refere</label>
+        <select id="photoOpeningId" class="form-input">
+            <option value="">Visita em geral (sem vão específico)</option>
+        </select>
         <div class="grid grid-cols-2 gap-3 mt-4">
             <button type="button" onclick="closePhotoEditor()" class="rounded-xl border border-slate-300 dark:border-slate-700 py-3 text-sm font-black">Cancelar</button>
             <button id="saveEditedPhotoButton" type="button" onclick="saveEditedPhoto()" class="rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-3 text-sm font-black">Salvar foto otimizada</button>
+        </div>
+    </div>
+</div>
+
+<div id="videoUploadModal" class="modal-shell hidden">
+    <div class="modal-card max-w-lg">
+        <button type="button" onclick="closeVideoUploader()" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <h3 class="text-xl font-black text-slate-900 dark:text-white">Anexar vídeo</h3>
+        <p id="videoFileName" class="text-xs text-slate-500 mt-1 mb-5"></p>
+        <label class="form-label" for="videoOpeningId">Vão a que este vídeo se refere</label>
+        <select id="videoOpeningId" class="form-input mb-4"><option value="">Visita em geral (sem vão específico)</option></select>
+        <label class="form-label" for="videoCaption">Legenda do vídeo</label>
+        <input id="videoCaption" maxlength="180" placeholder="Legenda opcional" class="form-input">
+        <p class="text-[11px] text-slate-500 mt-2">Para manter o sistema leve, o limite é 12 MB. Use vídeos curtos em MP4 ou WebM.</p>
+        <div class="grid grid-cols-2 gap-3 mt-5">
+            <button type="button" onclick="closeVideoUploader()" class="rounded-xl border border-slate-300 dark:border-slate-700 py-3 text-sm font-black">Cancelar</button>
+            <button id="saveVideoButton" type="button" onclick="uploadVideo()" class="rounded-xl bg-fuchsia-600 text-white py-3 text-sm font-black">Enviar vídeo</button>
+        </div>
+    </div>
+</div>
+
+<div id="mediaGalleryModal" class="modal-shell media-gallery-shell hidden" role="dialog" aria-modal="true" aria-label="Galeria de anexos">
+    <div class="media-gallery-card">
+        <button type="button" onclick="closeMediaGallery()" class="media-gallery-close" aria-label="Fechar"><i data-lucide="x" class="w-6 h-6"></i></button>
+        <button type="button" onclick="stepMediaGallery(-1)" class="media-gallery-arrow media-gallery-prev" aria-label="Anterior"><i data-lucide="chevron-left" class="w-8 h-8"></i></button>
+        <div id="mediaGalleryStage" class="media-gallery-stage"></div>
+        <button type="button" onclick="stepMediaGallery(1)" class="media-gallery-arrow media-gallery-next" aria-label="Próximo"><i data-lucide="chevron-right" class="w-8 h-8"></i></button>
+        <div class="media-gallery-caption">
+            <p id="mediaGalleryTitle" class="font-black"></p>
+            <p id="mediaGalleryOpening" class="text-xs text-slate-300 mt-1"></p>
+            <p id="mediaGalleryCounter" class="text-[11px] text-slate-400 mt-1"></p>
         </div>
     </div>
 </div>
@@ -216,6 +258,7 @@
     const INITIAL_VISIT_ID = /*[[${selectedVisitId}]]*/ null;
     const SERVICE_LABELS = {ABRIGO_PIA:'Abrigo de Pia',PORTA_CORRER:'Porta de Correr',JANELA_PADRAO:'Janela Padrão',PORTA_ABRIR:'Porta de Abrir',VIDRO_FIXO_PERFIL_U:'Vidro Fixo',JANELA_BASCULANTE:'Janela Basculante',SACADA:'Sacada',ESPELHO:'Espelho',BOX_BANHEIRO_PADRAO:'Box de Banheiro Padrão'};
     let currentVisit = null;
+    let galleryIndex = 0;
     const photoEditor = {file:null,image:null,objectUrl:null,rotation:0,commands:[],activePath:null,mode:'draw'};
 
 
@@ -260,12 +303,21 @@
     function statusMeta(s){ return ({AGENDADA:['Agendada','bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'],EM_ANDAMENTO:['Em andamento','bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'],CONCLUIDA:['Concluída','bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300']})[s]||[s,'bg-slate-100 text-slate-600']; }
 
     function visitMatchesStatus(v,status){ if(status==='TODAS')return true; if(status==='PENDENTES')return v.status!=='CONCLUIDA'; return v.status===status; }
-    function filteredVisits(){ const q=normalizeSearch($('visitSearch').value); const status=$('visitStatusFilter').value; return VISITS.filter(v=>visitMatchesStatus(v,status)&&normalizeSearch(`${v.clientName} ${v.clientAddress} ${v.quoteNumber||''}`).includes(q)); }
+    function filteredVisits(){
+        const q=normalizeSearch($('visitSearch').value); const status=$('visitStatusFilter').value; const month=$('visitMonthFilter').value;
+        $('clearVisitMonth').classList.toggle('hidden',!month);
+        return VISITS.filter(v=>{
+            const referenceDate=v.status==='CONCLUIDA'?(v.completedDate||v.visitDate):v.visitDate;
+            return visitMatchesStatus(v,status)&&(!month||String(referenceDate||'').startsWith(month))&&normalizeSearch(`${v.clientName} ${v.clientAddress} ${v.quoteNumber||''}`).includes(q);
+        });
+    }
+    function clearVisitMonthFilter(){ $('visitMonthFilter').value=''; renderVisitList(); }
     function renderVisitList(){
         const list=$('visitList'); list.innerHTML='';
         filteredVisits().forEach(v=>{
             const sm=statusMeta(v.status); const b=document.createElement('button'); b.type='button'; b.className='w-full text-left p-3 rounded-xl mb-1 border transition '+(currentVisit?.id===v.id?'border-fuchsia-300 bg-fuchsia-50 dark:bg-fuchsia-500/10':'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800');
-            b.innerHTML=`<div class="flex justify-between gap-2"><span class="text-sm font-black truncate">${esc(v.clientName)}</span><span class="text-[10px] text-slate-400 shrink-0">${fmtDate(v.visitDate)}</span></div><p class="text-[11px] text-slate-500 truncate mt-1">${esc(v.clientAddress)}</p><div class="flex items-center justify-between gap-2 mt-2"><span class="text-[9px] px-2 py-1 rounded-md font-black uppercase ${sm[1]}">${sm[0]}</span><span class="text-[10px] font-bold text-fuchsia-600">${v.openings.length} vão(ões) · ${v.photos.length} foto(s)</span></div>`;
+            const dateLabel=v.status==='CONCLUIDA'&&v.completedDate?`Concluída ${fmtDate(v.completedDate)}`:fmtDate(v.visitDate);
+            b.innerHTML=`<div class="flex justify-between gap-2"><span class="text-sm font-black truncate">${esc(v.clientName)}</span><span class="text-[10px] text-slate-400 shrink-0">${dateLabel}</span></div><p class="text-[11px] text-slate-500 truncate mt-1">${esc(v.clientAddress)}</p><div class="flex items-center justify-between gap-2 mt-2"><span class="text-[9px] px-2 py-1 rounded-md font-black uppercase ${sm[1]}">${sm[0]}</span><span class="text-[10px] font-bold text-fuchsia-600">${v.openings.length} vão(ões) · ${v.photos.length} anexo(s)</span></div>`;
             b.onclick=()=>selectVisit(v.id); list.appendChild(b);
         });
         if(!list.children.length) list.innerHTML='<p class="p-5 text-sm text-center text-slate-400">Nenhuma visita encontrada neste filtro.</p>';
@@ -274,7 +326,27 @@
     function openMaps(){ if(!currentVisit)return; window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(currentVisit.clientAddress),'_blank','noopener'); }
 
     function renderOpenings(){ const wrap=$('openingsList'); wrap.innerHTML=''; currentVisit.openings.forEach(o=>{ const card=document.createElement('article'); card.className='rounded-xl border border-slate-200 dark:border-slate-700 p-4 min-w-0'; const dimensions=o.grossHeightLeftMm!=null?`<div class="grid grid-cols-2 gap-1 text-[11px] mt-3"><span>Alt. esq.: <b>${fmt(o.grossHeightLeftMm)}</b></span><span>Alt. dir.: <b>${fmt(o.grossHeightRightMm)}</b></span><span>Larg. sup.: <b>${fmt(o.grossWidthTopMm)}</b></span><span>Larg. inf.: <b>${fmt(o.grossWidthBottomMm)}</b></span></div>`:`<p class="text-sm mt-2"><b>${fmt(o.widthMm)}</b> × <b>${fmt(o.heightMm)}</b></p>`; card.innerHTML=`<div class="flex items-start justify-between gap-2"><div class="min-w-0"><h4 class="font-black text-slate-900 dark:text-white truncate">${esc(o.name)}</h4><div class="flex flex-wrap gap-1.5 mt-1"><span class="text-[9px] px-2 py-1 rounded-md bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 font-black uppercase">${esc(SERVICE_LABELS[o.serviceCategory]||'Serviço não informado')}</span><span class="text-[9px] px-2 py-1 text-emerald-600 font-black uppercase">Disponível no plano de corte</span></div></div><div class="flex"><button class="p-2" title="Editar" onclick="editOpening('${o.id}')"><i data-lucide="pencil" class="w-4 h-4"></i></button><button class="p-2 text-rose-500" title="Excluir" onclick="deleteOpening('${o.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>${dimensions}${o.notes?`<p class="text-xs text-slate-500 mt-2">${esc(o.notes)}</p>`:''}<div class="mt-3 space-y-1">${o.features.map(f=>`<div class="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-2 text-[11px]"><b>${esc(f.name||f.type)}</b> · ${esc(f.referenceHorizontal)} ${fmt(f.distanceHorizontalMm)} · ${esc(f.referenceVertical)} ${fmt(f.distanceVerticalMm)}${f.diameterMm?' · Ø '+fmt(f.diameterMm):''}${f.widthMm?' · '+fmt(f.widthMm)+' × '+fmt(f.heightMm):''}</div>`).join('')||'<p class="text-[11px] text-slate-400">Sem furos ou recortes.</p>'}</div>`; wrap.appendChild(card); }); if(!wrap.children.length) wrap.innerHTML='<p class="2xl:col-span-2 text-sm text-center text-slate-400 py-8">Nenhuma medição adicionada. Use “Adicionar vão”.</p>'; lucide.createIcons(); }
-    function renderPhotos(){ const wrap=$('photosList'); wrap.innerHTML=''; currentVisit.photos.forEach(p=>{ const d=document.createElement('figure'); d.className='relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 aspect-square'; d.innerHTML=`<a href="/technical-visits/${currentVisit.id}/photos/${p.id}" target="_blank"><img src="/technical-visits/${currentVisit.id}/photos/${p.id}" alt="${esc(p.caption||p.fileName)}" class="w-full h-full object-cover"></a><figcaption class="absolute inset-x-0 bottom-0 bg-slate-950/70 text-white text-[10px] p-2 truncate">${esc(p.caption||p.fileName)}</figcaption><button onclick="deletePhoto('${p.id}')" class="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>`; wrap.appendChild(d); }); if(!wrap.children.length) wrap.innerHTML='<p class="col-span-full text-sm text-center text-slate-400 py-8">Nenhuma foto anexada.</p>'; lucide.createIcons(); }
+    function renderPhotos(){
+        const wrap=$('photosList'); wrap.innerHTML='';
+        currentVisit.photos.forEach((p,index)=>{
+            const d=document.createElement('figure'); d.className='relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 aspect-square cursor-pointer';
+            const preview=p.video?`<div class="w-full h-full bg-slate-900 text-white flex flex-col items-center justify-center gap-2"><i data-lucide="play-circle" class="w-11 h-11"></i><span class="text-[10px] font-black uppercase">Vídeo</span></div>`:`<img loading="lazy" src="/technical-visits/${currentVisit.id}/photos/${p.id}" alt="${esc(p.caption||p.fileName)}" class="w-full h-full object-cover">`;
+            const opening=p.openingName?`<span class="absolute top-2 left-2 max-w-[70%] bg-fuchsia-600/90 text-white text-[9px] font-black px-2 py-1 rounded-md truncate">${esc(p.openingName)}</span>`:'';
+            d.innerHTML=`<button type="button" onclick="openMediaGallery(${index})" class="absolute inset-0 w-full h-full text-left">${preview}</button>${opening}<figcaption class="absolute inset-x-0 bottom-0 bg-slate-950/75 text-white text-[10px] p-2 truncate pointer-events-none">${esc(p.caption||p.fileName)}</figcaption><button type="button" onclick="event.stopPropagation();deletePhoto('${p.id}')" class="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg" aria-label="Excluir anexo"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>`;
+            wrap.appendChild(d);
+        });
+        if(!wrap.children.length) wrap.innerHTML='<p class="col-span-full text-sm text-center text-slate-400 py-8">Nenhuma foto ou vídeo anexado.</p>';
+        lucide.createIcons();
+    }
+    function renderOpeningOptions(selectId){ const select=$(selectId); if(!select)return; const selected=select.value; select.innerHTML='<option value="">Visita em geral (sem vão específico)</option>'+currentVisit.openings.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join(''); select.value=selected; }
+    function openMediaGallery(index){ galleryIndex=index; toggleModal('mediaGalleryModal',true); renderMediaGallery(); }
+    function closeMediaGallery(){ const video=$('mediaGalleryStage').querySelector('video'); if(video)video.pause(); toggleModal('mediaGalleryModal',false); $('mediaGalleryStage').innerHTML=''; }
+    function stepMediaGallery(delta){ if(!currentVisit?.photos.length)return; galleryIndex=(galleryIndex+delta+currentVisit.photos.length)%currentVisit.photos.length; renderMediaGallery(); }
+    function renderMediaGallery(){
+        const p=currentVisit.photos[galleryIndex]; if(!p)return; const url=`/technical-visits/${currentVisit.id}/photos/${p.id}`; const stage=$('mediaGalleryStage');
+        stage.innerHTML=p.video?`<video src="${url}" controls autoplay playsinline preload="metadata" class="media-gallery-media"></video>`:`<img src="${url}" alt="${esc(p.caption||p.fileName)}" class="media-gallery-media">`;
+        $('mediaGalleryTitle').textContent=p.caption||p.fileName; $('mediaGalleryOpening').textContent=p.openingName?'Vão: '+p.openingName:'Visita em geral'; $('mediaGalleryCounter').textContent=`${galleryIndex+1} de ${currentVisit.photos.length}`; lucide.createIcons();
+    }
 
     async function createVisit(e){ e.preventDefault(); const clientId=$('newClientId').value; if(!clientId){ openClientSearchModal(); return; } const payload={clientId,visitDate:$('newVisitDate').value,visitTime:$('newVisitTime').value||null,notes:$('newVisitNotes').value,status:'AGENDADA'}; const r=await fetch('/technical-visits/create',{method:'POST',headers:csrfHeaders(true),body:JSON.stringify(payload)}); const d=await r.json(); if(!r.ok){alert(d.error);return;} location.href='/technical-visits?visit='+d.id; }
     function openVisitEditor(){ $('editVisitDate').value=currentVisit.visitDate||''; $('editVisitTime').value=currentVisit.visitTime?.substring(0,5)||''; $('editVisitStatus').value=currentVisit.status||'AGENDADA'; $('editVisitNotes').value=currentVisit.notes||''; toggleModal('visitEditorModal',true); }
@@ -333,7 +405,7 @@
         if(photoEditor.objectUrl)URL.revokeObjectURL(photoEditor.objectUrl);
         photoEditor.file=file; photoEditor.objectUrl=URL.createObjectURL(file); photoEditor.commands=[]; photoEditor.rotation=0; photoEditor.activePath=null;
         const image=new Image();
-        image.onload=()=>{ photoEditor.image=image; $('photoCaption').value=''; $('photoAnnotationText').value=''; setPhotoMode('draw'); renderPhotoEditor(); toggleModal('photoEditorModal',true); lucide.createIcons(); };
+        image.onload=()=>{ photoEditor.image=image; $('photoCaption').value=''; $('photoAnnotationText').value=''; renderOpeningOptions('photoOpeningId'); setPhotoMode('draw'); renderPhotoEditor(); toggleModal('photoEditorModal',true); lucide.createIcons(); };
         image.onerror=()=>{ alert('Nao foi possivel abrir esta imagem. Tente JPG ou PNG.'); closePhotoEditor(); };
         image.src=photoEditor.objectUrl;
     }
@@ -382,7 +454,7 @@
         const canvas=$('photoEditorCanvas');
         canvas.toBlob(async blob=>{
             if(!blob){ alert('Nao foi possivel gerar a foto editada.'); button.disabled=false; button.textContent='Salvar foto otimizada'; return; }
-            const fd=new FormData(); fd.append('file',blob,'foto-visita.jpg'); fd.append('caption',$('photoCaption').value.trim());
+            const fd=new FormData(); fd.append('file',blob,'foto-visita.jpg'); fd.append('caption',$('photoCaption').value.trim()); if($('photoOpeningId').value)fd.append('openingId',$('photoOpeningId').value);
             try{
                 const response=await fetch(`/technical-visits/${currentVisit.id}/photos`,{method:'POST',headers:csrfHeaders(false),body:fd}); const data=await response.json();
                 if(!response.ok)throw new Error(data.error||'Erro ao enviar foto');
@@ -392,10 +464,24 @@
     }
 
     setupPhotoCanvas();
-    async function deletePhoto(id){ if(confirm('Excluir esta foto?')) await jsonAction(`/technical-visits/${currentVisit.id}/photos/${id}`,'DELETE'); }
+    async function deletePhoto(id){ if(confirm('Excluir este anexo?')) await jsonAction(`/technical-visits/${currentVisit.id}/photos/${id}`,'DELETE'); }
     async function jsonAction(url,method,payload){ const options={method,headers:csrfHeaders(payload!==undefined)}; if(payload!==undefined)options.body=JSON.stringify(payload); const r=await fetch(url,options); const d=await r.json().catch(()=>({})); if(!r.ok){alert(d.error||'Não foi possível salvar.');return;} location.href='/technical-visits?visit='+currentVisit.id; }
 
-    document.addEventListener('DOMContentLoaded',()=>{ $('visitSearch').addEventListener('input',renderVisitList); $('visitStatusFilter').addEventListener('change',renderVisitList); $('newVisitDate').value=new Date().toISOString().substring(0,10); $('clientSearchModal').addEventListener('click',e=>{ if(e.target===$('clientSearchModal'))closeClientSearchModal(); }); document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('clientSearchModal').classList.contains('hidden'))closeClientSearchModal(); }); filterClientOptions(); if(INITIAL_VISIT_ID){ const selected=VISITS.find(v=>v.id===String(INITIAL_VISIT_ID)); if(selected?.status==='CONCLUIDA')$('visitStatusFilter').value='CONCLUIDA'; } renderVisitList(); if(INITIAL_VISIT_ID)selectVisit(String(INITIAL_VISIT_ID)); else if(filteredVisits().length)selectVisit(filteredVisits()[0].id); });
+    function openVideoUploader(input){
+        const file=input.files?.[0]; if(!file)return; const valid=['video/mp4','video/webm','video/quicktime'];
+        if(!valid.includes(file.type)){ alert('Use um vídeo MP4, WebM ou MOV.'); input.value=''; return; }
+        if(file.size>12*1024*1024){ alert('O vídeo deve ter no máximo 12 MB.'); input.value=''; return; }
+        $('videoFileName').textContent=`${file.name} · ${(file.size/1024/1024).toFixed(1)} MB`; $('videoCaption').value=''; renderOpeningOptions('videoOpeningId'); toggleModal('videoUploadModal',true); lucide.createIcons();
+    }
+    function closeVideoUploader(){ toggleModal('videoUploadModal',false); $('videoFile').value=''; }
+    async function uploadVideo(){
+        const file=$('videoFile').files?.[0]; if(!file||!currentVisit)return; const button=$('saveVideoButton'); button.disabled=true; button.textContent='Enviando...';
+        const fd=new FormData(); fd.append('file',file); fd.append('caption',$('videoCaption').value.trim()); if($('videoOpeningId').value)fd.append('openingId',$('videoOpeningId').value);
+        try{ const response=await fetch(`/technical-visits/${currentVisit.id}/photos`,{method:'POST',headers:csrfHeaders(false),body:fd}); const data=await response.json(); if(!response.ok)throw new Error(data.error||'Erro ao enviar vídeo'); location.href='/technical-visits?visit='+currentVisit.id; }
+        catch(error){ alert(error.message||'Erro ao enviar vídeo'); button.disabled=false; button.textContent='Enviar vídeo'; }
+    }
+
+    document.addEventListener('DOMContentLoaded',()=>{ $('visitSearch').addEventListener('input',renderVisitList); $('visitStatusFilter').addEventListener('change',renderVisitList); $('visitMonthFilter').addEventListener('change',renderVisitList); $('newVisitDate').value=new Date().toISOString().substring(0,10); $('clientSearchModal').addEventListener('click',e=>{ if(e.target===$('clientSearchModal'))closeClientSearchModal(); }); let touchStartX=null; $('mediaGalleryStage').addEventListener('touchstart',e=>touchStartX=e.changedTouches[0].clientX,{passive:true}); $('mediaGalleryStage').addEventListener('touchend',e=>{ if(touchStartX==null)return; const delta=e.changedTouches[0].clientX-touchStartX; if(Math.abs(delta)>45)stepMediaGallery(delta<0?1:-1); touchStartX=null; },{passive:true}); document.addEventListener('keydown',e=>{ if(!$('mediaGalleryModal').classList.contains('hidden')){ if(e.key==='ArrowRight')stepMediaGallery(1); if(e.key==='ArrowLeft')stepMediaGallery(-1); if(e.key==='Escape')closeMediaGallery(); } else if(e.key==='Escape'&&!$('clientSearchModal').classList.contains('hidden'))closeClientSearchModal(); }); filterClientOptions(); if(INITIAL_VISIT_ID){ const selected=VISITS.find(v=>v.id===String(INITIAL_VISIT_ID)); if(selected?.status==='CONCLUIDA')$('visitStatusFilter').value='CONCLUIDA'; } renderVisitList(); if(INITIAL_VISIT_ID)selectVisit(String(INITIAL_VISIT_ID)); else if(filteredVisits().length)selectVisit(filteredVisits()[0].id); });
 </script>
 <style>
     .modal-shell{position:fixed;inset:0;z-index:80;background:rgb(2 6 23/.78);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;overflow-y:auto}
@@ -414,6 +500,9 @@
     .photo-canvas-stage{min-height:180px;flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;border:1px solid #334155;border-radius:.85rem;background:#020617;padding:.5rem;overscroll-behavior:contain}
     #photoEditorCanvas{display:block;max-width:100%;height:auto;max-height:58dvh;touch-action:none;cursor:crosshair;box-shadow:0 8px 28px rgb(2 6 23/.45)}#photoEditorCanvas.text-mode{cursor:text}
     #saveEditedPhotoButton:disabled{opacity:.65;cursor:wait}
+    .media-gallery-shell{z-index:120;padding:0;background:rgb(2 6 23/.94)}.media-gallery-card{position:relative;width:100%;height:100dvh;display:flex;align-items:center;justify-content:center;overflow:hidden}.media-gallery-stage{width:100%;height:calc(100dvh - 112px);display:flex;align-items:center;justify-content:center;padding:3.5rem 4.5rem 1rem;touch-action:pan-y}.media-gallery-media{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:.5rem}.media-gallery-close{position:absolute;z-index:3;right:1rem;top:1rem;width:44px;height:44px;border-radius:999px;background:rgb(15 23 42/.8);color:white;display:flex;align-items:center;justify-content:center}.media-gallery-arrow{position:absolute;z-index:3;top:50%;transform:translateY(-50%);width:48px;height:64px;border-radius:.75rem;background:rgb(15 23 42/.72);color:white;display:flex;align-items:center;justify-content:center}.media-gallery-prev{left:1rem}.media-gallery-next{right:1rem}.media-gallery-caption{position:absolute;z-index:2;left:0;right:0;bottom:0;min-height:96px;padding:1rem 5rem;text-align:center;color:white;background:linear-gradient(transparent,rgb(2 6 23/.94))}
+    #saveVideoButton:disabled{opacity:.65;cursor:wait}
+    @media(max-width:639px){.media-gallery-stage{height:calc(100dvh - 120px);padding:3.5rem .5rem 1rem}.media-gallery-arrow{top:auto;bottom:1.5rem;width:44px;height:44px}.media-gallery-prev{left:1rem}.media-gallery-next{right:1rem}.media-gallery-caption{padding:1rem 4rem;min-height:108px}}
     @media(max-width:639px){.photo-editor-shell{padding:0;align-items:flex-end}.photo-editor-card{max-width:none;max-height:98dvh;border-radius:1rem 1rem 0 0;padding:.9rem}.photo-editor-toolbar{flex-wrap:nowrap;overflow-x:auto;padding-bottom:.25rem}.photo-tool{flex:0 0 auto}.photo-canvas-stage{padding:.25rem}#photoEditorCanvas{max-height:51dvh}}
 
     @media(max-width:639px){.modal-shell{padding:.5rem;align-items:flex-end}.modal-card{max-height:94dvh;border-radius:1.1rem}.client-search-shell{padding:0;align-items:flex-end}.client-search-card{width:100%;max-width:none;max-height:92dvh;border-radius:1.25rem 1.25rem 0 0;border-bottom:0}.client-search-header{padding:1rem 1rem .85rem}.client-search-results{padding:.5rem}.client-option{min-height:70px;padding:.75rem}.client-option-name{font-size:.95rem}.client-option-city{font-size:.8rem}.client-select-btn{min-height:68px}.grid.grid-cols-2.gap-3.mb-4{grid-template-columns:1fr}}

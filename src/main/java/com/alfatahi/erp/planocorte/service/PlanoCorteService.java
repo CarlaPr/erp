@@ -955,7 +955,7 @@ public class PlanoCorteService {
 
     private static final BigDecimal FECHADURA_DIST_PISO_MM = BigDecimal.valueOf(1000);
     private static final BigDecimal FECHADURA_DIST_LATERAL_MM = BigDecimal.valueOf(50);
-    private static final BigDecimal FECHADURA_DIST_ENTRE_FUROS_MM = BigDecimal.valueOf(100);
+    private static final BigDecimal FECHADURA_DISTANCIA_LIVRE_ENTRE_FUROS_MM = BigDecimal.valueOf(9);
     private static final BigDecimal FECHADURA_DIAMETRO_FURO_MM = BigDecimal.valueOf(16);
     private static final BigDecimal FECHADURA_DIAMETRO_FURO_MAIOR_MM = BigDecimal.valueOf(19);
 
@@ -966,6 +966,10 @@ public class PlanoCorteService {
     private static final BigDecimal PUXADOR_SIMPLES_DIST_PISO_MM = BigDecimal.valueOf(1000);
     private static final BigDecimal PUXADOR_SIMPLES_DIST_LATERAL_MM = BigDecimal.valueOf(50);
     private static final BigDecimal PUXADOR_SIMPLES_DIAMETRO_FURO_MM = BigDecimal.valueOf(7);
+    private static final BigDecimal BATE_FECHA_DIST_BORDA_MM = BigDecimal.valueOf(33);
+    private static final BigDecimal BATE_FECHA_DIAMETRO_MM = BigDecimal.valueOf(20);
+    private static final BigDecimal BATE_FECHA_DIST_ENTRE_FUROS_MM = BigDecimal.valueOf(50);
+    private static final BigDecimal BATE_FECHA_DIST_BASE_PADRAO_MM = BigDecimal.valueOf(300);
 
 
 
@@ -1061,11 +1065,41 @@ public class PlanoCorteService {
         BigDecimal yCentro = item.getCategoria() == CategoriaServico.JANELA_PADRAO
                 ? item.getAlturaFinalMm().divide(BigDecimal.valueOf(2))
                 : item.getAlturaFinalMm().subtract(FECHADURA_DIST_PISO_MM);
-        BigDecimal metadeGap = FECHADURA_DIST_ENTRE_FUROS_MM.divide(BigDecimal.valueOf(2));
+        BigDecimal deslocamentoVertical = FECHADURA_DIAMETRO_FURO_MAIOR_MM
+                .add(FECHADURA_DIAMETRO_FURO_MM)
+                .divide(BigDecimal.valueOf(2))
+                .add(FECHADURA_DISTANCIA_LIVRE_ENTRE_FUROS_MM);
 
-        item.getFuracoes().add(new Furacao(TipoFuracao.FECHADURA, xAlinhados, yCentro.subtract(metadeGap), FECHADURA_DIAMETRO_FURO_MM, "Fechadura"));
-        item.getFuracoes().add(new Furacao(TipoFuracao.FECHADURA, xAlinhados, yCentro.add(metadeGap), FECHADURA_DIAMETRO_FURO_MM, ""));
+        item.getFuracoes().add(new Furacao(TipoFuracao.FECHADURA, xAlinhados, yCentro.subtract(deslocamentoVertical), FECHADURA_DIAMETRO_FURO_MM, "Fechadura"));
+        item.getFuracoes().add(new Furacao(TipoFuracao.FECHADURA, xAlinhados, yCentro.add(deslocamentoVertical), FECHADURA_DIAMETRO_FURO_MM, ""));
         item.getFuracoes().add(new Furacao(TipoFuracao.FECHADURA, xMaior, yCentro, FECHADURA_DIAMETRO_FURO_MAIOR_MM, ""));
+        itemRepository.save(item);
+    }
+
+    public void adicionarBateFecha(Long planoCorteId, Long itemId, String lado, BigDecimal distanciaBaseMm) {
+        PlanoCorte plano = buscarPorId(planoCorteId);
+        garantirRascunho(plano);
+        PlanoCorteItem item = buscarItem(planoCorteId, itemId);
+        garantirNaoVidroFixo(item, "Bate e fecha");
+        if (item.getCategoria() != CategoriaServico.JANELA_PADRAO) {
+            throw new IllegalStateException("Bate e fecha rápido está disponível somente para janelas.");
+        }
+        BigDecimal distanciaBase = distanciaBaseMm != null && distanciaBaseMm.signum() > 0
+                ? distanciaBaseMm : BATE_FECHA_DIST_BASE_PADRAO_MM;
+        boolean direito = "DIREITO".equalsIgnoreCase(lado);
+        BigDecimal x = direito ? item.getLarguraFinalMm().subtract(BATE_FECHA_DIST_BORDA_MM) : BATE_FECHA_DIST_BORDA_MM;
+        BigDecimal alturaReferencia = item.getAlturaBrutaMm() != null ? item.getAlturaBrutaMm() : item.getAlturaFinalMm();
+        BigDecimal centroY = alturaReferencia.subtract(distanciaBase);
+        BigDecimal metadeGap = BATE_FECHA_DIST_ENTRE_FUROS_MM.divide(BigDecimal.valueOf(2));
+        BigDecimal y1 = centroY.subtract(metadeGap);
+        BigDecimal y2 = centroY.add(metadeGap);
+        if (y1.signum() < 0 || y2.compareTo(item.getAlturaFinalMm()) > 0 || x.signum() < 0
+                || x.compareTo(item.getLarguraFinalMm()) > 0) {
+            throw new IllegalStateException("A posição do bate e fecha precisa ficar dentro do vidro.");
+        }
+        String descricao = "Bate-fecha · centro a " + distanciaBase.stripTrailingZeros().toPlainString() + "mm da base";
+        item.getFuracoes().add(new Furacao(TipoFuracao.BATE_FECHA, x, y1, BATE_FECHA_DIAMETRO_MM, descricao));
+        item.getFuracoes().add(new Furacao(TipoFuracao.BATE_FECHA, x, y2, BATE_FECHA_DIAMETRO_MM, ""));
         itemRepository.save(item);
     }
 

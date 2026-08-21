@@ -14,7 +14,7 @@ import java.util.UUID;
 public record TechnicalVisitDetailsDto(
         UUID id, UUID clientId, String clientName, String clientAddress,
         UUID quoteId, String quoteNumber, LocalDate visitDate, LocalTime visitTime,
-        String notes, String status, List<OpeningDto> openings, List<PhotoDto> photos) {
+        String notes, String status, LocalDate completedDate, List<OpeningDto> openings, List<PhotoDto> photos) {
 
     public record OpeningDto(
             UUID id, CategoriaServico serviceCategory, String name, BigDecimal widthMm, BigDecimal heightMm,
@@ -29,5 +29,6 @@ public record TechnicalVisitDetailsDto(
             BigDecimal diameterMm, BigDecimal widthMm, BigDecimal heightMm,
             BigDecimal depthMm, BigDecimal radiusMm, String corner, String notes) { }
 
-    public record PhotoDto(UUID id, String fileName, String contentType, Long fileSize, String caption) { }
+    public record PhotoDto(UUID id, String fileName, String contentType, Long fileSize, String caption,
+                           UUID openingId, String openingName, boolean video) { }
 }
