@@ -70,17 +70,28 @@ public class TechnicalVisitDataService {
         visit.setVisitDate(request.getVisitDate() != null ? request.getVisitDate() : LocalDate.now());
         visit.setVisitTime(request.getVisitTime());
         visit.setNotes(request.getNotes());
-        applyStatus(visit, request.getStatus());
+        applyStatus(visit, "AGENDADA");
         return visitRepository.saveAndFlush(visit).getId();
     }
 
-    public void updateVisit(UUID visitId, TechnicalVisitSaveRequest request) {
+    public void updateVisit(UUID visitId, TechnicalVisitSaveRequest request, boolean canManageStatus) {
         TechnicalVisit visit = findVisit(visitId);
         if (request.getVisitDate() != null) visit.setVisitDate(request.getVisitDate());
         visit.setVisitTime(request.getVisitTime());
         visit.setNotes(request.getNotes());
-        applyStatus(visit, request.getStatus());
+        if (canManageStatus) applyStatus(visit, request.getStatus());
         visitRepository.save(visit);
+    }
+
+    public String startVisit(UUID visitId) {
+        TechnicalVisit visit = findVisit(visitId);
+        if ("CONCLUIDA".equals(visit.getStatus())) {
+            throw new IllegalStateException("Uma visita concluida nao pode ser iniciada novamente.");
+        }
+        visit.setStatus("EM_ANDAMENTO");
+        visit.setCompletedDate(null);
+        visitRepository.saveAndFlush(visit);
+        return visit.getStatus();
     }
 
     public LocalDate completeVisit(UUID visitId) {

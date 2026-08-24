@@ -1,24 +1,33 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head(title='Visitas Técnicas - Tahi Glass')}"></head>
-<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
+<body th:attr="data-visit-role=${visitRole}" class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
 
-<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen">
-    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-5">
-        <div>
-            <p class="text-[11px] font-black uppercase tracking-[.2em] text-fuchsia-600 dark:text-fuchsia-400">Campo e medição</p>
-            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">Visitas Técnicas</h1>
-            <p class="text-sm text-slate-500 mt-1">Registre cada vão, fotos, furos e recortes e reaproveite tudo no plano de corte.</p>
-        </div>
-        <button sec:authorize="hasAuthority('GESTAO')" type="button" onclick="toggleModal('newVisitModal', true)" class="w-full sm:w-auto px-5 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-500/20">
-            <i data-lucide="calendar-plus" class="w-4 h-4"></i> Nova visita por cliente
+<main id="technicalVisitsPage" class="visit-page lg:ml-72 px-3 sm:px-5 lg:px-7 pb-8 pt-20 lg:pt-6 w-full min-h-screen">
+    <header class="visit-hero mb-4 sm:mb-5">
+        <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+                <p class="text-[10px] sm:text-[11px] font-black uppercase tracking-[.2em] text-fuchsia-600 dark:text-fuchsia-400">Visitas Técnicas</p>
+                </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight">
+                <span th:if="${visitRole == 'VENDAS'}">Agenda e acompanhamento</span>
+                <span th:if="${visitRole == 'TECNICO'}">Roteiro e medição em campo</span>
+                <span th:if="${visitRole == 'GESTAO'}">Central de visitas técnicas</span>
+            </h1>
+            </div>
+        <button sec:authorize="hasAnyAuthority('GESTAO','VENDAS')" type="button" onclick="toggleModal('newVisitModal', true)" class="visit-primary-action">
+            <i data-lucide="calendar-plus" class="w-4 h-4"></i> Agendar visita
         </button>
     </header>
 
-    <section class="grid grid-cols-1 xl:grid-cols-[340px_minmax(0,1fr)] gap-5">
-        <aside class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden xl:sticky xl:top-6 xl:self-start">
+    <section id="visitWorkspace" data-mobile-view="list" class="visit-workspace grid grid-cols-1 xl:grid-cols-[350px_minmax(0,1fr)] gap-4 xl:gap-5">
+        <aside id="visitNavigator" class="visit-navigator bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden xl:sticky xl:top-6 xl:self-start">
+            <div class="visit-navigator-heading">
+                <div><p class="text-[10px] font-black uppercase tracking-widest text-fuchsia-600 dark:text-fuchsia-400">Fila de atendimento</p><h2 class="font-black text-slate-900 dark:text-white mt-0.5">Visitas</h2></div>
+                <span id="visibleVisitCount" class="visit-count">0</span>
+            </div>
             <div class="p-4 border-b border-slate-200 dark:border-slate-800">
                 <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Cliente ou visita</label>
                 <div class="relative mt-2">
@@ -27,9 +36,7 @@
                 </div>
                 <label for="visitStatusFilter" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mt-3">Situação</label>
                 <select id="visitStatusFilter" class="w-full mt-1.5 px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm font-bold outline-none focus:border-fuchsia-500">
-                    <option value="PENDENTES">Agendadas e em andamento</option>
-                    <option value="AGENDADA">Somente agendadas</option>
-                    <option value="EM_ANDAMENTO">Somente em andamento</option>
+                    <option value="PENDENTES">Em andamento</option>
                     <option value="CONCLUIDA">Concluídas</option>
                     <option value="TODAS">Todas</option>
                 </select>
@@ -47,6 +54,9 @@
         </section>
 
         <section id="visitDetail" class="hidden space-y-5 min-w-0">
+            <button id="mobileBackToVisits" type="button" onclick="showVisitList()" class="mobile-back-button">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar para visitas
+            </button>
             <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm p-5 sm:p-6">
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div class="min-w-0">
@@ -61,12 +71,13 @@
                     </div>
                     <div class="grid grid-cols-2 sm:flex gap-2 shrink-0">
                         <button type="button" onclick="openMaps()" class="px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="map" class="w-4 h-4"></i> Google Maps</button>
-                        <button type="button" onclick="openVisitEditor()" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="pencil" class="w-4 h-4"></i> Visita</button>
+                        <button sec:authorize="hasAnyAuthority('GESTAO','TECNICO')" id="startVisitButton" type="button" onclick="startTechnicalVisit()" class="hidden px-3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black items-center justify-center gap-1.5"><i data-lucide="play" class="w-4 h-4"></i> Iniciar</button>
+                        <button sec:authorize="hasAnyAuthority('GESTAO','VENDAS')" type="button" onclick="openVisitEditor()" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="calendar-cog" class="w-4 h-4"></i> Agenda</button>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="grid grid-cols-3 gap-2 sm:gap-3">
                 <div class="rounded-xl bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 p-4"><p class="text-[10px] font-black uppercase text-slate-400">Vãos</p><p id="kpiOpenings" class="text-2xl font-black mt-1"></p></div>
                 <div class="rounded-xl bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 p-4"><p class="text-[10px] font-black uppercase text-slate-400">Furos/recortes</p><p id="kpiFeatures" class="text-2xl font-black mt-1"></p></div>
                 <div class="rounded-xl bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 p-4"><p class="text-[10px] font-black uppercase text-slate-400">Fotos</p><p id="kpiPhotos" class="text-2xl font-black mt-1"></p></div>
@@ -75,7 +86,7 @@
             <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
                 <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
                     <div><h3 class="font-black text-slate-900 dark:text-white">Medições dos vãos</h3><p class="text-xs text-slate-500 mt-0.5">Ex.: vão para box, espelho, porta ou janela.</p></div>
-                    <button type="button" onclick="openOpeningEditor()" class="px-3 py-2 rounded-lg bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900 text-xs font-black flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar vão</button>
+                    <button sec:authorize="hasAnyAuthority('GESTAO','TECNICO')" type="button" onclick="openOpeningEditor()" class="field-action-button"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar vão</button>
                 </div>
                 <div id="openingsList" class="p-3 sm:p-5 grid grid-cols-1 2xl:grid-cols-2 gap-4"></div>
             </div>
@@ -83,7 +94,7 @@
             <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
                 <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div><h3 class="font-black text-slate-900 dark:text-white">Fotos e vídeos da visita</h3><p class="text-xs text-slate-500 mt-0.5">Informe o vão de referência. Vídeos são carregados somente ao abrir.</p></div>
-                    <div class="flex gap-2">
+                    <div sec:authorize="hasAnyAuthority('GESTAO','TECNICO')" class="flex gap-2">
                         <button type="button" onclick="document.getElementById('photoFile').click()" class="px-3 py-2 rounded-lg bg-slate-800 dark:bg-slate-700 text-white text-xs font-black flex items-center gap-1"><i data-lucide="camera" class="w-4 h-4"></i> Foto</button>
                         <button type="button" onclick="document.getElementById('videoFile').click()" class="px-3 py-2 rounded-lg bg-fuchsia-600 text-white text-xs font-black flex items-center gap-1"><i data-lucide="video" class="w-4 h-4"></i> Vídeo</button>
                     </div>
@@ -93,7 +104,7 @@
                 <div id="photosList" class="p-3 sm:p-5 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3"></div>
             </div>
 
-            <div id="completeVisitSection" class="rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-500/10 p-5 sm:p-6">
+            <div sec:authorize="hasAnyAuthority('GESTAO','TECNICO')" id="completeVisitSection" class="rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-500/10 p-5 sm:p-6">
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
                         <h3 id="completeVisitTitle" class="font-black text-emerald-950 dark:text-emerald-200">Finalizar atendimento em campo</h3>
@@ -103,6 +114,10 @@
                         <i data-lucide="circle-check-big" class="w-5 h-5"></i> CONCLUIR VISITA TÉCNICA
                     </button>
                 </div>
+            </div>
+            <div th:if="${visitRole == 'VENDAS'}" class="sales-readonly-card">
+                <div class="sales-readonly-icon"><i data-lucide="eye" class="w-5 h-5"></i></div>
+                <div><h3>Acompanhamento em modo leitura</h3><p>O conteúdo registrado em campo pode ser consultado aqui. Alterações de medidas, anexos e conclusão ficam com a equipe técnica ou a gestão.</p></div>
             </div>
         </section>
     </section>
@@ -138,7 +153,7 @@
         </button>
         <div class="grid grid-cols-2 gap-3 mb-4"><div><label class="form-label">Data *</label><input id="newVisitDate" type="date" required class="form-input"></div><div><label class="form-label">Horário</label><input id="newVisitTime" type="time" class="form-input"></div></div>
         <label class="form-label">Observações iniciais</label><textarea id="newVisitNotes" rows="3" class="form-input"></textarea>
-        <button class="submit-btn mt-5">Criar e começar medição</button>
+        <button class="submit-btn mt-5">Agendar visita</button>
     </form>
 </div>
 
@@ -180,7 +195,7 @@
         <button type="button" onclick="toggleModal('visitEditorModal', false)" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
         <h3 class="text-xl font-black text-slate-900 dark:text-white mb-5">Dados da visita</h3>
         <div class="grid grid-cols-2 gap-3 mb-4"><div><label class="form-label">Data</label><input id="editVisitDate" type="date" class="form-input"></div><div><label class="form-label">Horário</label><input id="editVisitTime" type="time" class="form-input"></div></div>
-        <label class="form-label">Status</label><select id="editVisitStatus" class="form-input mb-4"><option value="AGENDADA">Agendada</option><option value="EM_ANDAMENTO">Em andamento</option><option value="CONCLUIDA">Concluída</option></select>
+        <div th:if="${visitRole == 'GESTAO'}"><label class="form-label">Status</label><select id="editVisitStatus" class="form-input mb-4"><option value="AGENDADA">Agendada</option><option value="EM_ANDAMENTO">Em andamento</option><option value="CONCLUIDA">Concluída</option></select></div>
         <label class="form-label">Observações</label><textarea id="editVisitNotes" rows="4" class="form-input"></textarea>
         <button class="submit-btn mt-5">Salvar visita</button>
     </form>
@@ -279,6 +294,9 @@
 <script th:inline="javascript">
     const VISITS = /*[[${visits}]]*/ [];
     const INITIAL_VISIT_ID = /*[[${selectedVisitId}]]*/ null;
+    const USER_ROLE = /*[[${visitRole}]]*/ 'VENDAS';
+    const CAN_PLAN = USER_ROLE === 'GESTAO' || USER_ROLE === 'VENDAS';
+    const CAN_FIELD = USER_ROLE === 'GESTAO' || USER_ROLE === 'TECNICO';
     const SERVICE_LABELS = {ABRIGO_PIA:'Abrigo de Pia',PORTA_CORRER:'Porta de Correr',JANELA_PADRAO:'Janela Padrão',PORTA_ABRIR:'Porta de Abrir',VIDRO_FIXO_PERFIL_U:'Vidro Fixo',JANELA_BASCULANTE:'Janela Basculante',SACADA:'Sacada',ESPELHO:'Espelho',BOX_BANHEIRO_PADRAO:'Box de Banheiro Padrão'};
     let currentVisit = null;
     let galleryIndex = 0;
@@ -291,7 +309,7 @@
     const num = value => value == null || value === '' ? null : Number(value);
     const fmt = value => value == null ? '—' : new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(value)+' mm';
     const fmtDate = d => d ? d.split('-').reverse().join('/') : 'Sem data';
-    function toggleModal(id, show){ const m=$(id); m.classList.toggle('hidden',!show); m.classList.toggle('flex',show); }
+    function toggleModal(id, show){ const m=$(id); if(!m)return; m.classList.toggle('hidden',!show); m.classList.toggle('flex',show); }
     const normalizeSearch = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
     function openClientSearchModal(){ $('clientSearchInput').value=''; filterClientOptions(); toggleModal('clientSearchModal',true); requestAnimationFrame(()=>$('clientSearchInput').focus()); }
     function closeClientSearchModal(){ toggleModal('clientSearchModal',false); }
@@ -345,7 +363,9 @@
     function clearVisitMonthFilter(){ $('visitMonthFilter').value=''; renderVisitList(); }
     function renderVisitList(){
         const list=$('visitList'); list.innerHTML='';
-        filteredVisits().forEach(v=>{
+        const visibleVisits=filteredVisits();
+        $('visibleVisitCount').textContent=visibleVisits.length;
+        visibleVisits.forEach(v=>{
             const sm=statusMeta(v.status); const b=document.createElement('button'); b.type='button'; b.className='w-full text-left p-3 rounded-xl mb-1 border transition '+(currentVisit?.id===v.id?'border-fuchsia-300 bg-fuchsia-50 dark:bg-fuchsia-500/10':'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800');
             const dateLabel=v.status==='CONCLUIDA'&&v.completedDate?`Concluída ${fmtDate(v.completedDate)}`:fmtDate(v.visitDate);
             b.innerHTML=`<div class="flex justify-between gap-2"><span class="text-sm font-black truncate">${esc(v.clientName)}</span><span class="text-[10px] text-slate-400 shrink-0">${dateLabel}</span></div><p class="text-[11px] text-slate-500 truncate mt-1">${esc(v.clientAddress)}</p><div class="flex items-center justify-between gap-2 mt-2"><span class="text-[9px] px-2 py-1 rounded-md font-black uppercase ${sm[1]}">${sm[0]}</span><span class="text-[10px] font-bold text-fuchsia-600">${v.openings.length} vão(ões) · ${v.photos.length} anexo(s)</span></div>`;
@@ -353,10 +373,60 @@
         });
         if(!list.children.length) list.innerHTML='<p class="p-5 text-sm text-center text-slate-400">Nenhuma visita encontrada neste filtro.</p>';
     }
-    function selectVisit(id){ currentVisit=VISITS.find(v=>v.id===id); if(!currentVisit)return; $('emptyState').classList.add('hidden'); $('visitDetail').classList.remove('hidden'); const sm=statusMeta(currentVisit.status); $('detailStatus').textContent=sm[0]; $('detailStatus').className='px-2.5 py-1 rounded-lg text-[10px] font-black uppercase '+sm[1]; $('detailQuote').textContent=currentVisit.quoteNumber?'Orçamento '+currentVisit.quoteNumber:'Visita direta do cliente'; $('detailClient').textContent=currentVisit.clientName; $('detailAddress').textContent=currentVisit.clientAddress; $('detailWhen').textContent=fmtDate(currentVisit.visitDate)+(currentVisit.visitTime?' às '+currentVisit.visitTime.substring(0,5):''); $('detailNotes').textContent=currentVisit.notes||''; $('kpiOpenings').textContent=currentVisit.openings.length; $('kpiFeatures').textContent=currentVisit.openings.reduce((n,o)=>n+o.features.length,0); $('kpiPhotos').textContent=currentVisit.photos.length; renderOpenings(); renderPhotos(); renderCompletionAction(); renderVisitList(); if(innerWidth<1280) $('visitDetail').scrollIntoView({behavior:'smooth',block:'start'}); }
+    function selectVisit(id){
+        currentVisit=VISITS.find(v=>v.id===id);
+        if(!currentVisit)return;
+        $('visitWorkspace').dataset.mobileView='detail';
+        $('emptyState').classList.add('hidden');
+        $('visitDetail').classList.remove('hidden');
+        const sm=statusMeta(currentVisit.status);
+        $('detailStatus').textContent=sm[0];
+        $('detailStatus').className='px-2.5 py-1 rounded-lg text-[10px] font-black uppercase '+sm[1];
+        $('detailQuote').textContent=currentVisit.quoteNumber?'Orçamento '+currentVisit.quoteNumber:'Visita direta do cliente';
+        $('detailClient').textContent=currentVisit.clientName;
+        $('detailAddress').textContent=currentVisit.clientAddress;
+        $('detailWhen').textContent=fmtDate(currentVisit.visitDate)+(currentVisit.visitTime?' às '+currentVisit.visitTime.substring(0,5):'');
+        $('detailNotes').textContent=currentVisit.notes||'';
+        $('kpiOpenings').textContent=currentVisit.openings.length;
+        $('kpiFeatures').textContent=currentVisit.openings.reduce((n,o)=>n+o.features.length,0);
+        $('kpiPhotos').textContent=currentVisit.photos.length;
+        renderOpenings();
+        renderPhotos();
+        renderVisitActions();
+        renderCompletionAction();
+        renderVisitList();
+        if(innerWidth<1280) window.scrollTo({top:0,behavior:'smooth'});
+    }
+    function showVisitList(){ $('visitWorkspace').dataset.mobileView='list'; window.scrollTo({top:0,behavior:'smooth'}); }
+    function renderRoleOverview(){
+        if(USER_ROLE!=='GESTAO')return;
+        const values={managementScheduledCount:VISITS.filter(v=>v.status==='AGENDADA').length,managementActiveCount:VISITS.filter(v=>v.status==='EM_ANDAMENTO').length,managementCompletedCount:VISITS.filter(v=>v.status==='CONCLUIDA').length,managementTotalCount:VISITS.length};
+        Object.entries(values).forEach(([id,value])=>{ if($(id))$(id).textContent=value; });
+    }
+    function renderVisitActions(){
+        const start=$('startVisitButton');
+        if(start){
+            const show=CAN_FIELD&&currentVisit?.status==='AGENDADA';
+            start.classList.toggle('hidden',!show);
+            start.classList.toggle('flex',show);
+        }
+    }
+    async function startTechnicalVisit(){
+        if(!currentVisit||currentVisit.status!=='AGENDADA')return;
+        const button=$('startVisitButton'); if(button)button.disabled=true;
+        try{
+            const response=await fetch(`/technical-visits/${currentVisit.id}/start`,{method:'POST',headers:csrfHeaders(false)});
+            const data=await response.json().catch(()=>({}));
+            if(!response.ok)throw new Error(data.error||'Não foi possível iniciar a visita.');
+            currentVisit.status=data.status||'EM_ANDAMENTO';
+            selectVisit(currentVisit.id);
+        }catch(error){ alert(error.message||'Não foi possível iniciar a visita.'); }
+        finally{ if(button)button.disabled=false; }
+    }
     function openMaps(){ if(!currentVisit)return; window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(currentVisit.clientAddress),'_blank','noopener'); }
 
     function renderCompletionAction(){
+        if(!$('completeVisitSection'))return;
         const completed=currentVisit?.status==='CONCLUIDA';
         $('completeVisitTitle').textContent=completed?'Visita técnica concluída':'Finalizar atendimento em campo';
         $('completeVisitDescription').textContent=completed
@@ -393,14 +463,14 @@
         }
     }
 
-    function renderOpenings(){ const wrap=$('openingsList'); wrap.innerHTML=''; currentVisit.openings.forEach(o=>{ const card=document.createElement('article'); card.className='rounded-xl border border-slate-200 dark:border-slate-700 p-4 min-w-0'; const dimensions=o.grossHeightLeftMm!=null?`<div class="grid grid-cols-2 gap-1 text-[11px] mt-3"><span>Alt. esq.: <b>${fmt(o.grossHeightLeftMm)}</b></span><span>Alt. dir.: <b>${fmt(o.grossHeightRightMm)}</b></span><span>Larg. sup.: <b>${fmt(o.grossWidthTopMm)}</b></span><span>Larg. inf.: <b>${fmt(o.grossWidthBottomMm)}</b></span></div>`:`<p class="text-sm mt-2"><b>${fmt(o.widthMm)}</b> × <b>${fmt(o.heightMm)}</b></p>`; card.innerHTML=`<div class="flex items-start justify-between gap-2"><div class="min-w-0"><h4 class="font-black text-slate-900 dark:text-white truncate">${esc(o.name)}</h4><div class="flex flex-wrap gap-1.5 mt-1"><span class="text-[9px] px-2 py-1 rounded-md bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 font-black uppercase">${esc(SERVICE_LABELS[o.serviceCategory]||'Serviço não informado')}</span><span class="text-[9px] px-2 py-1 text-emerald-600 font-black uppercase">Disponível no plano de corte</span></div></div><div class="flex"><button class="p-2" title="Editar" onclick="editOpening('${o.id}')"><i data-lucide="pencil" class="w-4 h-4"></i></button><button class="p-2 text-rose-500" title="Excluir" onclick="deleteOpening('${o.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>${dimensions}${o.notes?`<p class="text-xs text-slate-500 mt-2">${esc(o.notes)}</p>`:''}<div class="mt-3 space-y-1">${o.features.map(f=>`<div class="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-2 text-[11px]"><b>${esc(f.name||f.type)}</b> · ${esc(f.referenceHorizontal)} ${fmt(f.distanceHorizontalMm)} · ${esc(f.referenceVertical)} ${fmt(f.distanceVerticalMm)}${f.diameterMm?' · Ø '+fmt(f.diameterMm):''}${f.widthMm?' · '+fmt(f.widthMm)+' × '+fmt(f.heightMm):''}</div>`).join('')||'<p class="text-[11px] text-slate-400">Sem furos ou recortes.</p>'}</div>`; wrap.appendChild(card); }); if(!wrap.children.length) wrap.innerHTML='<p class="2xl:col-span-2 text-sm text-center text-slate-400 py-8">Nenhuma medição adicionada. Use “Adicionar vão”.</p>'; lucide.createIcons(); }
+    function renderOpenings(){ const wrap=$('openingsList'); wrap.innerHTML=''; currentVisit.openings.forEach(o=>{ const actions=CAN_FIELD?`<div class="flex"><button class="p-2" title="Editar" onclick="editOpening('${o.id}')"><i data-lucide="pencil" class="w-4 h-4"></i></button><button class="p-2 text-rose-500" title="Excluir" onclick="deleteOpening('${o.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`:''; const card=document.createElement('article'); card.className='rounded-xl border border-slate-200 dark:border-slate-700 p-4 min-w-0'; const dimensions=o.grossHeightLeftMm!=null?`<div class="grid grid-cols-2 gap-1 text-[11px] mt-3"><span>Alt. esq.: <b>${fmt(o.grossHeightLeftMm)}</b></span><span>Alt. dir.: <b>${fmt(o.grossHeightRightMm)}</b></span><span>Larg. sup.: <b>${fmt(o.grossWidthTopMm)}</b></span><span>Larg. inf.: <b>${fmt(o.grossWidthBottomMm)}</b></span></div>`:`<p class="text-sm mt-2"><b>${fmt(o.widthMm)}</b> × <b>${fmt(o.heightMm)}</b></p>`; card.innerHTML=`<div class="flex items-start justify-between gap-2"><div class="min-w-0"><h4 class="font-black text-slate-900 dark:text-white truncate">${esc(o.name)}</h4><div class="flex flex-wrap gap-1.5 mt-1"><span class="text-[9px] px-2 py-1 rounded-md bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 font-black uppercase">${esc(SERVICE_LABELS[o.serviceCategory]||'Serviço não informado')}</span><span class="text-[9px] px-2 py-1 text-emerald-600 font-black uppercase">Disponível no plano de corte</span></div></div>${actions}</div>${dimensions}${o.notes?`<p class="text-xs text-slate-500 mt-2">${esc(o.notes)}</p>`:''}<div class="mt-3 space-y-1">${o.features.map(f=>`<div class="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-2 text-[11px]"><b>${esc(f.name||f.type)}</b> · ${esc(f.referenceHorizontal)} ${fmt(f.distanceHorizontalMm)} · ${esc(f.referenceVertical)} ${fmt(f.distanceVerticalMm)}${f.diameterMm?' · Ø '+fmt(f.diameterMm):''}${f.widthMm?' · '+fmt(f.widthMm)+' × '+fmt(f.heightMm):''}</div>`).join('')||'<p class="text-[11px] text-slate-400">Sem furos ou recortes.</p>'}</div>`; wrap.appendChild(card); }); if(!wrap.children.length) wrap.innerHTML='<p class="2xl:col-span-2 text-sm text-center text-slate-400 py-8">Nenhuma medição adicionada. Use “Adicionar vão”.</p>'; lucide.createIcons(); }
     function renderPhotos(){
         const wrap=$('photosList'); wrap.innerHTML='';
         currentVisit.photos.forEach((p,index)=>{
             const d=document.createElement('figure'); d.className='relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 aspect-square cursor-pointer';
             const preview=p.video?`<div class="w-full h-full bg-slate-900 text-white flex flex-col items-center justify-center gap-2"><i data-lucide="play-circle" class="w-11 h-11"></i><span class="text-[10px] font-black uppercase">Vídeo</span></div>`:`<img loading="lazy" src="/technical-visits/${currentVisit.id}/photos/${p.id}" alt="${esc(p.caption||p.fileName)}" class="w-full h-full object-cover">`;
             const opening=p.openingName?`<span class="absolute top-2 left-2 max-w-[70%] bg-fuchsia-600/90 text-white text-[9px] font-black px-2 py-1 rounded-md truncate">${esc(p.openingName)}</span>`:'';
-            d.innerHTML=`<button type="button" onclick="openMediaGallery(${index})" class="absolute inset-0 w-full h-full text-left">${preview}</button>${opening}<figcaption class="absolute inset-x-0 bottom-0 bg-slate-950/75 text-white text-[10px] p-2 truncate pointer-events-none">${esc(p.caption||p.fileName)}</figcaption><button type="button" onclick="event.stopPropagation();deletePhoto('${p.id}')" class="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg" aria-label="Excluir anexo"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>`;
+            d.innerHTML=`<button type="button" onclick="openMediaGallery(${index})" class="absolute inset-0 w-full h-full text-left">${preview}</button>${opening}<figcaption class="absolute inset-x-0 bottom-0 bg-slate-950/75 text-white text-[10px] p-2 truncate pointer-events-none">${esc(p.caption||p.fileName)}</figcaption>${CAN_FIELD?`<button type="button" onclick="event.stopPropagation();deletePhoto('${p.id}')" class="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg" aria-label="Excluir anexo"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>`:''}`;
             wrap.appendChild(d);
         });
         if(!wrap.children.length) wrap.innerHTML='<p class="col-span-full text-sm text-center text-slate-400 py-8">Nenhuma foto ou vídeo anexado.</p>';
@@ -417,8 +487,8 @@
     }
 
     async function createVisit(e){ e.preventDefault(); const clientId=$('newClientId').value; if(!clientId){ openClientSearchModal(); return; } const payload={clientId,visitDate:$('newVisitDate').value,visitTime:$('newVisitTime').value||null,notes:$('newVisitNotes').value,status:'AGENDADA'}; const r=await fetch('/technical-visits/create',{method:'POST',headers:csrfHeaders(true),body:JSON.stringify(payload)}); const d=await r.json(); if(!r.ok){alert(d.error);return;} location.href='/technical-visits?visit='+d.id; }
-    function openVisitEditor(){ $('editVisitDate').value=currentVisit.visitDate||''; $('editVisitTime').value=currentVisit.visitTime?.substring(0,5)||''; $('editVisitStatus').value=currentVisit.status||'AGENDADA'; $('editVisitNotes').value=currentVisit.notes||''; toggleModal('visitEditorModal',true); }
-    async function saveVisit(e){ e.preventDefault(); const payload={visitDate:$('editVisitDate').value,visitTime:$('editVisitTime').value||null,status:$('editVisitStatus').value,notes:$('editVisitNotes').value}; await jsonAction(`/technical-visits/${currentVisit.id}`,'POST',payload); }
+    function openVisitEditor(){ $('editVisitDate').value=currentVisit.visitDate||''; $('editVisitTime').value=currentVisit.visitTime?.substring(0,5)||''; const statusInput=$('editVisitStatus'); if(statusInput)statusInput.value=currentVisit.status||'AGENDADA'; $('editVisitNotes').value=currentVisit.notes||''; toggleModal('visitEditorModal',true); }
+    async function saveVisit(e){ e.preventDefault(); const payload={visitDate:$('editVisitDate').value,visitTime:$('editVisitTime').value||null,status:$('editVisitStatus')?.value||currentVisit.status,notes:$('editVisitNotes').value}; await jsonAction(`/technical-visits/${currentVisit.id}`,'POST',payload); }
 
     function openOpeningEditor(o=null){ $('openingModalTitle').textContent=o?'Editar vão':'Adicionar vão'; $('openingId').value=o?.id||''; $('openingServiceCategory').value=o?.serviceCategory||''; $('openingName').value=o?.name||''; $('openingWidth').value=o?.widthMm??''; $('openingHeight').value=o?.heightMm??''; $('openingHeightLeft').value=o?.grossHeightLeftMm??''; $('openingHeightRight').value=o?.grossHeightRightMm??''; $('openingWidthTop').value=o?.grossWidthTopMm??''; $('openingWidthBottom').value=o?.grossWidthBottomMm??''; $('openingNotes').value=o?.notes||''; $('featuresEditor').innerHTML=''; (o?.features||[]).forEach(addFeatureRow); toggleModal('openingModal',true); lucide.createIcons(); }
     function editOpening(id){ openOpeningEditor(currentVisit.openings.find(o=>o.id===id)); }
@@ -549,10 +619,39 @@
         catch(error){ alert(error.message||'Erro ao enviar vídeo'); button.disabled=false; button.textContent='Enviar vídeo'; }
     }
 
-    document.addEventListener('DOMContentLoaded',()=>{ $('visitSearch').addEventListener('input',renderVisitList); $('visitStatusFilter').addEventListener('change',renderVisitList); $('visitMonthFilter').addEventListener('change',renderVisitList); $('newVisitDate').value=new Date().toISOString().substring(0,10); $('clientSearchModal').addEventListener('click',e=>{ if(e.target===$('clientSearchModal'))closeClientSearchModal(); }); let touchStartX=null; $('mediaGalleryStage').addEventListener('touchstart',e=>touchStartX=e.changedTouches[0].clientX,{passive:true}); $('mediaGalleryStage').addEventListener('touchend',e=>{ if(touchStartX==null)return; const delta=e.changedTouches[0].clientX-touchStartX; if(Math.abs(delta)>45)stepMediaGallery(delta<0?1:-1); touchStartX=null; },{passive:true}); document.addEventListener('keydown',e=>{ if(!$('mediaGalleryModal').classList.contains('hidden')){ if(e.key==='ArrowRight')stepMediaGallery(1); if(e.key==='ArrowLeft')stepMediaGallery(-1); if(e.key==='Escape')closeMediaGallery(); } else if(e.key==='Escape'&&!$('clientSearchModal').classList.contains('hidden'))closeClientSearchModal(); }); filterClientOptions(); if(INITIAL_VISIT_ID){ const selected=VISITS.find(v=>v.id===String(INITIAL_VISIT_ID)); if(selected?.status==='CONCLUIDA')$('visitStatusFilter').value='CONCLUIDA'; } renderVisitList(); if(INITIAL_VISIT_ID)selectVisit(String(INITIAL_VISIT_ID)); else if(filteredVisits().length)selectVisit(filteredVisits()[0].id); });
+    document.addEventListener('DOMContentLoaded',()=>{ $('visitSearch').addEventListener('input',renderVisitList); $('visitStatusFilter').addEventListener('change',renderVisitList); $('visitMonthFilter').addEventListener('change',renderVisitList); if($('newVisitDate'))$('newVisitDate').value=new Date().toISOString().substring(0,10); if($('clientSearchModal'))$('clientSearchModal').addEventListener('click',e=>{ if(e.target===$('clientSearchModal'))closeClientSearchModal(); }); renderRoleOverview(); let touchStartX=null; $('mediaGalleryStage').addEventListener('touchstart',e=>touchStartX=e.changedTouches[0].clientX,{passive:true}); $('mediaGalleryStage').addEventListener('touchend',e=>{ if(touchStartX==null)return; const delta=e.changedTouches[0].clientX-touchStartX; if(Math.abs(delta)>45)stepMediaGallery(delta<0?1:-1); touchStartX=null; },{passive:true}); document.addEventListener('keydown',e=>{ if(!$('mediaGalleryModal').classList.contains('hidden')){ if(e.key==='ArrowRight')stepMediaGallery(1); if(e.key==='ArrowLeft')stepMediaGallery(-1); if(e.key==='Escape')closeMediaGallery(); } else if(e.key==='Escape'&&!$('clientSearchModal').classList.contains('hidden'))closeClientSearchModal(); }); if(CAN_PLAN)filterClientOptions(); if(INITIAL_VISIT_ID){ const selected=VISITS.find(v=>v.id===String(INITIAL_VISIT_ID)); if(selected?.status==='CONCLUIDA')$('visitStatusFilter').value='CONCLUIDA'; } renderVisitList(); if(INITIAL_VISIT_ID)selectVisit(String(INITIAL_VISIT_ID)); else if(innerWidth>=1280&&filteredVisits().length)selectVisit(filteredVisits()[0].id); });
 </script>
 <style>
-    .modal-shell{position:fixed;inset:0;z-index:80;background:rgb(2 6 23/.78);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;overflow-y:auto}
+    .visit-hero{position:relative;display:flex;flex-direction:column;gap:1rem;overflow:hidden;border:1px solid #e2e8f0;border-radius:1.15rem;background:linear-gradient(135deg,#fff 35%,#fdf4ff);padding:1.1rem;box-shadow:0 10px 28px rgb(15 23 42/.05)}
+    .dark .visit-hero{border-color:rgb(51 65 85/.72);background:linear-gradient(135deg,#131c2f 30%,rgb(88 28 135/.2))}
+    .visit-hero-copy{max-width:52rem;margin-top:.45rem;font-size:.82rem;line-height:1.35rem;color:#64748b}.dark .visit-hero-copy{color:#94a3b8}
+    .role-pill{display:inline-flex;align-items:center;gap:.3rem;border-radius:999px;padding:.32rem .65rem;font-size:.62rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+    .role-pill-sales{background:#e0f2fe;color:#0369a1}.role-pill-field{background:#fef3c7;color:#a16207}.role-pill-management{background:#f3e8ff;color:#7e22ce}
+    .dark .role-pill-sales{background:rgb(14 165 233/.15);color:#7dd3fc}.dark .role-pill-field{background:rgb(245 158 11/.15);color:#fcd34d}.dark .role-pill-management{background:rgb(168 85 247/.16);color:#d8b4fe}
+    .visit-primary-action,.field-action-button,.mobile-back-button{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:.45rem;border-radius:.8rem;font-size:.75rem;font-weight:900}
+    .visit-primary-action{width:100%;background:#c026d3;color:white;padding:.75rem 1rem;box-shadow:0 10px 22px rgb(192 38 211/.2)}
+    .visit-primary-action:hover{background:#a21caf}.field-action-button{flex-shrink:0;background:#c026d3;color:white;padding:.65rem .85rem}.field-action-button:hover{background:#a21caf}
+    .role-overview-card{display:flex;align-items:flex-start;gap:.85rem;border:1px solid #e2e8f0;border-radius:1rem;background:#fff;padding:1rem}.dark .role-overview-card{border-color:rgb(51 65 85/.72);background:#131c2f}
+    .role-overview-icon{display:flex;width:42px;height:42px;flex:0 0 auto;align-items:center;justify-content:center;border-radius:.8rem}
+    .role-overview-sales .role-overview-icon{background:#e0f2fe;color:#0284c7}.role-overview-field .role-overview-icon{background:#fef3c7;color:#d97706}
+    .role-overview-label{font-size:.61rem;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8}
+    .role-overview-card h2{margin-top:.15rem;font-size:.9rem;font-weight:900;color:#0f172a}.dark .role-overview-card h2{color:#fff}
+    .role-overview-card p:last-child{margin-top:.25rem;font-size:.73rem;line-height:1.15rem;color:#64748b}.dark .role-overview-card p:last-child{color:#94a3b8}
+    .management-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+    .management-stat{display:flex;min-height:82px;flex-direction:column;justify-content:space-between;border:1px solid #e2e8f0;border-radius:1rem;background:#fff;padding:.8rem}.dark .management-stat{border-color:rgb(51 65 85/.72);background:#131c2f}
+    .management-stat span{font-size:.61rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8}.management-stat strong{font-size:1.45rem;line-height:1.6rem;color:#0f172a}.dark .management-stat strong{color:#fff}
+    .management-stat-accent{border-color:#e879f9;background:#fdf4ff}.dark .management-stat-accent{border-color:rgb(217 70 239/.45);background:rgb(192 38 211/.1)}
+    .visit-navigator-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;border-bottom:1px solid #e2e8f0;padding:1rem}.dark .visit-navigator-heading{border-color:#1e293b}
+    .visit-count{display:flex;min-width:32px;height:32px;align-items:center;justify-content:center;border-radius:999px;background:#f1f5f9;padding:0 .55rem;font-size:.72rem;font-weight:900;color:#475569}.dark .visit-count{background:#1e293b;color:#cbd5e1}
+    .mobile-back-button{width:100%;border:1px solid #cbd5e1;background:#fff;padding:.65rem .85rem;color:#475569}.dark .mobile-back-button{border-color:#334155;background:#131c2f;color:#e2e8f0}
+    .sales-readonly-card{display:flex;align-items:flex-start;gap:.8rem;border:1px solid #bae6fd;border-radius:1rem;background:#f0f9ff;padding:1rem;color:#075985}.dark .sales-readonly-card{border-color:rgb(14 165 233/.28);background:rgb(14 165 233/.1);color:#bae6fd}
+    .sales-readonly-icon{display:flex;width:40px;height:40px;flex:0 0 auto;align-items:center;justify-content:center;border-radius:.75rem;background:#e0f2fe;color:#0284c7}.dark .sales-readonly-icon{background:rgb(14 165 233/.18);color:#7dd3fc}
+    .sales-readonly-card h3{font-size:.85rem;font-weight:900}.sales-readonly-card p{margin-top:.2rem;font-size:.72rem;line-height:1.2rem;opacity:.82}
+    [data-visit-role="TECNICO"] .visit-hero{background:linear-gradient(135deg,#fff 35%,#fffbeb)}.dark [data-visit-role="TECNICO"] .visit-hero{background:linear-gradient(135deg,#131c2f 30%,rgb(120 53 15/.2))}
+    @media(max-width:1279px){.visit-workspace[data-mobile-view="list"] #emptyState,.visit-workspace[data-mobile-view="list"] #visitDetail{display:none!important}.visit-workspace[data-mobile-view="detail"] #visitNavigator,.visit-workspace[data-mobile-view="detail"] #emptyState{display:none!important}#visitList{max-height:none}.visit-navigator{min-height:440px}}
+    @media(min-width:640px){.visit-hero{padding:1.35rem}.visit-primary-action{width:auto;align-self:flex-start}.management-overview-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.role-overview-card{padding:1.15rem}}
+    @media(min-width:1280px){.visit-hero{flex-direction:row;align-items:center;justify-content:space-between;padding:1.5rem}.visit-primary-action{align-self:center}.mobile-back-button{display:none}.visit-navigator-heading{padding:1rem 1.1rem}}
+        .modal-shell{position:fixed;inset:0;z-index:80;background:rgb(2 6 23/.78);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;overflow-y:auto}
     .modal-card{position:relative;width:100%;max-height:94vh;overflow-y:auto;border-radius:1rem;background:white;padding:1.25rem;box-shadow:0 24px 60px rgb(2 6 23/.35)}
     .dark .modal-card{background:#131C2F;border:1px solid rgb(51 65 85)}
     .modal-close{position:absolute;right:1rem;top:1rem;padding:.5rem;border-radius:.65rem;color:#94a3b8;background:#f8fafc}.dark .modal-close{background:#1e293b}

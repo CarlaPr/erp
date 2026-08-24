@@ -10,11 +10,13 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -31,9 +33,13 @@ public class TechnicalVisitPageController {
     }
 
     @GetMapping
-    public String page(@RequestParam(required = false) UUID visit, Model model) {
+    public String page(@RequestParam(required = false) UUID visit, Model model,
+                       Authentication authentication) {
+        String visitRole = visitRole(authentication);
         model.addAttribute("currentPage", "technical-visits");
-        model.addAttribute("clients", clientRepository.findSelectableClients());
+        model.addAttribute("visitRole", visitRole);
+        model.addAttribute("clients", List.of("GESTAO", "VENDAS").contains(visitRole)
+                ? clientRepository.findSelectableClients() : List.of());
         model.addAttribute("serviceCategories", CategoriaServico.values());
         model.addAttribute("visits", dataService.listAllDetailed());
         model.addAttribute("selectedVisitId", visit);
@@ -50,8 +56,19 @@ public class TechnicalVisitPageController {
     @PostMapping(value = "/{visitId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<Map<String, Object>> update(@PathVariable UUID visitId,
-                                                       @RequestBody TechnicalVisitSaveRequest request) {
-        try { dataService.updateVisit(visitId, request); return ok("ok", true); }
+                                                       @RequestBody TechnicalVisitSaveRequest request,
+                                                       Authentication authentication) {
+        try {
+            dataService.updateVisit(visitId, request, "GESTAO".equals(visitRole(authentication)));
+            return ok("ok", true);
+        }
+        catch (RuntimeException e) { return bad(e); }
+    }
+
+    @PostMapping("/{visitId}/start")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> start(@PathVariable UUID visitId) {
+        try { return ok("status", dataService.startVisit(visitId)); }
         catch (RuntimeException e) { return bad(e); }
     }
 
@@ -122,6 +139,18 @@ public class TechnicalVisitPageController {
     public ResponseEntity<Map<String, Object>> deletePhoto(@PathVariable UUID visitId, @PathVariable UUID photoId) {
         try { dataService.deletePhoto(visitId, photoId); return ok("ok", true); }
         catch (RuntimeException e) { return bad(e); }
+    }
+
+    private String visitRole(Authentication authentication) {
+        if (authentication == null) return "VENDAS";
+        if (hasAuthority(authentication, "GESTAO")) return "GESTAO";
+        if (hasAuthority(authentication, "TECNICO")) return "TECNICO";
+        return "VENDAS";
+    }
+
+    private boolean hasAuthority(Authentication authentication, String authority) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(granted -> authority.equals(granted.getAuthority()));
     }
 
     private ResponseEntity<Map<String, Object>> ok(String key, Object value) {

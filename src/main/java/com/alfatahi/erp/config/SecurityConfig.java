@@ -128,7 +128,20 @@ public class SecurityConfig {
                         .hasAnyAuthority("GESTAO", "VENDAS")
 
                         .requestMatchers("/agenda/**", "/login-success").hasAnyAuthority("GESTAO", "VENDAS", "TECNICO")
-                        .requestMatchers(HttpMethod.POST, "/technical-visits/create").hasAuthority("GESTAO")
+                        .requestMatchers(HttpMethod.POST,
+                                "/technical-visits/create",
+                                "/technical-visits/*")
+                        .hasAnyAuthority("GESTAO", "VENDAS")
+                        .requestMatchers(HttpMethod.POST,
+                                "/technical-visits/*/start",
+                                "/technical-visits/*/complete",
+                                "/technical-visits/*/openings",
+                                "/technical-visits/*/photos")
+                        .hasAnyAuthority("GESTAO", "TECNICO")
+                        .requestMatchers(HttpMethod.DELETE,
+                                "/technical-visits/*/openings/*",
+                                "/technical-visits/*/photos/*")
+                        .hasAnyAuthority("GESTAO", "TECNICO")
                         .requestMatchers("/technical-visits/**").hasAnyAuthority("GESTAO", "VENDAS", "TECNICO")
 
                         .anyRequest().authenticated()
