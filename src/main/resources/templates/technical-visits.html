@@ -92,9 +92,32 @@
                 </div>
                 <div id="photosList" class="p-3 sm:p-5 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3"></div>
             </div>
+
+            <div id="completeVisitSection" class="rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-500/10 p-5 sm:p-6">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div>
+                        <h3 id="completeVisitTitle" class="font-black text-emerald-950 dark:text-emerald-200">Finalizar atendimento em campo</h3>
+                        <p id="completeVisitDescription" class="text-sm text-emerald-800/80 dark:text-emerald-300/80 mt-1">Confira as medições, fotos e vídeos antes de concluir.</p>
+                    </div>
+                    <button id="completeVisitButton" type="button" onclick="completeTechnicalVisit()" class="w-full lg:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 disabled:opacity-60 disabled:cursor-wait">
+                        <i data-lucide="circle-check-big" class="w-5 h-5"></i> CONCLUIR VISITA TÉCNICA
+                    </button>
+                </div>
+            </div>
         </section>
     </section>
 </main>
+
+<div id="visitCompletedModal" class="modal-shell hidden" role="dialog" aria-modal="true" aria-labelledby="visitCompletedTitle">
+    <div class="modal-card max-w-md text-center">
+        <div class="w-16 h-16 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
+            <i data-lucide="circle-check-big" class="w-9 h-9"></i>
+        </div>
+        <h3 id="visitCompletedTitle" class="text-xl font-black text-slate-900 dark:text-white mt-5">Visita técnica concluída</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">A visita foi concluída com sucesso e todos os dados foram persistidos no banco de dados.</p>
+        <button type="button" onclick="toggleModal('visitCompletedModal', false)" class="submit-btn mt-6">Entendi</button>
+    </div>
+</div>
 
 <div id="newVisitModal" class="modal-shell hidden">
     <form onsubmit="createVisit(event)" class="modal-card max-w-lg">
@@ -306,10 +329,18 @@
     function filteredVisits(){
         const q=normalizeSearch($('visitSearch').value); const status=$('visitStatusFilter').value; const month=$('visitMonthFilter').value;
         $('clearVisitMonth').classList.toggle('hidden',!month);
-        return VISITS.filter(v=>{
+        const visits=VISITS.filter(v=>{
             const referenceDate=v.status==='CONCLUIDA'?(v.completedDate||v.visitDate):v.visitDate;
             return visitMatchesStatus(v,status)&&(!month||String(referenceDate||'').startsWith(month))&&normalizeSearch(`${v.clientName} ${v.clientAddress} ${v.quoteNumber||''}`).includes(q);
         });
+        if(status==='CONCLUIDA'){
+            visits.sort((a,b)=>
+                String(b.completedDate||b.visitDate||'').localeCompare(String(a.completedDate||a.visitDate||''))
+                || String(b.visitDate||'').localeCompare(String(a.visitDate||''))
+                || String(b.visitTime||'').localeCompare(String(a.visitTime||''))
+            );
+        }
+        return visits;
     }
     function clearVisitMonthFilter(){ $('visitMonthFilter').value=''; renderVisitList(); }
     function renderVisitList(){
@@ -322,8 +353,45 @@
         });
         if(!list.children.length) list.innerHTML='<p class="p-5 text-sm text-center text-slate-400">Nenhuma visita encontrada neste filtro.</p>';
     }
-    function selectVisit(id){ currentVisit=VISITS.find(v=>v.id===id); if(!currentVisit)return; $('emptyState').classList.add('hidden'); $('visitDetail').classList.remove('hidden'); const sm=statusMeta(currentVisit.status); $('detailStatus').textContent=sm[0]; $('detailStatus').className='px-2.5 py-1 rounded-lg text-[10px] font-black uppercase '+sm[1]; $('detailQuote').textContent=currentVisit.quoteNumber?'Orçamento '+currentVisit.quoteNumber:'Visita direta do cliente'; $('detailClient').textContent=currentVisit.clientName; $('detailAddress').textContent=currentVisit.clientAddress; $('detailWhen').textContent=fmtDate(currentVisit.visitDate)+(currentVisit.visitTime?' às '+currentVisit.visitTime.substring(0,5):''); $('detailNotes').textContent=currentVisit.notes||''; $('kpiOpenings').textContent=currentVisit.openings.length; $('kpiFeatures').textContent=currentVisit.openings.reduce((n,o)=>n+o.features.length,0); $('kpiPhotos').textContent=currentVisit.photos.length; renderOpenings(); renderPhotos(); renderVisitList(); if(innerWidth<1280) $('visitDetail').scrollIntoView({behavior:'smooth',block:'start'}); }
+    function selectVisit(id){ currentVisit=VISITS.find(v=>v.id===id); if(!currentVisit)return; $('emptyState').classList.add('hidden'); $('visitDetail').classList.remove('hidden'); const sm=statusMeta(currentVisit.status); $('detailStatus').textContent=sm[0]; $('detailStatus').className='px-2.5 py-1 rounded-lg text-[10px] font-black uppercase '+sm[1]; $('detailQuote').textContent=currentVisit.quoteNumber?'Orçamento '+currentVisit.quoteNumber:'Visita direta do cliente'; $('detailClient').textContent=currentVisit.clientName; $('detailAddress').textContent=currentVisit.clientAddress; $('detailWhen').textContent=fmtDate(currentVisit.visitDate)+(currentVisit.visitTime?' às '+currentVisit.visitTime.substring(0,5):''); $('detailNotes').textContent=currentVisit.notes||''; $('kpiOpenings').textContent=currentVisit.openings.length; $('kpiFeatures').textContent=currentVisit.openings.reduce((n,o)=>n+o.features.length,0); $('kpiPhotos').textContent=currentVisit.photos.length; renderOpenings(); renderPhotos(); renderCompletionAction(); renderVisitList(); if(innerWidth<1280) $('visitDetail').scrollIntoView({behavior:'smooth',block:'start'}); }
     function openMaps(){ if(!currentVisit)return; window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(currentVisit.clientAddress),'_blank','noopener'); }
+
+    function renderCompletionAction(){
+        const completed=currentVisit?.status==='CONCLUIDA';
+        $('completeVisitTitle').textContent=completed?'Visita técnica concluída':'Finalizar atendimento em campo';
+        $('completeVisitDescription').textContent=completed
+            ? `Concluída em ${fmtDate(currentVisit.completedDate)}. Os dados estão salvos no banco de dados.`
+            : 'Confira as medições, fotos e vídeos antes de concluir.';
+        const button=$('completeVisitButton');
+        button.classList.toggle('hidden',completed);
+        if(!completed){
+            button.disabled=false;
+            button.innerHTML='<i data-lucide="circle-check-big" class="w-5 h-5"></i> CONCLUIR VISITA TÉCNICA';
+        }
+        lucide.createIcons();
+    }
+
+    async function completeTechnicalVisit(){
+        if(!currentVisit||currentVisit.status==='CONCLUIDA')return;
+        const button=$('completeVisitButton');
+        button.disabled=true;
+        button.innerHTML='<span class="completion-spinner"></span> Salvando conclusão...';
+        try{
+            const response=await fetch(`/technical-visits/${currentVisit.id}/complete`,{method:'POST',headers:csrfHeaders(false)});
+            const data=await response.json().catch(()=>({}));
+            if(!response.ok)throw new Error(data.error||'Não foi possível concluir a visita técnica.');
+            currentVisit.status='CONCLUIDA';
+            currentVisit.completedDate=data.completedDate||new Date().toISOString().substring(0,10);
+            selectVisit(currentVisit.id);
+            toggleModal('visitCompletedModal',true);
+            lucide.createIcons();
+        }catch(error){
+            alert(error.message||'Não foi possível concluir a visita técnica.');
+            button.disabled=false;
+            button.innerHTML='<i data-lucide="circle-check-big" class="w-5 h-5"></i> CONCLUIR VISITA TÉCNICA';
+            lucide.createIcons();
+        }
+    }
 
     function renderOpenings(){ const wrap=$('openingsList'); wrap.innerHTML=''; currentVisit.openings.forEach(o=>{ const card=document.createElement('article'); card.className='rounded-xl border border-slate-200 dark:border-slate-700 p-4 min-w-0'; const dimensions=o.grossHeightLeftMm!=null?`<div class="grid grid-cols-2 gap-1 text-[11px] mt-3"><span>Alt. esq.: <b>${fmt(o.grossHeightLeftMm)}</b></span><span>Alt. dir.: <b>${fmt(o.grossHeightRightMm)}</b></span><span>Larg. sup.: <b>${fmt(o.grossWidthTopMm)}</b></span><span>Larg. inf.: <b>${fmt(o.grossWidthBottomMm)}</b></span></div>`:`<p class="text-sm mt-2"><b>${fmt(o.widthMm)}</b> × <b>${fmt(o.heightMm)}</b></p>`; card.innerHTML=`<div class="flex items-start justify-between gap-2"><div class="min-w-0"><h4 class="font-black text-slate-900 dark:text-white truncate">${esc(o.name)}</h4><div class="flex flex-wrap gap-1.5 mt-1"><span class="text-[9px] px-2 py-1 rounded-md bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 font-black uppercase">${esc(SERVICE_LABELS[o.serviceCategory]||'Serviço não informado')}</span><span class="text-[9px] px-2 py-1 text-emerald-600 font-black uppercase">Disponível no plano de corte</span></div></div><div class="flex"><button class="p-2" title="Editar" onclick="editOpening('${o.id}')"><i data-lucide="pencil" class="w-4 h-4"></i></button><button class="p-2 text-rose-500" title="Excluir" onclick="deleteOpening('${o.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>${dimensions}${o.notes?`<p class="text-xs text-slate-500 mt-2">${esc(o.notes)}</p>`:''}<div class="mt-3 space-y-1">${o.features.map(f=>`<div class="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-2 text-[11px]"><b>${esc(f.name||f.type)}</b> · ${esc(f.referenceHorizontal)} ${fmt(f.distanceHorizontalMm)} · ${esc(f.referenceVertical)} ${fmt(f.distanceVerticalMm)}${f.diameterMm?' · Ø '+fmt(f.diameterMm):''}${f.widthMm?' · '+fmt(f.widthMm)+' × '+fmt(f.heightMm):''}</div>`).join('')||'<p class="text-[11px] text-slate-400">Sem furos ou recortes.</p>'}</div>`; wrap.appendChild(card); }); if(!wrap.children.length) wrap.innerHTML='<p class="2xl:col-span-2 text-sm text-center text-slate-400 py-8">Nenhuma medição adicionada. Use “Adicionar vão”.</p>'; lucide.createIcons(); }
     function renderPhotos(){
@@ -491,6 +559,7 @@
     .form-label{display:block;font-size:.68rem;line-height:1rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin-bottom:.35rem}
     .form-input,.mini-input{width:100%;border:1px solid #cbd5e1;border-radius:.7rem;background:#f8fafc;padding:.68rem .8rem;font-size:.875rem;outline:none}.mini-input{padding:.55rem .65rem;font-size:.75rem}.dark .form-input,.dark .mini-input{border-color:#334155;background:#0f172a;color:white}.form-input:focus,.mini-input:focus{border-color:#d946ef}
     .submit-btn{width:100%;border-radius:.75rem;background:#c026d3;color:white;padding:.8rem 1rem;font-size:.875rem;font-weight:900}
+    .completion-spinner{width:1.15rem;height:1.15rem;border:2px solid rgb(255 255 255/.45);border-top-color:white;border-radius:999px;animation:completion-spin .7s linear infinite}@keyframes completion-spin{to{transform:rotate(360deg)}}
     .client-select-btn{width:100%;min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:.75rem;border:1px solid #cbd5e1;border-radius:.85rem;background:#f8fafc;padding:.65rem .8rem;outline:none;transition:border-color .18s,background-color .18s,box-shadow .18s}.client-select-btn:hover{border-color:#e879f9;background:#fdf4ff}.client-select-btn:focus-visible{border-color:#d946ef;box-shadow:0 0 0 3px rgb(217 70 239/.12)}.client-select-btn.has-client{border-color:#e879f9;background:#fdf4ff}.dark .client-select-btn{border-color:#334155;background:#0f172a}.dark .client-select-btn:hover,.dark .client-select-btn.has-client{border-color:#a855f7;background:rgb(168 85 247/.08)}
     .client-select-icon{width:40px;height:40px;border-radius:.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fae8ff;color:#c026d3}.dark .client-select-icon{background:rgb(192 38 211/.14);color:#f0abfc}
     .client-search-shell{z-index:95}.client-search-card{padding:0;display:flex;flex-direction:column;overflow:hidden;max-height:min(760px,90vh)}.client-search-header{padding:1.25rem;border-bottom:1px solid #e2e8f0;background:white;flex-shrink:0}.dark .client-search-header{border-color:#1e293b;background:#131C2F}.client-search-input{width:100%;height:48px;border:1px solid #cbd5e1;border-radius:.8rem;background:#f8fafc;padding:0 3rem 0 2.7rem;font-size:1rem;color:#0f172a;outline:none}.client-search-input:focus{border-color:#d946ef;box-shadow:0 0 0 3px rgb(217 70 239/.1)}.dark .client-search-input{border-color:#334155;background:#0f172a;color:white}.client-search-results{padding:.65rem;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.client-option{width:100%;min-height:66px;display:flex;align-items:center;gap:.75rem;padding:.7rem;border:1px solid transparent;border-radius:.85rem;color:#334155;transition:background-color .15s,border-color .15s}.client-option.client-filter-hidden{display:none!important}.client-option:hover{background:#f8fafc;border-color:#e2e8f0}.client-option.is-selected{background:#fdf4ff;border-color:#f0abfc}.dark .client-option{color:#e2e8f0}.dark .client-option:hover{background:#0f172a;border-color:#334155}.dark .client-option.is-selected{background:rgb(192 38 211/.08);border-color:rgb(217 70 239/.45)}.client-option-icon{width:42px;height:42px;border-radius:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#f1f5f9;color:#64748b}.client-option.is-selected .client-option-icon{background:#fae8ff;color:#c026d3}.dark .client-option-icon{background:#1e293b;color:#94a3b8}.dark .client-option.is-selected .client-option-icon{background:rgb(192 38 211/.14);color:#f0abfc}.client-option-name{display:block;font-size:.875rem;line-height:1.2rem;font-weight:900;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dark .client-option-name{color:white}.client-option-city{display:block;margin-top:.2rem;font-size:.75rem;line-height:1rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dark .client-option-city{color:#94a3b8}.client-option-check{width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:transparent;background:#f8fafc}.client-option.is-selected .client-option-check{color:white;background:#c026d3}.dark .client-option-check{background:#1e293b}.dark .client-option.is-selected .client-option-check{background:#c026d3}

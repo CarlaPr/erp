@@ -254,7 +254,8 @@ public class CroquiService {
             desenharBisote(svg, item, x0, y0, larguraPx, alturaPx, escala);
         }
 
-        desenharFuracoes(svg, item.getFuracoes(), x0, y0, escala);
+        desenharFuracoes(svg, item.getFuracoes(), x0, y0, larguraPx, alturaPx,
+                item.getAlturaFinalMm(), escala);
         List<GeometriaElemento> geometriasElementos = item.getElementos().stream()
                 .map(elemento -> calcularGeometriaElemento(elemento, x0, y0, escala))
                 .toList();
@@ -837,9 +838,13 @@ public class CroquiService {
                 x0 + faixaPx + 5, cotaY + 4, FONTE, formatarNumero(item.getEspessuraBisoteMm())));
     }
 
-    private void desenharFuracoes(StringBuilder svg, List<Furacao> furacoes, double x0, double y0, double escala) {
+    private void desenharFuracoes(StringBuilder svg, List<Furacao> furacoes, double x0, double y0,
+                                  double larguraPx, double alturaPx, BigDecimal alturaMm, double escala) {
         List<Furacao> restantes = new ArrayList<>(furacoes);
         List<Furacao[]> paresPuxador = new ArrayList<>();
+        List<Furacao[]> paresBateFecha = new ArrayList<>();
+
+        agruparParesVerticais(restantes, TipoFuracao.BATE_FECHA, paresBateFecha);
 
         for (int i = 0; i < restantes.size(); i++) {
             Furacao a = restantes.get(i);
@@ -863,12 +868,96 @@ public class CroquiService {
         for (Furacao[] par : paresPuxador) {
             desenharPuxadorH(svg, par[0], par[1], x0, y0, escala);
         }
+        for (Furacao[] par : paresBateFecha) {
+            desenharBateFecha(svg, par[0], par[1], x0, y0, larguraPx, alturaPx, alturaMm, escala);
+        }
         for (Furacao furacao : restantes) {
             if (furacao == null || furacao.getPosicaoXMm() == null || furacao.getPosicaoYMm() == null) {
                 continue;
             }
             desenharFuracaoSimples(svg, furacao, x0, y0, escala);
         }
+    }
+
+    private void agruparParesVerticais(List<Furacao> furacoes, TipoFuracao tipo,
+                                        List<Furacao[]> pares) {
+        for (int i = 0; i < furacoes.size(); i++) {
+            Furacao a = furacoes.get(i);
+            if (a == null || a.getTipo() != tipo || a.getPosicaoXMm() == null || a.getPosicaoYMm() == null) {
+                continue;
+            }
+
+            int indiceMaisProximo = -1;
+            BigDecimal menorDistanciaVertical = null;
+            for (int j = i + 1; j < furacoes.size(); j++) {
+                Furacao b = furacoes.get(j);
+                if (b == null || b.getTipo() != tipo || b.getPosicaoXMm() == null || b.getPosicaoYMm() == null) {
+                    continue;
+                }
+                if (a.getPosicaoXMm().subtract(b.getPosicaoXMm()).abs().doubleValue() > TOLERANCIA_PAR_MM) {
+                    continue;
+                }
+
+                BigDecimal distanciaVertical = a.getPosicaoYMm().subtract(b.getPosicaoYMm()).abs();
+                if (menorDistanciaVertical == null || distanciaVertical.compareTo(menorDistanciaVertical) < 0) {
+                    menorDistanciaVertical = distanciaVertical;
+                    indiceMaisProximo = j;
+                }
+            }
+
+            if (indiceMaisProximo >= 0) {
+                pares.add(new Furacao[]{a, furacoes.get(indiceMaisProximo)});
+                furacoes.set(i, null);
+                furacoes.set(indiceMaisProximo, null);
+            }
+        }
+    }
+
+    private void desenharBateFecha(StringBuilder svg, Furacao a, Furacao b, double x0, double y0,
+                                   double larguraPx, double alturaPx, BigDecimal alturaMm, double escala) {
+        double cx = x0 + (a.getPosicaoXMm().doubleValue() + b.getPosicaoXMm().doubleValue()) * escala / 2;
+        double cyA = y0 + a.getPosicaoYMm().doubleValue() * escala;
+        double cyB = y0 + b.getPosicaoYMm().doubleValue() * escala;
+        double centroY = (cyA + cyB) / 2;
+        double raioA = raioFuracao(a, escala);
+        double raioB = raioFuracao(b, escala);
+
+        BigDecimal centroYMm = a.getPosicaoYMm().add(b.getPosicaoYMm()).divide(BigDecimal.valueOf(2));
+        BigDecimal distanciaBaseMm = alturaMm.subtract(centroYMm).abs();
+        double centroPecaX = x0 + larguraPx / 2;
+        boolean ladoEsquerdo = cx <= centroPecaX;
+        double cotaX = cx + (ladoEsquerdo ? 28 : -28);
+        double baseY = y0 + alturaPx;
+        double labelX = cotaX + (ladoEsquerdo ? 15 : -15);
+
+        svg.append(String.format(Locale.US,
+                "<g class=\"bate-fecha\" data-distancia-base-mm=\"%s\">",
+                formatarNumero(distanciaBaseMm)));
+        svg.append(String.format(Locale.US,
+                "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"1.6\"/>",
+                cx, cyA, raioA));
+        svg.append(String.format(Locale.US,
+                "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"1.6\"/>",
+                cx, cyB, raioB));
+        svg.append(String.format(Locale.US,
+                "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"10\" font-weight=\"700\" fill=\"#0f172a\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" text-anchor=\"middle\">BATE E FECHA</text>",
+                cx, Math.min(cyA - raioA, cyB - raioB) - 7, FONTE));
+        svg.append(String.format(Locale.US,
+                "<line class=\"extensao-cota-bate-fecha\" x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\" stroke=\"#94a3b8\" stroke-width=\"1\" stroke-dasharray=\"3 2\"/>",
+                cx, centroY, cotaX, centroY));
+        svg.append(String.format(Locale.US,
+                "<line class=\"cota-bate-fecha\" x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\" stroke=\"#475569\" stroke-width=\"1.3\" marker-start=\"url(#seta-inicio)\" marker-end=\"url(#seta-fim)\"/>",
+                cotaX, centroY, cotaX, baseY));
+        svg.append(String.format(Locale.US,
+                "<text class=\"valor-cota-bate-fecha\" x=\"0\" y=\"0\" font-family=\"%s\" font-size=\"10\" font-weight=\"600\" fill=\"#475569\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" text-anchor=\"middle\" transform=\"translate(%.1f %.1f) rotate(-90)\">%s mm</text>",
+                FONTE, labelX, (centroY + baseY) / 2, formatarNumero(distanciaBaseMm)));
+        svg.append("</g>");
+    }
+
+    private double raioFuracao(Furacao furacao, double escala) {
+        return furacao.getDiametroMm() != null
+                ? Math.max(furacao.getDiametroMm().doubleValue() * escala / 2, 4)
+                : 5;
     }
 
     private void desenharFuracaoSimples(StringBuilder svg, Furacao furacao, double x0, double y0, double escala) {

@@ -83,6 +83,15 @@ public class TechnicalVisitDataService {
         visitRepository.save(visit);
     }
 
+    public LocalDate completeVisit(UUID visitId) {
+        TechnicalVisit visit = findVisit(visitId);
+        if (visit.getCompletedDate() == null) {
+            visit.setCompletedDate(LocalDate.now());
+        }
+        visit.setStatus("CONCLUIDA");
+        return visitRepository.saveAndFlush(visit).getCompletedDate();
+    }
+
     public TechnicalVisitOpening saveOpening(UUID visitId, TechnicalVisitOpeningRequest request) {
         TechnicalVisit visit = findVisit(visitId);
         if (request.getName() == null || request.getName().isBlank()) {

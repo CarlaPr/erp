@@ -1088,8 +1088,7 @@ public class PlanoCorteService {
                 ? distanciaBaseMm : BATE_FECHA_DIST_BASE_PADRAO_MM;
         boolean direito = "DIREITO".equalsIgnoreCase(lado);
         BigDecimal x = direito ? item.getLarguraFinalMm().subtract(BATE_FECHA_DIST_BORDA_MM) : BATE_FECHA_DIST_BORDA_MM;
-        BigDecimal alturaReferencia = item.getAlturaBrutaMm() != null ? item.getAlturaBrutaMm() : item.getAlturaFinalMm();
-        BigDecimal centroY = alturaReferencia.subtract(distanciaBase);
+        BigDecimal centroY = item.getAlturaFinalMm().subtract(distanciaBase);
         BigDecimal metadeGap = BATE_FECHA_DIST_ENTRE_FUROS_MM.divide(BigDecimal.valueOf(2));
         BigDecimal y1 = centroY.subtract(metadeGap);
         BigDecimal y2 = centroY.add(metadeGap);

@@ -55,6 +55,13 @@ public class TechnicalVisitPageController {
         catch (RuntimeException e) { return bad(e); }
     }
 
+    @PostMapping("/{visitId}/complete")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> complete(@PathVariable UUID visitId) {
+        try { return ok("completedDate", dataService.completeVisit(visitId)); }
+        catch (RuntimeException e) { return bad(e); }
+    }
+
     @PostMapping(value = "/{visitId}/openings", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<Map<String, Object>> saveOpening(@PathVariable UUID visitId,
