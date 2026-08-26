@@ -32,8 +32,10 @@ public class CashLedgerController {
         if (from == null) from = LocalDate.now().withDayOfMonth(1);
         if (to   == null) to   = LocalDate.now();
 
-        BigDecimal openingBalance = cashLedgerService.getOpeningBalance();
+        CashLedgerService.BalanceSummary openingBalances = cashLedgerService.getOpeningBalances(from);
+        BigDecimal openingBalance = openingBalances.total();
         List<CashLedgerEntryDto> entries = cashLedgerService.buildLedger(from, to, openingBalance);
+        CashLedgerService.BalanceSummary currentBalances = cashLedgerService.getCurrentBalances();
 
         BigDecimal totalEntradas = entries.stream()
                 .map(CashLedgerEntryDto::getEntrada)
@@ -58,6 +60,11 @@ public class CashLedgerController {
         model.addAttribute("totalSaidas",    totalSaidas);
         model.addAttribute("saldoFinal",     saldoFinal);
         model.addAttribute("totalTaxas",     totalTaxas);
+        model.addAttribute("saldoTotalAtual", currentBalances.total());
+        model.addAttribute("saldoBancoAtual", currentBalances.bank());
+        model.addAttribute("saldoDinheiroAtual", currentBalances.cash());
+        model.addAttribute("openingBankBalance", openingBalances.bank());
+        model.addAttribute("openingCashBalance", openingBalances.cash());
         return "cash-ledger";
     }
 }

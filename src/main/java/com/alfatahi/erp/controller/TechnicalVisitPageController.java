@@ -2,6 +2,7 @@ package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.dto.TechnicalVisitOpeningRequest;
 import com.alfatahi.erp.dto.TechnicalVisitSaveRequest;
+import com.alfatahi.erp.entity.Client;
 import com.alfatahi.erp.entity.TechnicalVisitPhoto;
 import com.alfatahi.erp.planocorte.entity.CategoriaServico;
 import com.alfatahi.erp.repository.ClientRepository;
@@ -51,6 +52,20 @@ public class TechnicalVisitPageController {
     public ResponseEntity<Map<String, Object>> create(@RequestBody TechnicalVisitSaveRequest request) {
         try { return ok("id", dataService.createForClient(request)); }
         catch (RuntimeException e) { return bad(e); }
+    }
+
+    @PostMapping(value = "/clients", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> createClient(@RequestBody Client client) {
+        if (client.getName() == null || client.getName().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Informe o nome do cliente."));
+        }
+        client.setId(null);
+        client.setName(client.getName().trim());
+        client.setType(client.getType() == null || client.getType().isBlank()
+                ? "individual" : client.getType());
+        client.setIsActive(true);
+        return ResponseEntity.ok(clientRepository.save(client));
     }
 
     @PostMapping(value = "/{visitId}", consumes = MediaType.APPLICATION_JSON_VALUE)

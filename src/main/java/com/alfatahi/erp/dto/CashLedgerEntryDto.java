@@ -6,6 +6,7 @@ import java.time.LocalDate;
 public class CashLedgerEntryDto {
 
     public enum EntryType { ENTRADA, SAIDA }
+    public enum BalanceLocation { BANCO, DINHEIRO }
 
     private LocalDate date;
     private EntryType type;
@@ -13,6 +14,7 @@ public class CashLedgerEntryDto {
     private String description;
     private String workOrderNumber;
     private String paymentMethod;
+    private BalanceLocation balanceLocation;
     private BigDecimal entrada = BigDecimal.ZERO;
     private BigDecimal saida   = BigDecimal.ZERO;
     private BigDecimal saldo   = BigDecimal.ZERO;
@@ -32,6 +34,8 @@ public class CashLedgerEntryDto {
     public void setWorkOrderNumber(String w) { this.workOrderNumber = w; }
     public String getPaymentMethod()       { return paymentMethod; }
     public void setPaymentMethod(String m) { this.paymentMethod = m; }
+    public BalanceLocation getBalanceLocation() { return balanceLocation; }
+    public void setBalanceLocation(BalanceLocation balanceLocation) { this.balanceLocation = balanceLocation; }
     public BigDecimal getEntrada()         { return entrada; }
     public void setEntrada(BigDecimal e)   { this.entrada = e; }
     public BigDecimal getSaida()           { return saida; }

@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -19,13 +20,16 @@ public class FinanceService {
     private final AccountsPayableRepository payableRepository;
     private final AccountsReceivableRepository receivableRepository;
     private final WorkOrderRepository workOrderRepository;
+    private final FinancialMovementRepository financialMovementRepository;
 
     public FinanceService(AccountsPayableRepository payableRepository,
                           AccountsReceivableRepository receivableRepository,
-                          WorkOrderRepository workOrderRepository) {
+                          WorkOrderRepository workOrderRepository,
+                          FinancialMovementRepository financialMovementRepository) {
         this.payableRepository = payableRepository;
         this.receivableRepository = receivableRepository;
         this.workOrderRepository = workOrderRepository;
+        this.financialMovementRepository = financialMovementRepository;
     }
 
     public List<AccountsPayable> listAllPayables()       { return payableRepository.findAllByOrderByDueDateAsc(); }
@@ -45,9 +49,14 @@ public class FinanceService {
         BigDecimal newTotalPaid = ap.getPaidAmount().add(amountPaid);
         ap.setPaidAmount(newTotalPaid);
 
-        if (paymentDate != null)                                    ap.setPaymentDate(paymentDate);
-        if (paymentMethod != null && !paymentMethod.isBlank())      ap.setPaymentMethod(paymentMethod);
-        if (notes != null && !notes.isBlank())                      ap.setNotes(notes);
+        LocalDate effectivePaymentDate = paymentDate != null ? paymentDate : LocalDate.now();
+        String effectivePaymentMethod = paymentMethod != null && !paymentMethod.isBlank()
+                ? paymentMethod : ap.getPaymentMethod();
+
+        ap.setPaymentDate(effectivePaymentDate);
+        if (effectivePaymentMethod != null && !effectivePaymentMethod.isBlank())
+            ap.setPaymentMethod(effectivePaymentMethod);
+        if (notes != null && !notes.isBlank()) ap.setNotes(notes);
 
         if (newTotalPaid.compareTo(BigDecimal.ZERO) > 0
                 && newTotalPaid.compareTo(ap.getTotalAmount()) < 0) {
@@ -56,6 +65,7 @@ public class FinanceService {
             ap.setStatus("paid");
         }
         payableRepository.save(ap);
+        recordPayableMovement(ap, amountPaid, effectivePaymentDate, effectivePaymentMethod);
     }
 
     @Transactional
@@ -98,8 +108,13 @@ public class FinanceService {
         ar.setGrossReceivedAmount(newGrossTotal);
         ar.setFeeAmount(newFeeTotal);
 
-        if (paymentDate != null)                               ar.setPaymentDate(paymentDate);
-        if (paymentMethod != null && !paymentMethod.isBlank()) ar.setPaymentMethod(paymentMethod);
+        LocalDate effectivePaymentDate = paymentDate != null ? paymentDate : LocalDate.now();
+        String effectivePaymentMethod = paymentMethod != null && !paymentMethod.isBlank()
+                ? paymentMethod : ar.getPaymentMethod();
+
+        ar.setPaymentDate(effectivePaymentDate);
+        if (effectivePaymentMethod != null && !effectivePaymentMethod.isBlank())
+            ar.setPaymentMethod(effectivePaymentMethod);
         if (cardFeePercent != null && cardFeePercent.compareTo(BigDecimal.ZERO) > 0)
             ar.setCardFeePercentage(cardFeePercent);
 
@@ -108,10 +123,10 @@ public class FinanceService {
         }
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        String dateStr = (paymentDate != null ? paymentDate : LocalDate.now()).format(fmt);
+        String dateStr = effectivePaymentDate.format(fmt);
         String autoNote;
         if (feeForThisPayment.compareTo(BigDecimal.ZERO) > 0) {
-            autoNote = String.format("[%s] Recebido R$ %.2f bruto | Taxa %.2f%% = R$ %.2f | Líquido no Caixa: R$ %.2f",
+            autoNote = String.format("[%s] Recebido R$ %.2f bruto | Taxa %.2f%% = R$ %.2f | Líquido recebido: R$ %.2f",
                     dateStr, amountReceived, fee, feeForThisPayment, netAmount);
         } else {
             autoNote = String.format("[%s] Recebido R$ %.2f", dateStr, amountReceived);
@@ -128,7 +143,7 @@ public class FinanceService {
         if (ar.getWorkOrder() != null) {
             WorkOrder wo = ar.getWorkOrder();
             boolean hasOsChanges = false;
-            String opDateStr = (paymentDate != null ? paymentDate : LocalDate.now()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String opDateStr = effectivePaymentDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
             if (wo.getItems() == null) {
                 wo.setItems(new ArrayList<>());
@@ -168,11 +183,12 @@ public class FinanceService {
         } else if (newGrossTotal.compareTo(ar.getTotalAmount()) >= 0) {
             ar.setStatus("received");
             if (ar.getPaymentDate() == null) {
-                ar.setPaymentDate(paymentDate != null ? paymentDate : LocalDate.now());
+                ar.setPaymentDate(effectivePaymentDate);
             }
         }
 
         receivableRepository.save(ar);
+        recordReceivableMovement(ar, netAmount, effectivePaymentDate, effectivePaymentMethod);
     }
 
     @Transactional
@@ -189,6 +205,37 @@ public class FinanceService {
                         AccountsPayable::getSubcategory,
                         java.util.stream.Collectors.reducing(
                                 BigDecimal.ZERO, AccountsPayable::getTotalAmount, BigDecimal::add)));
+    }
+
+    private void recordPayableMovement(AccountsPayable payable, BigDecimal amount,
+                                       LocalDate date, String paymentMethod) {
+        FinancialMovement movement = new FinancialMovement();
+        movement.setMovementDate(date);
+        movement.setType(FinancialMovement.MovementType.SAIDA);
+        movement.setBalanceLocation(resolveBalanceLocation(paymentMethod));
+        movement.setAmount(amount);
+        movement.setPaymentMethod(paymentMethod);
+        movement.setAccountsPayable(payable);
+        financialMovementRepository.save(movement);
+    }
+
+    private void recordReceivableMovement(AccountsReceivable receivable, BigDecimal amount,
+                                          LocalDate date, String paymentMethod) {
+        FinancialMovement movement = new FinancialMovement();
+        movement.setMovementDate(date);
+        movement.setType(FinancialMovement.MovementType.ENTRADA);
+        movement.setBalanceLocation(resolveBalanceLocation(paymentMethod));
+        movement.setAmount(amount);
+        movement.setPaymentMethod(paymentMethod);
+        movement.setAccountsReceivable(receivable);
+        financialMovementRepository.save(movement);
+    }
+
+    private FinancialMovement.BalanceLocation resolveBalanceLocation(String paymentMethod) {
+        String normalized = paymentMethod == null ? "" : paymentMethod.trim().toUpperCase(Locale.ROOT);
+        return List.of("CASH", "DINHEIRO", "MONEY").contains(normalized)
+                ? FinancialMovement.BalanceLocation.CASH
+                : FinancialMovement.BalanceLocation.BANK;
     }
 
     @Transactional
