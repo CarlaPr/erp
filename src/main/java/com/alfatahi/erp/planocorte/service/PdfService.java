@@ -52,7 +52,7 @@ public class PdfService {
         for (PlanoCorteItem item : itens) {
             croquis.put(
                     item.getId(),
-                    croquiService.gerarSvg(item)
+                    prepararSvgParaPdf(croquiService.gerarSvg(item))
             );
         }
 
@@ -75,7 +75,16 @@ public class PdfService {
 
 
             if (folhas.size() > 1) {
-                croquisVao.put(entrada.getKey(), croquiService.gerarSvgsVaoAgrupados(folhas, MAX_FOLHAS_POR_CROQUI_PDF));
+                List<CroquiVaoChunkDto> chunksPdf = croquiService
+                        .gerarSvgsVaoAgrupados(folhas, MAX_FOLHAS_POR_CROQUI_PDF)
+                        .stream()
+                        .map(chunk -> new CroquiVaoChunkDto(
+                                prepararSvgParaPdf(chunk.getSvg()),
+                                chunk.getFolhaInicio(),
+                                chunk.getFolhaFim(),
+                                chunk.getTotalFolhas()))
+                        .toList();
+                croquisVao.put(entrada.getKey(), chunksPdf);
             }
         }
 
@@ -243,6 +252,33 @@ public class PdfService {
         String limpo = semAcento.replaceAll("[^a-zA-Z0-9 _-]", "").trim();
         limpo = limpo.replaceAll("\\s+", "_");
         return limpo.isEmpty() ? "plano-de-corte" : limpo;
+    }
+
+    /**
+     * O Batik usado pelo PDF nao respeita de forma consistente o paint-order do
+     * SVG. Nos rotulos tecnicos, o contorno branco pode ser pintado sobre o
+     * preenchimento e esconder o texto. A versao destinada ao PDF usa preto em
+     * todos os textos e tracos, mantendo apenas os fundos claros.
+     */
+    private String prepararSvgParaPdf(String svg) {
+        if (svg == null || svg.isBlank()) {
+            return svg;
+        }
+
+        String preparado = svg
+                .replaceAll(
+                        "(?i)(<text\\b[^>]*?)\\s+fill=\"[^\"]+\"",
+                        "$1 fill=\"#000000\"")
+                .replaceAll(
+                        "(?i)(<text\\b[^>]*?)\\s+stroke=\"[^\"]+\"",
+                        "$1 stroke=\"none\"")
+                .replaceAll(
+                        "(?i)(<(?:line|path|circle|rect|polygon|polyline|ellipse)\\b[^>]*?)\\s+stroke=\"[^\"]+\"",
+                        "$1 stroke=\"#000000\"");
+
+        return preparado.replaceAll(
+                "(?i)(<marker\\b[^>]*>\\s*<path\\b[^>]*?)\\s+fill=\"[^\"]+\"",
+                "$1 fill=\"#000000\"");
     }
 
     private Profile buscarProfileTahiGlass() {
