@@ -414,23 +414,20 @@
 
         .dimension-label {
             display: block;
-            color: #94a3b8;
+            color: #000000;
             font-size: 7.5px;
-            font-weight: 800;
+            font-weight: 400;
             text-transform: uppercase;
             letter-spacing: .7px;
             margin-bottom: 2px;
         }
 
         .dimension-value {
-            color: #0f172a;
+            color: #000000;
             font-size: 11px;
-            font-weight: 800;
+            /*font-weight: 800;*/
         }
 
-        .dimension-value.highlight {
-            color: #2563eb;
-        }
 
         .technical-table {
             width: 100%;
@@ -762,7 +759,7 @@
                     <span class="dimension-label">
                         Medida final
                     </span>
-                        <span class="dimension-value highlight" th:text="${item.larguraFinalMm + ' × ' + item.alturaFinalMm + ' mm'}">
+                        <span class="dimension-value" th:text="${item.larguraFinalMm + ' × ' + item.alturaFinalMm + ' mm'}">
                         995 × 1895 mm
                     </span>
                     </td>

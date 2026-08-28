@@ -43,12 +43,6 @@
                                 Serviço
                             </span>
                         </span>
-                        <span th:if="${plano.descricao}" class="text-slate-300 dark:text-slate-700">
-                            •
-                        </span>
-                        <span th:if="${plano.descricao}" th:text="${plano.descricao}">
-                            Descrição
-                        </span>
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row xl:flex-col xl:items-end gap-3 shrink-0">
@@ -88,34 +82,27 @@
             </div>
         </div>
     </section>
-    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div class="group relative overflow-hidden bg-white dark:bg-[#101827] border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm">
-            <div class="flex items-start justify-between">
-                <div>
-                    <p class="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
-                        Área total
-                    </p>
-                    <p class="text-2xl font-black text-slate-900 dark:text-white" th:text="${#numbers.formatDecimal(plano.areaTotalM2, 1, 3)} + ' m²'">
-                        0 m²
-                    </p>
+    <section class="grid grid-cols-2 gap-3 mb-4 max-w-xl">
+        <div class="bg-white dark:bg-[#101827] border border-slate-200 dark:border-slate-700/60 rounded-xl px-4 py-3 shadow-sm">
+            <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Área total</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white leading-tight" th:text="${#numbers.formatDecimal(plano.areaTotalM2, 1, 3)} + ' m²'">0 m²</p>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                    <i data-lucide="square-dashed" class="w-5 h-5"></i>
+                <div class="w-8 h-8 shrink-0 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                    <i data-lucide="square-dashed" class="w-4 h-4"></i>
                 </div>
             </div>
         </div>
-        <div class="group relative overflow-hidden bg-white dark:bg-[#101827] border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm">
-            <div class="flex items-start justify-between">
-                <div>
-                    <p class="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
-                        Valor total estimado
-                    </p>
-                    <p class="text-2xl font-black text-slate-900 dark:text-white" th:text="'R$ ' + ${#numbers.formatDecimal(plano.valorTotalPlano, 1, 2)}">
-                        R$ 0,00
-                    </p>
+
+        <div class="bg-white dark:bg-[#101827] border border-slate-200 dark:border-slate-700/60 rounded-xl px-4 py-3 shadow-sm">
+            <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Valor estimado</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white leading-tight" th:text="'R$ ' + ${#numbers.formatDecimal(plano.valorTotalPlano, 1, 2)}">R$ 0,00</p>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <i data-lucide="circle-dollar-sign" class="w-5 h-5"></i>
+                <div class="w-8 h-8 shrink-0 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <i data-lucide="circle-dollar-sign" class="w-4 h-4"></i>
                 </div>
             </div>
         </div>
