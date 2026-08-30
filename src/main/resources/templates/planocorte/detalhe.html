@@ -4,6 +4,7 @@
 <body class="bg-slate-50 dark:bg-[#080D18] flex font-sans text-slate-800 dark:text-slate-200">
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
+<div th:replace="~{fragments/layout :: pending-schedule-alert}"></div>
 <main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-10 pt-20 lg:pt-8 w-full min-h-screen">
     <div th:if="${sucesso}" class="mb-5 flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 px-5 py-3.5 rounded-xl font-semibold text-sm shadow-sm">
         <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0"></i>

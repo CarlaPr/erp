@@ -1,5 +1,6 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.dto.PendingScheduleAlertDto;
 import com.alfatahi.erp.dto.ScheduleDto;
 import com.alfatahi.erp.dto.ScheduleOccurrenceDto;
 import com.alfatahi.erp.dto.ScheduleOccurrenceSaveRequest;
@@ -80,6 +81,17 @@ public class ScheduleController {
     @Transactional(readOnly = true)
     public ResponseEntity<ScheduleDto> getViewData(@PathVariable UUID id) {
         return ResponseEntity.ok(scheduleService.findDto(id));
+    }
+
+    /**
+     * Ordens de serviço com prazo de entrega expirando em até 7 dias (ou já expirado) que ainda
+     * não possuem nenhum agendamento. Alimenta a modal de atenção exibida para a role VENDAS.
+     */
+    @GetMapping("/pending-schedule-alerts")
+    @ResponseBody
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PendingScheduleAlertDto>> pendingScheduleAlerts() {
+        return ResponseEntity.ok(scheduleService.listPendingScheduleAlerts(7));
     }
 
     @PostMapping(value = "/save-ajax", consumes = "application/json")

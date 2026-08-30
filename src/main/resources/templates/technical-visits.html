@@ -4,6 +4,7 @@
 <body th:attr="data-visit-role=${visitRole}" class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
+<div th:replace="~{fragments/layout :: pending-schedule-alert}"></div>
 
 <main id="technicalVisitsPage" class="visit-page lg:ml-72 px-3 sm:px-5 lg:px-7 pb-8 pt-20 lg:pt-6 w-full min-h-screen">
     <header class="visit-hero mb-4 sm:mb-5">

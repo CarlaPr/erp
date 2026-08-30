@@ -1,5 +1,6 @@
 package com.alfatahi.erp.service;
 
+import com.alfatahi.erp.dto.PendingScheduleAlertDto;
 import com.alfatahi.erp.dto.ScheduleDto;
 import com.alfatahi.erp.dto.ScheduleOccurrenceDto;
 import com.alfatahi.erp.dto.ScheduleOccurrenceSaveRequest;
@@ -70,6 +71,55 @@ public class ScheduleService {
         return scheduleRepo.findAllWithRelations().stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Ordens de serviço com prazo de entrega expirando em até {@code daysThreshold} dias (ou já vencido)
+     * que ainda não possuem nenhum agendamento (data marcada). Usado para o alerta de atenção da role VENDAS.
+     */
+    @Transactional(readOnly = true)
+    public List<PendingScheduleAlertDto> listPendingScheduleAlerts(int daysThreshold) {
+        LocalDate today = LocalDate.now();
+        LocalDate limit = today.plusDays(daysThreshold);
+
+        return scheduleRepo.findAllWithRelations().stream()
+                .filter(s -> s.getScheduledDate() == null)
+                .filter(s -> !Schedule.STATUS_CANCELADO.equals(s.getStatus()) && !Schedule.STATUS_CONCLUIDO.equals(s.getStatus()))
+                .filter(s -> s.getWorkOrder() != null
+                        && !"cancelled".equals(s.getWorkOrder().getStatus())
+                        && !"completed".equals(s.getWorkOrder().getStatus()))
+                .filter(s -> s.getDeadlineDate() != null && !s.getDeadlineDate().isAfter(limit))
+                .sorted(Comparator.comparing(Schedule::getDeadlineDate))
+                .map(s -> toPendingAlertDto(s, today))
+                .collect(Collectors.toList());
+    }
+
+    private PendingScheduleAlertDto toPendingAlertDto(Schedule s, LocalDate today) {
+        PendingScheduleAlertDto dto = new PendingScheduleAlertDto();
+        dto.setScheduleId(s.getId());
+
+        if (s.getWorkOrder() != null) {
+            dto.setWorkOrderId(s.getWorkOrder().getId());
+            dto.setWorkOrderNumber(s.getWorkOrder().getNumber());
+            dto.setServiceType(deriveServiceType(s));
+        }
+        if (s.getQuote() != null) {
+            dto.setQuoteId(s.getQuote().getId());
+            dto.setQuoteNumber(s.getQuote().getNumber());
+        }
+        if (s.getClient() != null) {
+            dto.setClientId(s.getClient().getId());
+            dto.setClientName(s.getClient().getName());
+        }
+
+        dto.setServiceDetails(deriveServiceDetails(s));
+        dto.setDeadlineDate(s.getDeadlineDate());
+
+        long days = ChronoUnit.DAYS.between(today, s.getDeadlineDate());
+        dto.setDaysRemaining(days);
+        dto.setOverdue(days < 0);
+
+        return dto;
     }
 
     @Transactional(readOnly = true)

@@ -197,6 +197,10 @@
     </form>
 </header>
 
+<div th:fragment="pending-schedule-alert" sec:authorize="hasAuthority('VENDAS')">
+    <script src="/js/pending-schedule-alert.js"></script>
+</div>
+
 <div th:fragment="lucide-script">
     <script>
         lucide.createIcons();
