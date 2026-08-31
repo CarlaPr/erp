@@ -60,13 +60,13 @@ public class WorkOrderService {
             workOrder.setTotalValue(calculateTotalValueFromItems(workOrder));
         }
 
-        WorkOrder savedWorkOrder = workOrderRepository.saveAndFlush(workOrder);
-
-        if (savedWorkOrder.getInstallDate() != null) {
-            scheduleService.syncDeadlineFromWorkOrder(savedWorkOrder.getId(), savedWorkOrder.getInstallDate());
+        // A agenda é a origem das datas; salvar a O.S. não altera o prazo nem o agendamento.
+        scheduleService.applyAgendaDates(workOrder);
+        WorkOrder saved = workOrderRepository.saveAndFlush(workOrder);
+        if ("cancelled".equals(saved.getStatus()) || "canceled".equals(saved.getStatus())) {
+            scheduleService.onWorkOrderCancelled(saved.getId());
         }
-
-        return savedWorkOrder;
+        return saved;
     }
 
     public WorkOrder findById(UUID id) {
@@ -79,6 +79,7 @@ public class WorkOrderService {
         WorkOrder wo = workOrderRepository.findById(id).orElse(null);
 
         if (wo != null) {
+            validateDeletion(wo);
             scheduleService.onWorkOrderDeleted(id);
 
             if (wo.getItems() != null && !wo.getItems().isEmpty()) {
@@ -86,6 +87,12 @@ public class WorkOrderService {
             }
 
             workOrderRepository.delete(wo);
+        }
+    }
+
+    public void validateDeletion(WorkOrder workOrder) {
+        if (workOrder.getQuote() != null && "approved".equals(workOrder.getQuote().getStatus())) {
+            throw new IllegalStateException("Esta O.S. pertence a um orçamento aprovado e não pode ser excluída. Cancele a O.S. para preservar o histórico da venda.");
         }
     }
 

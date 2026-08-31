@@ -21,6 +21,8 @@
         </button>
     </header>
 
+
+
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
             <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Receita Total</p>
@@ -48,7 +50,7 @@
                     <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
                         <i data-lucide="search" class="w-4 h-4"></i>
                     </div>
-                    <input type="text" id="filterSearch" onkeyup="applyOsFilters()" placeholder="Nº da OS, Título ou Cliente..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm" />
+                    <input type="text" id="filterSearch" onkeyup="applyOsFilters()" placeholder="Nº da OS ou Orçamento, Título ou Cliente..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm" />
                 </div>
             </div>
             <div>
@@ -56,6 +58,7 @@
                 <select id="filterMonth" onchange="applyOsFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm">
                     <option value="current_view" selected>Visão Atual</option>
                     <option value="all">Todos os Meses</option>
+                    <option value="unscheduled">Sem instalação agendada</option>
                     <option value="01">Janeiro</option>
                     <option value="02">Fevereiro</option>
                     <option value="03">Março</option>
@@ -96,7 +99,7 @@
                  th:data-status="${wo.status}"
                  th:data-month="${wo.installDate != null ? #temporals.format(wo.installDate, 'MM') : ''}"
                  th:data-year="${wo.installDate != null ? #temporals.format(wo.installDate, 'yyyy') : ''}"
-                 th:data-search="${wo.number + ' ' + (wo.title != null ? wo.title : '') + ' ' + (wo.client != null ? wo.client.name : '')}">
+                 th:data-search="${wo.number + ' ' + (wo.quote != null ? wo.quote.number : '') + ' ' + (wo.title != null ? wo.title : '') + ' ' + (wo.client != null ? wo.client.name : '')}">
 
                 <div class="absolute left-0 top-0 bottom-0 w-1.5"
                      th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-500' : 'bg-brand-600 dark:bg-cyan-500'"></div>
@@ -167,8 +170,8 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-6 text-xs text-slate-500 dark:text-slate-400 font-bold">
-                        <div class="flex items-center gap-1.5"><i class="w-4 h-4"></i> <span>Entregar até</span></div>
-                        <div class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4"></i> <span th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : 'Sem data'}">entregar ate</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="calendar-clock" class="w-4 h-4"></i> <span>Entregar até:</span> <span th:text="${wo.deadlineDate != null ? #temporals.format(wo.deadlineDate, 'dd/MM/yyyy') : 'Sem prazo'}">Sem prazo</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4"></i> <span>Instalação:</span> <span th:text="${wo.installDate != null ? #temporals.format(wo.installDate, 'dd/MM/yyyy') : 'Não agendada'}">Não agendada</span></div>
                         <div class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i> <span class="truncate max-w-[200px]" th:text="${wo.client != null ? wo.client.address : 'Sem endereço'}">Endereço</span></div>
                     </div>
                 </div>
@@ -181,6 +184,7 @@
                 <p class="text-slate-600 dark:text-slate-400 font-bold text-base">Nenhuma Ordem de Serviço encontrada no momento.</p>
             </div>
 
+            <p id="osFilterSummary" class="text-sm text-slate-500 dark:text-slate-400" aria-live="polite"></p>
             <div id="emptyStateFilter" class="hidden text-center py-16 bg-white dark:bg-[#131C2F] rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
                 <div class="bg-slate-100 dark:bg-slate-800 p-4 w-fit mx-auto rounded-full mb-4">
                     <i data-lucide="search-x" class="w-8 h-8 text-slate-400"></i>
@@ -189,6 +193,17 @@
                 <button onclick="clearOsFilters()" class="mt-4 text-brand-600 dark:text-cyan-400 font-bold hover:underline">Remover Filtros</button>
             </div>
         </div>
+
+        <section th:if="${!#lists.isEmpty(approvedWithoutWorkOrder)}" class="mb-8 rounded-2xl border border-amber-300 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-700 p-5" aria-label="Orçamentos aprovados sem O.S.">
+            <h3 class="font-bold text-amber-900 dark:text-amber-200">Orçamentos aprovados sem O.S.</h3>
+            <p class="mt-1 text-sm text-amber-800 dark:text-amber-200">Estes orçamentos perderam o vínculo com a ordem de serviço. A recuperação reutiliza a O.S. da agenda quando existir; caso contrário, cria a ordem com a data e o valor aprovados. Ordens canceladas não são reativadas.</p>
+            <ul class="mt-4 space-y-3">
+                <li th:each="q : ${approvedWithoutWorkOrder}" class="flex flex-wrap items-center justify-between gap-3 border-t border-amber-200 dark:border-amber-800 pt-3">
+                    <span class="font-semibold" th:text="${q.number + ' — ' + (q.client != null ? q.client.name : 'Sem cliente')}"></span>
+                    <button type="button" th:data-quote-id="${q.id}" onclick="recoverWorkOrder(this)" class="rounded-lg bg-amber-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">Recuperar O.S.</button>
+                </li>
+            </ul>
+        </section>
     </div>
 
     <div id="deleteOsModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
@@ -247,9 +262,12 @@
                         </div>
                         <div>
                             <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider">Entregar Até</label>
-                            <input type="date" id="osDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-700 dark:text-slate-300 focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base" />
+                            <input type="date" id="osDeadlineDate" readonly class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-700 dark:text-slate-300 outline-none text-base" />
                         </div>
-
+                        <div>
+                            <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider">Data de Instalação</label>
+                            <input type="date" id="osInstallDate" readonly class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-700 dark:text-slate-300 outline-none text-base" />
+                        </div>
                         <div>
                             <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2 uppercase text-xs tracking-wider flex items-center gap-2">
                                 <i data-lucide="link" class="w-4 h-4 text-slate-400"></i> Vincular a Orçamento
@@ -443,7 +461,10 @@
                 // Visão padrão:
                 // 1) todas as OS em andamento, mesmo de meses anteriores;
                 // 2) todas as OS do mês corrente, independentemente do status.
-                matchMonth = isInProgress || isCurrentMonth;
+                // A busca textual também encontra ordens antigas na visão padrão.
+                matchMonth = searchTerm.length > 0 || isInProgress || isCurrentMonth;
+            } else if (monthTerm === 'unscheduled') {
+                matchMonth = monthData === '';
             } else if (monthTerm === 'all') {
                 matchMonth = true;
             } else {
@@ -462,6 +483,13 @@
             }
         });
 
+        const summary = document.getElementById('osFilterSummary');
+        if (summary) {
+            summary.textContent = `Exibindo ${visibleCount} de ${cards.length} ordens de serviço.`
+                + (monthTerm === 'current_view' && !searchTerm
+                    ? ' Visão atual: ordens em andamento e instalações deste mês. Selecione Todos os Meses para consultar o histórico.'
+                    : '');
+        }
         const emptyStateFilter = document.getElementById('emptyStateFilter');
         if (visibleCount === 0 && cards.length > 0) {
             if (emptyStateFilter) emptyStateFilter.classList.remove('hidden');
@@ -475,8 +503,33 @@
     function clearOsFilters() {
         document.getElementById('filterSearch').value = '';
         document.getElementById('filterStatus').value = 'all';
-        document.getElementById('filterMonth').value = 'current_view';
+        document.getElementById('filterMonth').value = 'all';
         applyOsFilters();
+    }
+
+    async function recoverWorkOrder(button) {
+        button.disabled = true;
+        const originalLabel = button.textContent;
+        button.textContent = 'Recuperando...';
+        try {
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+            const response = await fetch(`/work-orders/recover/${button.dataset.quoteId}`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    ...(csrfToken ? { [csrfHeader]: csrfToken } : {})
+                }
+            });
+            if (!response.ok) throw new Error(await response.text() || 'Não foi possível recuperar a O.S.');
+            const order = await response.json();
+            window.location.assign('/work-orders?search=' + encodeURIComponent(order.number));
+        } catch (error) {
+            alert(error.message || 'Erro de comunicação ao recuperar a O.S.');
+        } finally {
+            button.disabled = false;
+            button.textContent = originalLabel;
+        }
     }
 
     function openModal() {
@@ -503,7 +556,8 @@
         document.getElementById('osStatus').value     = 'pending';
         document.getElementById('osQuote').value      = '';
         document.getElementById('osClient').value     = '';
-        document.getElementById('osDate').value       = '';
+        document.getElementById('osDeadlineDate').value = '';
+        document.getElementById('osInstallDate').value  = '';
         document.getElementById('osTotalValue').value = '0.00';
 
         soldItems = [];
@@ -533,10 +587,10 @@
             headers: {
                 ...(csrfToken ? { [csrfHeader]: csrfToken } : {})
             }
-        }).then(res => {
-            if(res.ok) window.location.reload();
-            else alert("Erro ao excluir Ordem de Serviço.");
-        });
+        }).then(async res => {
+            if (res.ok) window.location.reload();
+            else alert(await res.text() || "Erro ao excluir Ordem de Serviço.");
+        }).catch(() => alert("Erro de comunicação ao excluir Ordem de Serviço."));
     }
 
     async function handleQuoteChange() {
@@ -614,10 +668,8 @@
             document.getElementById('osQuote').value      = data.quoteId || '';
             document.getElementById('osClient').value     = data.client ? data.client.id : '';
 
-            document.getElementById('osDate').value       = data.installDate ? data.installDate.split('T')[0] : '';
-            document.getElementById('osTotalValue').value = data.totalValue || 0;
-
-            document.getElementById('osDate').value       = data.installDate ? data.installDate.split('T')[0] : '';
+            document.getElementById('osDeadlineDate').value = data.deadlineDate || '';
+            document.getElementById('osInstallDate').value  = data.installDate || '';
             originalTotalValue = data.totalValue || 0;
             originalNotes      = data.notes || "";
             document.getElementById('osTotalValue').value = formatBRL(data.totalValue || 0);
@@ -886,7 +938,6 @@
             id: document.getElementById('osId').value || null,
             title: document.getElementById('osTitle').value,
             status: document.getElementById('osStatus').value,
-            installDate: document.getElementById('osDate').value || null,
             totalValue: currentTotalValue,
             notes: finalNotes,
             quoteId: document.getElementById('osQuote').value || null,
@@ -897,16 +948,25 @@
         const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-        await fetch('/work-orders/save-ajax', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                [csrfHeader]: csrfToken
-            },
-            body: JSON.stringify(payload)
-        });
-
-        window.location.reload();
+        const submitButton = e.target.querySelector('[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+            const response = await fetch('/work-orders/save-ajax', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(await response.text() || 'Não foi possível salvar a O.S.');
+            window.location.reload();
+        } catch (error) {
+            alert(error.message || 'Erro de comunicação ao salvar a O.S.');
+        } finally {
+            if (submitButton) submitButton.disabled = false;
+        }
     }
     document.addEventListener('DOMContentLoaded', function() {
         const monthFilter = document.getElementById('filterMonth');
@@ -914,6 +974,8 @@
 
         if (monthFilter) monthFilter.value = 'current_view';
         if (statusFilter) statusFilter.value = 'all';
+        const search = new URLSearchParams(window.location.search).get('search');
+        if (search) document.getElementById('filterSearch').value = search;
 
         applyOsFilters();
     });

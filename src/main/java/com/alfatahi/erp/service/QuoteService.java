@@ -2,13 +2,12 @@ package com.alfatahi.erp.service;
 
 import com.alfatahi.erp.entity.*;
 import com.alfatahi.erp.repository.*;
+import com.alfatahi.erp.util.DeliveryDeadline;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,26 +38,62 @@ public class QuoteService {
         return BigDecimal.ONE;
     }
 
-    private LocalDate calculateBusinessDays(LocalDate startDate, int businessDays) {
-        LocalDate result = startDate;
-        int addedDays = 0;
-        while (addedDays < businessDays) {
-            result = result.plusDays(1);
-            if (result.getDayOfWeek() != DayOfWeek.SATURDAY && result.getDayOfWeek() != DayOfWeek.SUNDAY) {
-                addedDays++;
-            }
+    @Transactional
+    public void approveQuote(UUID quoteId) {
+        Quote quote = quoteRepo.findByIdForUpdate(quoteId)
+                .orElseThrow(() -> new IllegalArgumentException("Orçamento não encontrado"));
+
+        if (!"pending".equals(quote.getStatus()) && !"sent".equals(quote.getStatus())
+                && !"expired".equals(quote.getStatus()) && !"approved".equals(quote.getStatus())) {
+            throw new IllegalStateException(
+                    "Orçamento não pode ser aprovado no status atual: " + quote.getStatus());
         }
-        return result;
+
+        ensureApprovedWorkOrder(quote);
     }
 
     @Transactional
-    public void approveQuote(UUID quoteId) {
-        Quote quote = quoteRepo.findById(quoteId)
-                .orElseThrow(() -> new RuntimeException("Orçamento não encontrado"));
+    public WorkOrder recoverApprovedWorkOrder(UUID quoteId) {
+        Quote quote = quoteRepo.findByIdForUpdate(quoteId)
+                .orElseThrow(() -> new IllegalArgumentException("Orçamento não encontrado"));
+        if (!"approved".equals(quote.getStatus())) {
+            throw new IllegalStateException("Somente orçamentos aprovados podem ter a O.S. recuperada.");
+        }
+        return ensureApprovedWorkOrder(quote);
+    }
 
-        if (!"pending".equals(quote.getStatus()) && !"sent".equals(quote.getStatus())) {
-            throw new IllegalStateException(
-                    "Orçamento não pode ser aprovado no status atual: " + quote.getStatus());
+    private WorkOrder ensureApprovedWorkOrder(Quote quote) {
+        boolean alreadyApproved = "approved".equals(quote.getStatus());
+        WorkOrder existing = osRepo.findByQuoteId(quote.getId())
+                .orElseGet(() -> scheduleService.findWorkOrderByQuoteId(quote.getId()).orElse(null));
+        if (existing != null) {
+            if (existing.getQuote() != null && !quote.getId().equals(existing.getQuote().getId())) {
+                throw new IllegalStateException("A O.S. da agenda está vinculada a outro orçamento. Revise os vínculos antes de continuar.");
+            }
+            if (!alreadyApproved && ("cancelled".equals(existing.getStatus()) || "canceled".equals(existing.getStatus()))) {
+                throw new IllegalStateException("A O.S. deste orçamento está cancelada.");
+            }
+            // A agenda identifica a O.S. mesmo quando o vínculo antigo foi removido.
+            // Não inferimos vínculos pelo número nem reativamos ordens canceladas.
+            if (existing.getQuote() == null) {
+                existing.setQuote(quote);
+                osRepo.saveAndFlush(existing);
+            }
+            quote.setWorkOrder(existing);
+            if (!alreadyApproved) {
+                quote.setStatus("approved");
+                quote.setDateApproved(LocalDateTime.now());
+                quoteRepo.saveAndFlush(quote);
+                scheduleService.createFromApprovedQuote(quote, existing);
+            }
+            return existing;
+        }
+
+        LocalDateTime approvalDate = alreadyApproved
+                ? (quote.getDateApproved() != null ? quote.getDateApproved() : quote.getDateCreated())
+                : LocalDateTime.now();
+        if (approvalDate == null) {
+            throw new IllegalStateException("Orçamento sem data de aprovação ou emissão. Corrija a data antes de recuperar a O.S.");
         }
 
         WorkOrder os = new WorkOrder();
@@ -76,6 +111,7 @@ public class QuoteService {
         if (description.length() > 255) description = description.substring(0, 255);
         os.setDescription(description);
         os.setStatus("in_progress");
+        os.setCreatedAt(approvalDate);
 
         BigDecimal subtotal = BigDecimal.ZERO;
         if (quote.getItems() != null && !quote.getItems().isEmpty()) {
@@ -95,10 +131,9 @@ public class QuoteService {
 
         BigDecimal finalTotal = subtotal.subtract(discountAmount);
         if (finalTotal.compareTo(BigDecimal.ZERO) < 0) finalTotal = BigDecimal.ZERO;
-        os.setTotalValue(finalTotal);
+        os.setTotalValue(alreadyApproved && quote.getTotalValue() != null ? quote.getTotalValue() : finalTotal);
 
-        LocalDate dataEntrega = calculateBusinessDays(LocalDate.now(), 15);
-        os.setInstallDate(dataEntrega);
+        os.setDeadlineDate(DeliveryDeadline.fromApproval(approvalDate));
 
         if (quote.getItems() != null) {
             for (QuoteItem qi : quote.getItems()) {
@@ -121,14 +156,14 @@ public class QuoteService {
         }
 
         quote.setStatus("approved");
-        quote.setDateApproved(LocalDateTime.now());
+        quote.setDateApproved(approvalDate);
         os.setQuote(quote);
         quote.setWorkOrder(os);
 
         os = osRepo.saveAndFlush(os);
         quoteRepo.saveAndFlush(quote);
         scheduleService.createFromApprovedQuote(quote, os);
-
+        return os;
     }
 
     @Transactional

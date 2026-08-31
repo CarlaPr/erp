@@ -28,6 +28,11 @@ public class WorkOrder {
     @Column(columnDefinition = "TEXT")
     private String notes;
     private BigDecimal totalValue = BigDecimal.ZERO;
+    @Column(name = "deadline_date")
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private LocalDate deadlineDate;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDate installDate;
 
     @ManyToOne
@@ -98,6 +103,8 @@ public class WorkOrder {
     public void setNotes(String notes) { this.notes = notes; }
     public BigDecimal getTotalValue() { return totalValue != null ? totalValue : BigDecimal.ZERO; }
     public void setTotalValue(BigDecimal totalValue) { this.totalValue = totalValue; }
+    public LocalDate getDeadlineDate() { return deadlineDate; }
+    public void setDeadlineDate(LocalDate deadlineDate) { this.deadlineDate = deadlineDate; }
     public LocalDate getInstallDate() { return installDate; }
     public void setInstallDate(LocalDate installDate) { this.installDate = installDate; }
     public Client getClient() { return client; }

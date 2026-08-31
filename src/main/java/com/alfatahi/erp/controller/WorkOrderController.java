@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -33,12 +34,13 @@ public class WorkOrderController {
     private final ClientRepository clientRepository;
     private final AccountsReceivableRepository receivableRepo;
     private final AccountsPayableRepository payableRepo;
+    private final QuoteService quoteService;
 
     public WorkOrderController(WorkOrderService workOrderService, ClientService clientService,
                                ServiceCategoryRepository categoryRepository, ProfileRepository profileRepository,
                                QuoteRepository quoteRepository, WorkOrderRepository workOrderRepo,
                                ClientRepository clientRepository, AccountsReceivableRepository receivableRepo,
-                               AccountsPayableRepository payableRepo) {
+                               AccountsPayableRepository payableRepo, QuoteService quoteService) {
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
@@ -48,6 +50,7 @@ public class WorkOrderController {
         this.clientRepository = clientRepository;
         this.receivableRepo = receivableRepo;
         this.payableRepo = payableRepo;
+        this.quoteService = quoteService;
     }
 
     @GetMapping
@@ -89,6 +92,7 @@ public class WorkOrderController {
         }
 
         model.addAttribute("orders", orders);
+        model.addAttribute("approvedWithoutWorkOrder", quoteRepository.findApprovedWithoutWorkOrder());
 
 
         model.addAttribute("totalRevenue", totalRevenue);
@@ -104,6 +108,19 @@ public class WorkOrderController {
         return "work-orders";
     }
 
+    @PostMapping("/recover/{quoteId}")
+    @ResponseBody
+    public ResponseEntity<?> recover(@PathVariable UUID quoteId) {
+        WorkOrder order = quoteService.recoverApprovedWorkOrder(quoteId);
+        return ResponseEntity.ok(Map.of("id", order.getId(), "number", order.getNumber()));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseBody
+    public ResponseEntity<String> handleConflict(IllegalStateException exception) {
+        return ResponseEntity.status(409).body(exception.getMessage());
+    }
+
     @PostMapping(value = "/save-ajax", consumes = "application/json")
     @ResponseBody
     @Transactional
@@ -111,10 +128,29 @@ public class WorkOrderController {
         WorkOrder targetWo;
         boolean isTotalChanged = false;
         String changeReasonMsg = "Valor ajustado conforme alteração na O.S.";
+        List<WorkOrderItem> incomingItems = workOrder.getItems() != null
+                ? new ArrayList<>(workOrder.getItems()) : new ArrayList<>();
+        Quote linkedQuote = null;
+        if (workOrder.getQuoteId() != null) {
+            linkedQuote = quoteRepository.findByIdForUpdate(workOrder.getQuoteId())
+                    .orElseThrow(() -> new IllegalStateException("Orçamento não encontrado."));
+            WorkOrder linkedOrder = workOrderRepo.findByQuoteId(linkedQuote.getId()).orElse(null);
+            if (linkedOrder != null && !linkedOrder.getId().equals(workOrder.getId())) {
+                throw new IllegalStateException("Este orçamento já possui a O.S. " + linkedOrder.getNumber() + ". Edite a ordem existente.");
+            }
+            if (workOrder.getId() == null && "approved".equals(linkedQuote.getStatus())) {
+                throw new IllegalStateException("Use Recuperar O.S. na lista de orçamentos aprovados sem O.S. para preservar os dados da aprovação.");
+            }
+        }
 
         if (workOrder.getId() != null) {
             targetWo = workOrderService.findById(workOrder.getId());
             if (targetWo == null) return ResponseEntity.notFound().build();
+
+            if (targetWo.getQuote() != null && linkedQuote != null
+                    && !targetWo.getQuote().getId().equals(linkedQuote.getId())) {
+                throw new IllegalStateException("O orçamento de origem desta O.S. não pode ser trocado.");
+            }
 
             BigDecimal oldTotal = targetWo.getTotalValue();
 
@@ -123,7 +159,6 @@ public class WorkOrderController {
             targetWo.setDescription(workOrder.getDescription());
 
             targetWo.setNotes(workOrder.getNotes());
-            targetWo.setInstallDate(workOrder.getInstallDate());
 
             BigDecimal newTotal = workOrder.getTotalValue();
             if (newTotal != null && newTotal.compareTo(BigDecimal.ZERO) > 0) {
@@ -148,24 +183,23 @@ public class WorkOrderController {
             }
 
             targetWo.setClient(workOrder.getClient());
-            targetWo.getItems().clear();
         } else {
             targetWo = workOrder;
-        }
-
-        if (workOrder.getItems() != null) {
-            for (WorkOrderItem item : workOrder.getItems()) {
-                item.setWorkOrder(targetWo);
-                targetWo.getItems().add(item);
+            if (targetWo.getStatus() == null || targetWo.getStatus().isBlank()) {
+                targetWo.setStatus("pending");
             }
         }
 
-        if (workOrder.getQuoteId() != null) {
-            Quote q = quoteRepository.findById(workOrder.getQuoteId()).orElse(null);
-            if (q != null) {
-                targetWo.setQuote(q);
-                q.setWorkOrder(targetWo);
-            }
+        if (targetWo.getItems() == null) targetWo.setItems(new ArrayList<>());
+        targetWo.getItems().clear();
+        for (WorkOrderItem item : incomingItems) {
+            item.setWorkOrder(targetWo);
+            targetWo.getItems().add(item);
+        }
+
+        if (linkedQuote != null) {
+            targetWo.setQuote(linkedQuote);
+            linkedQuote.setWorkOrder(targetWo);
         }
 
         workOrderService.save(targetWo);
@@ -233,12 +267,7 @@ public class WorkOrderController {
             wo.setStatus("cancelled");
             wo.setNotes((wo.getNotes() != null ? wo.getNotes() : "") + "\n>>> CANCELADA: " + reason);
 
-            if(wo.getQuote() != null) {
-                Quote q = wo.getQuote();
-                q.setWorkOrder(null);
-                quoteRepository.save(q);
-                wo.setQuote(null);
-            }
+            // O cancelamento mantém a origem da venda e seu histórico.
             workOrderService.save(wo);
 
             List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
@@ -261,6 +290,8 @@ public class WorkOrderController {
         WorkOrder wo = workOrderService.findById(id);
 
         if (wo != null) {
+            // Valida antes de remover vínculos ou registros financeiros.
+            workOrderService.validateDeletion(wo);
             if (wo.getQuote() != null) {
                 Quote q = wo.getQuote();
                 q.setWorkOrder(null);

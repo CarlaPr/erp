@@ -403,6 +403,11 @@ public class QuoteController {
             quote.setSellerName(principal.getName());
         }
 
+        // A aprovação deve criar a O.S. pelo serviço, na mesma transação.
+        quote.setStatus("pending");
+        quote.setDateApproved(null);
+        quote.setWorkOrder(null);
+
         if (quote.getItems() != null) {
             for (QuoteItem item : quote.getItems()) {
                 item.setQuote(quote);
@@ -418,6 +423,8 @@ public class QuoteController {
         try {
             quoteService.approveQuote(id);
             return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("Erro ao aprovar: " + e.getMessage());

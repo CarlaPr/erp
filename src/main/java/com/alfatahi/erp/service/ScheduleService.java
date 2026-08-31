@@ -10,6 +10,7 @@ import com.alfatahi.erp.repository.ScheduleHistoryRepository;
 import com.alfatahi.erp.repository.ScheduleOccurrenceRepository;
 import com.alfatahi.erp.repository.ScheduleRepository;
 import com.alfatahi.erp.repository.WorkOrderRepository;
+import com.alfatahi.erp.util.DeliveryDeadline;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -42,10 +43,18 @@ public class ScheduleService {
         this.workOrderRepo = workOrderRepo;
     }
 
+    @Transactional(readOnly = true)
+    public Optional<WorkOrder> findWorkOrderByQuoteId(UUID quoteId) {
+        return scheduleRepo.findByQuoteId(quoteId).map(Schedule::getWorkOrder);
+    }
+
     @Transactional
     public Schedule createFromApprovedQuote(Quote quote, WorkOrder workOrder) {
         Optional<Schedule> existing = scheduleRepo.findByQuoteId(quote.getId());
         if (existing.isPresent()) {
+            if (!java.util.Objects.equals(existing.get().getWorkOrder().getId(), workOrder.getId())) {
+                throw new IllegalStateException("O orçamento já possui uma agenda vinculada a outra O.S.");
+            }
             return existing.get();
         }
 
@@ -56,8 +65,12 @@ public class ScheduleService {
         schedule.setWorkOrder(workOrder);
         schedule.setClient(quote.getClient());
         schedule.setApprovalDate(approval);
-        schedule.setDeadlineDate(workOrder.getInstallDate());
+        schedule.setDeadlineDate(DeliveryDeadline.fromApproval(approval));
         schedule.setStatus(Schedule.STATUS_AGUARDANDO_AGENDAMENTO);
+
+        workOrder.setDeadlineDate(schedule.getDeadlineDate());
+        workOrder.setInstallDate(null);
+        workOrderRepo.save(workOrder);
 
         schedule = scheduleRepo.saveAndFlush(schedule);
 
@@ -315,7 +328,7 @@ public class ScheduleService {
 
         WorkOrder wo = schedule.getWorkOrder();
         if (wo != null) {
-            wo.setInstallDate(newDeadline);
+            wo.setDeadlineDate(newDeadline);
             workOrderRepo.save(wo);
         }
     }
@@ -476,6 +489,7 @@ public class ScheduleService {
     @Transactional
     public void onWorkOrderCancelled(UUID workOrderId) {
         scheduleRepo.findByWorkOrderId(workOrderId).ifPresent(schedule -> {
+            if (Schedule.STATUS_CANCELADO.equals(schedule.getStatus())) return;
             schedule.setStatus(Schedule.STATUS_CANCELADO);
             scheduleRepo.saveAndFlush(schedule);
             addHistory(schedule, "Cancelado", "Ordem de Serviço vinculada foi cancelada.", null);
@@ -497,17 +511,11 @@ public class ScheduleService {
     }
 
     @Transactional
-    public void syncDeadlineFromWorkOrder(UUID workOrderId, LocalDate newDeadline) {
-        if (newDeadline == null) return;
-        scheduleRepo.findByWorkOrderId(workOrderId).ifPresent(schedule -> {
-            if (!newDeadline.equals(schedule.getDeadlineDate())) {
-                LocalDate oldDate = schedule.getDeadlineDate();
-                schedule.setDeadlineDate(newDeadline);
-                scheduleRepo.save(schedule);
-
-                addHistory(schedule, "Editado", "Data de Instalação ajustada na Ordem de Serviço.",
-                        "Data limite alterada de " + oldDate + " para " + newDeadline + ".");
-            }
+    public void applyAgendaDates(WorkOrder workOrder) {
+        if (workOrder.getId() == null) return;
+        scheduleRepo.findByWorkOrderId(workOrder.getId()).ifPresent(schedule -> {
+            workOrder.setDeadlineDate(schedule.getDeadlineDate());
+            workOrder.setInstallDate(schedule.getScheduledDate());
         });
     }
 
@@ -582,9 +590,8 @@ public class ScheduleService {
         WorkOrder wo = schedule.getWorkOrder();
         if (wo == null) return;
 
-        if (schedule.getScheduledDate() != null) {
-            wo.setInstallDate(schedule.getScheduledDate());
-        }
+        wo.setDeadlineDate(schedule.getDeadlineDate());
+        wo.setInstallDate(schedule.getScheduledDate());
 
         if (!"cancelled".equals(wo.getStatus()) && !"completed".equals(wo.getStatus())) {
             switch (schedule.getStatus()) {

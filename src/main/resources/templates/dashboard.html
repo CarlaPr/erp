@@ -551,7 +551,8 @@
                     <th class="px-6 py-3.5">Nº / OS</th>
                     <th class="px-6 py-3.5">Cliente</th>
                     <th class="px-6 py-3.5">Serviço</th>
-                    <th class="px-6 py-3.5 text-center">Entrega</th>
+                    <th class="px-6 py-3.5 text-center">Entregar até</th>
+                    <th class="px-6 py-3.5 text-center">Instalação</th>
                     <th class="px-6 py-3.5 text-right">Valor</th>
                     <th class="px-6 py-3.5 text-center">Status</th>
                 </tr>
@@ -572,10 +573,14 @@
                     </td>
                     <td class="px-6 py-4 text-center">
               <span class="text-sm font-bold"
-                    th:classappend="${os.installDate != null and os.installDate.isBefore(#temporals.createNow().toLocalDate()) and os.status != 'concluida' ? 'text-rose-500 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'}"
-                    th:text="${os.installDate != null ? #temporals.format(os.installDate, 'dd/MM/yy') : '—'}">
+                    th:classappend="${os.deadlineDate != null and os.deadlineDate.isBefore(#temporals.createNow().toLocalDate()) and os.status != 'completed' and os.status != 'delivered' and os.status != 'cancelled' and os.status != 'canceled' ? 'text-rose-500 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'}"
+                    th:text="${os.deadlineDate != null ? #temporals.format(os.deadlineDate, 'dd/MM/yy') : '—'}">
                 —
               </span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="text-sm text-slate-700 dark:text-slate-300"
+                              th:text="${os.installDate != null ? #temporals.format(os.installDate, 'dd/MM/yy') : 'Não agendada'}">Não agendada</span>
                     </td>
                     <td class="px-6 py-4 text-right">
               <span class="font-mono font-black text-sm text-slate-900 dark:text-white"
@@ -604,7 +609,7 @@
                 </tr>
 
                 <tr th:if="${ultimasOs == null or #lists.isEmpty(ultimasOs)}">
-                    <td colspan="6" class="px-6 py-12 text-center">
+                    <td colspan="7" class="px-6 py-12 text-center">
                         <div class="flex flex-col items-center gap-2">
                             <i data-lucide="package-open" class="w-8 h-8 text-slate-400 dark:text-slate-700"></i>
                             <p class="text-slate-500 font-bold text-sm">Nenhuma ordem de serviço cadastrada.</p>
