@@ -33,6 +33,13 @@
 
     </header>
 
+    <div th:if="${param.error}" class="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-300 text-sm font-semibold">
+        <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+        <span th:if="${param.error[0] == 'duplicate_payment_stage'}">Esta O.S. já possui uma conta ativa com o mesmo estágio de pagamento (entrada, entrega ou pagamento integral). Cancele ou edite a conta existente em vez de duplicá-la.</span>
+        <span th:if="${param.error[0] == 'invalid_amount'}">Informe um valor de pagamento válido, maior que zero.</span>
+        <span th:unless="${param.error[0] == 'duplicate_payment_stage' or param.error[0] == 'invalid_amount'}">Não foi possível concluir a operação.</span>
+    </div>
+
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
         <div class="bg-indigo-600 dark:bg-indigo-900 p-6 rounded-2xl shadow-md border-none">
             <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1">Saldo Real (Atual)</span>

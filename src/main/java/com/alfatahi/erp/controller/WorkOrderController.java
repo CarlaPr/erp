@@ -1,11 +1,13 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.dto.WorkOrderPaymentStatusDto;
 import com.alfatahi.erp.entity.*;
 import com.alfatahi.erp.repository.*;
 import com.alfatahi.erp.service.*;
 import java.util.HashMap;
 import java.util.Map;
 import org.hibernate.Hibernate;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -93,6 +96,7 @@ public class WorkOrderController {
 
         model.addAttribute("orders", orders);
         model.addAttribute("approvedWithoutWorkOrder", quoteRepository.findApprovedWithoutWorkOrder());
+        model.addAttribute("paymentStatusByOrder", buildPaymentStatusMap(orders));
 
 
         model.addAttribute("totalRevenue", totalRevenue);
@@ -126,7 +130,7 @@ public class WorkOrderController {
     @Transactional
     public ResponseEntity<?> saveAjax(@RequestBody WorkOrder workOrder) {
         WorkOrder targetWo;
-        boolean isTotalChanged = false;
+        BigDecimal oldTotal = null;
         String changeReasonMsg = "Valor ajustado conforme alteração na O.S.";
         List<WorkOrderItem> incomingItems = workOrder.getItems() != null
                 ? new ArrayList<>(workOrder.getItems()) : new ArrayList<>();
@@ -152,7 +156,7 @@ public class WorkOrderController {
                 throw new IllegalStateException("O orçamento de origem desta O.S. não pode ser trocado.");
             }
 
-            BigDecimal oldTotal = targetWo.getTotalValue();
+            oldTotal = targetWo.getTotalValue();
 
             targetWo.setTitle(workOrder.getTitle());
             targetWo.setStatus(workOrder.getStatus());
@@ -168,8 +172,6 @@ public class WorkOrderController {
             }
 
             if (oldTotal != null && targetWo.getTotalValue().compareTo(oldTotal) != 0) {
-                isTotalChanged = true;
-
                 String osNotes = workOrder.getNotes() != null ? workOrder.getNotes() : "";
                 if (osNotes.contains("VALOR ALTERADO")) {
                     String[] lines = osNotes.split("\n");
@@ -203,32 +205,7 @@ public class WorkOrderController {
         }
 
         workOrderService.save(targetWo);
-
-        if (targetWo.getId() != null && isTotalChanged) {
-            List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
-                    .filter(r -> r.getWorkOrder() != null && r.getWorkOrder().getId().equals(targetWo.getId()))
-                    .filter(r -> !"cancelled".equals(r.getStatus()))
-                    .collect(Collectors.toList());
-
-            if (!receivables.isEmpty()) {
-                int installmentsCount = receivables.size();
-                BigDecimal newTotal = targetWo.getTotalValue();
-
-                BigDecimal installmentValue = newTotal.divide(new BigDecimal(installmentsCount), 2, RoundingMode.HALF_UP);
-                BigDecimal sumPrevious = installmentValue.multiply(new BigDecimal(installmentsCount - 1));
-                BigDecimal lastInstallment = newTotal.subtract(sumPrevious);
-
-                for (int i = 0; i < installmentsCount; i++) {
-                    AccountsReceivable ar = receivables.get(i);
-
-                    ar.setTotalAmount(i == installmentsCount - 1 ? lastInstallment : installmentValue);
-                    String currentNotes = ar.getNotes() != null ? ar.getNotes() : "";
-                    ar.setNotes(currentNotes + "\n[Sistema] " + changeReasonMsg);
-
-                    receivableRepo.save(ar);
-                }
-            }
-        }
+        workOrderService.redistributeReceivablesIfTotalChanged(targetWo, oldTotal, changeReasonMsg);
 
         return ResponseEntity.ok().build();
     }
@@ -339,5 +316,82 @@ public class WorkOrderController {
         }
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Calcula, para cada O.S. da lista, um resumo do status de pagamento (contas a
+     * receber vinculadas), para exibição individual no card de cada O.S.
+     */
+    private Map<UUID, WorkOrderPaymentStatusDto> buildPaymentStatusMap(List<WorkOrder> orders) {
+        if (orders == null || orders.isEmpty()) return Collections.emptyMap();
+
+        List<UUID> orderIds = orders.stream().map(WorkOrder::getId).collect(Collectors.toList());
+
+        List<AccountsReceivable> receivables = receivableRepo.findByWorkOrderIdIn(orderIds).stream()
+                .filter(r -> !"cancelled".equals(r.getStatus()))
+                .collect(Collectors.toList());
+
+        Map<UUID, List<AccountsReceivable>> byOrder = receivables.stream()
+                .filter(r -> r.getWorkOrder() != null)
+                .collect(Collectors.groupingBy(r -> r.getWorkOrder().getId()));
+
+        Map<UUID, WorkOrderPaymentStatusDto> result = new HashMap<>();
+        for (WorkOrder wo : orders) {
+            result.put(wo.getId(), computePaymentStatus(byOrder.getOrDefault(wo.getId(), Collections.emptyList())));
+        }
+        return result;
+    }
+
+    private static final String BADGE_PAGO = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20";
+    private static final String BADGE_ENTRADA = "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20";
+    private static final String BADGE_ENTREGA = "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:border-violet-500/20";
+    private static final String BADGE_PARCIAL = "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20";
+    private static final String BADGE_PENDENTE = "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-700/40 dark:text-slate-300 dark:border-slate-600/50";
+
+    private WorkOrderPaymentStatusDto computePaymentStatus(List<AccountsReceivable> receivables) {
+        if (receivables == null || receivables.isEmpty()) {
+            return new WorkOrderPaymentStatusDto("Pagamento pendente", BADGE_PENDENTE);
+        }
+
+        AccountsReceivable unico = receivables.stream()
+                .filter(r -> "recebimento_total".equals(r.getPaymentStage()) || "unico".equals(r.getPaymentStage()))
+                .findFirst().orElse(null);
+
+        if (unico != null) {
+            if ("received".equals(unico.getStatus())) {
+                return new WorkOrderPaymentStatusDto("Pago integral", BADGE_PAGO);
+            }
+            if ("partial".equals(unico.getStatus())) {
+                return new WorkOrderPaymentStatusDto("Pagamento parcial", BADGE_PARCIAL);
+            }
+            return new WorkOrderPaymentStatusDto("Pagamento pendente", BADGE_PENDENTE);
+        }
+
+        AccountsReceivable entrada = receivables.stream().filter(r -> "entrada".equals(r.getPaymentStage())).findFirst().orElse(null);
+        AccountsReceivable entrega = receivables.stream().filter(r -> "entrega".equals(r.getPaymentStage())).findFirst().orElse(null);
+
+        boolean entradaPaga = entrada != null && "received".equals(entrada.getStatus());
+        boolean entregaPaga = entrega != null && "received".equals(entrega.getStatus());
+        boolean algumParcial = receivables.stream().anyMatch(r -> "partial".equals(r.getStatus()));
+
+        if (entradaPaga && entregaPaga) {
+            return new WorkOrderPaymentStatusDto("Pago integral", BADGE_PAGO);
+        }
+        if (entradaPaga) {
+            return new WorkOrderPaymentStatusDto("Pago entrada", BADGE_ENTRADA);
+        }
+        if (entregaPaga) {
+            return new WorkOrderPaymentStatusDto("Pago entrega", BADGE_ENTREGA);
+        }
+        if (algumParcial) {
+            return new WorkOrderPaymentStatusDto("Pagamento parcial", BADGE_PARCIAL);
+        }
+        return new WorkOrderPaymentStatusDto("Pagamento pendente", BADGE_PENDENTE);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseBody
+    public ResponseEntity<String> handleDataIntegrityConflict(DataIntegrityViolationException exception) {
+        return ResponseEntity.status(409).body("Conflito ao salvar a O.S. (possível número duplicado). Tente novamente.");
     }
 }

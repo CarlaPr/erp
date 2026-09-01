@@ -14,6 +14,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class WorkOrderService {
@@ -62,6 +63,10 @@ public class WorkOrderService {
 
         // A agenda é a origem das datas; salvar a O.S. não altera o prazo nem o agendamento.
         scheduleService.applyAgendaDates(workOrder);
+
+        // O número é único em banco (ver migração V31); em caso de colisão rara (duas O.S.
+        // novas salvas quase ao mesmo tempo), a gravação falha com DataIntegrityViolationException
+        // em vez de silenciosamente duplicar o número — ver tratamento em WorkOrderController.
         WorkOrder saved = workOrderRepository.saveAndFlush(workOrder);
         if ("cancelled".equals(saved.getStatus()) || "canceled".equals(saved.getStatus())) {
             scheduleService.onWorkOrderCancelled(saved.getId());
@@ -90,9 +95,52 @@ public class WorkOrderService {
         }
     }
 
+    /**
+     * A exclusão de uma O.S. é sempre permitida, mesmo quando vinculada a um orçamento
+     * aprovado: o vínculo é desfeito junto com a exclusão (ver WorkOrderController#delete)
+     * e, como o orçamento continua com status "approved" sem nenhuma O.S. associada, ele
+     * volta a aparecer em "Orçamentos aprovados sem O.S." para que uma nova O.S. seja
+     * gerada — sem risco de duplicidade, já que quote_id é único em work_orders.
+     */
     public void validateDeletion(WorkOrder workOrder) {
-        if (workOrder.getQuote() != null && "approved".equals(workOrder.getQuote().getStatus())) {
-            throw new IllegalStateException("Esta O.S. pertence a um orçamento aprovado e não pode ser excluída. Cancele a O.S. para preservar o histórico da venda.");
+        // Sem restrições adicionais no momento; método mantido como ponto único de
+        // extensão para futuras regras de validação antes da exclusão.
+    }
+
+    /**
+     * Quando o valor total da O.S. muda (edição direta da O.S. ou sincronização a partir
+     * de um orçamento aprovado editado), redistribui proporcionalmente o valor entre as
+     * contas a receber ainda ativas (não canceladas) vinculadas a ela, preservando o
+     * número de parcelas/estágios já lançados.
+     */
+    @Transactional
+    public void redistributeReceivablesIfTotalChanged(WorkOrder workOrder, BigDecimal oldTotal, String changeReasonMsg) {
+        if (workOrder == null || workOrder.getId() == null) return;
+        if (oldTotal == null || workOrder.getTotalValue().compareTo(oldTotal) == 0) return;
+
+        List<AccountsReceivable> receivables = receivableRepository.findAll().stream()
+                .filter(r -> r.getWorkOrder() != null && r.getWorkOrder().getId().equals(workOrder.getId()))
+                .filter(r -> !"cancelled".equals(r.getStatus()))
+                .collect(Collectors.toList());
+
+        if (receivables.isEmpty()) return;
+
+        int installmentsCount = receivables.size();
+        BigDecimal newTotal = workOrder.getTotalValue();
+
+        BigDecimal installmentValue = newTotal.divide(new BigDecimal(installmentsCount), 2, RoundingMode.HALF_UP);
+        BigDecimal sumPrevious = installmentValue.multiply(new BigDecimal(installmentsCount - 1));
+        BigDecimal lastInstallment = newTotal.subtract(sumPrevious);
+
+        String reason = (changeReasonMsg != null && !changeReasonMsg.isBlank())
+                ? changeReasonMsg : "Valor ajustado conforme alteração na O.S.";
+
+        for (int i = 0; i < installmentsCount; i++) {
+            AccountsReceivable ar = receivables.get(i);
+            ar.setTotalAmount(i == installmentsCount - 1 ? lastInstallment : installmentValue);
+            String currentNotes = ar.getNotes() != null ? ar.getNotes() : "";
+            ar.setNotes(currentNotes + "\n[Sistema] " + reason);
+            receivableRepository.save(ar);
         }
     }
 

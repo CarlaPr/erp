@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +15,10 @@ public interface AccountsReceivableRepository extends JpaRepository<AccountsRece
     List<AccountsReceivable> findAllByOrderByDueDateAsc();
 
     List<AccountsReceivable> findByStatusNotOrderByDueDateAsc(String status);
+
+    List<AccountsReceivable> findByWorkOrderIdIn(Collection<UUID> workOrderIds);
+
+    List<AccountsReceivable> findByWorkOrderId(UUID workOrderId);
 
     @Query("SELECT COALESCE(SUM(COALESCE(a.grossReceivedAmount,0) + COALESCE(a.feeAmount,0)), 0) FROM AccountsReceivable a " +
             "WHERE a.paymentDate >= :inicio AND a.paymentDate < :fim")

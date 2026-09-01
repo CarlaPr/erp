@@ -180,8 +180,9 @@ public class ReceivableController {
             receivable.setClient(null);
         }
 
+        WorkOrder wo = null;
         if (receivable.getWorkOrder() != null && receivable.getWorkOrder().getId() != null) {
-            WorkOrder wo = workOrderService.findById(receivable.getWorkOrder().getId());
+            wo = workOrderService.findById(receivable.getWorkOrder().getId());
             receivable.setWorkOrder(wo);
 
             if (wo != null) {
@@ -204,6 +205,12 @@ public class ReceivableController {
             receivable.setPaymentStage("unico");
         }
 
+        // Evita duas contas ativas com o mesmo estágio de pagamento (ex.: duas "entrada")
+        // para a mesma O.S., o que deixaria o status de pagamento da O.S. inconsistente.
+        if (wo != null && hasDuplicatePaymentStage(wo, receivable.getPaymentStage(), null)) {
+            return "redirect:/receivables?error=duplicate_payment_stage";
+        }
+
         if (receivable.getReferenceMonth() == null) {
             receivable.setReferenceMonth(receivable.getDueDate().withDayOfMonth(1));
         }
@@ -219,21 +226,26 @@ public class ReceivableController {
         AccountsReceivable ar = receivableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
 
+        String newStage = (form.getPaymentStage() != null && !form.getPaymentStage().isBlank())
+                ? form.getPaymentStage() : ar.getPaymentStage();
+
+        WorkOrder wo = null;
+        if (form.getWorkOrder() != null && form.getWorkOrder().getId() != null) {
+            wo = workOrderService.findById(form.getWorkOrder().getId());
+        }
+
+        // Evita duas contas ativas com o mesmo estágio de pagamento (ex.: duas "entrada")
+        // para a mesma O.S., o que deixaria o status de pagamento da O.S. inconsistente.
+        if (wo != null && hasDuplicatePaymentStage(wo, newStage, ar.getId())) {
+            return "redirect:/receivables?error=duplicate_payment_stage";
+        }
+
         ar.setDescription(form.getDescription());
         ar.setTotalAmount(form.getTotalAmount());
         ar.setDueDate(form.getDueDate());
         ar.setReferenceMonth(form.getReferenceMonth());
-
-        if (form.getPaymentStage() != null && !form.getPaymentStage().isBlank()) {
-            ar.setPaymentStage(form.getPaymentStage());
-        }
-
-        if (form.getWorkOrder() != null && form.getWorkOrder().getId() != null) {
-            WorkOrder wo = workOrderService.findById(form.getWorkOrder().getId());
-            ar.setWorkOrder(wo);
-        } else {
-            ar.setWorkOrder(null);
-        }
+        ar.setPaymentStage(newStage);
+        ar.setWorkOrder(wo);
 
         ar.setInstallments(form.getInstallments());
         ar.setCardFeePercentage(form.getCardFeePercentage());
@@ -256,6 +268,24 @@ public class ReceivableController {
 
         receivableRepository.save(ar);
         return "redirect:/receivables";
+    }
+
+    /**
+     * Verifica se já existe outra conta a receber ativa (não cancelada) com o mesmo
+     * estágio de pagamento para a mesma O.S. — ex.: duas "entrada" para a mesma O.S.
+     * "unico" e "recebimento_total" são tratados como o mesmo estágio (pagamento integral).
+     */
+    private boolean hasDuplicatePaymentStage(WorkOrder wo, String stage, UUID excludeReceivableId) {
+        String normalizedStage = (stage == null || stage.isBlank()) ? "unico" : stage;
+        return receivableRepository.findByWorkOrderId(wo.getId()).stream()
+                .filter(r -> excludeReceivableId == null || !excludeReceivableId.equals(r.getId()))
+                .filter(r -> !"cancelled".equals(r.getStatus()))
+                .anyMatch(r -> {
+                    String existingStage = (r.getPaymentStage() == null || r.getPaymentStage().isBlank()) ? "unico" : r.getPaymentStage();
+                    boolean bothIntegral = ("unico".equals(existingStage) || "recebimento_total".equals(existingStage))
+                            && ("unico".equals(normalizedStage) || "recebimento_total".equals(normalizedStage));
+                    return bothIntegral || existingStage.equals(normalizedStage);
+                });
     }
 
     @PostMapping("/pay/{id}")

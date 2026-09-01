@@ -318,12 +318,13 @@ public class QuoteController {
     @Transactional(readOnly = true)
     public String editQuoteForm(@PathVariable UUID id, Model model) {
 
-        quoteRepo.findById(id).orElseThrow();
+        Quote quote = quoteRepo.findById(id).orElseThrow();
 
         model.addAttribute("currentPage", "quotes");
         model.addAttribute("clients", clientRepo.findAll());
         model.addAttribute("profiles", profileRepo.findAll());
         model.addAttribute("quoteId", id.toString());
+        model.addAttribute("quoteStatus", quote.getStatus());
         return "quote-form";
     }
 
@@ -387,6 +388,13 @@ public class QuoteController {
             }
 
             quoteRepo.save(existing);
+
+            // Orçamento já aprovado: a O.S. gerada a partir dele precisa refletir os
+            // mesmos itens/valor editados agora, para que os dois não fiquem divergentes.
+            if ("approved".equals(existing.getStatus())) {
+                quoteService.syncApprovedQuoteToWorkOrder(existing);
+            }
+
             return ResponseEntity.ok().build();
         }
 

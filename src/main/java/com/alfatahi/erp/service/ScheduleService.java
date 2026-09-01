@@ -52,7 +52,7 @@ public class ScheduleService {
     public Schedule createFromApprovedQuote(Quote quote, WorkOrder workOrder) {
         Optional<Schedule> existing = scheduleRepo.findByQuoteId(quote.getId());
         if (existing.isPresent()) {
-            if (!java.util.Objects.equals(existing.get().getWorkOrder().getId(), workOrder.getId())) {
+            if (!Objects.equals(existing.get().getWorkOrder().getId(), workOrder.getId())) {
                 throw new IllegalStateException("O orçamento já possui uma agenda vinculada a outra O.S.");
             }
             return existing.get();

@@ -37,6 +37,11 @@
             <button type="button" onclick="discardQuoteDraft()" class="ml-auto shrink-0 underline underline-offset-2 hover:no-underline">Descartar rascunho</button>
         </div>
 
+        <div th:if="${quoteStatus == 'approved'}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-sm font-semibold">
+            <i data-lucide="badge-check" class="w-4 h-4 shrink-0"></i>
+            <span>Este orçamento já está aprovado. Ao salvar, os itens e o valor da Ordem de Serviço vinculada serão atualizados junto com o orçamento.</span>
+        </div>
+
         <form id="quoteForm" onsubmit="saveQuote(event)" novalidate>
             <input type="hidden" id="quoteId" th:value="${quoteId}" />
 

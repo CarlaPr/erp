@@ -146,6 +146,16 @@
                             <i data-lucide="file-text" class="w-4 h-4"></i>
                             <span th:text="${wo.quote.number}">ORC 00</span>
                         </div>
+
+                        <div th:if="${paymentStatusByOrder != null and paymentStatusByOrder.get(wo.id) != null}"
+                             class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border"
+                             th:classappend="${#strings.equalsIgnoreCase(paymentStatusByOrder.get(wo.id).label, 'Pagamento pendente')
+                                    ? ' bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/30'
+                                    : ' ' + paymentStatusByOrder.get(wo.id).badgeClass}"
+                             title="Situação do pagamento desta O.S.">
+                            <i data-lucide="wallet" class="w-4 h-4"></i>
+                            <span th:text="${wo.number + ' - ' + paymentStatusByOrder.get(wo.id).label}">OS-0000 - Pagamento pendente</span>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6"
@@ -193,7 +203,7 @@
                 <button onclick="clearOsFilters()" class="mt-4 text-brand-600 dark:text-cyan-400 font-bold hover:underline">Remover Filtros</button>
             </div>
         </div>
-
+        <br><br>
         <section th:if="${!#lists.isEmpty(approvedWithoutWorkOrder)}" class="mb-8 rounded-2xl border border-amber-300 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-700 p-5" aria-label="Orçamentos aprovados sem O.S.">
             <h3 class="font-bold text-amber-900 dark:text-amber-200">Orçamentos aprovados sem O.S.</h3>
             <p class="mt-1 text-sm text-amber-800 dark:text-amber-200">Estes orçamentos perderam o vínculo com a ordem de serviço. A recuperação reutiliza a O.S. da agenda quando existir; caso contrário, cria a ordem com a data e o valor aprovados. Ordens canceladas não são reativadas.</p>
@@ -219,7 +229,7 @@
 
             <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">Excluir Ordem de Serviço</h3>
             <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                Atenção! Esta ação irá <b>apagar permanentemente</b> a O.S. do sistema, incluindo suas contas a receber vinculadas. <b>Esta ação não pode ser desfeita.</b>
+                Atenção! Esta ação irá <b>apagar permanentemente</b> a O.S. do sistema, incluindo suas contas a receber vinculadas. Se esta O.S. pertencer a um <b>orçamento aprovado</b>, o vínculo será desfeito e o orçamento voltará a aparecer em "Orçamentos aprovados sem O.S." para gerar uma nova O.S. quando necessário. <b>Esta ação não pode ser desfeita.</b>
             </p>
 
             <div class="flex justify-end gap-3">
@@ -487,7 +497,7 @@
         if (summary) {
             summary.textContent = `Exibindo ${visibleCount} de ${cards.length} ordens de serviço.`
                 + (monthTerm === 'current_view' && !searchTerm
-                    ? ' Visão atual: ordens em andamento e instalações deste mês. Selecione Todos os Meses para consultar o histórico.'
+                    ? ''
                     : '');
         }
         const emptyStateFilter = document.getElementById('emptyStateFilter');

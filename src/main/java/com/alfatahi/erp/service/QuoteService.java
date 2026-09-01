@@ -20,13 +20,15 @@ public class QuoteService {
     private final WorkOrderRepository osRepo;
     private final ScheduleService scheduleService;
     private final TechnicalVisitService technicalVisitService;
+    private final WorkOrderService workOrderService;
 
     public QuoteService(QuoteRepository quoteRepo, WorkOrderRepository osRepo, ScheduleService scheduleService,
-                         TechnicalVisitService technicalVisitService) {
+                         TechnicalVisitService technicalVisitService, WorkOrderService workOrderService) {
         this.quoteRepo = quoteRepo;
         this.osRepo = osRepo;
         this.scheduleService = scheduleService;
         this.technicalVisitService = technicalVisitService;
+        this.workOrderService = workOrderService;
     }
 
     private BigDecimal calcularAreaM2(BigDecimal width, BigDecimal height) {
@@ -113,6 +115,66 @@ public class QuoteService {
         os.setStatus("in_progress");
         os.setCreatedAt(approvalDate);
 
+        BigDecimal finalTotal = computeFinalTotal(quote);
+        os.setTotalValue(alreadyApproved && quote.getTotalValue() != null ? quote.getTotalValue() : finalTotal);
+
+        os.setDeadlineDate(DeliveryDeadline.fromApproval(approvalDate));
+
+        os.setItems(buildWorkOrderItems(quote, os));
+
+        quote.setStatus("approved");
+        quote.setDateApproved(approvalDate);
+        os.setQuote(quote);
+        quote.setWorkOrder(os);
+
+        os = osRepo.saveAndFlush(os);
+        quoteRepo.saveAndFlush(quote);
+        scheduleService.createFromApprovedQuote(quote, os);
+        return os;
+    }
+
+    /**
+     * Sincroniza uma O.S. já vinculada a um orçamento aprovado com o estado atual do
+     * orçamento (itens e valor total), depois de o orçamento aprovado ter sido editado.
+     * Reajusta proporcionalmente as contas a receber ainda ativas caso o valor mude.
+     * Não faz nada caso o orçamento não esteja aprovado ou não tenha O.S. vinculada
+     * (por exemplo, se a O.S. foi excluída/desvinculada — nesse caso, use "Recuperar O.S.").
+     */
+    @Transactional
+    public WorkOrder syncApprovedQuoteToWorkOrder(Quote quote) {
+        if (quote == null || !"approved".equals(quote.getStatus())) {
+            return null;
+        }
+
+        WorkOrder os = osRepo.findByQuoteId(quote.getId()).orElse(null);
+        if (os == null) {
+            return null;
+        }
+
+        BigDecimal oldTotal = os.getTotalValue();
+
+        os.setClient(quote.getClient());
+
+        os.getItems().clear();
+        os.getItems().addAll(buildWorkOrderItems(quote, os));
+
+        BigDecimal finalTotal = (quote.getTotalValue() != null && quote.getTotalValue().compareTo(BigDecimal.ZERO) > 0)
+                ? quote.getTotalValue()
+                : computeFinalTotal(quote);
+        os.setTotalValue(finalTotal);
+
+        String currentNotes = os.getNotes() != null ? os.getNotes() : "";
+        os.setNotes(currentNotes + "\n[Sistema] Itens/valor atualizados pela edição do orçamento " + quote.getNumber() + ".");
+
+        WorkOrder saved = osRepo.saveAndFlush(os);
+
+        workOrderService.redistributeReceivablesIfTotalChanged(saved, oldTotal,
+                "Valor ajustado conforme edição do orçamento " + quote.getNumber() + ".");
+
+        return saved;
+    }
+
+    private BigDecimal computeFinalTotal(Quote quote) {
         BigDecimal subtotal = BigDecimal.ZERO;
         if (quote.getItems() != null && !quote.getItems().isEmpty()) {
             for (QuoteItem item : quote.getItems()) {
@@ -131,39 +193,29 @@ public class QuoteService {
 
         BigDecimal finalTotal = subtotal.subtract(discountAmount);
         if (finalTotal.compareTo(BigDecimal.ZERO) < 0) finalTotal = BigDecimal.ZERO;
-        os.setTotalValue(alreadyApproved && quote.getTotalValue() != null ? quote.getTotalValue() : finalTotal);
+        return finalTotal;
+    }
 
-        os.setDeadlineDate(DeliveryDeadline.fromApproval(approvalDate));
-
-        if (quote.getItems() != null) {
-            for (QuoteItem qi : quote.getItems()) {
-                WorkOrderItem osItem = new WorkOrderItem();
-                BigDecimal w = qi.getWidth() != null ? qi.getWidth() : BigDecimal.ZERO;
-                BigDecimal h = qi.getHeight() != null ? qi.getHeight() : BigDecimal.ZERO;
-                String dimensions = (w.compareTo(BigDecimal.ZERO) > 0 || h.compareTo(BigDecimal.ZERO) > 0)
-                        ? " (LxA: " + w + "x" + h + ")" : "";
-                String cat = qi.getCategory() != null ? qi.getCategory() : "Item";
-                String prod = qi.getProduct() != null ? qi.getProduct() : "Sem descrição";
-                osItem.setDescription(cat + " - " + prod + dimensions);
-                osItem.setQuantity(qi.getQuantity());
-                BigDecimal area = calcularAreaM2(w, h);
-                osItem.setUnitPrice(qi.getUnitPrice().multiply(area));
-                osItem.setUnitCost(BigDecimal.ZERO);
-                osItem.setWorkOrder(os);
-                if (os.getItems() == null) os.setItems(new ArrayList<>());
-                os.getItems().add(osItem);
-            }
+    private List<WorkOrderItem> buildWorkOrderItems(Quote quote, WorkOrder os) {
+        List<WorkOrderItem> items = new ArrayList<>();
+        if (quote.getItems() == null) return items;
+        for (QuoteItem qi : quote.getItems()) {
+            WorkOrderItem osItem = new WorkOrderItem();
+            BigDecimal w = qi.getWidth() != null ? qi.getWidth() : BigDecimal.ZERO;
+            BigDecimal h = qi.getHeight() != null ? qi.getHeight() : BigDecimal.ZERO;
+            String dimensions = (w.compareTo(BigDecimal.ZERO) > 0 || h.compareTo(BigDecimal.ZERO) > 0)
+                    ? " (LxA: " + w + "x" + h + ")" : "";
+            String cat = qi.getCategory() != null ? qi.getCategory() : "Item";
+            String prod = qi.getProduct() != null ? qi.getProduct() : "Sem descrição";
+            osItem.setDescription(cat + " - " + prod + dimensions);
+            osItem.setQuantity(qi.getQuantity());
+            BigDecimal area = calcularAreaM2(w, h);
+            osItem.setUnitPrice(qi.getUnitPrice().multiply(area));
+            osItem.setUnitCost(BigDecimal.ZERO);
+            osItem.setWorkOrder(os);
+            items.add(osItem);
         }
-
-        quote.setStatus("approved");
-        quote.setDateApproved(approvalDate);
-        os.setQuote(quote);
-        quote.setWorkOrder(os);
-
-        os = osRepo.saveAndFlush(os);
-        quoteRepo.saveAndFlush(quote);
-        scheduleService.createFromApprovedQuote(quote, os);
-        return os;
+        return items;
     }
 
     @Transactional
