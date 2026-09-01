@@ -1466,6 +1466,10 @@
     }
 
     function openCancelModalFromEdit() {
+        const description = document.querySelector('#cancelScheduleModal p');
+        if (description) {
+            description.innerHTML = 'A Ordem de Servi&ccedil;o e o or&ccedil;amento n&atilde;o ser&atilde;o apagados. A data atual ser&aacute; removida e o servi&ccedil;o voltar&aacute; para Aguardando Agendamento. Informe o motivo:';
+        }
         toggleModal('cancelScheduleModal', true);
     }
 

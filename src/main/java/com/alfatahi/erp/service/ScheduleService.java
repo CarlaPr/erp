@@ -297,10 +297,15 @@ public class ScheduleService {
     public void cancel(UUID id, String reason) {
         Schedule schedule = scheduleRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Agendamento não encontrado: " + id));
-        schedule.setStatus(Schedule.STATUS_CANCELADO);
-        schedule.getOccurrences().forEach(o -> o.setStatus(Schedule.STATUS_CANCELADO));
+        LocalDate previousDate = schedule.getScheduledDate();
+
+        schedule.getOccurrences().clear();
+        schedule.setScheduledDate(null);
+        schedule.setScheduledTime(null);
+        schedule.setStatus(Schedule.STATUS_AGUARDANDO_AGENDAMENTO);
         scheduleRepo.saveAndFlush(schedule);
-        addHistory(schedule, "Cancelado", reason, null);
+        addHistory(schedule, "Agendamento Cancelado", reason,
+                "Data anteriormente agendada: " + fmt(previousDate) + ". Servico disponivel para novo agendamento.");
         syncWorkOrder(schedule);
     }
 
@@ -597,7 +602,7 @@ public class ScheduleService {
             switch (schedule.getStatus()) {
                 case Schedule.STATUS_EM_EXECUCAO -> wo.setStatus("in_progress");
                 case Schedule.STATUS_CONCLUIDO -> wo.setStatus("completed");
-                case Schedule.STATUS_CANCELADO -> wo.setStatus("cancelled");
+                case Schedule.STATUS_CANCELADO -> { }
                 default -> { }
             }
         }
