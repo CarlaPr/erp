@@ -24,9 +24,12 @@ public class RecurrenceService {
 
     private final ExpenseRecurrenceRepository recurrenceRepository;
     private final AccountsPayableRepository payableRepository;
+    private final FinanceService financeService;
 
     public RecurrenceService(ExpenseRecurrenceRepository recurrenceRepository,
-                              AccountsPayableRepository payableRepository) {
+                              AccountsPayableRepository payableRepository,
+                              FinanceService financeService) {
+        this.financeService = financeService;
         this.recurrenceRepository = recurrenceRepository;
         this.payableRepository = payableRepository;
     }
@@ -192,6 +195,9 @@ public class RecurrenceService {
     }
 
     private void removeOrCancel(AccountsPayable ap) {
+        // Sempre remove primeiro qualquer rateio de OS e o custo que ele lançou,
+        // evitando que o custo fique órfão na Ordem de Serviço.
+        financeService.removeAllocationsAndCosts(ap.getId());
         if ("pending".equals(ap.getStatus())) {
             payableRepository.delete(ap);
         } else if (!"cancelled".equals(ap.getStatus())) {

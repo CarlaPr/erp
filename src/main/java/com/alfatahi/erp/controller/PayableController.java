@@ -2,15 +2,18 @@ package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.entity.AccountsPayable;
 import com.alfatahi.erp.entity.AccountsReceivable;
+import com.alfatahi.erp.entity.ExpenseAllocation;
 import com.alfatahi.erp.entity.RecurrenceEndType;
 import com.alfatahi.erp.entity.RecurrenceFrequency;
 import com.alfatahi.erp.repository.AccountsPayableRepository;
+import com.alfatahi.erp.repository.ExpenseAllocationRepository;
 import com.alfatahi.erp.repository.SupplierRepository;
 import com.alfatahi.erp.repository.WorkOrderRepository;
 import com.alfatahi.erp.service.CategoryCatalogService;
 import com.alfatahi.erp.service.FinanceService;
 import com.alfatahi.erp.service.RecurrenceService;
 import com.alfatahi.erp.service.SupplierService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +43,8 @@ public class PayableController {
     private final WorkOrderRepository workOrderRepository;
     private final CategoryCatalogService categoryCatalogService;
     private final RecurrenceService recurrenceService;
+    private final ExpenseAllocationRepository expenseAllocationRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public PayableController(AccountsPayableRepository payableRepository,
                              SupplierService supplierService,
@@ -46,7 +52,8 @@ public class PayableController {
                              SupplierRepository supplierRepository,
                              WorkOrderRepository workOrderRepository,
                              CategoryCatalogService categoryCatalogService,
-                             RecurrenceService recurrenceService) {
+                             RecurrenceService recurrenceService,
+                             ExpenseAllocationRepository expenseAllocationRepository) {
         this.payableRepository = payableRepository;
         this.supplierService = supplierService;
         this.financeService = financeService;
@@ -54,6 +61,7 @@ public class PayableController {
         this.workOrderRepository = workOrderRepository;
         this.categoryCatalogService = categoryCatalogService;
         this.recurrenceService = recurrenceService;
+        this.expenseAllocationRepository = expenseAllocationRepository;
     }
 
     @Transactional(readOnly = true)
@@ -136,6 +144,7 @@ public class PayableController {
         model.addAttribute("suppliers", supplierRepository.findByIsActiveTrueOrderByNameAsc());
         model.addAttribute("workOrders", workOrderRepository.findAll());
         model.addAttribute("categories", categoryCatalogService.listActiveCategories());
+        model.addAttribute("allocationsJsonByPayable", buildAllocationsJsonByPayable(list));
 
         model.addAttribute("saldoReal", saldoReal);
         model.addAttribute("valTotal", total);
@@ -246,7 +255,11 @@ public class PayableController {
 
     @PostMapping("/edit/{id}")
     public String edit(@PathVariable UUID id, @ModelAttribute AccountsPayable form,
-                       @RequestParam(required = false, defaultValue = "single") String editScope) {
+                       @RequestParam(required = false, defaultValue = "single") String editScope,
+                       @RequestParam(required = false, defaultValue = "false") boolean allocationsSubmitted,
+                       @RequestParam(required = false) List<UUID> workOrderIds,
+                       @RequestParam(required = false) List<BigDecimal> workOrderValues,
+                       @RequestParam(required = false) List<String> workOrderDescriptions) {
         AccountsPayable ap = payableRepository.findById(id).orElseThrow(() -> new RuntimeException("Conta não encontrada"));
         applyDerivedFields(form);
 
@@ -287,6 +300,9 @@ public class PayableController {
         else ap.setWorkOrder(null);
 
         payableRepository.save(ap);
+        if (allocationsSubmitted) {
+            applyWorkOrderAllocations(ap.getId(), workOrderIds, workOrderValues, workOrderDescriptions);
+        }
         return "redirect:/payables";
     }
 
@@ -296,10 +312,15 @@ public class PayableController {
                        @RequestParam(required = false) String recurrenceFrequency,
                        @RequestParam(required = false) String recurrenceEndType,
                        @RequestParam(required = false) Integer recurrenceCount,
-                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate recurrenceEndDate) {
+                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate recurrenceEndDate,
+                       @RequestParam(required = false, defaultValue = "false") boolean allocationsSubmitted,
+                       @RequestParam(required = false) List<UUID> workOrderIds,
+                       @RequestParam(required = false) List<BigDecimal> workOrderValues,
+                       @RequestParam(required = false) List<String> workOrderDescriptions) {
 
         applyDerivedFields(payable);
 
+        UUID payableIdForAllocation;
         if (recurrenceEnabled && recurrenceFrequency != null && !recurrenceFrequency.isBlank()) {
             RecurrenceFrequency freq;
             RecurrenceEndType endType;
@@ -311,11 +332,42 @@ public class PayableController {
                 return "redirect:/payables?error=invalid_recurrence";
             }
             payable.setRecurring(true);
-            recurrenceService.createRecurrence(payable, freq, endType, recurrenceCount, recurrenceEndDate);
+            // Contas recorrentes: o rateio por OS se aplica apenas ao primeiro lançamento gerado
+            // agora (o do vencimento informado), não é replicado nas ocorrências futuras.
+            List<AccountsPayable> created = recurrenceService.createRecurrence(payable, freq, endType, recurrenceCount, recurrenceEndDate);
+            payableIdForAllocation = created.isEmpty() ? null : created.get(0).getId();
         } else {
-            financeService.savePayable(payable);
+            payableIdForAllocation = financeService.savePayable(payable).getId();
+        }
+
+        if (allocationsSubmitted) {
+            applyWorkOrderAllocations(payableIdForAllocation, workOrderIds, workOrderValues, workOrderDescriptions);
         }
         return "redirect:/payables";
+    }
+
+    /**
+     * Aplica o rateio por OS informado no formulário (múltiplas OS com valor
+     * individual cada), substituindo o rateio anterior da conta. Só é chamado
+     * quando o formulário efetivamente enviou o bloco de rateio
+     * (allocationsSubmitted=true) — contas antigas, salvas antes deste
+     * recurso existir, não são tocadas e por isso nunca recebem custo
+     * automático retroativo.
+     */
+    private void applyWorkOrderAllocations(UUID payableId, List<UUID> workOrderIds,
+                                           List<BigDecimal> workOrderValues, List<String> workOrderDescriptions) {
+        if (payableId == null) return;
+        if (workOrderIds == null) workOrderIds = List.of();
+
+        List<FinanceService.AllocationInput> inputs = new ArrayList<>();
+        for (int i = 0; i < workOrderIds.size(); i++) {
+            UUID woId = workOrderIds.get(i);
+            if (woId == null) continue;
+            BigDecimal value = (workOrderValues != null && i < workOrderValues.size()) ? workOrderValues.get(i) : null;
+            String description = (workOrderDescriptions != null && i < workOrderDescriptions.size()) ? workOrderDescriptions.get(i) : null;
+            inputs.add(new FinanceService.AllocationInput(woId, value, description));
+        }
+        financeService.replaceAllocations(payableId, inputs);
     }
 
     @PostMapping("/pay/{id}")
@@ -339,12 +391,13 @@ public class PayableController {
         return "redirect:/payables";
     }
 
+
+
     @PostMapping("/cancel/{id}")
     public String cancel(@PathVariable UUID id) {
-        AccountsPayable ap = payableRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
-        ap.setStatus("cancelled");
-        payableRepository.save(ap);
+        // cancelPayable também remove as alocações de OS e os custos que elas
+        // haviam lançado, evitando que um custo fique "órfão" na OS.
+        financeService.cancelPayable(id);
         return "redirect:/payables";
     }
 
@@ -438,6 +491,40 @@ public class PayableController {
     }
 
 
+
+    /**
+     * Monta, para cada conta a pagar listada, o JSON com o rateio por O.S.
+     * já cadastrado (usado para pré-preencher o modal de edição). Contas sem
+     * nenhuma alocação simplesmente retornam uma lista vazia "[]".
+     */
+    private Map<UUID, String> buildAllocationsJsonByPayable(List<AccountsPayable> list) {
+        Map<UUID, String> result = new LinkedHashMap<>();
+        if (list.isEmpty()) return result;
+
+        List<UUID> payableIds = list.stream().map(AccountsPayable::getId).toList();
+        Map<UUID, List<Map<String, Object>>> rowsByPayable = new LinkedHashMap<>();
+
+        for (ExpenseAllocation ea : expenseAllocationRepository.findByAccountsPayableIdIn(payableIds)) {
+            if (ea.getWorkOrder() == null || ea.getAccountsPayable() == null) continue;
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("workOrderId", ea.getWorkOrder().getId().toString());
+            row.put("workOrderNumber", ea.getWorkOrder().getNumber());
+            row.put("workOrderTitle", ea.getWorkOrder().getTitle());
+            row.put("value", ea.getValue());
+            row.put("description", ea.getDescription());
+            rowsByPayable.computeIfAbsent(ea.getAccountsPayable().getId(), k -> new ArrayList<>()).add(row);
+        }
+
+        for (UUID payableId : payableIds) {
+            List<Map<String, Object>> rows = rowsByPayable.getOrDefault(payableId, List.of());
+            try {
+                result.put(payableId, objectMapper.writeValueAsString(rows));
+            } catch (Exception e) {
+                result.put(payableId, "[]");
+            }
+        }
+        return result;
+    }
 
     private void applyDerivedFields(AccountsPayable p) {
         if (p.getExpenseType() == null || p.getExpenseType().isBlank()) {

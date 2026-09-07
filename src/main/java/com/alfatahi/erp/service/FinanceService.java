@@ -21,15 +21,21 @@ public class FinanceService {
     private final AccountsReceivableRepository receivableRepository;
     private final WorkOrderRepository workOrderRepository;
     private final FinancialMovementRepository financialMovementRepository;
+    private final ExpenseAllocationRepository expenseAllocationRepository;
+    private final WorkOrderItemRepository workOrderItemRepository;
 
     public FinanceService(AccountsPayableRepository payableRepository,
                           AccountsReceivableRepository receivableRepository,
                           WorkOrderRepository workOrderRepository,
-                          FinancialMovementRepository financialMovementRepository) {
+                          FinancialMovementRepository financialMovementRepository,
+                          ExpenseAllocationRepository expenseAllocationRepository,
+                          WorkOrderItemRepository workOrderItemRepository) {
         this.payableRepository = payableRepository;
         this.receivableRepository = receivableRepository;
         this.workOrderRepository = workOrderRepository;
         this.financialMovementRepository = financialMovementRepository;
+        this.expenseAllocationRepository = expenseAllocationRepository;
+        this.workOrderItemRepository = workOrderItemRepository;
     }
 
     public List<AccountsPayable> listAllPayables()       { return payableRepository.findAllByOrderByDueDateAsc(); }
@@ -73,6 +79,7 @@ public class FinanceService {
         AccountsPayable ap = payableRepository.findById(payableId).orElseThrow();
         ap.setStatus("cancelled");
         payableRepository.save(ap);
+        removeAllocationsAndCosts(payableId);
     }
 
     @Transactional
@@ -238,24 +245,131 @@ public class FinanceService {
                 : FinancialMovement.BalanceLocation.BANK;
     }
 
+    /**
+     * Um item a ratear: OS de destino, valor a lançar como custo naquela OS,
+     * e descrição opcional (se vazia, usa a descrição da conta a pagar).
+     */
+    public record AllocationInput(UUID workOrderId, BigDecimal value, String description) {}
+
+    /**
+     * Substitui as alocações de OS de uma Conta a Pagar pelas informadas em
+     * {@code inputs}, mantendo o custo lançado em cada OS sempre em sincronia
+     * (sem duplicidade): alocações removidas apagam o custo correspondente na
+     * OS; alocações mantidas apenas atualizam o valor/descrição do custo já
+     * existente; alocações novas criam um novo item de custo na OS.
+     *
+     * Chamado apenas ao salvar/editar contas a pagar a partir de agora — não
+     * é aplicado retroativamente a contas antigas, então elas nunca ganham
+     * alocações nem custos automáticos a menos que o usuário as edite e
+     * explicitamente informe o rateio por OS.
+     */
     @Transactional
-    public void allocateExpenseToWorkOrder(UUID payableId, UUID workOrderId, BigDecimal percentage) {
+    public void replaceAllocations(UUID payableId, List<AllocationInput> inputs) {
         AccountsPayable ap = payableRepository.findById(payableId)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
-        WorkOrder wo = workOrderRepository.findById(workOrderId)
-                .orElseThrow(() -> new RuntimeException("OS não encontrada"));
 
-        BigDecimal value = ap.getTotalAmount()
-                .multiply(percentage)
-                .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+        List<ExpenseAllocation> existing = expenseAllocationRepository.findByAccountsPayableId(payableId);
 
-        ExpenseAllocation allocation = new ExpenseAllocation();
-        allocation.setAccountsPayable(ap);
-        allocation.setWorkOrder(wo);
-        allocation.setPercentage(percentage);
-        allocation.setValue(value);
+        List<AllocationInput> validInputs = (inputs == null ? List.<AllocationInput>of() : inputs).stream()
+                .filter(i -> i.workOrderId() != null && i.value() != null && i.value().compareTo(BigDecimal.ZERO) > 0)
+                .toList();
 
-        ap.getAllocations().add(allocation);
-        payableRepository.save(ap);
+        // Mantém no máximo uma alocação por OS (evita lançar o mesmo custo duas vezes na mesma OS).
+        java.util.Map<UUID, ExpenseAllocation> existingByWorkOrder = new java.util.LinkedHashMap<>();
+        for (ExpenseAllocation ea : existing) {
+            if (ea.getWorkOrder() != null) existingByWorkOrder.put(ea.getWorkOrder().getId(), ea);
+        }
+
+        java.util.Set<UUID> keptWorkOrderIds = new java.util.HashSet<>();
+        for (AllocationInput input : validInputs) {
+            keptWorkOrderIds.add(input.workOrderId());
+        }
+
+        // Remove alocações que não estão mais presentes -> apaga o custo correspondente na OS.
+        for (ExpenseAllocation ea : existing) {
+            UUID woId = ea.getWorkOrder() != null ? ea.getWorkOrder().getId() : null;
+            if (woId == null || !keptWorkOrderIds.contains(woId)) {
+                deleteAllocationAndCost(ea);
+            }
+        }
+
+        for (AllocationInput input : validInputs) {
+            ExpenseAllocation ea = existingByWorkOrder.get(input.workOrderId());
+            String description = (input.description() != null && !input.description().isBlank())
+                    ? input.description() : ap.getDescription();
+
+            if (ea != null) {
+                // Alocação já existia para esta OS: apenas atualiza valor/descrição do custo já lançado,
+                // sem criar um novo item (evita duplicidade).
+                ea.setValue(input.value());
+                ea.setDescription(description);
+                ea.setPercentage(computePercentage(input.value(), ap.getTotalAmount()));
+                syncWorkOrderItem(ea, description, input.value());
+                expenseAllocationRepository.save(ea);
+            } else {
+                WorkOrder wo = workOrderRepository.findById(input.workOrderId())
+                        .orElseThrow(() -> new RuntimeException("OS não encontrada"));
+
+                ExpenseAllocation newAllocation = new ExpenseAllocation();
+                newAllocation.setAccountsPayable(ap);
+                newAllocation.setWorkOrder(wo);
+                newAllocation.setValue(input.value());
+                newAllocation.setDescription(description);
+                newAllocation.setPercentage(computePercentage(input.value(), ap.getTotalAmount()));
+                newAllocation = expenseAllocationRepository.save(newAllocation);
+
+                WorkOrderItem item = new WorkOrderItem();
+                item.setWorkOrder(wo);
+                item.setDescription(description);
+                item.setQuantity(BigDecimal.ONE);
+                item.setUnitCost(input.value());
+                item.setUnitPrice(BigDecimal.ZERO);
+                item.setSourceExpenseAllocationId(newAllocation.getId());
+                item = workOrderItemRepository.save(item);
+
+                newAllocation.setWorkOrderItem(item);
+                expenseAllocationRepository.save(newAllocation);
+            }
+        }
+    }
+
+    /** Remove todas as alocações de uma Conta a Pagar e os custos que elas haviam lançado nas OS. */
+    @Transactional
+    public void removeAllocationsAndCosts(UUID payableId) {
+        List<ExpenseAllocation> existing = expenseAllocationRepository.findByAccountsPayableId(payableId);
+        for (ExpenseAllocation ea : existing) {
+            deleteAllocationAndCost(ea);
+        }
+    }
+
+    private void deleteAllocationAndCost(ExpenseAllocation ea) {
+        WorkOrderItem item = ea.getWorkOrderItem();
+        expenseAllocationRepository.delete(ea);
+        if (item != null && item.getId() != null) {
+            workOrderItemRepository.deleteById(item.getId());
+        }
+    }
+
+    private void syncWorkOrderItem(ExpenseAllocation ea, String description, BigDecimal value) {
+        WorkOrderItem item = ea.getWorkOrderItem();
+        if (item == null) {
+            item = new WorkOrderItem();
+            item.setWorkOrder(ea.getWorkOrder());
+            item.setQuantity(BigDecimal.ONE);
+            item.setUnitPrice(BigDecimal.ZERO);
+            item.setSourceExpenseAllocationId(ea.getId());
+        }
+        item.setDescription(description);
+        item.setUnitCost(value);
+        workOrderItemRepository.save(item);
+        ea.setWorkOrderItem(item);
+    }
+
+    private BigDecimal computePercentage(BigDecimal value, BigDecimal totalAmount) {
+        if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) <= 0 || value == null) {
+            return BigDecimal.ZERO;
+        }
+        return value.multiply(new BigDecimal("100"))
+                .divide(totalAmount, 2, RoundingMode.HALF_UP);
     }
 }

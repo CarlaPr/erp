@@ -30,6 +30,17 @@ public class WorkOrderItem {
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice = BigDecimal.ZERO;
 
+    /**
+     * Preenchido quando este item de custo foi gerado automaticamente a
+     * partir do rateio de uma Conta a Pagar (ver {@link ExpenseAllocation}).
+     * Itens lançados manualmente pelo usuário permanecem com este campo nulo.
+     */
+    @Column(name = "source_expense_allocation_id")
+    private UUID sourceExpenseAllocationId;
+
+    public UUID getSourceExpenseAllocationId() { return sourceExpenseAllocationId; }
+    public void setSourceExpenseAllocationId(UUID sourceExpenseAllocationId) { this.sourceExpenseAllocationId = sourceExpenseAllocationId; }
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
