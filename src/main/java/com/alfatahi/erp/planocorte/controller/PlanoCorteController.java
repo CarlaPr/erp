@@ -192,14 +192,27 @@ public class PlanoCorteController {
                                      @ModelAttribute PlanoCorteVaoForm vaoForm,
                                      RedirectAttributes redirectAttributes) {
         try {
-            planoCorteService.editarDimensoesVao(id, grupoVao, vaoForm);
-            redirectAttributes.addFlashAttribute("sucesso", "Medidas do vao atualizadas e croqui recalculado.");
+            planoCorteService.editarVao(id, grupoVao, vaoForm);
+            redirectAttributes.addFlashAttribute("sucesso", "Vão atualizado e croqui recalculado.");
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("erro", e.getMessage());
         }
         return "redirect:/cut-plans/" + id;
     }
 
+    @PostMapping("/{id}/itens/{itemId}/dimensoes")
+    public String editarDimensoesFolha(@PathVariable Long id, @PathVariable Long itemId,
+                                       @RequestParam BigDecimal larguraMm,
+                                       @RequestParam BigDecimal alturaMm,
+                                       RedirectAttributes redirectAttributes) {
+        try {
+            planoCorteService.editarDimensoesFolha(id, itemId, larguraMm, alturaMm);
+            redirectAttributes.addFlashAttribute("sucesso", "Dimensões da folha atualizadas e croqui recalculado.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/cut-plans/" + id;
+    }
     @PostMapping("/{id}/itens/{itemId}/elementos")
     public String adicionarElemento(@PathVariable Long id, @PathVariable Long itemId,
                                      @Valid @ModelAttribute("elementoForm") ElementoTecnicoForm elementoForm,
@@ -314,9 +327,10 @@ public class PlanoCorteController {
                                      @RequestParam String lado,
                                      @RequestParam(required = false) BigDecimal tamanhoMm,
                                      @RequestParam(required = false) BigDecimal distanciaBordaMm,
+                                     @RequestParam(required = false) BigDecimal diametroFuroMm,
                                      RedirectAttributes redirectAttributes) {
         try {
-            planoCorteService.adicionarPuxadorH(id, itemId, lado, tamanhoMm, distanciaBordaMm);
+            planoCorteService.adicionarPuxadorH(id, itemId, lado, tamanhoMm, distanciaBordaMm, diametroFuroMm);
             String tamanhoDescricao = tamanhoMm != null && tamanhoMm.signum() > 0
                     ? tamanhoMm.stripTrailingZeros().toPlainString() + "mm"
                     : "padrão 300mm";
@@ -439,6 +453,9 @@ public class PlanoCorteController {
             }
         }
 
+        Map<Integer, PlanoCorteVaoForm> formulariosVao = new LinkedHashMap<>();
+        itensPorGrupo.forEach((grupo, folhas) -> formulariosVao.put(grupo, planoCorteService.formularioVao(folhas)));
+        model.addAttribute("formulariosVao", formulariosVao);
         Map<Integer, List<CroquiVaoChunkDto>> croquisVao = new LinkedHashMap<>();
         Map<Integer, Long> primeiroItemIdDoGrupo = new LinkedHashMap<>();
         Map<Long, Integer> folhaNumeroPorItem = new LinkedHashMap<>();

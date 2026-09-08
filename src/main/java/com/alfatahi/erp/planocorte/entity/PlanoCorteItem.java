@@ -32,6 +32,12 @@ public class PlanoCorteItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "configuracao_vao_json", columnDefinition = "TEXT")
+    private String configuracaoVaoJson;
+
+    public String getConfiguracaoVaoJson() { return configuracaoVaoJson; }
+    public void setConfiguracaoVaoJson(String configuracaoVaoJson) { this.configuracaoVaoJson = configuracaoVaoJson; }
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plano_corte_id", nullable = false)

@@ -1,0 +1,1 @@
+ALTER TABLE plano_corte_itens ADD COLUMN configuracao_vao_json TEXT;

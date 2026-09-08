@@ -270,8 +270,8 @@
         }
 
         .piece-large-croqui {
-            page-break-before: always;
-            -fs-page-break-min-height: 245mm;
+            /* Regras que forçavam a quebra de página foram removidas */
+            page-break-inside: avoid !important;
         }
 
         .piece-header {
@@ -337,8 +337,7 @@
             border: 1px solid #bfdbfe;
             border-radius: 9px;
             page-break-inside: avoid !important;
-            page-break-before: always;
-            -fs-page-break-min-height: 245mm;
+            /* page-break-before: always foi removido */
             overflow: hidden;
             background: #ffffff;
         }
@@ -681,23 +680,23 @@
                     <td class="technical-value" colspan="3" th:text="${item.espessuraBisoteMm + ' mm — todas as laterais'}">20 mm — todas as laterais</td>
                 </tr>
             </table>
-<!--            <div class="technical-section" th:if="${item.furacoes != null && !#lists.isEmpty(item.furacoes)}">-->
-<!--                <div class="technical-section-title">Furações</div>-->
-<!--                <div class="technical-item" th:each="f : ${item.furacoes}">-->
-<!--                    <span th:text="${f.tipo != null ? f.tipo.descricao : 'Furação'}">Roldana</span>-->
-<!--                    <span th:if="${f.descricao != null && !f.descricao.isEmpty()}" th:text="' — ' + ${f.descricao}"></span>-->
-<!--                    <span th:text="| (${f.posicaoXMm != null ? #numbers.formatDecimal(f.posicaoXMm, 1, 0) : '?'}, ${f.posicaoYMm != null ? #numbers.formatDecimal(f.posicaoYMm, 1, 0) : '?'} mm)|">(125, 70 mm)</span>-->
-<!--                    <span th:if="${f.diametroMm != null}" th:text="' · Ø' + ${#numbers.formatDecimal(f.diametroMm,1,1)} + ' mm'">· Ø30,0 mm</span>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--            <div class="technical-section" th:if="${item.elementos != null && !#lists.isEmpty(item.elementos)}">-->
-<!--                <div class="technical-section-title">Elementos técnicos</div>-->
-<!--                <div class="technical-item element" th:each="e : ${item.elementos}">-->
-<!--                    <span th:text="${e.ferragemNomeSnapshot != null ? e.ferragemNomeSnapshot : (e.tipo != null ? e.tipo.descricao : 'Elemento')}">Fechadura</span>-->
-<!--                    <span th:if="${e.lado != null}" th:text="' · ' + ${e.lado}"></span>-->
-<!--                    <span th:text="| (${e.posicaoXMm != null ? #numbers.formatDecimal(e.posicaoXMm, 1, 0) : '?'}, ${e.posicaoYMm != null ? #numbers.formatDecimal(e.posicaoYMm, 1, 0) : '?'} mm)|">(50, 1000 mm)</span>-->
-<!--                </div>-->
-<!--            </div>-->
+            <!--            <div class="technical-section" th:if="${item.furacoes != null && !#lists.isEmpty(item.furacoes)}">-->
+            <!--                <div class="technical-section-title">Furações</div>-->
+            <!--                <div class="technical-item" th:each="f : ${item.furacoes}">-->
+            <!--                    <span th:text="${f.tipo != null ? f.tipo.descricao : 'Furação'}">Roldana</span>-->
+            <!--                    <span th:if="${f.descricao != null && !f.descricao.isEmpty()}" th:text="' — ' + ${f.descricao}"></span>-->
+            <!--                    <span th:text="| (${f.posicaoXMm != null ? #numbers.formatDecimal(f.posicaoXMm, 1, 0) : '?'}, ${f.posicaoYMm != null ? #numbers.formatDecimal(f.posicaoYMm, 1, 0) : '?'} mm)|">(125, 70 mm)</span>-->
+            <!--                    <span th:if="${f.diametroMm != null}" th:text="' · Ø' + ${#numbers.formatDecimal(f.diametroMm,1,1)} + ' mm'">· Ø30,0 mm</span>-->
+            <!--                </div>-->
+            <!--            </div>-->
+            <!--            <div class="technical-section" th:if="${item.elementos != null && !#lists.isEmpty(item.elementos)}">-->
+            <!--                <div class="technical-section-title">Elementos técnicos</div>-->
+            <!--                <div class="technical-item element" th:each="e : ${item.elementos}">-->
+            <!--                    <span th:text="${e.ferragemNomeSnapshot != null ? e.ferragemNomeSnapshot : (e.tipo != null ? e.tipo.descricao : 'Elemento')}">Fechadura</span>-->
+            <!--                    <span th:if="${e.lado != null}" th:text="' · ' + ${e.lado}"></span>-->
+            <!--                    <span th:text="| (${e.posicaoXMm != null ? #numbers.formatDecimal(e.posicaoXMm, 1, 0) : '?'}, ${e.posicaoYMm != null ? #numbers.formatDecimal(e.posicaoYMm, 1, 0) : '?'} mm)|">(50, 1000 mm)</span>-->
+            <!--                </div>-->
+            <!--            </div>-->
         </div>
     </div>
 

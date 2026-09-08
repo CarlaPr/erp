@@ -416,6 +416,11 @@
                         </p>
                     </div>
                 </div>
+
+                <div th:if="${plano.status.name() != 'FINALIZADO'}" class="px-5 sm:px-7 py-4 border-b border-blue-100 dark:border-blue-500/20">
+                    <th:block th:replace="~{planocorte/fragments/edicao-vao :: editor}"></th:block>
+                </div>
+
                 <div th:each="chunk, chunkStat : ${croquisVao.get(item.grupoVao)}"
                      class="relative bg-slate-50 dark:bg-[#0B1220] px-4 sm:px-8 py-8 sm:py-10"
                      th:classappend="${!chunkStat.first ? 'border-t border-slate-100 dark:border-slate-800' : ''}">
@@ -486,43 +491,48 @@
                             <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5"></i>
                             Selecionar folha
                         </button>
-                        <details th:if="${plano.status.name() != 'FINALIZADO' and item.grupoVao != null and primeiroItemIdDoGrupo.get(item.grupoVao).equals(item.id)}" class="relative group/editarvao">
-                            <summary class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer"><i data-lucide="ruler" class="w-3.5 h-3.5"></i> Editar medidas do vao</summary>
-                            <form th:action="@{/cut-plans/{id}/vaos/{grupoVao}/dimensoes(id=${plano.id},grupoVao=${item.grupoVao})}" method="post" class="absolute z-30 right-0 mt-2 w-[min(88vw,360px)] rounded-xl border border-blue-200 dark:border-blue-500/30 bg-white dark:bg-slate-900 p-4 shadow-xl space-y-3">
-                                <input type="hidden" name="dimensoesPersonalizadas" th:value="${item.dimensoesPersonalizadas}">
-                                <p class="text-xs font-black text-slate-700 dark:text-white">Medidas brutas do vao</p>
-                                <div th:unless="${item.dimensoesPersonalizadas}" class="grid grid-cols-2 gap-2">
-                                    <input type="number" min="0" step="0.01" name="larguraVaoMm" th:value="${item.larguraBrutaMm}" placeholder="Largura mm" class="input-tecnico" required>
-                                    <input type="number" min="0" step="0.01" name="alturaVaoMm" th:value="${item.alturaBrutaMm}" placeholder="Altura mm" class="input-tecnico" required>
-                                </div>
-                                <div th:if="${item.dimensoesPersonalizadas}" class="grid grid-cols-2 gap-2">
-                                    <label class="text-[10px] font-bold text-slate-500">Altura/lado esquerdo
-                                        <input type="number" min="0" step="0.01" name="alturaBrutaEsquerdaMm" th:value="${item.alturaBrutaEsquerdaMm}" class="input-tecnico mt-1" required>
-                                    </label>
-                                    <label class="text-[10px] font-bold text-slate-500">Altura/lado direito
-                                        <input type="number" min="0" step="0.01" name="alturaBrutaDireitaMm" th:value="${item.alturaBrutaDireitaMm}" class="input-tecnico mt-1" required>
-                                    </label>
-                                    <label class="text-[10px] font-bold text-slate-500">Largura/lado superior
-                                        <input type="number" min="0" step="0.01" name="larguraBrutaSuperiorMm" th:value="${item.larguraBrutaSuperiorMm}" class="input-tecnico mt-1" required>
-                                    </label>
-                                    <label class="text-[10px] font-bold text-slate-500">Largura/lado inferior
-                                        <input type="number" min="0" step="0.01" name="larguraBrutaInferiorMm" th:value="${item.larguraBrutaInferiorMm}" class="input-tecnico mt-1" required>
-                                    </label>
-                                </div>
-                                <p class="text-[10px] text-slate-500">Ao salvar, folhas, furos, recortes, custos e o croqui sao atualizados automaticamente.</p>
-                                <button type="submit" class="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-3 py-2">Salvar medidas</button>
-                            </form>
-                        </details>
+
                                 <p th:if="${item.dimensoesPersonalizadas}" class="text-[10px] text-amber-600">
                                     Triangular: deixe somente o lado inexistente com valor 0.
                                 </p>
-                        <form th:if="${plano.status.name() != 'FINALIZADO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/excluir(id=${plano.id},itemId=${item.id})}" method="post" onsubmit="return confirm('Remover esta peça?');">
+                        <form th:if="${plano.status.name() != 'FINALIZADO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/excluir(id=${plano.id},itemId=${item.id})}" method="post" class="acao-folha-seletiva" onsubmit="return confirm('Remover esta peça?');">
                             <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 px-3 py-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                 Remover
                             </button>
                         </form>
                     </div>
+                </div>
+                <div th:if="${item.grupoVao != null and itensPorGrupo.get(item.grupoVao) != null and #lists.size(itensPorGrupo.get(item.grupoVao)) > 1}" class="folha-selecao-pendente px-5 sm:px-7 py-4 bg-slate-50 dark:bg-slate-800/40">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                <i data-lucide="mouse-pointer-click" class="w-4 h-4"></i>
+                            </div>
+
+                            <div>
+                                <p class="text-xs font-black text-slate-700 dark:text-slate-200">
+                                    Selecione esta folha para visualizar e editar
+                                </p>
+
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Dimensões, elementos técnicos, furações e ferragens ficarão disponíveis após a seleção.
+                                </p>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-selecionar-folha" th:attr="data-item-id=${item.id},data-grupo-vao=${item.grupoVao}" onclick="selecionarFolhaTecnica(this)">
+                            <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5"></i>
+                            Abrir esta folha
+                        </button>
+                    </div>
+                </div>
+                <div th:if="${plano.status.name() != 'FINALIZADO' and (item.grupoVao == null or croquisVao.get(item.grupoVao) == null)}" class="folha-conteudo-seletivo px-5 sm:px-7 py-4 space-y-3">
+                    <th:block th:if="${item.grupoVao != null}"><th:block th:replace="~{planocorte/fragments/edicao-vao :: editor}"></th:block></th:block>
+                    <details class="rounded-xl border border-blue-200 dark:border-blue-500/30">
+                        <summary class="text-xs font-bold text-blue-600 px-3 py-3 cursor-pointer">Editar dimensões da folha</summary>
+                        <div class="p-4"><th:block th:replace="~{planocorte/fragments/edicao-folha :: editor(${item}, 1)}"></th:block></div>
+                    </details>
                 </div>
                 <div th:unless="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}" class="relative bg-slate-50 dark:bg-[#0B1220] border-b border-slate-100 dark:border-slate-800 px-4 sm:px-8 py-8 sm:py-10">
                     <div class="absolute top-4 left-5 text-[9px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-700">
@@ -577,22 +587,42 @@
                         </div>
                     </div>
                 </div>
-                <div th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}" class="peca-croqui-aviso px-5 sm:px-7 py-3 border-b flex items-center gap-2">
+                <div th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}" class="peca-croqui-aviso folha-conteudo-seletivo px-5 sm:px-7 py-3 border-b flex items-center gap-2">
                     <i data-lucide="arrow-up" class="w-3.5 h-3.5 text-blue-400 shrink-0"></i>
                     <p class="text-xs text-blue-600 dark:text-blue-300">
                         O croqui desta folha já aparece no <strong>croqui combinado do vão</strong>, no topo da lista.
                     </p>
                 </div>
-                <div class="peca-card-body p-4 sm:p-5">
+                <div class="peca-card-body folha-conteudo-seletivo p-4 sm:p-5">
+                    <details th:if="${plano.status.name() != 'FINALIZADO' and item.grupoVao != null and croquisVao.get(item.grupoVao) != null}" class="group mb-4 overflow-hidden rounded-xl border border-blue-200 dark:border-blue-500/30 bg-white dark:bg-slate-900">
+                        <summary class="cursor-pointer select-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition">
+                            <span class="flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                    <i data-lucide="ruler" class="w-4 h-4"></i>
+                                </span>
+
+                                <span>
+                                    <span class="block text-xs font-black text-slate-700 dark:text-slate-200">Editar dimensões desta folha</span>
+                                    <span class="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Altera somente a folha selecionada</span>
+                                </span>
+                            </span>
+
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"></i>
+                        </summary>
+
+                        <div class="border-t border-blue-100 dark:border-blue-500/20 p-4">
+                            <th:block th:replace="~{planocorte/fragments/edicao-folha :: editor(${item}, ${folhaNumeroPorItem.get(item.id) != null ? folhaNumeroPorItem.get(item.id) : 1})}"></th:block>
+                        </div>
+                    </details>
                     <details th:if="${plano.status.name() != 'FINALIZADO'}" th:id="'add-elemento-' + ${item.id}" th:attr="data-item-id=${item.id},data-grupo-vao=${item.grupoVao}" th:classappend="${item.grupoVao != null and itensPorGrupo.get(item.grupoVao) != null and #lists.size(itensPorGrupo.get(item.grupoVao)) > 1 ? ' elemento-tecnico-seletivo' : ''}" class="elemento-tecnico-details group mb-4 overflow-hidden rounded-2xl border-2 border-violet-300 dark:border-violet-500/40 bg-violet-50/60 dark:bg-violet-500/5 shadow-sm">
                         <summary class="elemento-tecnico-summary cursor-pointer select-none flex items-center justify-between gap-4 px-4 sm:px-5 py-4 text-slate-900 dark:text-white hover:bg-violet-100/70 dark:hover:bg-violet-500/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-inset">
-        <span class="flex items-center gap-3 min-w-0">
-            <span class="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-sm shrink-0"><i data-lucide="plus" class="w-5 h-5"></i></span>
-            <span class="min-w-0">
-                <span class="block text-sm sm:text-base font-black">Adicionar elemento técnico</span>
-                <span class="block text-[11px] sm:text-xs font-medium text-violet-600 dark:text-violet-300 mt-0.5">Furo, recorte, chanfro nesta folha</span>
-            </span>
-        </span>
+                            <span class="flex items-center gap-3 min-w-0">
+                                <span class="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-sm shrink-0"><i data-lucide="plus" class="w-5 h-5"></i></span>
+                                <span class="min-w-0">
+                                    <span class="block text-sm sm:text-base font-black">Adicionar elemento técnico</span>
+                                    <span class="block text-[11px] sm:text-xs font-medium text-violet-600 dark:text-violet-300 mt-0.5">Furo, recorte, chanfro nesta folha</span>
+                                </span>
+                            </span>
                             <span class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide text-violet-600 dark:text-violet-300 shrink-0">Abrir <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i></span>
                         </summary>
                         <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos(id=${plano.id},itemId=${item.id})}" th:object="${elementoForm}" method="post" th:attr="data-fixed-glass=${item.tipoFolha != null and item.tipoFolha.name() == 'FIXA'}" class="fixed-glass-element-form border-t border-violet-200 dark:border-violet-500/20 bg-white dark:bg-[#0D1524] p-4 sm:p-5 space-y-4">
@@ -724,6 +754,7 @@
                             </div>
                         </form>
                     </details>
+
                     <details class="group mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 overflow-hidden">
                         <summary class="cursor-pointer select-none flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
                             <span class="flex items-center gap-2 min-w-0"><i data-lucide="ruler" class="w-4 h-4 text-slate-400 shrink-0"></i><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Dados da peça</span></span>
@@ -1006,7 +1037,7 @@
                                             </div>
                                             <div>
                                                 <label class="block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
-                                                    Comprimento do Puxador
+                                                    Distância entre os furos do Puxador
                                                 </label>
                                                 <div class="relative">
                                                     <input type="number" step="1" min="1" name="tamanhoMm" placeholder="300mm padrão" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 pr-10 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"/>
@@ -1022,14 +1053,12 @@
                                                 <div class="relative">
                                                     <input type="number" step="1" min="1" name="distanciaBordaMm" placeholder="300mm padrão" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-white px-3 py-2.5 pr-10 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"/>
                                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                                 mm
-                            </span>
+                                                     mm
+                                                </span>
                                                 </div>
-                                                <p class="text-[10px] text-slate-400 mt-1">
-                                                    Deixe em branco para usar a distância padrão do sistema (300mm da lateral).
-                                                </p>
                                             </div>
                                         </div>
+                                        <label class="block text-xs mt-3">Diâmetro do furo (mm)<input type="number" name="diametroFuroMm" min="0.01" step="0.01" placeholder="14 mm padrão" class="input-tecnico"></label>
                                         <button type="submit" class="mt-4 w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white rounded-lg px-3 py-2.5 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors">
                                             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                                             Adicionar puxador H
@@ -1798,27 +1827,337 @@
         border-color: #60a5fa !important;
         box-shadow: 0 0 0 3px rgba(96,165,250,.14), 0 10px 30px rgba(0,0,0,.22) !important;
     }
+
     .elemento-tecnico-details {
-        scroll-margin-top: 96px;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+        overflow: hidden;
+        transition: border-color .2s ease, box-shadow .2s ease;
     }
+
+    .elemento-tecnico-details:hover {
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
+    }
+
     .elemento-tecnico-details[open] {
-        padding-bottom: 2px;
+        border-color: #c4b5fd !important;
+        box-shadow: 0 4px 18px rgba(124, 58, 237, 0.08) !important;
     }
+
     .elemento-tecnico-summary {
-        min-height: 44px;
-        padding: 8px 10px;
-        margin: -8px -10px 0;
+        min-height: 68px;
+        padding: 12px 16px !important;
+        background: #f8fafc !important;
+        border: 0 !important;
+        transition: background .2s ease;
     }
-    .elemento-tecnico-details[open] > .elemento-tecnico-summary {
+
+    .elemento-tecnico-summary:hover {
+        background: #f1f5f9 !important;
+    }
+
+    .elemento-tecnico-details[open] .elemento-tecnico-summary {
+        background: #faf8ff !important;
+        border-bottom: 1px solid #ede9fe !important;
+    }
+
+
+
+    .elemento-tecnico-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .elemento-tecnico-summary {
+        list-style: none;
+    }
+
+
+    /* Ícone principal */
+
+    .elemento-tecnico-summary > span:first-child > span:first-child {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 10px !important;
+        background: #7c3aed !important;
+        box-shadow: none !important;
+    }
+
+    .elemento-tecnico-summary .font-black {
+        font-weight: 800;
+    }
+
+    .fixed-glass-element-form {
+        background: #ffffff !important;
+        border-top: 0 !important;
+        padding: 18px !important;
+    }
+
+    .fixed-glass-element-form > * + * {
+        margin-top: 16px;
+    }
+
+    .fixed-glass-element-form .form-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 11px;
+        line-height: 1.2;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: #64748b;
+    }
+
+    .fixed-glass-element-form .form-input {
+        width: 100%;
+        height: 42px;
+        padding: 0 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #0f172a;
+        font-size: 13px;
+        font-weight: 500;
+        outline: none;
+        transition:
+                border-color .15s ease,
+                box-shadow .15s ease,
+                background-color .15s ease;
+    }
+
+    .fixed-glass-element-form select.form-input {
+        cursor: pointer;
+    }
+
+    .fixed-glass-element-form .form-input:hover {
+        border-color: #94a3b8;
+    }
+
+    .fixed-glass-element-form .form-input:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, .12);
+    }
+
+    .fixed-glass-element-form .form-input::placeholder {
+        color: #94a3b8;
+        font-weight: 400;
+    }
+
+
+    .fixed-glass-element-form .rounded-xl.bg-white,
+    .fixed-glass-element-form .rounded-xl.bg-slate-50 {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 14px !important;
+    }
+
+    .fixed-glass-element-form > div:first-child {
+        border-radius: 10px !important;
+        padding: 9px 11px !important;
+        background: #f5f3ff !important;
+        border: 1px solid #ede9fe !important;
+    }
+
+    .fixed-glass-element-form > div:first-child p {
+        color: #6d28d9 !important;
+        line-height: 1.45;
+    }
+
+
+    .fixed-glass-element-form .btn-canto {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 36px;
+        padding: 7px 11px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #475569;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+                background .15s ease,
+                border-color .15s ease,
+                color .15s ease,
+                transform .1s ease;
+    }
+
+    .fixed-glass-element-form .btn-canto:hover {
+        border-color: #a78bfa;
         background: #f5f3ff;
         color: #6d28d9;
     }
-    .dark .elemento-tecnico-details[open] > .elemento-tecnico-summary {
-        background: rgba(124,58,237,.12);
-        color: #ddd6fe !important;
+
+    .fixed-glass-element-form .btn-canto:active {
+        transform: scale(.98);
     }
-    .elemento-tecnico-seletivo[hidden] {
-        display: none !important;
+
+    .fixed-glass-element-form p {
+        line-height: 1.45;
+    }
+
+    .fixed-glass-element-form p.text-\[10px\],
+    .fixed-glass-element-form p.text-\[11px\] {
+        color: #64748b;
+    }
+
+    .fixed-glass-element-form button[type="submit"] {
+        min-width: 180px !important;
+        min-height: 42px;
+        padding: 10px 18px !important;
+        border-radius: 10px !important;
+        border: none;
+        background: #7c3aed !important;
+        color: #ffffff !important;
+        font-size: 13px !important;
+        font-weight: 800 !important;
+        box-shadow: 0 2px 5px rgba(124, 58, 237, .18) !important;
+        transition:
+                background .15s ease,
+                box-shadow .15s ease,
+                transform .1s ease !important;
+    }
+
+    .fixed-glass-element-form button[type="submit"]:hover {
+        background: #6d28d9 !important;
+        box-shadow: 0 4px 10px rgba(124, 58, 237, .22) !important;
+    }
+
+    .fixed-glass-element-form button[type="submit"]:active {
+        transform: scale(.98);
+    }
+
+    .dark .elemento-tecnico-details {
+        background: #0d1524 !important;
+        border-color: #263244 !important;
+        box-shadow: none !important;
+    }
+
+    .dark .elemento-tecnico-details:hover {
+        border-color: #334155 !important;
+    }
+
+    .dark .elemento-tecnico-details[open] {
+        border-color: rgba(139, 92, 246, .55) !important;
+    }
+
+
+    .dark .elemento-tecnico-summary {
+        background: #111b2c !important;
+    }
+
+    .dark .elemento-tecnico-summary:hover {
+        background: #152033 !important;
+    }
+
+    .dark .elemento-tecnico-details[open] .elemento-tecnico-summary {
+        background: rgba(124, 58, 237, .08) !important;
+        border-bottom-color: rgba(139, 92, 246, .20) !important;
+    }
+
+
+    .dark .fixed-glass-element-form {
+        background: #0d1524 !important;
+    }
+
+
+    .dark .fixed-glass-element-form .form-label {
+        color: #94a3b8;
+    }
+
+
+    .dark .fixed-glass-element-form .form-input {
+        background: #111b2c;
+        border-color: #334155;
+        color: #f1f5f9;
+    }
+
+    .dark .fixed-glass-element-form .form-input:hover {
+        border-color: #475569;
+    }
+
+    .dark .fixed-glass-element-form .form-input:focus {
+        border-color: #8b5cf6;
+        background: #131e30;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, .15);
+    }
+
+    .dark .fixed-glass-element-form .form-input::placeholder {
+        color: #64748b;
+    }
+
+
+    .dark .fixed-glass-element-form .rounded-xl.bg-white,
+    .dark .fixed-glass-element-form .rounded-xl.bg-slate-50,
+    .dark .fixed-glass-element-form .dark\:bg-slate-900 {
+        background: #111b2c !important;
+        border-color: #263244 !important;
+    }
+
+
+    .dark .fixed-glass-element-form > div:first-child {
+        background: rgba(124, 58, 237, .09) !important;
+        border-color: rgba(139, 92, 246, .20) !important;
+    }
+
+    .dark .fixed-glass-element-form > div:first-child p {
+        color: #c4b5fd !important;
+    }
+
+
+    .dark .fixed-glass-element-form .btn-canto {
+        background: #111b2c;
+        border-color: #334155;
+        color: #cbd5e1;
+    }
+
+    .dark .fixed-glass-element-form .btn-canto:hover {
+        background: rgba(124, 58, 237, .12);
+        border-color: #7c3aed;
+        color: #c4b5fd;
+    }
+
+
+    .dark .fixed-glass-element-form p.text-\[10px\],
+    .dark .fixed-glass-element-form p.text-\[11px\] {
+        color: #94a3b8;
+    }
+
+
+    @media (max-width: 640px) {
+
+        .elemento-tecnico-summary {
+            min-height: 62px;
+            padding: 10px 12px !important;
+        }
+
+        .elemento-tecnico-summary > span:first-child > span:first-child {
+            width: 36px !important;
+            height: 36px !important;
+        }
+
+        .fixed-glass-element-form {
+            padding: 14px !important;
+        }
+
+        .fixed-glass-element-form .form-input {
+            height: 40px;
+            font-size: 13px;
+        }
+
+        .fixed-glass-element-form .btn-canto {
+            flex: 1 1 calc(50% - 6px);
+            min-width: 130px;
+        }
+
+        .fixed-glass-element-form button[type="submit"] {
+            width: 100%;
+        }
     }
     .adicionar-vao-details {
         scroll-margin-top: 92px;
@@ -2243,6 +2582,93 @@
         }
     }
 
+    /* Em vãos com várias folhas, o conteúdo começa oculto */
+    .peca-selecionavel:not(.peca-selecionada) > .folha-conteudo-seletivo {
+        display: none !important;
+    }
+
+    /* Também esconde ações perigosas como remover */
+    .peca-selecionavel:not(.peca-selecionada) .acao-folha-seletiva {
+        display: none !important;
+    }
+
+    /* O aviso "selecione esta folha" desaparece quando selecionada */
+    .peca-selecionavel.peca-selecionada > .folha-selecao-pendente {
+        display: none !important;
+    }
+
+    /* Card ainda não selecionado */
+    .peca-selecionavel:not(.peca-selecionada) {
+        opacity: .92;
+    }
+
+    .peca-selecionavel:not(.peca-selecionada):hover {
+        opacity: 1;
+        border-color: #93c5fd !important;
+        box-shadow: 0 5px 18px rgba(37, 99, 235, .07);
+    }
+
+    /* Cabeçalho mais compacto enquanto fechado */
+    .peca-selecionavel:not(.peca-selecionada) .peca-card-header {
+        border-bottom-width: 0;
+    }
+
+    /* Folha ativa */
+    .peca-selecionavel.peca-selecionada {
+        opacity: 1;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .12), 0 12px 30px rgba(15, 23, 42, .08) !important;
+    }
+
+    /* Pequeno indicador visual no card selecionado */
+    .peca-selecionavel.peca-selecionada .peca-card-header {
+        background: #eff6ff;
+        border-bottom-color: #bfdbfe;
+    }
+
+    .dark .peca-selecionavel.peca-selecionada .peca-card-header {
+        background: rgba(37, 99, 235, .12);
+        border-bottom-color: rgba(96, 165, 250, .25);
+    }
+
+    /* Estado escuro das folhas fechadas */
+    .dark .peca-selecionavel:not(.peca-selecionada) {
+        opacity: .86;
+    }
+
+    .dark .peca-selecionavel:not(.peca-selecionada):hover {
+        opacity: 1;
+        border-color: #60a5fa !important;
+    }
+
+    /* Folha única nunca precisa de seleção */
+    .peca-card:not(.peca-selecionavel) > .folha-conteudo-seletivo {
+        display: block;
+    }
+
+    /* Transição visual */
+    .folha-conteudo-seletivo {
+        animation: folhaConteudoEntrada .18s ease-out;
+    }
+
+    @keyframes folhaConteudoEntrada {
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .folha-conteudo-seletivo {
+            animation: none;
+        }
+    }
+
 </style>
 <script th:inline="javascript">
     var pendingFixedGlassForm = null;
@@ -2661,78 +3087,167 @@
         botao.classList.add('btn-canto-ativo');
     }
     function selecionarFolhaTecnica(botao) {
-        if (!botao) {
-            return;
-        }
+        if (!botao) return;
+
         var itemId = botao.getAttribute('data-item-id');
         var grupoVao = botao.getAttribute('data-grupo-vao');
-        if (!itemId) {
-            return;
-        }
-        abrirFolha(itemId, grupoVao);
+
+        if (!itemId) return;
+
+        abrirFolha(itemId, grupoVao, true);
     }
 
-    function abrirFolha(itemId, grupoVao) {
+    function abrirFolha(itemId, grupoVao, deveRolar) {
         itemId = String(itemId);
-        grupoVao = grupoVao !== undefined && grupoVao !== null && String(grupoVao) !== '' ? String(grupoVao) : null;
 
+        grupoVao = grupoVao !== undefined &&
+        grupoVao !== null &&
+        String(grupoVao) !== ''
+            ? String(grupoVao)
+            : null;
+
+        /* =====================================================
+           LIMPA A SELEÇÃO ANTERIOR DO MESMO VÃO
+           ===================================================== */
         if (grupoVao) {
-            document.querySelectorAll('.elemento-tecnico-seletivo[data-grupo-vao="' + grupoVao + '"]').forEach(function (detalhes) {
-                detalhes.open = false;
-                detalhes.hidden = true;
+
+            document.querySelectorAll(
+                '.peca-card[data-grupo-vao="' + grupoVao + '"]'
+            ).forEach(function(peca) {
+                peca.classList.remove('peca-selecionada');
             });
-            document.querySelectorAll('.peca-card[data-grupo-vao="' + grupoVao + '"]').forEach(function (pecaGrupo) {
-                pecaGrupo.classList.remove('peca-selecionada');
-            });
-            document.querySelectorAll('[data-grupo-vao="' + grupoVao + '"][aria-pressed]').forEach(function (controle) {
+
+            document.querySelectorAll(
+                '[data-grupo-vao="' + grupoVao + '"][aria-pressed]'
+            ).forEach(function(controle) {
                 controle.setAttribute('aria-pressed', 'false');
                 controle.classList.remove('is-selected');
             });
+
+            /* Fecha apenas o formulário grande de adicionar elemento
+               da folha anteriormente selecionada */
+            document.querySelectorAll(
+                '.elemento-tecnico-seletivo[data-grupo-vao="' + grupoVao + '"]'
+            ).forEach(function(detalhes) {
+                detalhes.open = false;
+                detalhes.hidden = true;
+            });
         }
 
+        /* =====================================================
+           SELECIONA A NOVA FOLHA
+           ===================================================== */
         var peca = document.getElementById('peca-' + itemId);
-        var detalhesAdicionar = document.getElementById('add-elemento-' + itemId);
 
-        if (peca) {
-            peca.classList.add('peca-selecionada');
-        }
+        if (!peca) return;
 
-        document.querySelectorAll('[data-item-id="' + itemId + '"][aria-pressed]').forEach(function (controleSelecionado) {
-            controleSelecionado.setAttribute('aria-pressed', 'true');
-            controleSelecionado.classList.add('is-selected');
+        peca.classList.add('peca-selecionada');
+
+        document.querySelectorAll(
+            '[data-item-id="' + itemId + '"][aria-pressed]'
+        ).forEach(function(controle) {
+            controle.setAttribute('aria-pressed', 'true');
+            controle.classList.add('is-selected');
         });
+
+        /* Libera o formulário de elemento técnico, mas NÃO abre */
+        var detalhesAdicionar = document.getElementById(
+            'add-elemento-' + itemId
+        );
 
         if (detalhesAdicionar) {
             detalhesAdicionar.hidden = false;
-            detalhesAdicionar.open = true;
-            window.requestAnimationFrame(function () {
-                detalhesAdicionar.scrollIntoView({
-                    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-                    block: 'center'
+            detalhesAdicionar.open = false;
+        }
+
+        /* Guarda a folha selecionada */
+        if (grupoVao) {
+            try {
+                sessionStorage.setItem(
+                    'plano-corte-folha-grupo-' + grupoVao,
+                    itemId
+                );
+            } catch (e) {
+                /* sessionStorage indisponível */
+            }
+        }
+
+        /* Atualiza Lucide caso necessário */
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+
+        /* =====================================================
+           ROLA ATÉ A FOLHA
+           ===================================================== */
+        if (deveRolar !== false) {
+            window.requestAnimationFrame(function() {
+                peca.scrollIntoView({
+                    behavior: window.matchMedia(
+                        '(prefers-reduced-motion: reduce)'
+                    ).matches ? 'auto' : 'smooth',
+                    block: 'start'
                 });
-                var primeiroCampo = detalhesAdicionar.querySelector('select:not([disabled]), input:not([type="hidden"]):not([disabled]), textarea:not([disabled])');
-                if (primeiroCampo) {
-                    window.setTimeout(function () {
-                        primeiroCampo.focus({preventScroll: true});
-                    }, 350);
-                }
-            });
-        } else if (peca) {
-            peca.scrollIntoView({
-                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-                block: 'start'
             });
         }
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.elemento-tecnico-seletivo').forEach(function (detalhes) {
+
+        document.querySelectorAll('.elemento-tecnico-seletivo').forEach(function(detalhes) {
             detalhes.open = false;
             detalhes.hidden = true;
         });
 
-        var secaoAdicionarVao = document.getElementById('secao-adicionar-vao');
-        if (secaoAdicionarVao && secaoAdicionarVao.querySelector('.text-red-600')) {
+        var gruposProcessados = new Set();
+
+        document.querySelectorAll('.peca-selecionavel[data-grupo-vao]').forEach(function(peca) {
+
+            var grupoVao = peca.getAttribute('data-grupo-vao');
+
+            if (!grupoVao || gruposProcessados.has(grupoVao)) {
+                return;
+            }
+
+            gruposProcessados.add(grupoVao);
+
+            var itemSalvo = null;
+
+            try {
+                itemSalvo = sessionStorage.getItem(
+                    'plano-corte-folha-grupo-' + grupoVao
+                );
+            } catch (e) {
+                itemSalvo = null;
+            }
+
+            if (!itemSalvo) {
+                return;
+            }
+
+            var folhaSalva = document.getElementById(
+                'peca-' + itemSalvo
+            );
+
+            if (
+                folhaSalva &&
+                folhaSalva.getAttribute('data-grupo-vao') === grupoVao
+            ) {
+                abrirFolha(
+                    itemSalvo,
+                    grupoVao,
+                    false
+                );
+            }
+        });
+
+        var secaoAdicionarVao =
+            document.getElementById('secao-adicionar-vao');
+
+        if (
+            secaoAdicionarVao &&
+            secaoAdicionarVao.querySelector('.text-red-600')
+        ) {
             secaoAdicionarVao.open = true;
         }
     });

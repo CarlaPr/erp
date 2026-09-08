@@ -1,0 +1,57 @@
+<form xmlns:th="http://www.thymeleaf.org" th:fragment="editor(folha, numero)" th:action="@{/cut-plans/{id}/itens/{itemId}/dimensoes(id=${plano.id},itemId=${folha.id})}" method="post" class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
+    <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="flex items-center justify-center w-8 h-8 shrink-0 rounded-lg bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                <i data-lucide="panel-top" class="w-4 h-4"></i>
+            </div>
+
+            <div class="min-w-0">
+                <p class="text-xs font-black text-slate-800 dark:text-white" th:text="|Folha ${numero}|">Folha 1</p>
+                <p class="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate" th:text="|${folha.tipoFolha.descricao} · ${folha.codigoPeca}|">Móvel · P001</p>
+            </div>
+        </div>
+
+        <span class="shrink-0 rounded-md bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+            Medida final
+        </span>
+    </div>
+
+    <div class="p-4 space-y-4">
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <i data-lucide="ruler" class="w-3.5 h-3.5 text-emerald-500"></i>
+                <p class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Dimensões da folha</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="block">
+                    <span class="block mb-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">Largura final</span>
+                    <div class="relative">
+                        <input type="number" name="larguraMm" min="0.01" max="999999.99" step="0.01" required th:value="${folha.larguraFinalMm}" class="input-tecnico pr-11">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 pointer-events-none">mm</span>
+                    </div>
+                </label>
+
+                <label class="block">
+                    <span class="block mb-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">Altura final</span>
+                    <div class="relative">
+                        <input type="number" name="alturaMm" min="0.01" max="999999.99" step="0.01" required th:value="${folha.alturaFinalMm}" class="input-tecnico pr-11">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 pointer-events-none">mm</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div th:if="${folha.dimensoesPersonalizadas}" class="flex items-start gap-2 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/5 px-3 py-2.5">
+            <i data-lucide="info" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-500"></i>
+            <p class="text-[10px] leading-relaxed font-medium text-amber-800 dark:text-amber-300">
+                Esta folha possui medidas personalizadas. As medidas individuais dos lados serão ajustadas proporcionalmente após salvar.
+            </p>
+        </div>
+
+        <button type="submit" class="flex items-center justify-center gap-2 w-full rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-black px-4 py-2.5 shadow-sm shadow-blue-600/20 transition-all">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span th:text="|Salvar folha ${numero}|">Salvar folha</span>
+        </button>
+    </div>
+</form>

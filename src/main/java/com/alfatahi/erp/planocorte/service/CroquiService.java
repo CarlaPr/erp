@@ -866,7 +866,7 @@ public class CroquiService {
         }
 
         for (Furacao[] par : paresPuxador) {
-            desenharPuxadorH(svg, par[0], par[1], x0, y0, escala);
+            desenharPuxadorH(svg, par[0], par[1], x0, y0, larguraPx, escala);
         }
         for (Furacao[] par : paresBateFecha) {
             desenharBateFecha(svg, par[0], par[1], x0, y0, larguraPx, alturaPx, alturaMm, escala);
@@ -984,19 +984,30 @@ public class CroquiService {
         }
     }
 
-    private void desenharPuxadorH(StringBuilder svg, Furacao a, Furacao b, double x0, double y0, double escala) {
+    private void desenharPuxadorH(StringBuilder svg, Furacao a, Furacao b, double x0, double y0, double larguraPx, double escala) {
         double cx = x0 + a.getPosicaoXMm().doubleValue() * escala;
         double cySuperior = y0 + Math.min(a.getPosicaoYMm().doubleValue(), b.getPosicaoYMm().doubleValue()) * escala;
         double cyInferior = y0 + Math.max(a.getPosicaoYMm().doubleValue(), b.getPosicaoYMm().doubleValue()) * escala;
 
         svg.append(String.format(Locale.US,
                 "<line x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\" stroke=\"#334155\" stroke-width=\"4\" stroke-linecap=\"round\"/>",
-                cx, cySuperior, cx, cyInferior));
+                cx, cySuperior, cx, cyInferior, raioFuracao(b, escala)));
         svg.append(String.format(Locale.US,
-                "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"5\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"1.6\"/>", cx, cySuperior));
+                "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"1.6\"/>", cx, cySuperior, raioFuracao(a, escala)));
         svg.append(String.format(Locale.US,
-                "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"5\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"1.6\"/>", cx, cyInferior));
+                "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"1.6\"/>", cx, cyInferior, raioFuracao(b, escala)));
 
+        boolean direito = a.getDescricao() != null && a.getDescricao().contains("lado DIREITO");
+        if (a.getDescricao() == null || !a.getDescricao().contains("lado ")) {
+            direito = cx > x0 + larguraPx / 2;
+        }
+        double bordaX = direito ? x0 + larguraPx : x0;
+        BigDecimal distanciaBorda = BigDecimal.valueOf(Math.abs(cx - bordaX) / escala).setScale(2, java.math.RoundingMode.HALF_UP);
+        svg.append(linhaCota(bordaX, cyInferior + 20, cx, cyInferior + 20));
+        svg.append(String.format(Locale.US,
+                "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"9\" fill=\"#475569\" text-anchor=\"%s\">%s mm %s</text>",
+                bordaX, cyInferior + 34, FONTE, direito ? "end" : "start", formatarNumero(distanciaBorda),
+                direito ? "" : ""));
         BigDecimal comprimentoMm = a.getPosicaoYMm().subtract(b.getPosicaoYMm()).abs();
         svg.append(String.format(Locale.US,
                 "<line x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\" stroke=\"#94a3b8\" stroke-width=\"1.3\" marker-start=\"url(#seta-inicio)\" marker-end=\"url(#seta-fim)\"/>",
