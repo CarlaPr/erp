@@ -293,7 +293,7 @@
                     esquadro): informe a altura medida em cada lateral e a largura
                     medida em cima e embaixo, separadamente.
                 </p>
-                    <span class="block mt-1 font-semibold">
+                <span class="block mt-1 font-semibold">
                         Espelho triangular: informe 0 no lado inexistente; as outras três medidas serão usadas como comprimentos reais das bordas.
                     </span>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -492,9 +492,9 @@
                             Selecionar folha
                         </button>
 
-                                <p th:if="${item.dimensoesPersonalizadas}" class="text-[10px] text-amber-600">
-                                    Triangular: deixe somente o lado inexistente com valor 0.
-                                </p>
+                        <p th:if="${item.dimensoesPersonalizadas}" class="text-[10px] text-amber-600">
+                            Triangular: deixe somente o lado inexistente com valor 0.
+                        </p>
                         <form th:if="${plano.status.name() != 'FINALIZADO'}" th:action="@{/cut-plans/{id}/itens/{itemId}/excluir(id=${plano.id},itemId=${item.id})}" method="post" class="acao-folha-seletiva" onsubmit="return confirm('Remover esta peça?');">
                             <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 px-3 py-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -625,7 +625,7 @@
                             </span>
                             <span class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide text-violet-600 dark:text-violet-300 shrink-0">Abrir <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i></span>
                         </summary>
-                        <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos(id=${plano.id},itemId=${item.id})}" th:object="${elementoForm}" method="post" th:attr="data-fixed-glass=${item.tipoFolha != null and item.tipoFolha.name() == 'FIXA'}" class="fixed-glass-element-form border-t border-violet-200 dark:border-violet-500/20 bg-white dark:bg-[#0D1524] p-4 sm:p-5 space-y-4">
+                        <form th:action="@{/cut-plans/{id}/itens/{itemId}/elementos(id=${plano.id},itemId=${item.id})}" th:object="${elementoForm}" method="post" th:attr="data-fixed-glass=${(item.tipoFolha != null and item.tipoFolha.name() == 'FIXA') or (item.categoria != null and item.categoria.name() == 'VIDRO_FIXO_PERFIL_U')}" class="fixed-glass-element-form border-t border-violet-200 dark:border-violet-500/20 bg-white dark:bg-[#0D1524] p-4 sm:p-5 space-y-4">
                             <div class="flex items-start gap-2 rounded-lg bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20 px-3 py-2"><i data-lucide="info" class="w-3.5 h-3.5 text-violet-500 shrink-0 mt-0.5"></i><p class="text-[11px] text-violet-700 dark:text-violet-300"><strong>Informe o tipo e a posição.</strong> Para recortes encostados na borda, use uma posição rápida.</p></div>
                             <input type="hidden" th:field="*{ancoragem}" class="campo-ancoragem">
                             <div class="grid sm:grid-cols-2 gap-4">
@@ -986,13 +986,13 @@
                         </div>
                     </details>
                     <div th:if="${item.observacoes}" class="mb-3 flex items-start gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 px-3 py-2"><i data-lucide="message-square-text" class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5"></i><p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed"><span class="font-black text-slate-500 dark:text-slate-300">Obs.:</span> <span th:text="${item.observacoes}">Observação</span></p></div>
-                    <details th:if="${plano.status.name() != 'FINALIZADO' and item.tipoFolha.name() != 'FIXA' and (item.categoria.name() == 'PORTA_CORRER' or item.categoria.name() == 'PORTA_ABRIR' or item.categoria.name() == 'JANELA_PADRAO' or item.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="group mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 overflow-hidden">
+                    <details th:if="${plano.status.name() != 'FINALIZADO' and (item.tipoFolha == null or item.tipoFolha.name() != 'FIXA') and item.categoria != null and (item.categoria.name() == 'PORTA_CORRER' or item.categoria.name() == 'PORTA_ABRIR' or item.categoria.name() == 'JANELA_PADRAO' or item.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="group mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 overflow-hidden">
                         <summary class="cursor-pointer select-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
                             <span class="flex items-center gap-2"><i data-lucide="wand-sparkles" class="w-4 h-4 text-slate-400"></i><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Ferragens rápidas</span><span class="text-[10px] font-medium text-slate-400">Puxadores, fechadura e bate-fecha</span></span>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"></i>
                         </summary>
                         <div class="border-t border-slate-100 dark:border-slate-800 p-4">
-                            <div th:if="${plano.status.name() != 'FINALIZADO' and item.tipoFolha.name() != 'FIXA' and (item.categoria.name() == 'PORTA_CORRER' or item.categoria.name() == 'PORTA_ABRIR' or item.categoria.name() == 'JANELA_PADRAO' or item.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="border-t border-slate-100 dark:border-slate-800 pt-5">
+                            <div th:if="${plano.status.name() != 'FINALIZADO' and (item.tipoFolha == null or item.tipoFolha.name() != 'FIXA') and item.categoria != null and (item.categoria.name() == 'PORTA_CORRER' or item.categoria.name() == 'PORTA_ABRIR' or item.categoria.name() == 'JANELA_PADRAO' or item.categoria.name() == 'BOX_BANHEIRO_PADRAO')}" class="border-t border-slate-100 dark:border-slate-800 pt-5">
                                 <div class="flex items-start gap-3 mb-4">
                                     <div class="w-9 h-9 rounded-lg bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
                                         <i data-lucide="wand-sparkles" class="w-4 h-4"></i>
@@ -1328,6 +1328,14 @@
         </form>
     </section>
 </main>
+<div id="fixedGlassWarningModal" class="fixed inset-0 z-[120] hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="fixedGlassWarningTitle">
+    <div class="w-full max-w-md rounded-2xl border border-amber-300 dark:border-amber-500/30 bg-white dark:bg-[#101827] p-6 shadow-2xl">
+        <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4"><i data-lucide="triangle-alert" class="w-6 h-6"></i></div>
+        <h3 id="fixedGlassWarningTitle" class="text-lg font-black text-slate-900 dark:text-white">Elemento em vidro fixo</h3>
+        <p class="text-sm text-slate-600 dark:text-slate-300 mt-2">Você adicionou um recorte, furo ou elemento técnico em uma folha <strong>FIXA</strong> ou em um serviço de vidro fixo. Confirme que esta escolha é intencional antes de salvar.</p>
+        <div class="grid grid-cols-2 gap-3 mt-6"><button type="button" onclick="cancelFixedGlassElement()" class="rounded-xl border border-slate-300 dark:border-slate-700 px-4 py-3 text-sm font-black">Voltar e revisar</button><button type="button" onclick="confirmFixedGlassElement()" class="rounded-xl bg-amber-600 hover:bg-amber-700 text-white px-4 py-3 text-sm font-black">Confirmar escolha</button></div>
+    </div>
+</div>
 <style>
     .form-label {
         display: block;
@@ -1336,14 +1344,6 @@
         line-height: 14px;
         font-weight: 800;
         color: #475569;
-<div id="fixedGlassWarningModal" class="fixed inset-0 z-[120] hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="fixedGlassWarningTitle">
-    <div class="w-full max-w-md rounded-2xl border border-amber-300 dark:border-amber-500/30 bg-white dark:bg-[#101827] p-6 shadow-2xl">
-        <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4"><i data-lucide="triangle-alert" class="w-6 h-6"></i></div>
-        <h3 id="fixedGlassWarningTitle" class="text-lg font-black text-slate-900 dark:text-white">Elemento em vidro fixo</h3>
-        <p class="text-sm text-slate-600 dark:text-slate-300 mt-2">Você adicionou um recorte, furo ou elemento técnico em uma folha <strong>FIXA</strong>. Confirme que esta escolha é intencional antes de salvar.</p>
-        <div class="grid grid-cols-2 gap-3 mt-6"><button type="button" onclick="cancelFixedGlassElement()" class="rounded-xl border border-slate-300 dark:border-slate-700 px-4 py-3 text-sm font-black">Voltar e revisar</button><button type="button" onclick="confirmFixedGlassElement()" class="rounded-xl bg-amber-600 hover:bg-amber-700 text-white px-4 py-3 text-sm font-black">Confirmar escolha</button></div>
-    </div>
-</div>
     }
     .dark .form-label {
         color: #94a3b8;
@@ -2646,6 +2646,11 @@
         display: block;
     }
 
+    /* Folha única: edição e elementos ficam disponíveis sem exigir seleção. */
+    .peca-card:not(.peca-selecionavel) .elemento-tecnico-details[hidden] {
+        display: block !important;
+    }
+
     /* Transição visual */
     .folha-conteudo-seletivo {
         animation: folhaConteudoEntrada .18s ease-out;
@@ -2672,20 +2677,61 @@
 </style>
 <script th:inline="javascript">
     var pendingFixedGlassForm = null;
+
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.fixed-glass-element-form[data-fixed-glass="true"]').forEach(function (form) {
             form.addEventListener('submit', function (event) {
-                if (form.dataset.fixedGlassConfirmed === 'true') return;
-                event.preventDefault(); pendingFixedGlassForm = form;
-                var modal = document.getElementById('fixedGlassWarningModal'); modal.classList.remove('hidden'); modal.classList.add('flex');
-                if (window.lucide) window.lucide.createIcons();
+                if (form.dataset.fixedGlassConfirmed === 'true') {
+                    return;
+                }
+
+                var modal = document.getElementById('fixedGlassWarningModal');
+
+                /* Segurança: nunca bloqueia o cadastro caso a modal não esteja disponível. */
+                if (!modal) {
+                    return;
+                }
+
+                event.preventDefault();
+                pendingFixedGlassForm = form;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
             });
         });
     });
-    function cancelFixedGlassElement() { var modal=document.getElementById('fixedGlassWarningModal'); modal.classList.add('hidden'); modal.classList.remove('flex'); pendingFixedGlassForm=null; }
+
+    function cancelFixedGlassElement() {
+        var modal = document.getElementById('fixedGlassWarningModal');
+
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        pendingFixedGlassForm = null;
+    }
+
     function confirmFixedGlassElement() {
-        if (!pendingFixedGlassForm) return; var form=pendingFixedGlassForm; pendingFixedGlassForm=null; form.dataset.fixedGlassConfirmed='true';
-        var modal=document.getElementById('fixedGlassWarningModal'); modal.classList.add('hidden'); modal.classList.remove('flex'); form.requestSubmit();
+        if (!pendingFixedGlassForm) {
+            return;
+        }
+
+        var form = pendingFixedGlassForm;
+        var modal = document.getElementById('fixedGlassWarningModal');
+
+        pendingFixedGlassForm = null;
+        form.dataset.fixedGlassConfirmed = 'true';
+
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        form.requestSubmit();
     }
 
     function alternarBisote() {
@@ -3195,8 +3241,15 @@
     document.addEventListener('DOMContentLoaded', function () {
 
         document.querySelectorAll('.elemento-tecnico-seletivo').forEach(function(detalhes) {
-            detalhes.open = false;
-            detalhes.hidden = true;
+            var itemId = detalhes.getAttribute('data-item-id');
+            var peca = itemId ? document.getElementById('peca-' + itemId) : null;
+
+            if (peca && peca.classList.contains('peca-selecionavel')) {
+                detalhes.open = false;
+                detalhes.hidden = true;
+            } else {
+                detalhes.hidden = false;
+            }
         });
 
         var gruposProcessados = new Set();
