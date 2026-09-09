@@ -59,6 +59,26 @@ public class PlanoCorteController {
         this.pdfService = pdfService;
     }
 
+    @GetMapping("/catalogo/vidros-compativeis")
+    @ResponseBody
+    public ResponseEntity<?> consultarVidrosCompativeis(
+            @RequestParam CorVidroVao corVidro,
+            @RequestParam TipoVidro tipoVidro,
+            @RequestParam Integer espessuraVidroMm) {
+        PlanoCorteVaoForm form = new PlanoCorteVaoForm();
+        form.setCorVidro(corVidro);
+        form.setTipoVidro(tipoVidro);
+        form.setEspessuraVidroMm(espessuraVidroMm);
+        try {
+            return ResponseEntity.ok(planoCorteService.listarVidrosCompativeis(form).stream()
+                    .map(vidro -> new VidroCompativel(vidro.getId(), vidro.getNome(), vidro.getValorPorM2())).toList());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("erro", e.getMessage()));
+        }
+    }
+
+    public record VidroCompativel(Long id, String nome, BigDecimal valorPorM2) {}
+
     @GetMapping
     public String listar(Model model) {
         model.addAttribute("currentPage", "cut-plans");
@@ -489,7 +509,11 @@ public class PlanoCorteController {
         model.addAttribute("vaoForm", vaoForm);
         model.addAttribute("elementoForm", new ElementoTecnicoForm());
         model.addAttribute("vidros", vidroService.listarAtivos());
-        model.addAttribute("tiposBorda", TipoBorda.values());
+        model.addAttribute("coresVidroVao", com.alfatahi.erp.planocorte.entity.CorVidroVao.values());
+        model.addAttribute("espessurasVidroVao", PlanoCorteVaoForm.ESPESSURAS_VIDRO);
+        model.addAttribute("tiposBorda", TipoBorda.acabamentos());
+        model.addAttribute("tiposCanto", com.alfatahi.erp.planocorte.entity.TipoCanto.values());
+        model.addAttribute("tiposVidroVao", PlanoCorteVaoForm.TIPOS_VIDRO);
         model.addAttribute("tiposElemento", TipoElemento.valoresSelecionaveis());
         model.addAttribute("referenciasHorizontais", ReferenciaHorizontal.values());
         model.addAttribute("referenciasVerticais", ReferenciaVertical.values());

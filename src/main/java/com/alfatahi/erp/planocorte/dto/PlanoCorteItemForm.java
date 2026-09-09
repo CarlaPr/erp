@@ -33,6 +33,9 @@ public class PlanoCorteItemForm {
 
     @NotNull(message = "Selecione o acabamento")
     private TipoBorda tipoBorda;
+    private com.alfatahi.erp.planocorte.entity.TipoCanto tipoCanto;
+    public com.alfatahi.erp.planocorte.entity.TipoCanto getTipoCanto() { return tipoCanto; }
+    public void setTipoCanto(com.alfatahi.erp.planocorte.entity.TipoCanto tipoCanto) { this.tipoCanto = tipoCanto; }
 
     private String observacoes;
 

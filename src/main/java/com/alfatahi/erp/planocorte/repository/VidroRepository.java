@@ -16,5 +16,8 @@ public interface VidroRepository extends JpaRepository<Vidro, Long> {
     @EntityGraph(attributePaths = "supplier")
     List<Vidro> findAll();
 
+    List<Vidro> findByAtivoTrueAndTipoAndEspessuraOrderByNomeAscIdAsc(
+            com.alfatahi.erp.planocorte.entity.TipoVidro tipo, java.math.BigDecimal espessura);
+
     Optional<Vidro> findFirstByNomeIgnoreCase(String nome);
 }

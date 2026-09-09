@@ -81,6 +81,17 @@ public class PlanoCorteItem {
     @Column(name = "tipo_borda", nullable = false, length = 20)
     private TipoBorda tipoBorda;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_canto", nullable = false, length = 20)
+    private TipoCanto tipoCanto = TipoCanto.NORMAL;
+
+    public TipoCanto getTipoCanto() {
+        if (tipoBorda == TipoBorda.CANTO_MOEDA) return TipoCanto.CANTO_MOEDA;
+        if (tipoBorda == TipoBorda.CANTO_GARRAFA) return TipoCanto.CANTO_GARRAFA;
+        return tipoCanto == null ? TipoCanto.NORMAL : tipoCanto;
+    }
+    public void setTipoCanto(TipoCanto tipoCanto) { this.tipoCanto = tipoCanto; }
+
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 

@@ -713,8 +713,7 @@ public class CroquiService {
 
     private void desenharContornoPeca(StringBuilder svg, PlanoCorteItem item, double x0, double y0,
                                        double larguraPx, double alturaPx, double escala) {
-        boolean acabamentoDeCanto = item.getTipoBorda() == TipoBorda.CANTO_MOEDA
-                || item.getTipoBorda() == TipoBorda.CANTO_GARRAFA;
+        boolean acabamentoDeCanto = item.getTipoCanto() != com.alfatahi.erp.planocorte.entity.TipoCanto.NORMAL;
         if (!acabamentoDeCanto || !item.isTemCantoArredondado()) {
             svg.append(String.format(Locale.US,
                     "<rect x=\"%.1f\" y=\"%.1f\" width=\"%.1f\" height=\"%.1f\" fill=\"#eff6ff\" stroke=\"#1e293b\" stroke-width=\"2\"/>",
@@ -760,7 +759,7 @@ public class CroquiService {
 
 
 
-        String rotuloCanto = item.getTipoBorda().getDescricao().toUpperCase(Locale.ROOT);
+        String rotuloCanto = item.getTipoCanto().getDescricao().toUpperCase(Locale.ROOT);
         svg.append(String.format(Locale.US,
                 "<text x=\"%.1f\" y=\"%.1f\" font-family=\"%s\" font-size=\"11\" font-weight=\"800\" fill=\"#7c3aed\" letter-spacing=\"0.3\">%s</text>",
                 x0 + 10, y0 + 18, FONTE, escapeXml(rotuloCanto)));

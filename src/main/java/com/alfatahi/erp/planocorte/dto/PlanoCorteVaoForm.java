@@ -3,6 +3,10 @@ package com.alfatahi.erp.planocorte.dto;
 import com.alfatahi.erp.planocorte.entity.CategoriaServico;
 import com.alfatahi.erp.planocorte.entity.TipoBorda;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.AssertTrue;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.alfatahi.erp.planocorte.entity.CorVidroVao;
+import com.alfatahi.erp.planocorte.entity.TipoVidro;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -13,8 +17,39 @@ public class PlanoCorteVaoForm {
     @NotNull(message = "Selecione o tipo de serviço")
     private CategoriaServico categoria;
 
-    @NotNull(message = "Selecione o vidro")
+    // Compatibilidade com vãos antigos vinculados ao catálogo.
     private Long vidroId;
+    private Long vidroCatalogoId;
+    public Long getVidroCatalogoId() { return vidroCatalogoId; }
+    public void setVidroCatalogoId(Long vidroCatalogoId) { this.vidroCatalogoId = vidroCatalogoId; }
+    private CorVidroVao corVidro;
+    private Integer espessuraVidroMm;
+    private TipoVidro tipoVidro;
+
+    public static final java.util.List<TipoVidro> TIPOS_VIDRO = java.util.List.of(
+            TipoVidro.TEMPERADO, TipoVidro.COMUM, TipoVidro.LAMINADO, TipoVidro.ARAMADO, TipoVidro.INSULADO);
+
+    public static final java.util.List<Integer> ESPESSURAS_VIDRO = java.util.List.of(3, 4, 6, 8, 10, 12);
+
+    public CorVidroVao getCorVidro() { return corVidro; }
+    public void setCorVidro(CorVidroVao corVidro) { this.corVidro = corVidro; }
+    public Integer getEspessuraVidroMm() { return espessuraVidroMm; }
+    public void setEspessuraVidroMm(Integer espessuraVidroMm) { this.espessuraVidroMm = espessuraVidroMm; }
+    public TipoVidro getTipoVidro() { return tipoVidro; }
+    public void setTipoVidro(TipoVidro tipoVidro) { this.tipoVidro = tipoVidro; }
+
+    @JsonIgnore
+    public boolean isVidroEspecificado() {
+        return corVidro != null || espessuraVidroMm != null || tipoVidro != null;
+    }
+
+    @JsonIgnore
+    @AssertTrue(message = "Selecione a cor, a espessura (3, 4, 6, 8, 10 ou 12 mm) e o tipo Temperado, Comum, Laminado, Aramado ou Insulado.")
+    public boolean isSelecaoVidroValida() {
+        if (!isVidroEspecificado()) return vidroId != null;
+        return corVidro != null && espessuraVidroMm != null && ESPESSURAS_VIDRO.contains(espessuraVidroMm)
+                && (tipoVidro != null && TIPOS_VIDRO.contains(tipoVidro));
+    }
 
     private BigDecimal larguraVaoMm;
 
@@ -43,6 +78,9 @@ public class PlanoCorteVaoForm {
 
     @NotNull(message = "Selecione o acabamento")
     private TipoBorda tipoBorda;
+    private com.alfatahi.erp.planocorte.entity.TipoCanto tipoCanto;
+    public com.alfatahi.erp.planocorte.entity.TipoCanto getTipoCanto() { return tipoCanto; }
+    public void setTipoCanto(com.alfatahi.erp.planocorte.entity.TipoCanto tipoCanto) { this.tipoCanto = tipoCanto; }
 
     private Boolean comFechadura = Boolean.FALSE;
 

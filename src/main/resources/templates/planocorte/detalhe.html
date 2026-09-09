@@ -175,26 +175,51 @@
                     <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('categoria')}" th:errors="*{categoria}"></p>
                 </div>
                 <div>
-                    <label class="form-label">
-                        Vidro *
-                    </label>
-                    <select th:field="*{vidroId}" class="form-input vidro-select">
-                        <option value="">
-                            Selecione...
-                        </option>
-                        <option th:each="v : ${vidros}" th:value="${v.id}" th:text="${v.nome + ' (' + v.espessura + 'mm)'}">
-                        </option>
+                    <label class="form-label" for="corVidro">Vidro *</label>
+                    <select th:field="*{corVidro}" class="form-input" required>
+                        <option value="">Selecione...</option>
+                        <option th:each="cor : ${coresVidroVao}" th:value="${cor}" th:text="${cor.descricao}"></option>
                     </select>
-                    <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('vidroId')}" th:errors="*{vidroId}">
-                    </p>
                 </div>
+                <div>
+                    <label class="form-label" for="espessuraVidroMm">Espessura *</label>
+                    <select th:field="*{espessuraVidroMm}" class="form-input" required>
+                        <option value="">Selecione...</option>
+                        <option th:each="espessura : ${espessurasVidroVao}" th:value="${espessura}" th:text="${espessura + ' mm'}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" for="tipoVidro">Tipo de vidro *</label>
+                    <select th:field="*{tipoVidro}" class="form-input" required>
+                        <option value="">Selecione...</option>
+                        <option th:each="tipo : ${tiposVidroVao}" th:value="${tipo}" th:text="${#strings.capitalize(#strings.toLowerCase(tipo.name()))}"></option>
+                    </select>
+                    <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('selecaoVidroValida')}" th:errors="*{selecaoVidroValida}"></p>
+                    <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('corVidro')}" th:errors="*{corVidro}"></p>
+                    <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('espessuraVidroMm')}" th:errors="*{espessuraVidroMm}"></p>
+                    <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('tipoVidro')}" th:errors="*{tipoVidro}"></p>
+                </div>
+<!--                <div class="catalogo-vidro sm:col-span-2 lg:col-span-3 rounded-xl border border-slate-200 dark:border-slate-700 p-3" aria-live="polite">-->
+<!--                    <p class="catalogo-vidro-status text-sm">Selecione cor, tipo e espessura para consultar o preço por m².</p>-->
+<!--                    <label class="catalogo-vidro-opcoes mt-2" hidden>-->
+<!--                        <span class="form-label">Insumo compatível do catálogo</span>-->
+<!--                        <select name="vidroCatalogoId" class="form-input" th:attr="data-selecionado=${vaoForm.vidroCatalogoId}"></select>-->
+<!--                    </label>-->
+<!--                </div>-->
+
                 <div>
                     <label class="form-label">
                         Acabamento *
                     </label>
-                    <select th:field="*{tipoBorda}" id="acabamentoVao" class="form-input acabamento-select" onchange="alternarBisote(); alternarCantoMoeda(this);">
+                    <select th:field="*{tipoBorda}" id="acabamentoVao" class="form-input acabamento-select" onchange="alternarBisote();">
                         <option th:each="t : ${tiposBorda}" th:value="${t}" th:text="${t.descricao}">
                         </option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Canto</label>
+                    <select th:field="*{tipoCanto}" class="form-input canto-select" onchange="alternarCantoMoeda(this);">
+                        <option th:each="canto : ${tiposCanto}" th:value="${canto}" th:text="${canto.descricao}"></option>
                     </select>
                 </div>
             </div>
@@ -587,6 +612,10 @@
                         </div>
                     </div>
                 </div>
+                <div class="px-5 py-3 text-sm">
+                    <p th:if="${item.vidroId == null}" class="text-amber-700 dark:text-amber-300">Sem preço: não foi encontrado insumo compatível no catálogo para esta seleção.</p>
+                    <p th:if="${item.vidroId != null}" th:text="${'Preço aplicado do catálogo: R$ ' + #numbers.formatDecimal(item.valorM2Snapshot, 1, 2) + ' / m²'}"></p>
+                </div>
                 <div th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}" class="peca-croqui-aviso folha-conteudo-seletivo px-5 sm:px-7 py-3 border-b flex items-center gap-2">
                     <i data-lucide="arrow-up" class="w-3.5 h-3.5 text-blue-400 shrink-0"></i>
                     <p class="text-xs text-blue-600 dark:text-blue-300">
@@ -770,7 +799,7 @@
                                 <div><p class="text-[8px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Valor estimado</p><p class="mt-0.5 text-xs font-black text-emerald-700 dark:text-emerald-300" th:text="'R$ ' + ${#numbers.formatDecimal(item.valorTotal, 1, 2)}">R$ 850,00</p></div>
                             </div>
                             <div th:if="${item.espessuraBisoteMm}" class="mt-3 flex items-center gap-2 rounded-lg bg-sky-50 dark:bg-sky-500/10 border border-sky-100 dark:border-sky-500/20 px-3 py-2"><i data-lucide="scan-line" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0"></i><span class="text-[11px] font-bold text-sky-800 dark:text-sky-300" th:text="'Bisôte: ' + ${item.espessuraBisoteMm} + ' mm — todas as laterais'">Bisôte: 25 mm — todas as laterais</span></div>
-                            <div th:if="${item.tipoBorda != null and item.tipoBorda.name() == 'CANTO_MOEDA' and item.temCantoArredondado}" class="mt-2 flex items-center gap-2 rounded-lg bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20 px-3 py-2"><i data-lucide="circle-dot" class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 shrink-0"></i><span class="text-[11px] font-bold text-violet-800 dark:text-violet-300" th:text="'Canto moeda: ' + ${item.descricaoCantosArredondados}">Canto moeda: Superior esquerdo, Inferior direito</span></div>
+                            <div th:if="${item.tipoCanto.name() != 'NORMAL' and item.temCantoArredondado}" class="mt-2 flex items-center gap-2 rounded-lg bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20 px-3 py-2"><i data-lucide="circle-dot" class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 shrink-0"></i><span class="text-[11px] font-bold text-violet-800 dark:text-violet-300" th:text="${item.tipoCanto.descricao + ': ' + item.descricaoCantosArredondados}">Canto moeda: Superior esquerdo, Inferior direito</span></div>
                         </div>
                     </details>
                     <details th:if="${!#lists.isEmpty(item.elementos)}" class="group mb-3 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/30 dark:bg-amber-500/5 overflow-hidden">
@@ -1202,9 +1231,15 @@
                     <label class="form-label">
                         Acabamento *
                     </label>
-                    <select th:field="*{tipoBorda}" class="form-input acabamento-select" onchange="alternarCantoMoeda(this);">
+                    <select th:field="*{tipoBorda}" class="form-input acabamento-select">
                         <option th:each="t : ${tiposBorda}" th:value="${t}" th:text="${t.descricao}">
                         </option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Canto</label>
+                    <select th:field="*{tipoCanto}" class="form-input canto-select" onchange="alternarCantoMoeda(this);">
+                        <option th:each="canto : ${tiposCanto}" th:value="${canto}" th:text="${canto.descricao}"></option>
                     </select>
                 </div>
             </div>
@@ -1245,7 +1280,7 @@
                     </button>
                 </div>
                 <p class="text-xs text-violet-700 dark:text-violet-300 mt-2">
-                    Marque pelo menos um canto — o croqui vai desenhá-lo arredondado.
+                    Selecione os cantos desejados. Sem marcações, o tipo escolhido será aplicado aos quatro cantos.
                 </p>
             </div>
 
@@ -2782,7 +2817,7 @@
         });
     }
     document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.acabamento-select').forEach(function (select) {
+        document.querySelectorAll('.canto-select').forEach(function (select) {
             alternarCantoMoeda(select);
         });
     });
@@ -3476,5 +3511,6 @@
     })();
 </script>
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
+<script src="/js/plano-corte-catalogo.js"></script>
 </body>
 </html>

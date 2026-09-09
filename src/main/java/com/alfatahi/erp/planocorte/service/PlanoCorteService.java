@@ -29,6 +29,7 @@ import com.alfatahi.erp.planocorte.entity.StatusPlano;
 import com.alfatahi.erp.planocorte.entity.TipoAncoragem;
 import com.alfatahi.erp.planocorte.entity.TipoAnotacao;
 import com.alfatahi.erp.planocorte.entity.TipoBorda;
+import com.alfatahi.erp.planocorte.entity.TipoCanto;
 import com.alfatahi.erp.planocorte.entity.TipoFolha;
 import com.alfatahi.erp.planocorte.entity.TipoFuracao;
 import com.alfatahi.erp.planocorte.entity.Vidro;
@@ -220,7 +221,7 @@ public class PlanoCorteService {
                     semNegativo(dimensoes.larguraSuperiorMm().subtract(ajuste.largura())),
                     semNegativo(dimensoes.larguraInferiorMm().subtract(ajuste.largura())));
         }
-        aplicarCantosMoeda(item, form.getTipoBorda(),
+        aplicarCantosMoeda(item, form.getTipoBorda(), form.getTipoCanto(),
                 form.isCantoSuperiorEsquerdo(), form.isCantoSuperiorDireito(),
                 form.isCantoInferiorEsquerdo(), form.isCantoInferiorDireito());
 
@@ -334,7 +335,9 @@ public class PlanoCorteService {
         form.setSourceOpeningId(null);
         form.setCategoria(item.getCategoria());
         form.setVidroId(item.getVidroId());
-        form.setTipoBorda(item.getTipoBorda());
+        if (form.isVidroEspecificado()) form.setVidroCatalogoId(item.getVidroId());
+        form.setTipoCanto(item.getTipoCanto());
+        form.setTipoBorda(TipoBorda.acabamentos().contains(item.getTipoBorda()) ? item.getTipoBorda() : TipoBorda.LISO);
         form.setQuantidadeVaos(item.getQuantidade());
         form.setQuantidadeFolhas(folhas.size());
         form.setQuantidadeFolhasFixas((int) folhas.stream().filter(i -> i.getTipoFolha() == TipoFolha.FIXA).count());
@@ -370,6 +373,64 @@ public class PlanoCorteService {
         salvarVao(planoCorteId, form, grupoVao);
     }
 
+    @Transactional(readOnly = true)
+    public List<Vidro> listarVidrosCompativeis(PlanoCorteVaoForm form) {
+        if (!form.isVidroEspecificado() || !form.isSelecaoVidroValida()) {
+            throw new IllegalStateException("Selecione a cor, o tipo e a espessura do vidro.");
+        }
+        String cor = normalizarCorVidro(form.getCorVidro().getDescricao());
+        return vidroRepository.findByAtivoTrueAndTipoAndEspessuraOrderByNomeAscIdAsc(
+                        form.getTipoVidro(), BigDecimal.valueOf(form.getEspessuraVidroMm())).stream()
+                .filter(vidro -> normalizarCorVidro(vidro.getCor()).equals(cor))
+                .filter(vidro -> vidro.getValorPorM2() != null && vidro.getValorPorM2().signum() >= 0)
+                .toList();
+    }
+
+    private String normalizarCorVidro(String cor) {
+        if (cor == null) return "";
+        return java.text.Normalizer.normalize(cor, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").strip().toLowerCase(java.util.Locale.ROOT).replaceAll("\\s+", " ");
+    }
+
+    private Vidro resolverVidroVao(PlanoCorteVaoForm form) {
+        if (!form.isSelecaoVidroValida()) {
+            throw new IllegalStateException("Selecione a cor, a espessura e o tipo do vidro.");
+        }
+        if (!form.isVidroEspecificado()) {
+            return vidroRepository.findById(form.getVidroId())
+                    .orElseThrow(() -> new NoSuchElementException("Vidro não encontrado: " + form.getVidroId()));
+        }
+        List<Vidro> compativeis = listarVidrosCompativeis(form);
+        if (!compativeis.isEmpty()) {
+            Vidro selecionado;
+            if (form.getVidroCatalogoId() != null) {
+                selecionado = compativeis.stream().filter(v -> v.getId().equals(form.getVidroCatalogoId()))
+                        .findFirst().orElseThrow(() -> new IllegalStateException(
+                                "O insumo selecionado não corresponde mais à cor, ao tipo e à espessura. Consulte o catálogo novamente."));
+            } else if (compativeis.size() == 1) {
+                selecionado = compativeis.getFirst();
+            } else {
+                throw new IllegalStateException("Há mais de um insumo compatível. Selecione qual preço do catálogo deseja usar.");
+            }
+            form.setVidroId(selecionado.getId());
+            form.setVidroCatalogoId(selecionado.getId());
+            return selecionado;
+        }
+        // Sem correspondência, a especificação continua válida e fica sem preço.
+        form.setVidroCatalogoId(null);
+        // Especificação técnica transitória: não cria nem altera insumos no catálogo.
+        Vidro vidro = new Vidro();
+        vidro.setNome(form.getCorVidro().getDescricao() + " · "
+                + (form.getTipoVidro().name().substring(0, 1) + form.getTipoVidro().name().substring(1).toLowerCase(java.util.Locale.ROOT)));
+        vidro.setCor(form.getCorVidro().getDescricao());
+        vidro.setEspessura(BigDecimal.valueOf(form.getEspessuraVidroMm()));
+        vidro.setTipo(form.getTipoVidro());
+        // Sem insumo associado não há preço de catálogo a aplicar ao plano técnico.
+        vidro.setValorPorM2(BigDecimal.ZERO);
+        form.setVidroId(null);
+        return vidro;
+    }
+
     private List<PlanoCorteItem> salvarVao(Long planoCorteId, PlanoCorteVaoForm form, Integer grupoExistente) {
         List<PlanoCorteItem> existentes = grupoExistente == null ? new ArrayList<>()
                 : new ArrayList<>(listarItens(planoCorteId).stream()
@@ -377,8 +438,8 @@ public class PlanoCorteService {
         if (grupoExistente != null && existentes.isEmpty()) {
             throw new IllegalStateException("Vão não encontrado neste plano.");
         }
-        if (form.getVidroId() == null || form.getTipoBorda() == null) {
-            throw new IllegalStateException("Informe o vidro e o acabamento.");
+        if (!form.isSelecaoVidroValida() || form.getTipoBorda() == null) {
+            throw new IllegalStateException("Informe a cor, a espessura (3, 4, 6, 8, 10 ou 12 mm), o tipo Temperado, Comum, Laminado, Aramado ou Insulado e o acabamento.");
         }
         if (form.getQuantidadeVaos() == null || form.getQuantidadeVaos() < 1
                 || (form.getQuantidadeFolhasFixas() != null && form.getQuantidadeFolhasFixas() < 0)
@@ -395,8 +456,7 @@ public class PlanoCorteService {
                 .orElseThrow(() -> new IllegalStateException(
                         "A categoria " + categoriaVao.getDescricao() + " não possui cálculo automático de vão."));
 
-        Vidro vidro = vidroRepository.findById(form.getVidroId())
-                .orElseThrow(() -> new NoSuchElementException("Vidro não encontrado: " + form.getVidroId()));
+        Vidro vidro = resolverVidroVao(form);
 
         boolean espelhoRedondo = categoriaVao == CategoriaServico.ESPELHO && form.isEspelhoRedondo();
         if (espelhoRedondo) {
@@ -424,12 +484,14 @@ public class PlanoCorteService {
         List<FolhaCalculada> anteriores = new ArrayList<>();
         if (!existentes.isEmpty()) {
             PlanoCorteVaoForm anterior = formularioVao(existentes);
-            Vidro vidroAnterior = vidroRepository.findById(anterior.getVidroId()).orElse(vidro);
+            com.alfatahi.erp.planocorte.entity.TipoVidro tipoAnterior = anterior.isVidroEspecificado()
+                    ? anterior.getTipoVidro()
+                    : vidroRepository.findById(anterior.getVidroId()).map(Vidro::getTipo).orElse(vidro.getTipo());
             servicoCalculadoraRegistry.buscar(anterior.getCategoria()).ifPresent(calculoAnterior ->
                     anteriores.addAll(calculoAnterior.calcular(new EntradaCalculoServico(
                             anterior.getLarguraVaoMm(), anterior.getAlturaVaoMm(),
                             anterior.getQuantidadeFolhas(), anterior.getQuantidadeFolhasFixas(), anterior.getQuantidadeFolhasMoveis(),
-                            anterior.getLadoRecorte(), vidroAnterior.getTipo(),
+                            anterior.getLadoRecorte(), tipoAnterior,
                             anterior.getDescontoLateralPersonalizadoMm(), anterior.getDescontoAlturaPersonalizadoMm(),
                             anterior.getEspessuraBisoteMm(), anterior.getComFechadura(),
                             anterior.isEspelhoRedondo(), anterior.getAlturaBateFechaMm())).folhas()));
@@ -511,7 +573,7 @@ public class PlanoCorteService {
                         alturaEsquerdaFinalMm, alturaDireitaFinalMm, larguraSuperiorFinalMm, larguraInferiorFinalMm);
             }
             if (dimensoes.alturaEsquerdaMm() == null) limparDimensoesPersonalizadas(item);
-            aplicarCantosMoeda(item, form.getTipoBorda(),
+            aplicarCantosMoeda(item, form.getTipoBorda(), form.getTipoCanto(),
                     form.isCantoSuperiorEsquerdo(), form.isCantoSuperiorDireito(),
                     form.isCantoInferiorEsquerdo(), form.isCantoInferiorDireito());
 
@@ -760,10 +822,19 @@ public class PlanoCorteService {
     }
 
 
-    private void aplicarCantosMoeda(PlanoCorteItem item, TipoBorda tipoBorda,
+    private void aplicarCantosMoeda(PlanoCorteItem item, TipoBorda tipoBorda, TipoCanto tipoCanto,
                                      boolean superiorEsquerdo, boolean superiorDireito,
                                      boolean inferiorEsquerdo, boolean inferiorDireito) {
-        boolean cantoMoeda = tipoBorda == TipoBorda.CANTO_MOEDA || tipoBorda == TipoBorda.CANTO_GARRAFA;
+        if (tipoCanto == null) {
+            tipoCanto = tipoBorda == TipoBorda.CANTO_MOEDA ? TipoCanto.CANTO_MOEDA
+                    : tipoBorda == TipoBorda.CANTO_GARRAFA ? TipoCanto.CANTO_GARRAFA : TipoCanto.NORMAL;
+        }
+        item.setTipoCanto(tipoCanto);
+        if (!TipoBorda.acabamentos().contains(tipoBorda)) item.setTipoBorda(TipoBorda.LISO);
+        boolean cantoMoeda = tipoCanto != TipoCanto.NORMAL;
+        if (cantoMoeda && !superiorEsquerdo && !superiorDireito && !inferiorEsquerdo && !inferiorDireito) {
+            superiorEsquerdo = superiorDireito = inferiorEsquerdo = inferiorDireito = true;
+        }
         item.setCantoMoedaSuperiorEsquerdo(cantoMoeda && superiorEsquerdo);
         item.setCantoMoedaSuperiorDireito(cantoMoeda && superiorDireito);
         item.setCantoMoedaInferiorEsquerdo(cantoMoeda && inferiorEsquerdo);

@@ -662,6 +662,8 @@
                 <span class="meta-chip" th:if="${item.tipoFolha != null && item.tipoFolha.name() != 'UNICA'}" th:text="${item.tipoFolha.descricao}">Fixa</span>
                 <span class="meta-chip" th:if="${item.grupoVao != null}" th:text="'Vão ' + ${item.grupoVao}">Vão 01</span>
             </div>
+            <div class="meta-chip" th:if="${item.tipoCanto.name() != 'NORMAL'}" th:text="${item.tipoCanto.descricao + ': ' + item.descricaoCantosArredondados}"></div>
+            <div class="meta-chip" th:if="${item.vidroId == null}">Sem preço de catálogo para a seleção de vidro.</div>
             <table class="dimensions">
                 <tr>
                     <td>

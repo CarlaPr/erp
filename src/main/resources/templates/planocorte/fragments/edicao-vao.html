@@ -29,18 +29,48 @@
                     </select>
                 </label>
 
+                <input type="hidden" name="vidroId" th:value="${edicao.vidroId}">
                 <label class="block">
-                    <span class="block mb-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">Vidro <span class="text-red-500">*</span></span>
-                    <select name="vidroId" class="input-tecnico">
-                        <option th:value="${item.vidroId}" th:text="${item.vidroNomeSnapshot}" selected></option>
-                        <option th:each="v : ${vidros}" th:if="${v.id != item.vidroId}" th:value="${v.id}" th:text="${v.nome}"></option>
+                    <span class="block mb-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">Vidro *</span>
+                    <select name="corVidro" class="input-tecnico" th:required="${edicao.vidroId == null or edicao.vidroEspecificado}">
+                        <option value="">Selecione...</option>
+                        <option th:each="cor : ${coresVidroVao}" th:value="${cor}" th:text="${cor.descricao}" th:selected="${cor == edicao.corVidro}"></option>
                     </select>
                 </label>
+                <label class="block">
+                    <span class="block mb-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">Espessura *</span>
+                    <select name="espessuraVidroMm" class="input-tecnico" th:required="${edicao.vidroId == null or edicao.vidroEspecificado}">
+                        <option value="">Selecione...</option>
+                        <option th:each="espessura : ${espessurasVidroVao}" th:value="${espessura}" th:text="${espessura + ' mm'}" th:selected="${espessura == edicao.espessuraVidroMm}"></option>
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="block mb-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">Tipo de vidro *</span>
+                    <select name="tipoVidro" class="input-tecnico" th:required="${edicao.vidroId == null or edicao.vidroEspecificado}">
+                        <option value="">Selecione...</option>
+                        <option th:each="tipo : ${tiposVidroVao}" th:value="${tipo}" th:text="${#strings.capitalize(#strings.toLowerCase(tipo.name()))}" th:selected="${tipo == edicao.tipoVidro}"></option>
+                    </select>
+                </label>
+<!--                <div class="catalogo-vidro md:col-span-3 rounded-xl border border-slate-200 dark:border-slate-700 p-3" aria-live="polite">-->
+<!--                    <p class="catalogo-vidro-status text-sm">Selecione cor, tipo e espessura para consultar o preço por m².</p>-->
+<!--                    <label class="catalogo-vidro-opcoes mt-2" hidden>-->
+<!--                        <span class="block mb-1 text-xs">Insumo compatível do catálogo</span>-->
+<!--                        <select name="vidroCatalogoId" class="input-tecnico" th:attr="data-selecionado=${edicao.vidroCatalogoId}"></select>-->
+<!--                    </label>-->
+<!--                </div>-->
+
+                <p class="text-xs text-slate-500 md:col-span-3" th:if="${edicao.vidroId != null and !edicao.vidroEspecificado}" th:text="${'Vidro atual: ' + item.vidroNomeSnapshot + ' (' + item.espessuraSnapshot + ' mm). Para manter, deixe os três campos de vidro vazios. Para trocar, selecione os três.'}"></p>
 
                 <label class="block">
                     <span class="block mb-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">Acabamento <span class="text-red-500">*</span></span>
                     <select name="tipoBorda" class="input-tecnico">
-                        <option th:each="t : ${tiposBorda}" th:value="${t}" th:text="${t.descricao}" th:selected="${t == item.tipoBorda}"></option>
+                        <option th:each="t : ${tiposBorda}" th:value="${t}" th:text="${t.descricao}" th:selected="${t == edicao.tipoBorda}"></option>
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="block mb-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">Canto</span>
+                    <select name="tipoCanto" class="input-tecnico canto-select" onchange="alternarCantoMoeda(this);">
+                        <option th:each="canto : ${tiposCanto}" th:value="${canto}" th:text="${canto.descricao}" th:selected="${canto == edicao.tipoCanto}"></option>
                     </select>
                 </label>
             </div>
@@ -244,8 +274,9 @@
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <p class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Cantos moeda</p>
+                <div class="space-y-2 caixa-canto-moeda">
+                    <p class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Cantos</p>
+                    <p class="text-xs text-slate-500">Selecione os cantos desejados. Sem marcações, aplica-se aos quatro cantos.</p>
 
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
                         <label class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 cursor-pointer">

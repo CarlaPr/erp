@@ -19,6 +19,11 @@ public enum TipoBorda {
         this.descricao = descricao;
     }
 
+    public static java.util.List<TipoBorda> acabamentos() {
+        return java.util.Arrays.stream(values())
+                .filter(tipo -> tipo != CANTO_MOEDA && tipo != CANTO_GARRAFA).toList();
+    }
+
     public String getDescricao() {
         return descricao;
     }
