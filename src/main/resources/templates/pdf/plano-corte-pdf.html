@@ -642,64 +642,64 @@
         </div>
     </th:block>
     <div class="piece" th:classappend="${croquis.get(item.id) != null and !(item.grupoVao != null and croquisVao.get(item.grupoVao) != null)} ? ' piece-large-croqui' : ''">
-        <table class="piece-header">
-            <tr>
-                <td>
-                    <div class="piece-code" th:text="${item.codigoPeca}">VID-0001</div>
-                </td>
-                <td class="piece-number">
-                    <span th:text="'PEÇA ' + ${stat.count}">PEÇA 1</span>
-                </td>
-            </tr>
-        </table>
-        <div class="piece-croqui-note" th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}">O croqui desta folha já aparece no croqui combinado do vão, acima.</div>
-        <div class="piece-body">
-            <div class="croqui-box" th:if="${croquis.get(item.id) != null and !(item.grupoVao != null and croquisVao.get(item.grupoVao) != null)}" th:utext="${croquis.get(item.id)}"></div>
-            <div class="piece-meta">
-                <span class="meta-chip" th:if="${item.categoria != null}" th:text="${item.categoria.descricao}">Serviço</span>
-                <span class="meta-chip" th:text="${item.espessuraSnapshot != null ? #numbers.formatDecimal(item.espessuraSnapshot, 1, 1) + ' mm' : '-'}">8,0 mm</span>
-                <span class="meta-chip" th:if="${item.tipoBorda != null}" th:text="${item.tipoBorda.descricao}">Lapidado</span>
-                <span class="meta-chip" th:if="${item.tipoFolha != null && item.tipoFolha.name() != 'UNICA'}" th:text="${item.tipoFolha.descricao}">Fixa</span>
-                <span class="meta-chip" th:if="${item.grupoVao != null}" th:text="'Vão ' + ${item.grupoVao}">Vão 01</span>
-            </div>
-            <div class="meta-chip" th:if="${item.tipoCanto.name() != 'NORMAL'}" th:text="${item.tipoCanto.descricao + ': ' + item.descricaoCantosArredondados}"></div>
-            <div class="meta-chip" th:if="${item.vidroId == null}">Sem preço de catálogo para a seleção de vidro.</div>
-            <table class="dimensions">
-                <tr>
-                    <td>
-                        <span class="dimension-label">Medida final</span>
-                        <span class="dimension-value" th:text="${item.larguraFinalMm + ' × ' + item.alturaFinalMm + ' mm'}">995 × 1895 mm</span>
-                    </td>
-                </tr>
-            </table>
-            <table class="technical-table">
-                <tr>
-                    <td class="technical-label">Quantidade</td>
-                    <td class="technical-value" th:text="${item.quantidade}">1</td>
-                </tr>
-                <tr th:if="${item.espessuraBisoteMm != null}">
-                    <td class="technical-label">Bisote</td>
-                    <td class="technical-value" colspan="3" th:text="${item.espessuraBisoteMm + ' mm — todas as laterais'}">20 mm — todas as laterais</td>
-                </tr>
-            </table>
-            <!--            <div class="technical-section" th:if="${item.furacoes != null && !#lists.isEmpty(item.furacoes)}">-->
-            <!--                <div class="technical-section-title">Furações</div>-->
-            <!--                <div class="technical-item" th:each="f : ${item.furacoes}">-->
-            <!--                    <span th:text="${f.tipo != null ? f.tipo.descricao : 'Furação'}">Roldana</span>-->
-            <!--                    <span th:if="${f.descricao != null && !f.descricao.isEmpty()}" th:text="' — ' + ${f.descricao}"></span>-->
-            <!--                    <span th:text="| (${f.posicaoXMm != null ? #numbers.formatDecimal(f.posicaoXMm, 1, 0) : '?'}, ${f.posicaoYMm != null ? #numbers.formatDecimal(f.posicaoYMm, 1, 0) : '?'} mm)|">(125, 70 mm)</span>-->
-            <!--                    <span th:if="${f.diametroMm != null}" th:text="' · Ø' + ${#numbers.formatDecimal(f.diametroMm,1,1)} + ' mm'">· Ø30,0 mm</span>-->
-            <!--                </div>-->
-            <!--            </div>-->
-            <!--            <div class="technical-section" th:if="${item.elementos != null && !#lists.isEmpty(item.elementos)}">-->
-            <!--                <div class="technical-section-title">Elementos técnicos</div>-->
-            <!--                <div class="technical-item element" th:each="e : ${item.elementos}">-->
-            <!--                    <span th:text="${e.ferragemNomeSnapshot != null ? e.ferragemNomeSnapshot : (e.tipo != null ? e.tipo.descricao : 'Elemento')}">Fechadura</span>-->
-            <!--                    <span th:if="${e.lado != null}" th:text="' · ' + ${e.lado}"></span>-->
-            <!--                    <span th:text="| (${e.posicaoXMm != null ? #numbers.formatDecimal(e.posicaoXMm, 1, 0) : '?'}, ${e.posicaoYMm != null ? #numbers.formatDecimal(e.posicaoYMm, 1, 0) : '?'} mm)|">(50, 1000 mm)</span>-->
-            <!--                </div>-->
-            <!--            </div>-->
-        </div>
+<!--        <table class="piece-header">-->
+<!--            <tr>-->
+<!--                <td>-->
+<!--                    <div class="piece-code" th:text="${item.codigoPeca}">VID-0001</div>-->
+<!--                </td>-->
+<!--                <td class="piece-number">-->
+<!--                    <span th:text="'PEÇA ' + ${stat.count}">PEÇA 1</span>-->
+<!--                </td>-->
+<!--            </tr>-->
+<!--        </table>-->
+<!--        <div class="piece-croqui-note" th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}">O croqui desta folha já aparece no croqui combinado do vão, acima.</div>-->
+<!--        <div class="piece-body">-->
+<!--            <div class="croqui-box" th:if="${croquis.get(item.id) != null and !(item.grupoVao != null and croquisVao.get(item.grupoVao) != null)}" th:utext="${croquis.get(item.id)}"></div>-->
+<!--            <div class="piece-meta">-->
+<!--                <span class="meta-chip" th:if="${item.categoria != null}" th:text="${item.categoria.descricao}">Serviço</span>-->
+<!--                <span class="meta-chip" th:text="${item.espessuraSnapshot != null ? #numbers.formatDecimal(item.espessuraSnapshot, 1, 1) + ' mm' : '-'}">8,0 mm</span>-->
+<!--                <span class="meta-chip" th:if="${item.tipoBorda != null}" th:text="${item.tipoBorda.descricao}">Lapidado</span>-->
+<!--                <span class="meta-chip" th:if="${item.tipoFolha != null && item.tipoFolha.name() != 'UNICA'}" th:text="${item.tipoFolha.descricao}">Fixa</span>-->
+<!--                <span class="meta-chip" th:if="${item.grupoVao != null}" th:text="'Vão ' + ${item.grupoVao}">Vão 01</span>-->
+<!--            </div>-->
+<!--            <div class="meta-chip" th:if="${item.tipoCanto.name() != 'NORMAL'}" th:text="${item.tipoCanto.descricao + ': ' + item.descricaoCantosArredondados}"></div>-->
+<!--            <div class="meta-chip" th:if="${item.vidroId == null}">Sem preço de catálogo para a seleção de vidro.</div>-->
+<!--            <table class="dimensions">-->
+<!--                <tr>-->
+<!--                    <td>-->
+<!--                        <span class="dimension-label">Medida final</span>-->
+<!--                        <span class="dimension-value" th:text="${item.larguraFinalMm + ' × ' + item.alturaFinalMm + ' mm'}">995 × 1895 mm</span>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--            </table>-->
+<!--            <table class="technical-table">-->
+<!--                <tr>-->
+<!--                    <td class="technical-label">Quantidade</td>-->
+<!--                    <td class="technical-value" th:text="${item.quantidade}">1</td>-->
+<!--                </tr>-->
+<!--                <tr th:if="${item.espessuraBisoteMm != null}">-->
+<!--                    <td class="technical-label">Bisote</td>-->
+<!--                    <td class="technical-value" colspan="3" th:text="${item.espessuraBisoteMm + ' mm — todas as laterais'}">20 mm — todas as laterais</td>-->
+<!--                </tr>-->
+<!--            </table>-->
+<!--            &lt;!&ndash;            <div class="technical-section" th:if="${item.furacoes != null && !#lists.isEmpty(item.furacoes)}">&ndash;&gt;-->
+<!--            &lt;!&ndash;                <div class="technical-section-title">Furações</div>&ndash;&gt;-->
+<!--            &lt;!&ndash;                <div class="technical-item" th:each="f : ${item.furacoes}">&ndash;&gt;-->
+<!--            &lt;!&ndash;                    <span th:text="${f.tipo != null ? f.tipo.descricao : 'Furação'}">Roldana</span>&ndash;&gt;-->
+<!--            &lt;!&ndash;                    <span th:if="${f.descricao != null && !f.descricao.isEmpty()}" th:text="' — ' + ${f.descricao}"></span>&ndash;&gt;-->
+<!--            &lt;!&ndash;                    <span th:text="| (${f.posicaoXMm != null ? #numbers.formatDecimal(f.posicaoXMm, 1, 0) : '?'}, ${f.posicaoYMm != null ? #numbers.formatDecimal(f.posicaoYMm, 1, 0) : '?'} mm)|">(125, 70 mm)</span>&ndash;&gt;-->
+<!--            &lt;!&ndash;                    <span th:if="${f.diametroMm != null}" th:text="' · Ø' + ${#numbers.formatDecimal(f.diametroMm,1,1)} + ' mm'">· Ø30,0 mm</span>&ndash;&gt;-->
+<!--            &lt;!&ndash;                </div>&ndash;&gt;-->
+<!--            &lt;!&ndash;            </div>&ndash;&gt;-->
+<!--            &lt;!&ndash;            <div class="technical-section" th:if="${item.elementos != null && !#lists.isEmpty(item.elementos)}">&ndash;&gt;-->
+<!--            &lt;!&ndash;                <div class="technical-section-title">Elementos técnicos</div>&ndash;&gt;-->
+<!--            &lt;!&ndash;                <div class="technical-item element" th:each="e : ${item.elementos}">&ndash;&gt;-->
+<!--            &lt;!&ndash;                    <span th:text="${e.ferragemNomeSnapshot != null ? e.ferragemNomeSnapshot : (e.tipo != null ? e.tipo.descricao : 'Elemento')}">Fechadura</span>&ndash;&gt;-->
+<!--            &lt;!&ndash;                    <span th:if="${e.lado != null}" th:text="' · ' + ${e.lado}"></span>&ndash;&gt;-->
+<!--            &lt;!&ndash;                    <span th:text="| (${e.posicaoXMm != null ? #numbers.formatDecimal(e.posicaoXMm, 1, 0) : '?'}, ${e.posicaoYMm != null ? #numbers.formatDecimal(e.posicaoYMm, 1, 0) : '?'} mm)|">(50, 1000 mm)</span>&ndash;&gt;-->
+<!--            &lt;!&ndash;                </div>&ndash;&gt;-->
+<!--            &lt;!&ndash;            </div>&ndash;&gt;-->
+<!--        </div>-->
     </div>
 
 </th:block>
