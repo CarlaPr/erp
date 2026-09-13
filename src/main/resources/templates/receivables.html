@@ -133,6 +133,20 @@
             </div>
         </div>
     </form>
+    <div id="pendingWorkOrders" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Ordens de Serviço sem conta a receber</h3>
+        <p th:if="${#lists.isEmpty(pendingWorkOrders)}" class="text-sm text-slate-500 dark:text-slate-400 mt-3">Nenhuma OS com criação pendente.</p>
+        <div th:unless="${#lists.isEmpty(pendingWorkOrders)}" class="flex flex-wrap gap-2 mt-3">
+            <button type="button" th:each="wo : ${pendingWorkOrders}"
+                    th:data-id="${wo.id}" th:data-number="${wo.number}"
+                    th:data-client-id="${wo.client != null ? wo.client.id : ''}"
+                    th:data-client-name="${wo.client != null ? wo.client.name : ''}"
+                    onclick="openPendingReceivable(this)"
+                    class="px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-500 text-sm font-semibold transition-colors">
+                <span th:text="${wo.number}">OS 1233</span>
+            </button>
+        </div>
+    </div>
     <div class="receivables-table-container bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
 
         <table class="receivables-table w-full text-left border-collapse">
@@ -1197,6 +1211,15 @@
         closeModal('osSearchModal');
     }
 
+    function openPendingReceivable(button) {
+        document.querySelector('#receivableModal form').reset();
+        calculateDiscountPreview();
+        currentTargetType = 'new';
+        selectOs(button.dataset.id, button.dataset.number, button.dataset.clientName);
+        selectClient(button.dataset.clientId || '', button.dataset.clientName || '');
+        openModal('receivableModal');
+        document.getElementById('newWorkOrderDisplay').focus();
+    }
     function clearOs(target) {
         if(target === 'new') {
             document.getElementById('newWorkOrderId').value = '';
@@ -1208,10 +1231,18 @@
     }
 
     function calculateDiscountPreview() {
+        const discountType = document.getElementById('uiDiscountType');
+        const discountValue = document.getElementById('uiDiscountValue');
+        const discountField = document.getElementById('realDiscountField');
+        // Os controles de desconto podem estar desativados na criação.
+        if (!discountType || !discountValue || !discountField) {
+            document.getElementById('discountPreviewAlert').classList.add('hidden');
+            return;
+        }
         const grossStr = document.getElementById('newReceivableGross').value;
         const gross = parseFloat(grossStr) || 0;
-        const type = document.getElementById('uiDiscountType').value;
-        const val = parseFloat(document.getElementById('uiDiscountValue').value) || 0;
+        const type = discountType.value;
+        const val = parseFloat(discountValue.value) || 0;
 
         let discountInMoney = 0;
         if (type === 'percent') {
@@ -1222,7 +1253,7 @@
 
         const net = gross - discountInMoney;
 
-        document.getElementById('realDiscountField').value = discountInMoney.toFixed(2);
+        discountField.value = discountInMoney.toFixed(2);
 
         const alertDiv = document.getElementById('discountPreviewAlert');
         const alertText = document.getElementById('discountPreviewText');

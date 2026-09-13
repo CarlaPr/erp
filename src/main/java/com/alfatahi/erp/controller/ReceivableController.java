@@ -24,6 +24,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -93,7 +94,18 @@ public class ReceivableController {
             dateTo = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
         }
 
-        List<AccountsReceivable> list = receivableRepository.findAllByOrderByDueDateAsc().stream()
+        List<AccountsReceivable> allReceivables = receivableRepository.findAllByOrderByDueDateAsc();
+        Set<UUID> linkedWorkOrderIds = allReceivables.stream()
+                .filter(r -> r.getWorkOrder() != null)
+                .map(r -> r.getWorkOrder().getId())
+                .collect(Collectors.toSet());
+        List<WorkOrder> workOrders = workOrderService.listAll();
+        List<WorkOrder> pendingWorkOrders = workOrders.stream()
+                .filter(wo -> !"cancelled".equals(wo.getStatus()))
+                .filter(wo -> !linkedWorkOrderIds.contains(wo.getId()))
+                .collect(Collectors.toList());
+
+        List<AccountsReceivable> list = allReceivables.stream()
                 .filter(r -> !"cancelled".equals(r.getStatus()) || "cancelled".equals(status))
                 .collect(Collectors.toList());
 
@@ -152,7 +164,8 @@ public class ReceivableController {
         model.addAttribute("currentPage", "receivables");
         model.addAttribute("receivables", list);
         model.addAttribute("clients", clientService.listAllActive());
-        model.addAttribute("workOrders", workOrderService.listAll());
+        model.addAttribute("workOrders", workOrders);
+        model.addAttribute("pendingWorkOrders", pendingWorkOrders);
         model.addAttribute("newReceivable", new AccountsReceivable());
 
         model.addAttribute("saldoReal", saldoReal);

@@ -50,8 +50,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
 
-
-
 @Service
 @Transactional
 public class PlanoCorteService {
@@ -416,16 +414,16 @@ public class PlanoCorteService {
             form.setVidroCatalogoId(selecionado.getId());
             return selecionado;
         }
-        // Sem correspondência, a especificação continua válida e fica sem preço.
+
         form.setVidroCatalogoId(null);
-        // Especificação técnica transitória: não cria nem altera insumos no catálogo.
+
         Vidro vidro = new Vidro();
         vidro.setNome(form.getCorVidro().getDescricao() + " · "
-                + (form.getTipoVidro().name().substring(0, 1) + form.getTipoVidro().name().substring(1).toLowerCase(java.util.Locale.ROOT)));
+                + form.getTipoVidro().getDescricao());
         vidro.setCor(form.getCorVidro().getDescricao());
         vidro.setEspessura(BigDecimal.valueOf(form.getEspessuraVidroMm()));
         vidro.setTipo(form.getTipoVidro());
-        // Sem insumo associado não há preço de catálogo a aplicar ao plano técnico.
+
         vidro.setValorPorM2(BigDecimal.ZERO);
         form.setVidroId(null);
         return vidro;
@@ -439,7 +437,7 @@ public class PlanoCorteService {
             throw new IllegalStateException("Vão não encontrado neste plano.");
         }
         if (!form.isSelecaoVidroValida() || form.getTipoBorda() == null) {
-            throw new IllegalStateException("Informe a cor, a espessura (3, 4, 6, 8, 10 ou 12 mm), o tipo Temperado, Comum, Laminado, Aramado ou Insulado e o acabamento.");
+            throw new IllegalStateException("Informe a cor, a espessura (3, 4, 6, 8, 10 ou 12 mm), um tipo de vidro compatível com o serviço e o acabamento.");
         }
         if (form.getQuantidadeVaos() == null || form.getQuantidadeVaos() < 1
                 || (form.getQuantidadeFolhasFixas() != null && form.getQuantidadeFolhasFixas() < 0)

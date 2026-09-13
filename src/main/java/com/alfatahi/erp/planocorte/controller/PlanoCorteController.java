@@ -64,8 +64,10 @@ public class PlanoCorteController {
     public ResponseEntity<?> consultarVidrosCompativeis(
             @RequestParam CorVidroVao corVidro,
             @RequestParam TipoVidro tipoVidro,
-            @RequestParam Integer espessuraVidroMm) {
+            @RequestParam Integer espessuraVidroMm,
+            @RequestParam(required = false) CategoriaServico categoria) {
         PlanoCorteVaoForm form = new PlanoCorteVaoForm();
+        form.setCategoria(categoria);
         form.setCorVidro(corVidro);
         form.setTipoVidro(tipoVidro);
         form.setEspessuraVidroMm(espessuraVidroMm);
@@ -513,7 +515,8 @@ public class PlanoCorteController {
         model.addAttribute("espessurasVidroVao", PlanoCorteVaoForm.ESPESSURAS_VIDRO);
         model.addAttribute("tiposBorda", TipoBorda.acabamentos());
         model.addAttribute("tiposCanto", com.alfatahi.erp.planocorte.entity.TipoCanto.values());
-        model.addAttribute("tiposVidroVao", PlanoCorteVaoForm.TIPOS_VIDRO);
+        model.addAttribute("tiposVidroVao", java.util.stream.Stream.concat(
+                PlanoCorteVaoForm.TIPOS_VIDRO.stream(), PlanoCorteVaoForm.TIPOS_ESPELHO.stream()).toList());
         model.addAttribute("tiposElemento", TipoElemento.valoresSelecionaveis());
         model.addAttribute("referenciasHorizontais", ReferenciaHorizontal.values());
         model.addAttribute("referenciasVerticais", ReferenciaVertical.values());

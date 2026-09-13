@@ -4,6 +4,19 @@
     document.querySelectorAll('.catalogo-vidro').forEach(painel => {
         const form = painel.closest('form');
         const campos = ['corVidro', 'tipoVidro', 'espessuraVidroMm'].map(nome => form.elements.namedItem(nome));
+        const categoria = form.elements.namedItem('categoria');
+        const tipoVidro = campos[1];
+        const todosTipos = Array.from(tipoVidro.options).filter(opcao => opcao.value)
+            .map(opcao => ({ value: opcao.value, text: opcao.text }));
+        const sincronizarTipos = () => {
+            const anterior = tipoVidro.value;
+            const espelho = categoria && categoria.value === 'ESPELHO';
+            const disponiveis = todosTipos.filter(opcao =>
+                ['ESPELHO', 'ESPELHO_CEBRACE'].includes(opcao.value) === Boolean(espelho));
+            tipoVidro.replaceChildren(new Option('Selecione...', ''));
+            disponiveis.forEach(opcao => tipoVidro.add(new Option(opcao.text, opcao.value)));
+            tipoVidro.value = disponiveis.some(opcao => opcao.value === anterior) ? anterior : '';
+        };
         const status = painel.querySelector('.catalogo-vidro-status');
         const opcoes = painel.querySelector('.catalogo-vidro-opcoes');
         const select = painel.querySelector('select[name="vidroCatalogoId"]');
@@ -33,6 +46,7 @@
 
             const parametros = new URLSearchParams();
             campos.forEach(campo => parametros.set(campo.name, campo.value));
+            if (categoria && categoria.value) parametros.set('categoria', categoria.value);
             try {
                 const resposta = await fetch('/cut-plans/catalogo/vidros-compativeis?' + parametros,
                     { signal: controle.signal, headers: { Accept: 'application/json' } });
@@ -62,6 +76,11 @@
         };
         select.addEventListener('change', mostrarPreco);
         campos.forEach(campo => campo.addEventListener('change', () => consultar()));
+        form.addEventListener('servico-alterado', () => {
+            sincronizarTipos();
+            consultar();
+        });
+        sincronizarTipos();
         consultar(true);
     });
 })();

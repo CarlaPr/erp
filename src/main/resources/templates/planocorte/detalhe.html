@@ -192,7 +192,7 @@
                     <label class="form-label" for="tipoVidro">Tipo de vidro *</label>
                     <select th:field="*{tipoVidro}" class="form-input" required>
                         <option value="">Selecione...</option>
-                        <option th:each="tipo : ${tiposVidroVao}" th:value="${tipo}" th:text="${#strings.capitalize(#strings.toLowerCase(tipo.name()))}"></option>
+                        <option th:each="tipo : ${tiposVidroVao}" th:value="${tipo}" th:text="${tipo.descricao}"></option>
                     </select>
                     <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('selecaoVidroValida')}" th:errors="*{selecaoVidroValida}"></p>
                     <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('corVidro')}" th:errors="*{corVidro}"></p>
@@ -612,10 +612,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="px-5 py-3 text-sm">
-                    <p th:if="${item.vidroId == null}" class="text-amber-700 dark:text-amber-300">Sem preço: não foi encontrado insumo compatível no catálogo para esta seleção.</p>
-                    <p th:if="${item.vidroId != null}" th:text="${'Preço aplicado do catálogo: R$ ' + #numbers.formatDecimal(item.valorM2Snapshot, 1, 2) + ' / m²'}"></p>
-                </div>
+<!--                <div class="px-5 py-3 text-sm">-->
+<!--                    <p th:if="${item.vidroId == null}" class="text-amber-700 dark:text-amber-300">Sem preço: não foi encontrado insumo compatível no catálogo para esta seleção.</p>-->
+<!--                    <p th:if="${item.vidroId != null}" th:text="${'Preço aplicado do catálogo: R$ ' + #numbers.formatDecimal(item.valorM2Snapshot, 1, 2) + ' / m²'}"></p>-->
+<!--                </div>-->
                 <div th:if="${item.grupoVao != null and croquisVao.get(item.grupoVao) != null}" class="peca-croqui-aviso folha-conteudo-seletivo px-5 sm:px-7 py-3 border-b flex items-center gap-2">
                     <i data-lucide="arrow-up" class="w-3.5 h-3.5 text-blue-400 shrink-0"></i>
                     <p class="text-xs text-blue-600 dark:text-blue-300">
@@ -2893,6 +2893,7 @@
         var categoria = select.value;
 
         filtrarVidrosPorCategoria(form, categoria);
+        form.dispatchEvent(new Event('servico-alterado'));
         form.querySelectorAll('[data-service-section]').forEach(function(section){
             section.style.display = section.dataset.serviceSection.split(' ').includes(categoria) ? '' : 'none';
         });

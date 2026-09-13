@@ -29,6 +29,8 @@ public class PlanoCorteVaoForm {
     public static final java.util.List<TipoVidro> TIPOS_VIDRO = java.util.List.of(
             TipoVidro.TEMPERADO, TipoVidro.COMUM, TipoVidro.LAMINADO, TipoVidro.ARAMADO, TipoVidro.INSULADO);
 
+    public static final java.util.List<TipoVidro> TIPOS_ESPELHO = java.util.List.of(TipoVidro.ESPELHO, TipoVidro.ESPELHO_CEBRACE);
+
     public static final java.util.List<Integer> ESPESSURAS_VIDRO = java.util.List.of(3, 4, 6, 8, 10, 12);
 
     public CorVidroVao getCorVidro() { return corVidro; }
@@ -44,11 +46,11 @@ public class PlanoCorteVaoForm {
     }
 
     @JsonIgnore
-    @AssertTrue(message = "Selecione a cor, a espessura (3, 4, 6, 8, 10 ou 12 mm) e o tipo Temperado, Comum, Laminado, Aramado ou Insulado.")
+    @AssertTrue(message = "Selecione a cor, a espessura (3, 4, 6, 8, 10 ou 12 mm) e um tipo de vidro compatível com o serviço selecionado.")
     public boolean isSelecaoVidroValida() {
         if (!isVidroEspecificado()) return vidroId != null;
         return corVidro != null && espessuraVidroMm != null && ESPESSURAS_VIDRO.contains(espessuraVidroMm)
-                && (tipoVidro != null && TIPOS_VIDRO.contains(tipoVidro));
+                && (tipoVidro != null && (categoria == CategoriaServico.ESPELHO ? TIPOS_ESPELHO : TIPOS_VIDRO).contains(tipoVidro));
     }
 
     private BigDecimal larguraVaoMm;
