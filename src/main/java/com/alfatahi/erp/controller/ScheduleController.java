@@ -8,6 +8,7 @@ import com.alfatahi.erp.dto.ScheduleSaveRequest;
 import com.alfatahi.erp.dto.TechnicalVisitDto;
 import com.alfatahi.erp.entity.AppUser;
 import com.alfatahi.erp.repository.AppUserRepository;
+import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.service.ScheduleService;
 import com.alfatahi.erp.service.TechnicalVisitService;
 import com.alfatahi.erp.util.SecurityUtils;
@@ -44,13 +45,15 @@ public class ScheduleController {
     private final TechnicalVisitService technicalVisitService;
     private final AppUserRepository appUserRepo;
     private final TemplateEngine templateEngine;
+    private final ClientRepository clientRepository;
 
     public ScheduleController(ScheduleService scheduleService, TechnicalVisitService technicalVisitService,
-                               AppUserRepository appUserRepo, TemplateEngine templateEngine) {
+                               AppUserRepository appUserRepo, TemplateEngine templateEngine, ClientRepository clientRepository) {
         this.scheduleService = scheduleService;
         this.technicalVisitService = technicalVisitService;
         this.appUserRepo = appUserRepo;
         this.templateEngine = templateEngine;
+        this.clientRepository = clientRepository;
     }
 
     @GetMapping
@@ -66,6 +69,7 @@ public class ScheduleController {
                 .map(AppUser::getUsername)
                 .collect(Collectors.toList());
 
+        model.addAttribute("clients", isTecnico ? List.of() : clientRepository.findSelectableClients());
         model.addAttribute("currentPage", "agenda");
         model.addAttribute("isTecnico", isTecnico);
         model.addAttribute("schedules", schedules);

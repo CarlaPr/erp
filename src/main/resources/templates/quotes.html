@@ -16,12 +16,43 @@
     </header>
 
     <div class="mb-5 -mx-3 px-3 sm:mx-0 sm:px-0">
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 bg-white dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm scrollbar-hide">
-            <button type="button" onclick="setQuoteStatusFilter('')" class="shrink-0 px-4 py-2.5 rounded-lg text-sm font-bold transition-all border whitespace-nowrap" th:classappend="${selectedFilterStatus == null or #strings.isEmpty(selectedFilterStatus)} ? 'bg-brand-600 text-white border-brand-600 dark:bg-slate-700 dark:border-slate-700' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">Todos</button>
-            <button type="button" onclick="setQuoteStatusFilter('pending')" class="shrink-0 px-4 py-2.5 rounded-lg text-sm font-bold transition-all border whitespace-nowrap" th:classappend="${selectedFilterStatus == 'pending'} ? 'bg-amber-500 text-white border-amber-500 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">Pendentes</button>
-            <button type="button" onclick="setQuoteStatusFilter('approved')" class="shrink-0 px-4 py-2.5 rounded-lg text-sm font-bold transition-all border whitespace-nowrap" th:classappend="${selectedFilterStatus == 'approved'} ? 'bg-emerald-600 text-white border-emerald-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">Aprovados</button>
-            <button type="button" onclick="setQuoteStatusFilter('expired')" class="shrink-0 px-4 py-2.5 rounded-lg text-sm font-bold transition-all border whitespace-nowrap" th:classappend="${selectedFilterStatus == 'expired'} ? 'bg-slate-600 text-white border-slate-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'">Expirados</button>
-            <a href="/quotes/new" class="ml-2 bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm transition-all border border-transparent"><i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Orçamento</a>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 bg-white dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+
+            <a href="/quotes/new"
+               class="order-1 w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-5 py-3 sm:py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm transition-all border border-transparent">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                Novo Orçamento
+            </a>
+
+            <div class="order-2 grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+                <button type="button"
+                        onclick="setQuoteStatusFilter('')"
+                        class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap text-center"
+                        th:classappend="${selectedFilterStatus == null or #strings.isEmpty(selectedFilterStatus)} ? 'bg-brand-600 text-white border-brand-600 dark:bg-slate-700 dark:border-slate-700' : 'bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+                    Todos
+                </button>
+
+                <button type="button"
+                        onclick="setQuoteStatusFilter('pending')"
+                        class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap text-center"
+                        th:classappend="${selectedFilterStatus == 'pending'} ? 'bg-amber-500 text-white border-amber-500 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+                    Pendentes
+                </button>
+
+                <button type="button"
+                        onclick="setQuoteStatusFilter('approved')"
+                        class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap text-center"
+                        th:classappend="${selectedFilterStatus == 'approved'} ? 'bg-emerald-600 text-white border-emerald-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+                    Aprovados
+                </button>
+
+                <button type="button"
+                        onclick="setQuoteStatusFilter('expired')"
+                        class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap text-center"
+                        th:classappend="${selectedFilterStatus == 'expired'} ? 'bg-slate-600 text-white border-slate-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'">
+                    Expirados
+                </button>
+            </div>
         </div>
     </div>
 

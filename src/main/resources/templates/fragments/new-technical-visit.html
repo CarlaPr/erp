@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<body>
+<th:block th:fragment="modal">
+<div id="newVisitModal" class="modal-shell hidden">
+    <form onsubmit="createVisit(event)" class="modal-card max-w-lg">
+        <button type="button" onclick="toggleModal('newVisitModal', false)" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <h3 class="text-xl font-black text-slate-900 dark:text-white">Nova visita técnica</h3>
+        <p class="text-sm text-slate-500 mt-1 mb-5">Selecione um cliente mesmo que ainda não exista orçamento.</p>
+        <div class="flex items-center justify-between gap-3 mb-2">
+            <label class="form-label mb-0">Cliente *</label>
+            <button type="button" onclick="openInlineClientModal()" class="inline-client-trigger">
+                <i data-lucide="user-plus" class="w-4 h-4"></i> Novo cliente
+            </button>
+        </div>
+        <input id="newClientId" type="hidden" value="">
+        <button id="clientSelectButton" type="button" onclick="openClientSearchModal()" class="client-select-btn mb-4">
+            <span class="flex items-center gap-3 min-w-0">
+                <span class="client-select-icon"><i data-lucide="user-round-search" class="w-5 h-5"></i></span>
+                <span class="min-w-0 text-left">
+                    <span id="selectedClientName" class="block text-sm font-black text-slate-700 dark:text-slate-200 truncate">Selecionar cliente</span>
+                    <span id="selectedClientCity" class="block text-xs font-medium text-slate-400 truncate mt-0.5">Toque para pesquisar entre os cadastrados</span>
+                </span>
+            </span>
+            <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400 shrink-0"></i>
+        </button>
+        <div class="grid grid-cols-2 gap-3 mb-4"><div><label class="form-label">Data *</label><input id="newVisitDate" type="date" required class="form-input"></div><div><label class="form-label">Horário</label><input id="newVisitTime" type="time" class="form-input"></div></div>
+        <label class="form-label">Observações iniciais</label><textarea id="newVisitNotes" rows="3" class="form-input"></textarea>
+        <button class="submit-btn mt-5">Agendar visita</button>
+    </form>
+</div>
+
+<div id="clientSearchModal" class="modal-shell client-search-shell hidden">
+    <div class="modal-card client-search-card max-w-2xl">
+        <div class="client-search-header">
+            <div class="pr-12">
+                <p class="text-[10px] font-black uppercase tracking-widest text-fuchsia-600 dark:text-fuchsia-400">Selecionar cliente</p>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white mt-1">Buscar cliente</h3>
+                <p id="clientSearchCount" class="text-xs text-slate-500 mt-1" th:text="${#lists.size(clients) + ' cliente(s) cadastrado(s)'}">Clientes cadastrados</p>
+            </div>
+            <button type="button" onclick="closeClientSearchModal()" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <div class="client-search-actions mt-4">
+                <div class="relative min-w-0">
+                    <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    <input id="clientSearchInput" type="search" autocomplete="off" placeholder="Pesquisar por nome ou cidade..." class="client-search-input" oninput="filterClientOptions()">
+                    <button id="clearClientSearch" type="button" onclick="clearClientSearchInput()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+                <button type="button" onclick="openInlineClientModal()" class="client-search-new-button">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i> Novo cliente
+                </button>
+            </div>
+        </div>
+        <div id="clientSearchResults" class="client-search-results">
+            <button th:each="c : ${clients}" type="button" class="client-option" th:attr="data-client-id=${c.id},data-client-name=${c.name},data-client-city=${c.city != null ? c.city : ''}" onclick="selectClientFromModal(this)">
+                <span class="client-option-icon"><i data-lucide="user-round" class="w-5 h-5"></i></span>
+                <span class="min-w-0 flex-1 text-left">
+                    <span class="client-option-name" th:text="${c.name}">Nome do cliente</span>
+                    <span class="client-option-city" th:text="${c.city != null and !c.city.isBlank() ? c.city : 'Cidade não informada'}">Cidade</span>
+                </span>
+                <span class="client-option-check"><i data-lucide="check" class="w-4 h-4"></i></span>
+            </button>
+            <div id="clientSearchEmpty" class="hidden py-10 px-5 text-center">
+                <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center"><i data-lucide="user-round-x" class="w-6 h-6"></i></div>
+                <p class="mt-3 text-sm font-black text-slate-700 dark:text-slate-200">Nenhum cliente encontrado</p>
+                <p class="text-xs text-slate-500 mt-1">Tente pesquisar por outro nome ou cidade.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="clientInlineModal" class="modal-shell client-inline-shell hidden" role="dialog" aria-modal="true" aria-labelledby="clientInlineTitle">
+    <form id="inlineClientForm" onsubmit="saveInlineClient(event)" class="modal-card max-w-xl">
+        <button type="button" onclick="closeInlineClientModal()" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <div class="pr-12 mb-5">
+            <p class="text-[10px] font-black uppercase tracking-widest text-fuchsia-600 dark:text-fuchsia-400">Novo cliente</p>
+            <h3 id="clientInlineTitle" class="text-xl font-black text-slate-900 dark:text-white mt-1">Cadastro de cliente</h3>
+            <p class="text-xs text-slate-500 mt-1">Cadastre e selecione o cliente sem sair da nova visita.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2">
+                <label class="form-label">Nome completo / Razão social *</label>
+                <input id="inlineClientName" type="text" required maxlength="150" autocomplete="name" class="form-input">
+            </div>
+            <div>
+                <label class="form-label">Tipo de pessoa</label>
+                <select id="inlineClientType" class="form-input">
+                    <option value="individual">Pessoa Física (CPF)</option>
+                    <option value="company">Pessoa Jurídica (CNPJ)</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label">CPF / CNPJ</label>
+                <input id="inlineClientDoc" type="text" maxlength="18" autocomplete="off" class="form-input">
+                <p id="inlineDocumentError" class="form-error hidden"></p>
+            </div>
+            <div>
+                <label class="form-label">E-mail</label>
+                <input id="inlineClientEmail" type="email" maxlength="120" autocomplete="email" class="form-input">
+                <p id="inlineEmailError" class="form-error hidden"></p>
+            </div>
+            <div>
+                <label class="form-label">Telefone</label>
+                <input id="inlineClientPhone" type="text" maxlength="15" placeholder="(11) 99999-9999" autocomplete="tel" class="form-input">
+                <p id="inlinePhoneError" class="form-error hidden"></p>
+            </div>
+            <div>
+                <label class="form-label">CEP</label>
+                <input id="inlineClientCep" type="text" maxlength="9" placeholder="00000-000" autocomplete="postal-code" class="form-input">
+                <p id="inlineCepError" class="form-error hidden"></p>
+            </div>
+            <div>
+                <label class="form-label">Cidade</label>
+                <input id="inlineClientCity" type="text" maxlength="100" autocomplete="address-level2" class="form-input">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="form-label">Endereço completo (Rua, Número, Bairro, UF)</label>
+                <input id="inlineClientAddress" type="text" maxlength="255" placeholder="Será preenchido com o CEP..." autocomplete="street-address" class="form-input">
+            </div>
+        </div>
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-5 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <button type="button" onclick="closeInlineClientModal()" class="secondary-btn">Cancelar</button>
+            <button id="saveInlineClientButton" type="submit" class="primary-inline-btn">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span>Salvar e selecionar</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+</th:block>
+</body>
+</html>

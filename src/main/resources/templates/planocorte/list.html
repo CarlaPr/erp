@@ -133,12 +133,12 @@
                             title="Abrir plano">
                         <i data-lucide="layout-grid" class="w-5 h-5"></i>
                     </a>
-                    <a
-                            th:href="@{/cut-plans/editar/{id}(id=${p.id})}"
-                            class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block"
-                            title="Editar cabeçalho">
-                        <i data-lucide="edit-3" class="w-5 h-5"></i>
-                    </a>
+<!--                    <a-->
+<!--                            th:href="@{/cut-plans/editar/{id}(id=${p.id})}"-->
+<!--                            class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block"-->
+<!--                            title="Editar cabeçalho">-->
+<!--                        <i data-lucide="edit-3" class="w-5 h-5"></i>-->
+<!--                    </a>-->
                     <form
                             th:action="@{/cut-plans/{id}/excluir(id=${p.id})}"
                             method="POST"

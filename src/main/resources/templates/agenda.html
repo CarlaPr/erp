@@ -16,6 +16,14 @@
             <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1"
                th:text="${isTecnico} ? 'Todos os serviços agendados para hoje. Toque em um card para ver detalhes e registrar observações.' : 'Agende, acompanhe o prazo e reagende os serviços aprovados.'">Agende, acompanhe o prazo e reagende os serviços aprovados.</p>
         </div>
+        <div sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" class="flex flex-wrap gap-2 shrink-0">
+            <button type="button" onclick="openServiceSchedulePicker()" class="px-4 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold flex items-center gap-2">
+                <i data-lucide="calendar-plus" class="w-4 h-4"></i> Agendar serviço
+            </button>
+            <button type="button" onclick="toggleModal('newVisitModal', true)" class="px-4 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm font-bold flex items-center gap-2">
+                <i data-lucide="clipboard-plus" class="w-4 h-4"></i> Agendar visita técnica
+            </button>
+        </div>
     </header>
     <div th:if="${!isTecnico}" class="agenda-kpis grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4 mb-6">
         <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
@@ -218,6 +226,11 @@
             <h3 id="editModalTitle" class="text-xl font-black text-slate-900 dark:text-white mb-1">Agendar Serviço</h3>
             <p id="editModalSubtitle" class="text-sm text-slate-500 dark:text-slate-400 mb-6"></p>
 
+            <div id="serviceSchedulePicker" class="hidden mb-5">
+                <label for="serviceScheduleSelect" class="block text-xs font-bold text-slate-500 mb-2">Ordem de serviço *</label>
+                <select id="serviceScheduleSelect" onchange="selectServiceSchedule(this.value)" class="w-full px-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm dark:text-white"></select>
+            </div>
+            <fieldset id="serviceScheduleFields" class="min-w-0">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 text-xs">
                 <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
                     <span class="block text-slate-400 font-bold uppercase mb-1">Cliente</span>
@@ -379,6 +392,7 @@
                     </button>
                 </div>
             </div>
+            </fieldset>
         </div>
     </div>
     <div id="cancelScheduleModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 overflow-y-auto">
@@ -1179,11 +1193,42 @@
     let currentEditSchedule = null;
     let pendingOccurrences = []; // dias adicionais ainda não persistidos (ver seção mais abaixo)
 
-    async function openEditModal(id) {
+    let serviceScheduleRequest = 0;
+    function openServiceSchedulePicker() {
+        if(IS_TECNICO)return;
+        serviceScheduleRequest++;
+        const select=document.getElementById('serviceScheduleSelect');
+        const schedules=EXECUTION_SCHEDULES_RAW.filter(s=>s.workOrderId && !['CANCELADO','CONCLUIDO'].includes(s.status));
+        select.replaceChildren(new Option(schedules.length?'Selecione a ordem de serviço':'Nenhuma ordem de serviço disponível', ''));
+        schedules.sort((a,b)=>String(a.workOrderNumber).localeCompare(String(b.workOrderNumber),'pt-BR',{numeric:true})).forEach(s=>select.add(new Option([s.workOrderNumber,s.clientName,s.serviceType].filter(Boolean).join(' — '),s.id)));
+        document.getElementById('serviceSchedulePicker').classList.remove('hidden');
+        document.getElementById('serviceScheduleFields').classList.add('hidden');
+        document.getElementById('serviceScheduleFields').disabled=true;
+        document.getElementById('editId').value='';
+        currentEditSchedule=null;
+        pendingOccurrences=[];
+        document.getElementById('editModalTitle').textContent='Agendar Serviço';
+        document.getElementById('editModalSubtitle').textContent='Selecione a OS correspondente para carregar os dados do serviço.';
+        toggleModal('editModal',true);
+        select.focus();
+    }
+    function selectServiceSchedule(id) {
+        serviceScheduleRequest++;
+        document.getElementById('editId').value='';
+        document.getElementById('serviceScheduleFields').disabled=true;
+        document.getElementById('serviceScheduleFields').classList.add('hidden');
+        if(id)openEditModal(id,true);
+    }
+    async function openEditModal(id, selecting = false) {
+        const request=++serviceScheduleRequest;
+        if(!selecting)document.getElementById('serviceSchedulePicker').classList.add('hidden');
         try {
             const res = await fetch(`/agenda/view-data/${id}`);
             if (!res.ok) throw new Error('Falha ao carregar agendamento');
             const s = await res.json();
+            if(request!==serviceScheduleRequest)return;
+            document.getElementById('serviceScheduleFields').disabled=false;
+            document.getElementById('serviceScheduleFields').classList.remove('hidden');
             currentEditSchedule = s;
 
             const isFirst = !s.scheduledDate;
@@ -1434,6 +1479,7 @@
     }
 
     async function submitScheduleForm() {
+        if(!document.getElementById('editId').value){alert('Selecione uma ordem de serviço.');return;}
         const payload = {
             id: document.getElementById('editId').value,
             scheduledDate: document.getElementById('editDate').value || null,
@@ -1870,5 +1916,8 @@
 
 </style>
 
+<div th:replace="~{fragments/new-technical-visit :: modal}"></div>
+<link rel="stylesheet" th:href="@{/css/new-technical-visit.css}">
+<script th:src="@{/js/new-technical-visit.js}"></script>
 </body>
 </html>
