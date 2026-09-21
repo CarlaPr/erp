@@ -449,6 +449,7 @@ public class ScheduleController {
         public LocalTime getSortTime() { return sortTime; }
         public void setSortTime(LocalTime sortTime) { this.sortTime = sortTime; }
     }
+
     @GetMapping("/roteiro-whatsapp/{date}")
     @ResponseBody
     @Transactional(readOnly = true)
@@ -488,19 +489,35 @@ public class ScheduleController {
         StringBuilder message = new StringBuilder("*Agenda Comercial — Roteiro Diário*\n")
                 .append("*Data:* ").append(day.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
                 .append("\n*Total de atendimentos:* ").append(items.size());
+
         for (int index = 0; index < items.size(); index++) {
             RoteiroItemView item = items.get(index);
-            message.append("\n\n*").append(index + 1).append(". ").append(item.getClientName()).append("*")
+
+            message.append("\n\n*").append(index + 1).append(". ").append(item.getClientName()).append("* (")
+                    .append(item.isVisit() ? "Visita Técnica" : "Serviço").append(")")
                     .append("\n").append(item.getTypeLabel()).append(" · ").append(item.getTimeFormatted())
                     .append("\nEndereço: ").append(item.getClientAddress())
                     .append("\nOrçamento: ").append(item.getQuoteNumber())
                     .append("\nResponsável/equipe: ").append(item.getTeamOrResponsible())
                     .append("\n*Serviços:*");
-            for (String service : item.getItems()) message.append("\n• ").append(service);
+
+            for (String service : item.getItems()) {
+                String servicoLimpo = service;
+                if (servicoLimpo != null && servicoLimpo.contains("(")) {
+                    servicoLimpo = servicoLimpo.substring(0, servicoLimpo.indexOf("(")).trim();
+                }
+                message.append("\n* ").append(servicoLimpo);
+            }
+
             if (item.getObservations() != null && !item.getObservations().isBlank()) {
                 message.append("\n*Observações:* ").append(item.getObservations());
             }
+
+            if (index < items.size() - 1) {
+                message.append("\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.");
+            }
         }
+
         return message.toString();
     }
 
