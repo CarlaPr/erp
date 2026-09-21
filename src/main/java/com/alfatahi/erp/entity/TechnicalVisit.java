@@ -35,6 +35,9 @@ public class TechnicalVisit {
     @Column(columnDefinition = "text")
     private String notes;
 
+    @Column(name = "responsible", length = 120)
+    private String responsible;
+
     @Column(nullable = false, length = 20)
     private String status = "AGENDADA";
 
@@ -69,6 +72,9 @@ public class TechnicalVisit {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public String getResponsible() { return responsible; }
+    public void setResponsible(String responsible) { this.responsible = responsible; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

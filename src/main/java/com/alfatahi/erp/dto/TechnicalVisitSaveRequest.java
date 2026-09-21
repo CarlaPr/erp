@@ -12,6 +12,7 @@ public class TechnicalVisitSaveRequest {
     private LocalDate visitDate;
     private LocalTime visitTime;
     private String notes;
+    private String responsible;
     private String status;
 
     public UUID getId() { return id; }
@@ -28,6 +29,9 @@ public class TechnicalVisitSaveRequest {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public String getResponsible() { return responsible; }
+    public void setResponsible(String responsible) { this.responsible = responsible; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

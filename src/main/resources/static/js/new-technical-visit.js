@@ -165,7 +165,7 @@
         const button=event.target.querySelector('button[type="submit"], .submit-btn');
         button.disabled=true;
         try {
-            const response=await fetch('/technical-visits/create', {method:'POST',headers:csrfHeaders(true),body:JSON.stringify({clientId,visitDate:$('newVisitDate').value,visitTime:$('newVisitTime').value||null,notes:$('newVisitNotes').value,status:'AGENDADA'})});
+            const response=await fetch('/technical-visits/create', {method:'POST',headers:csrfHeaders(true),body:JSON.stringify({clientId,visitDate:$('newVisitDate').value,visitTime:$('newVisitTime').value||null,responsible:$('newVisitResponsible').value.trim(),notes:$('newVisitNotes').value,status:'AGENDADA'})});
             const data=await response.json().catch(()=>({}));
             if(!response.ok)throw new Error(data.error||'Não foi possível agendar a visita.');
             if(location.pathname==='/agenda')location.reload();

@@ -390,7 +390,7 @@ public class ScheduleController {
         r.setWorkOrderNumber("-");
         r.setSortTime(v.getVisitTime());
         r.setTimeFormatted(v.getVisitTime() != null ? v.getVisitTime().toString().substring(0, 5) : "A definir");
-        r.setTeamOrResponsible("-");
+        r.setTeamOrResponsible(nvl(v.getResponsible(), "-"));
         r.setItems(List.of("Visita técnica ao cliente"));
         r.setObservations(v.getNotes());
         r.setVisit(true);
@@ -449,4 +449,59 @@ public class ScheduleController {
         public LocalTime getSortTime() { return sortTime; }
         public void setSortTime(LocalTime sortTime) { this.sortTime = sortTime; }
     }
+    @GetMapping("/roteiro-whatsapp/{date}")
+    @ResponseBody
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> roteiroWhatsApp(@PathVariable String date) {
+        try {
+            LocalDate day = LocalDate.parse(date);
+            List<RoteiroItemView> items = roteiroItems(day);
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("message", formatarRoteiroWhatsApp(day, items));
+            body.put("totalItems", items.size());
+            return ResponseEntity.ok(body);
+        } catch (DateTimeParseException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    private List<RoteiroItemView> roteiroItems(LocalDate day) {
+        List<RoteiroItemView> items = new ArrayList<>();
+        for (ScheduleDto s : scheduleService.listAllDto()) {
+            if (s.getOccurrences() != null && !s.getOccurrences().isEmpty()) {
+                for (var occ : s.getOccurrences()) {
+                    if (day.equals(occ.getOccurrenceDate())) items.add(toRoteiroRow(s, occ));
+                }
+            } else if (day.equals(s.getScheduledDate())) {
+                items.add(toRoteiroRow(s, null));
+            }
+        }
+        for (TechnicalVisitDto v : technicalVisitService.listAllDto()) {
+            if (day.equals(v.getVisitDate())) items.add(toRoteiroRow(v));
+        }
+        items.sort(Comparator.comparing(RoteiroItemView::getSortTime,
+                Comparator.nullsLast(Comparator.naturalOrder())));
+        return items;
+    }
+
+    private String formatarRoteiroWhatsApp(LocalDate day, List<RoteiroItemView> items) {
+        StringBuilder message = new StringBuilder("*Agenda Comercial — Roteiro Diário*\n")
+                .append("*Data:* ").append(day.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                .append("\n*Total de atendimentos:* ").append(items.size());
+        for (int index = 0; index < items.size(); index++) {
+            RoteiroItemView item = items.get(index);
+            message.append("\n\n*").append(index + 1).append(". ").append(item.getClientName()).append("*")
+                    .append("\n").append(item.getTypeLabel()).append(" · ").append(item.getTimeFormatted())
+                    .append("\nEndereço: ").append(item.getClientAddress())
+                    .append("\nOrçamento: ").append(item.getQuoteNumber())
+                    .append("\nResponsável/equipe: ").append(item.getTeamOrResponsible())
+                    .append("\n*Serviços:*");
+            for (String service : item.getItems()) message.append("\n• ").append(service);
+            if (item.getObservations() != null && !item.getObservations().isBlank()) {
+                message.append("\n*Observações:* ").append(item.getObservations());
+            }
+        }
+        return message.toString();
+    }
+
 }

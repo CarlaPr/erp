@@ -70,6 +70,7 @@ public class TechnicalVisitDataService {
         visit.setVisitDate(request.getVisitDate() != null ? request.getVisitDate() : LocalDate.now());
         visit.setVisitTime(request.getVisitTime());
         visit.setNotes(request.getNotes());
+        visit.setResponsible(request.getResponsible());
         applyStatus(visit, "AGENDADA");
         return visitRepository.saveAndFlush(visit).getId();
     }
@@ -79,6 +80,7 @@ public class TechnicalVisitDataService {
         if (request.getVisitDate() != null) visit.setVisitDate(request.getVisitDate());
         visit.setVisitTime(request.getVisitTime());
         visit.setNotes(request.getNotes());
+        visit.setResponsible(request.getResponsible());
         if (canManageStatus) applyStatus(visit, request.getStatus());
         visitRepository.save(visit);
     }

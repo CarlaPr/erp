@@ -950,6 +950,11 @@
                 </div>
             </div>
 
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável pela visita</label>
+                <input id="scheduleVisitResponsible" type="text" maxlength="120" placeholder="Nome de quem fará a visita"
+                       class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+            </div>
             <div class="mb-6">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Observações</label>
                 <textarea id="scheduleVisitNotes" rows="3" placeholder="Ex: Medir vão da sacada, verificar estrutura..."
@@ -1518,6 +1523,7 @@
         document.getElementById('scheduleVisitDate').value = '';
         document.getElementById('scheduleVisitTime').value = '';
         document.getElementById('scheduleVisitNotes').value = '';
+        document.getElementById('scheduleVisitResponsible').value = '';
         toggleModal('scheduleVisitModal', true);
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
@@ -1533,7 +1539,8 @@
         const payload = {
             visitDate: visitDate,
             visitTime: document.getElementById('scheduleVisitTime').value ? (document.getElementById('scheduleVisitTime').value + ':00') : null,
-            notes: document.getElementById('scheduleVisitNotes').value
+            notes: document.getElementById('scheduleVisitNotes').value,
+            responsible: document.getElementById('scheduleVisitResponsible').value.trim()
         };
 
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;

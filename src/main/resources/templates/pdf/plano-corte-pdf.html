@@ -642,6 +642,9 @@
         </div>
     </th:block>
     <div class="piece" th:classappend="${croquis.get(item.id) != null and !(item.grupoVao != null and croquisVao.get(item.grupoVao) != null)} ? ' piece-large-croqui' : ''">
+        <div class="piece-body" th:if="${croquis.get(item.id) != null and !(item.grupoVao != null and croquisVao.get(item.grupoVao) != null)}">
+            <div class="croqui-box" th:utext="${croquis.get(item.id)}"></div>
+        </div>
 <!--        <table class="piece-header">-->
 <!--            <tr>-->
 <!--                <td>-->

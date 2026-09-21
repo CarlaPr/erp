@@ -13,44 +13,9 @@
         <div>
             <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight"
                 th:text="${isTecnico} ? 'Serviços do Dia' : 'Agenda Comercial'">Agenda Comercial</h2>
-            <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1"
-               th:text="${isTecnico} ? 'Todos os serviços agendados para hoje. Toque em um card para ver detalhes e registrar observações.' : 'Agende, acompanhe o prazo e reagende os serviços aprovados.'">Agende, acompanhe o prazo e reagende os serviços aprovados.</p>
-        </div>
-        <div sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" class="flex flex-wrap gap-2 shrink-0">
-            <button type="button" onclick="openServiceSchedulePicker()" class="px-4 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold flex items-center gap-2">
-                <i data-lucide="calendar-plus" class="w-4 h-4"></i> Agendar serviço
-            </button>
-            <button type="button" onclick="toggleModal('newVisitModal', true)" class="px-4 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm font-bold flex items-center gap-2">
-                <i data-lucide="clipboard-plus" class="w-4 h-4"></i> Agendar visita técnica
-            </button>
         </div>
     </header>
-    <div th:if="${!isTecnico}" class="agenda-kpis grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4 mb-6">
-        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Aprovados</span>
-            <p class="text-2xl font-black text-slate-900 dark:text-white mt-1" th:text="${kpis.aprovados}">0</p>
-        </div>
-        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Aguard. Agend.</span>
-            <p class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1" th:text="${kpis.aguardandoAgendamento}">0</p>
-        </div>
-        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Agendados</span>
-            <p class="text-2xl font-black text-brand-600 dark:text-cyan-400 mt-1" th:text="${kpis.agendados}">0</p>
-        </div>
-        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Atrasados</span>
-            <p class="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1" th:text="${kpis.atrasados}">0</p>
-        </div>
-        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Prazo Médio (d)</span>
-            <p class="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1" th:text="${kpis.prazoMedioDias}">0</p>
-        </div>
-        <div class="bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">Semana</span>
-            <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1" th:text="${kpis.semana}">0</p>
-        </div>
-    </div>
+
     <div th:if="${!isTecnico}" class="agenda-filters bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 lg:p-5 shadow-sm mb-6">
         <div class="agenda-filter-grid flex flex-wrap items-center gap-3">
             <div class="agenda-search-filter relative flex-1 min-w-[220px]">
@@ -101,36 +66,56 @@
         </div>
     </div>
 
-    <div class="agenda-toolbar flex flex-wrap items-center justify-between gap-3">
-        <div class="agenda-view-tabs flex items-center gap-1 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-1 shadow-sm overflow-x-auto max-w-full">
-            <button type="button" th:if="${isTecnico}" id="btnViewAgenda" onclick="switchView('agenda')"
-                    class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap">
-                <i data-lucide="list-checks" class="w-4 h-4"></i> Serviços do Dia
+    <div class="agenda-toolbar flex flex-col lg:flex-row flex-wrap items-center justify-between gap-4 w-full">
+
+        <div class="w-full lg:flex-1 flex justify-center lg:justify-start">
+            <div class="agenda-view-tabs flex items-center gap-1 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-1 shadow-sm overflow-x-auto max-w-full">
+                <button type="button" th:if="${isTecnico}" id="btnViewAgenda" onclick="switchView('agenda')"
+                        class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap">
+                    <i data-lucide="list-checks" class="w-4 h-4"></i> Serviços do Dia
+                </button>
+                <button type="button" th:unless="${isTecnico}" onclick="openDayView()"
+                        class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 text-slate-600 dark:text-slate-400 transition-all whitespace-nowrap">
+                    <i data-lucide="calendar-check" class="w-4 h-4"></i> Dia
+                </button>
+                <button type="button" id="btnViewCalendar" onclick="switchView('calendar')"
+                        class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap">
+                    <i data-lucide="calendar-days" class="w-4 h-4"></i> Mês
+                </button>
+                <button type="button" id="btnViewList" onclick="switchView('list')"
+                        class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap">
+                    <i data-lucide="list" class="w-4 h-4"></i> Lista
+                </button>
+            </div>
+        </div>
+
+        <div sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" class="flex flex-wrap items-center justify-center gap-2 shrink-0 z-10 relative">
+            <button type="button" onclick="openServiceSchedulePicker()"
+                    class="px-4 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold flex items-center gap-2 transition-colors">
+                <i data-lucide="calendar-plus" class="w-4 h-4"></i> Agendar serviço
             </button>
-            <button type="button" th:unless="${isTecnico}" onclick="openDayView()" class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 text-slate-600 dark:text-slate-400 transition-all whitespace-nowrap">
-                <i data-lucide="calendar-check" class="w-4 h-4"></i> Dia
-            </button>
-            <button type="button" id="btnViewCalendar" onclick="switchView('calendar')"
-                    class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap">
-                <i data-lucide="calendar-days" class="w-4 h-4"></i> Mês
-            </button>
-            <button type="button" id="btnViewList" onclick="switchView('list')"
-                    class="px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap">
-                <i data-lucide="list" class="w-4 h-4"></i> Lista
+            <button type="button" onclick="toggleModal('newVisitModal', true)"
+                    class="px-4 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm font-bold flex items-center gap-2 transition-colors">
+                <i data-lucide="clipboard-plus" class="w-4 h-4"></i> Agendar visita técnica
             </button>
         </div>
 
-        <div th:unless="${isTecnico}" class="agenda-day-picker flex items-center gap-2 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-2 shadow-sm">
-            <label for="routeDatePicker" class="text-xs font-bold text-slate-500 dark:text-slate-400 pl-1 flex items-center gap-1.5 whitespace-nowrap">
-                <i data-lucide="calendar-search" class="w-4 h-4"></i> Ver serviços do dia:
-            </label>
-            <input id="routeDatePicker" type="date" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
-            <button type="button" onclick="openRouteDayFromPicker()"
-                    class="px-4 py-2 rounded-lg text-sm font-bold bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white transition-colors flex items-center gap-1.5 whitespace-nowrap">
-                <i data-lucide="eye" class="w-4 h-4"></i> Ver
-            </button>
+        <div th:unless="${isTecnico}" class="w-full lg:flex-1 flex justify-center lg:justify-end">
+            <div class="agenda-day-picker flex flex-wrap items-center justify-center sm:justify-start gap-2 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-xl p-2 shadow-sm max-w-full">
+                <label for="routeDatePicker" class="text-xs font-bold text-slate-500 dark:text-slate-400 pl-1 flex items-center gap-1.5 whitespace-nowrap">
+                    <i data-lucide="calendar-search" class="w-4 h-4"></i> Ver serviços do dia:
+                </label>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <input id="routeDatePicker" type="date"
+                           class="flex-1 sm:w-auto px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                    <button type="button" onclick="openRouteDayFromPicker()"
+                            class="px-4 py-2 rounded-lg text-sm font-bold bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="eye" class="w-4 h-4"></i> Ver
+                    </button>
+                </div>
+            </div>
         </div>
-        <input th:if="${isTecnico}" id="routeDatePicker" type="date" class="hidden">
+
     </div>
     <br>
 
@@ -211,6 +196,11 @@
                         class="px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-md flex items-center gap-2">
                     <i data-lucide="file-down" class="w-4 h-4"></i>
                     Abrir Roteiro em PDF
+                </button>
+                <button type="button" id="btnDayWhatsApp"
+                        class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md flex items-center gap-2">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                    Enviar no WhatsApp
                 </button>
             </div>
 
@@ -462,6 +452,11 @@
                 <textarea id="visitNotes" rows="3" placeholder="Detalhes da visita técnica..."
                           class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white"></textarea>
             </div>
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável</label>
+                <input id="visitResponsible" type="text" maxlength="120" placeholder="Carla, Jessica, Tatiane"
+                       class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+            </div>
 
             <div class="flex flex-wrap justify-between items-center gap-3">
                 <button type="button" onclick="openDeleteVisitModalFromEdit()" class="px-5 py-3 rounded-xl text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex items-center gap-2">
@@ -633,7 +628,7 @@
             semaphore: 'NEUTRAL',
             serviceDetails: ['Visita técnica ao cliente'],
             daysRemaining: null,
-            responsible: null,
+            responsible: v.responsible || null,
             team: null,
             observations: v.notes,
             rescheduleReason: null
@@ -933,6 +928,7 @@
 
         document.getElementById('dayModalTitle').textContent = 'Serviços do dia ' + fmtBR(dateStr);
         document.getElementById('btnDayPdf').onclick = () => openRoteiroPdf(dateStr);
+        document.getElementById('btnDayWhatsApp').onclick = () => openRoteiroWhatsApp(dateStr);
 
         const list = document.getElementById('dayModalList');
         list.innerHTML = '';
@@ -970,7 +966,7 @@
                 <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 mb-4">
                     <span><b>Orçamento:</b> ${s.quoteNumber || '-'}</span>
                     <span><b>OS:</b> ${s.workOrderNumber || '-'}</span>
-                    <span><b>${isVisit ? 'Observações' : 'Aprovação'}:</b> ${isVisit ? (s.observations || '-') : fmtDateTimeBR(s.approvalDate)}</span>
+                    <span><b>Observações:</b> ${s.observations || '-'}</span>
                     <span><b>${isVisit ? 'Agendada para' : 'Prazo - Entregar até'}:</b> ${fmtBR(isVisit ? s.scheduledDate : s.deadlineDate)}</span>
                     <span><b>Responsável:</b> ${s.responsible || '-'}</span>
                     <span><b>Hora Prevista:</b> ${s.scheduledTime ? fmtTimeBR(s.scheduledTime) : '-'}</span>
@@ -1000,9 +996,22 @@
     }
 
     function openRoteiroPdf(dateStr) {
-
-
         window.open('/agenda/roteiro-pdf/' + dateStr, '_blank');
+    }
+
+    async function openRoteiroWhatsApp(dateStr) {
+        const whatsapp = window.open('about:blank', '_blank');
+        try {
+            const response = await fetch('/agenda/roteiro-whatsapp/' + encodeURIComponent(dateStr));
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.message) throw new Error(data.error || 'Não foi possível gerar a mensagem do roteiro.');
+            const url = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(data.message);
+            if (whatsapp) whatsapp.location.href = url;
+            else window.open(url, '_blank', 'noopener');
+        } catch (error) {
+            if (whatsapp) whatsapp.close();
+            alert(error.message || 'Não foi possível gerar a mensagem do roteiro.');
+        }
     }
 
     function renderUnscheduledPanel() {
@@ -1029,13 +1038,6 @@
         });
     }
 
-
-    /**
-     * View "Serviços do Dia": pensada para o Técnico usando o celular em campo.
-     * Mostra cards grandes e tocáveis com todos os serviços agendados para hoje,
-     * ao invés do calendário mensal apertado ou da tabela larga — que exigem scroll horizontal
-     * e são difíceis de usar em telas pequenas.
-     */
     function renderAgendaView() {
         const container = document.getElementById('agendaViewList');
         if (!container) return;
@@ -1550,6 +1552,7 @@
             document.getElementById('visitDate').value = v.visitDate || '';
             document.getElementById('visitTime').value = v.visitTime ? v.visitTime.substring(0, 5) : '';
             document.getElementById('visitNotes').value = v.notes || '';
+            document.getElementById('visitResponsible').value = v.responsible || '';
 
             closeModal('dayModal');
             toggleModal('visitModal', true);
@@ -1565,7 +1568,8 @@
             id: document.getElementById('visitId').value,
             visitDate: document.getElementById('visitDate').value || null,
             visitTime: document.getElementById('visitTime').value ? (document.getElementById('visitTime').value + ':00') : null,
-            notes: document.getElementById('visitNotes').value
+            notes: document.getElementById('visitNotes').value,
+            responsible: document.getElementById('visitResponsible').value.trim()
         };
 
         if (!payload.visitDate) {

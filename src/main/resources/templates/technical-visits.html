@@ -142,6 +142,7 @@
         <h3 class="text-xl font-black text-slate-900 dark:text-white mb-5">Dados da visita</h3>
         <div class="grid grid-cols-2 gap-3 mb-4"><div><label class="form-label">Data</label><input id="editVisitDate" type="date" class="form-input"></div><div><label class="form-label">Horário</label><input id="editVisitTime" type="time" class="form-input"></div></div>
         <div th:if="${visitRole == 'GESTAO'}"><label class="form-label">Status</label><select id="editVisitStatus" class="form-input mb-4"><option value="AGENDADA">Agendada</option><option value="EM_ANDAMENTO">Em andamento</option><option value="CONCLUIDA">Concluída</option></select></div>
+        <label class="form-label">Responsável pela visita</label><input id="editVisitResponsible" maxlength="120" class="form-input mb-4">
         <label class="form-label">Observações</label><textarea id="editVisitNotes" rows="4" class="form-input"></textarea>
         <button class="submit-btn mt-5">Salvar visita</button>
     </form>
@@ -404,8 +405,8 @@
         $('mediaGalleryTitle').textContent=p.caption||p.fileName; $('mediaGalleryOpening').textContent=p.openingName?'Vão: '+p.openingName:'Visita em geral'; $('mediaGalleryCounter').textContent=`${galleryIndex+1} de ${currentVisit.photos.length}`; lucide.createIcons();
     }
 
-    function openVisitEditor(){ $('editVisitDate').value=currentVisit.visitDate||''; $('editVisitTime').value=currentVisit.visitTime?.substring(0,5)||''; const statusInput=$('editVisitStatus'); if(statusInput)statusInput.value=currentVisit.status||'AGENDADA'; $('editVisitNotes').value=currentVisit.notes||''; toggleModal('visitEditorModal',true); }
-    async function saveVisit(e){ e.preventDefault(); const payload={visitDate:$('editVisitDate').value,visitTime:$('editVisitTime').value||null,status:$('editVisitStatus')?.value||currentVisit.status,notes:$('editVisitNotes').value}; await jsonAction(`/technical-visits/${currentVisit.id}`,'POST',payload); }
+    function openVisitEditor(){ $('editVisitDate').value=currentVisit.visitDate||''; $('editVisitTime').value=currentVisit.visitTime?.substring(0,5)||''; $('editVisitResponsible').value=currentVisit.responsible||''; const statusInput=$('editVisitStatus'); if(statusInput)statusInput.value=currentVisit.status||'AGENDADA'; $('editVisitNotes').value=currentVisit.notes||''; toggleModal('visitEditorModal',true); }
+    async function saveVisit(e){ e.preventDefault(); const payload={visitDate:$('editVisitDate').value,visitTime:$('editVisitTime').value||null,responsible:$('editVisitResponsible').value.trim(),status:$('editVisitStatus')?.value||currentVisit.status,notes:$('editVisitNotes').value}; await jsonAction(`/technical-visits/${currentVisit.id}`,'POST',payload); }
 
     function openOpeningEditor(o=null){ $('openingModalTitle').textContent=o?'Editar vão':'Adicionar vão'; $('openingId').value=o?.id||''; $('openingServiceCategory').value=o?.serviceCategory||''; $('openingName').value=o?.name||''; $('openingWidth').value=o?.widthMm??''; $('openingHeight').value=o?.heightMm??''; $('openingHeightLeft').value=o?.grossHeightLeftMm??''; $('openingHeightRight').value=o?.grossHeightRightMm??''; $('openingWidthTop').value=o?.grossWidthTopMm??''; $('openingWidthBottom').value=o?.grossWidthBottomMm??''; $('openingNotes').value=o?.notes||''; $('featuresEditor').innerHTML=''; (o?.features||[]).forEach(addFeatureRow); toggleModal('openingModal',true); lucide.createIcons(); }
     function editOpening(id){ openOpeningEditor(currentVisit.openings.find(o=>o.id===id)); }

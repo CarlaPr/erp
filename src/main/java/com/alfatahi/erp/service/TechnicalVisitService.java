@@ -42,6 +42,7 @@ public class TechnicalVisitService {
         visit.setVisitDate(req.getVisitDate());
         visit.setVisitTime(req.getVisitTime());
         visit.setNotes(req.getNotes());
+        visit.setResponsible(req.getResponsible());
 
         visit = visitRepo.saveAndFlush(visit);
         return toDto(visit);
@@ -76,6 +77,7 @@ public class TechnicalVisitService {
         visit.setVisitDate(req.getVisitDate());
         visit.setVisitTime(req.getVisitTime());
         visit.setNotes(req.getNotes());
+        visit.setResponsible(req.getResponsible());
 
         visitRepo.saveAndFlush(visit);
     }
@@ -125,6 +127,8 @@ public class TechnicalVisitService {
         dto.setVisitDate(v.getVisitDate());
         dto.setVisitTime(v.getVisitTime());
         dto.setNotes(v.getNotes());
+        dto.setResponsible(v.getResponsible());
+        dto.setStatus(v.getStatus());
         dto.setCreatedAt(v.getCreatedAt());
 
         return dto;
