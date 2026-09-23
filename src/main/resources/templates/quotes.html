@@ -1191,18 +1191,44 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
+    // Tempo máximo de espera pela geração do PDF no servidor. Sem isso, se o backend
+    // travasse (ex.: buscando uma imagem de logo/assinatura fora do ar), a aba aberta
+    // ficava "carregando" para sempre e sem nenhuma mensagem de erro para o usuário.
+    const PDF_FETCH_TIMEOUT_MS = 45000;
+
     async function generateReceiptPdfBlob() {
         if (!currentActiveQuoteIdForPdf) {
             throw new Error('ID do orçamento não encontrado. Feche e reabra o orçamento.');
         }
-        const response = await fetch(`/quotes/pdf/${currentActiveQuoteIdForPdf}`, {
-            credentials: 'same-origin'
-        });
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), PDF_FETCH_TIMEOUT_MS);
+
+        let response;
+        try {
+            response = await fetch(`/quotes/pdf/${currentActiveQuoteIdForPdf}`, {
+                credentials: 'same-origin',
+                signal: controller.signal
+            });
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                throw new Error('O servidor demorou demais para gerar o PDF (tempo limite excedido). Tente novamente.');
+            }
+            throw new Error('Falha de comunicação com o servidor ao gerar o PDF.');
+        } finally {
+            clearTimeout(timeoutId);
+        }
+
         if (!response.ok) {
             const detail = await response.text().catch(() => '');
             throw new Error(`Falha ao gerar PDF no servidor (HTTP ${response.status}). ${detail}`.trim());
         }
-        return await response.blob();
+
+        const blob = await response.blob();
+        if (!blob || blob.size === 0) {
+            throw new Error('O servidor retornou um PDF vazio.');
+        }
+        return blob;
     }
 
     async function generateAndPrintQuotePdf() {
@@ -1213,19 +1239,29 @@
 
         const buttons = [document.getElementById('btnPrintPdfTop'), document.getElementById('btnPrintPdfBottom')].filter(Boolean);
         const originalHtmlMap = new Map();
-        setPdfButtonsLoading(buttons, true, '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Abrindo PDF...', originalHtmlMap);
+        setPdfButtonsLoading(buttons, true, '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Gerando PDF...', originalHtmlMap);
+
+        // Abrimos a aba já dentro do clique do usuário (ainda em branco) para que os
+        // bloqueadores de pop-up não a barrem; só navegamos ela para o PDF depois que
+        // o servidor confirmar que gerou o arquivo com sucesso.
+        const newTab = window.open('about:blank', '_blank');
+        if (newTab) {
+            newTab.document.write('<h2 style="font-family:sans-serif; text-align:center; margin-top:50px; color:#333;">Gerando o PDF do orçamento...</h2>');
+        }
 
         try {
-            const pdfUrl = `/quotes/pdf/${currentActiveQuoteIdForPdf}`;
-            const newTab = window.open(pdfUrl, '_blank');
+            const pdfBlob = await generateReceiptPdfBlob();
+            const pdfUrl = URL.createObjectURL(pdfBlob);
 
-            if (!newTab) {
-                const pdfBlob = await generateReceiptPdfBlob();
+            if (newTab) {
+                newTab.location.href = pdfUrl;
+            } else {
                 downloadBlobFile(pdfBlob, buildQuoteShareFileName());
             }
         } catch (err) {
-            console.error('Erro ao abrir PDF do orçamento:', err);
-            alert('Não foi possível abrir o PDF.\n\nDetalhe: ' + (err.message || ''));
+            if (newTab) newTab.close();
+            console.error('Erro ao gerar PDF do orçamento:', err);
+            alert('Não foi possível gerar o PDF.\n\nDetalhe: ' + (err.message || ''));
         } finally {
             setPdfButtonsLoading(buttons, false, '', originalHtmlMap);
         }

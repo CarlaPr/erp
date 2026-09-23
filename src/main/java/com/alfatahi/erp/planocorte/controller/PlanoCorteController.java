@@ -511,10 +511,10 @@ public class PlanoCorteController {
         model.addAttribute("vaoForm", vaoForm);
         model.addAttribute("elementoForm", new ElementoTecnicoForm());
         model.addAttribute("vidros", vidroService.listarAtivos());
-        model.addAttribute("coresVidroVao", com.alfatahi.erp.planocorte.entity.CorVidroVao.values());
+        model.addAttribute("coresVidroVao", CorVidroVao.values());
         model.addAttribute("espessurasVidroVao", PlanoCorteVaoForm.ESPESSURAS_VIDRO);
         model.addAttribute("tiposBorda", TipoBorda.acabamentos());
-        model.addAttribute("tiposCanto", com.alfatahi.erp.planocorte.entity.TipoCanto.values());
+        model.addAttribute("tiposCanto", TipoCanto.values());
         model.addAttribute("tiposVidroVao", java.util.stream.Stream.concat(
                 PlanoCorteVaoForm.TIPOS_VIDRO.stream(), PlanoCorteVaoForm.TIPOS_ESPELHO.stream()).toList());
         model.addAttribute("tiposElemento", TipoElemento.valoresSelecionaveis());

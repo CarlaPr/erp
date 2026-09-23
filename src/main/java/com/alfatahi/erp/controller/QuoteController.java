@@ -9,6 +9,8 @@ import com.alfatahi.erp.repository.QuoteRepository;
 import com.alfatahi.erp.service.QuoteService;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -22,15 +24,27 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
 @RequestMapping("/quotes")
 public class QuoteController {
+
+    private static final Logger log = LoggerFactory.getLogger(QuoteController.class);
+
+    // Cache em memória para as imagens (logo/assinatura) já baixadas e convertidas em base64.
+    // Evita baixar a mesma logo/assinatura da empresa a cada PDF gerado (o que deixava a
+    // geração lenta e sujeita a falhas de rede repetidas).
+    private static final Map<String, String> IMAGE_DATA_URI_CACHE = new ConcurrentHashMap<>();
+    private static final int IMAGE_CACHE_MAX_ENTRIES = 200;
 
     private final QuoteRepository quoteRepo;
     private final ClientRepository clientRepo;
@@ -120,9 +134,20 @@ public class QuoteController {
             }
             boolean hasClientDetails = !clientDoc.isEmpty() || !clientPhone.isEmpty() || !clientEmail.isEmpty() || !clientAddr.isEmpty();
 
-            String logoB64    = toBase64Uri(quote.getProfile() != null ? quote.getProfile().getLogoUrl() : null);
-            String sigCoB64   = toBase64Uri(quote.getProfile() != null ? quote.getProfile().getSignatureUrl() : null);
-            String sigCliB64  = toBase64Uri(nvlStr(quote.getClientSignature(), null));
+            // As três imagens (logo da empresa, assinatura da empresa, assinatura do cliente) são
+            // buscadas em paralelo. Antes eram buscadas uma após a outra, então uma URL lenta ou
+            // fora do ar podia, sozinha, travar a geração do PDF por até ~50s.
+            String logoUrlSrc   = quote.getProfile() != null ? quote.getProfile().getLogoUrl() : null;
+            String sigCoUrlSrc  = quote.getProfile() != null ? quote.getProfile().getSignatureUrl() : null;
+            String sigCliUrlSrc = nvlStr(quote.getClientSignature(), null);
+
+            CompletableFuture<String> logoFuture  = CompletableFuture.supplyAsync(() -> toBase64Uri(logoUrlSrc));
+            CompletableFuture<String> sigCoFuture  = CompletableFuture.supplyAsync(() -> toBase64Uri(sigCoUrlSrc));
+            CompletableFuture<String> sigCliFuture = CompletableFuture.supplyAsync(() -> toBase64Uri(sigCliUrlSrc));
+
+            String logoB64    = logoFuture.join();
+            String sigCoB64   = sigCoFuture.join();
+            String sigCliB64  = sigCliFuture.join();
             boolean clientSigned = quote.getClientSignature() != null && !quote.getClientSignature().isBlank();
 
             String num = nvlStr(quote.getNumber(), "ORC-0000").replace("ORC-", "");
@@ -183,8 +208,11 @@ public class QuoteController {
                     .body(pdfBytes);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
+            log.error("Erro ao gerar PDF do orçamento {}", id, e);
+            String message = "Erro ao gerar PDF: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+            return ResponseEntity.internalServerError()
+                    .header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
+                    .body(message.getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -192,8 +220,19 @@ public class QuoteController {
         int[] weights = {400, 500, 600, 700, 800, 900};
         for (int weight : weights) {
             String path = "/fonts/Inter-" + weight + ".ttf";
-            builder.useFont(() -> getClass().getResourceAsStream(path), "Inter", weight,
-                    PdfRendererBuilder.FontStyle.NORMAL, true);
+            // IMPORTANTE: só registra a fonte se o arquivo realmente existir no classpath.
+            // Antes o código chamava builder.useFont(...) incondicionalmente; como os arquivos
+            // /fonts/Inter-*.ttf não existem no projeto, o openhtmltopdf falhava ao tentar
+            // carregá-los assim que precisava desenhar qualquer texto (o template usa
+            // font-family: 'Inter' em praticamente tudo) e a geração do PDF quebrava com
+            // exceção em 100% das chamadas — por isso o botão nunca completava. O
+            // ScheduleController já fazia essa checagem corretamente; faltava aqui.
+            if (getClass().getResource(path) != null) {
+                builder.useFont(() -> getClass().getResourceAsStream(path), "Inter", weight,
+                        PdfRendererBuilder.FontStyle.NORMAL, true);
+            } else {
+                log.warn("Fonte '{}' não encontrada no classpath; o PDF do orçamento usará a fonte padrão para o peso {}.", path, weight);
+            }
         }
     }
 
@@ -209,19 +248,67 @@ public class QuoteController {
     private String toBase64Uri(String url) {
         if (url == null || url.isBlank()) return null;
         if (url.startsWith("data:"))       return url;
-        try {
-            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-            conn.setConnectTimeout(6000);
-            conn.setReadTimeout(12000);
-            conn.setRequestProperty("User-Agent", "ERP-PDF-Generator/1.0");
-            byte[] bytes   = conn.getInputStream().readAllBytes();
-            String mime    = conn.getContentType();
-            if (mime == null) mime = url.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
-            mime = mime.split(";")[0].trim();
-            return "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(bytes);
-        } catch (Exception e) {
+
+        String trimmed = url.trim();
+        if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+            // URL inválida/relativa: nem tenta baixar (antes isso gerava uma
+            // MalformedURLException silenciosamente engolida a cada PDF).
+            log.warn("URL de imagem ignorada no PDF (não é http/https): {}", trimmed);
             return null;
         }
+
+        String cached = IMAGE_DATA_URI_CACHE.get(trimmed);
+        if (cached != null) return cached;
+
+        try {
+            String result = fetchImageAsDataUri(trimmed, 0);
+            if (result != null) {
+                if (IMAGE_DATA_URI_CACHE.size() >= IMAGE_CACHE_MAX_ENTRIES) {
+                    IMAGE_DATA_URI_CACHE.clear();
+                }
+                IMAGE_DATA_URI_CACHE.put(trimmed, result);
+            } else {
+                log.warn("Não foi possível baixar a imagem para o PDF: {}", trimmed);
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("Falha ao baixar imagem para o PDF ({}): {}", trimmed, e.getMessage());
+            return null;
+        }
+    }
+
+    private String fetchImageAsDataUri(String url, int redirectCount) throws Exception {
+        if (redirectCount > 5) return null;
+
+        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+        conn.setConnectTimeout(4000);
+        conn.setReadTimeout(6000);
+        conn.setInstanceFollowRedirects(false);
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; ERP-PDF-Generator/1.0)");
+
+        int status = conn.getResponseCode();
+        if (status >= 300 && status < 400) {
+            String location = conn.getHeaderField("Location");
+            conn.disconnect();
+            if (location == null || location.isBlank()) return null;
+            String resolved = URI.create(url).resolve(location).toString();
+            return fetchImageAsDataUri(resolved, redirectCount + 1);
+        }
+        if (status != HttpURLConnection.HTTP_OK) {
+            conn.disconnect();
+            return null;
+        }
+
+        byte[] bytes = conn.getInputStream().readAllBytes();
+        String mime  = conn.getContentType();
+        conn.disconnect();
+
+        if (bytes.length == 0) return null;
+        if (mime == null || !mime.toLowerCase().startsWith("image/")) {
+            mime = url.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+        }
+        mime = mime.split(";")[0].trim();
+        return "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(bytes);
     }
 
     @Transactional(readOnly = true)
