@@ -123,13 +123,15 @@ public class ReceivableController {
         if (clientId != null) {
             list = list.stream().filter(r -> r.getClient() != null && clientId.equals(r.getClient().getId())).collect(Collectors.toList());
         }
-        if (dateFrom != null) {
+        if (dateFrom != null || dateTo != null) {
             final LocalDate df = dateFrom;
-            list = list.stream().filter(r -> !r.getDueDate().isBefore(df)).collect(Collectors.toList());
-        }
-        if (dateTo != null) {
             final LocalDate dt = dateTo;
-            list = list.stream().filter(r -> !r.getDueDate().isAfter(dt)).collect(Collectors.toList());
+            final LocalDate today = LocalDate.now();
+            // Vencidos em aberto continuam visíveis fora do período selecionado.
+            list = list.stream().filter(r -> (("pending".equals(r.getStatus()) || "partial".equals(r.getStatus())) && r.getDueDate().isBefore(today))
+                    || ((df == null || !r.getDueDate().isBefore(df))
+                    && (dt == null || !r.getDueDate().isAfter(dt))))
+                    .collect(Collectors.toList());
         }
         if (paymentMethod != null && !paymentMethod.isBlank()) {
             list = list.stream().filter(r -> paymentMethod.equals(r.getPaymentMethod())).collect(Collectors.toList());

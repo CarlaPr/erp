@@ -116,8 +116,15 @@ public class PayableController {
             }
         }
         if (supplierId != null) list = list.stream().filter(p -> p.getSupplier() != null && supplierId.equals(p.getSupplier().getId())).collect(Collectors.toList());
-        if (dateFrom != null) { final LocalDate df = dateFrom; list = list.stream().filter(p -> !p.getDueDate().isBefore(df)).collect(Collectors.toList()); }
-        if (dateTo != null) { final LocalDate dt = dateTo; list = list.stream().filter(p -> !p.getDueDate().isAfter(dt)).collect(Collectors.toList()); }
+        if (dateFrom != null || dateTo != null) {
+            final LocalDate df = dateFrom;
+            final LocalDate dt = dateTo;
+            // Vencidos em aberto continuam visíveis fora do período selecionado.
+            list = list.stream().filter(p -> p.isOverdue()
+                    || ((df == null || !p.getDueDate().isBefore(df))
+                    && (dt == null || !p.getDueDate().isAfter(dt))))
+                    .collect(Collectors.toList());
+        }
         if (workOrderId != null) list = list.stream().filter(p -> p.getWorkOrder() != null && workOrderId.equals(p.getWorkOrder().getId())).collect(Collectors.toList());
 
         switch (aba == null ? "todas" : aba) {
