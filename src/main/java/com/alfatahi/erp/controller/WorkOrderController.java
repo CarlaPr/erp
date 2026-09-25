@@ -63,7 +63,7 @@ public class WorkOrderController {
 
         Profile profile = profileRepository.findAll().stream().findFirst().orElseGet(() -> {
             Profile p = new Profile();
-            p.setCompanyName("Alfa Tahi");
+            p.setCompanyName("GRUPO GLASS");
             return profileRepository.save(p);
         });
 

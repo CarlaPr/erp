@@ -23,7 +23,7 @@
             const tab = window.open('about:blank', '_blank');
             if (tab) {
                 tab.opener = null;
-                tab.document.title = 'Gerando orçamento';
+                tab.document.title = 'Gerando orçamento - Grupo Glass';
                 tab.document.body.textContent = 'Gerando o PDF do orçamento…';
                 tab.document.body.style.cssText = 'font:18px sans-serif;padding:40px;color:#334155';
             }

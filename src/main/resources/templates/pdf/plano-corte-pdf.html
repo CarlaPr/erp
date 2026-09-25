@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head>
+    <title>Plano de Corte - Grupo Glass</title>
     <meta charset="UTF-8"/>
     <style>
         * {
@@ -579,7 +580,7 @@
                         <img class="company-logo" th:src="${logoBase64}" alt="Logo"/>
                     </td>
                     <td>
-                        <div class="company-name" th:text="${companyName}">TAHIGLASS</div>
+                        <div class="company-name" th:text="${companyName}">GRUPO GLASS</div>
                         <div class="company-document" th:text="${'CNPJ/CPF: ' + companyDoc}">CNPJ/CPF: --</div>
                         <div class="company-address" th:if="${companyAddress != null && !companyAddress.isEmpty()}" th:text="${companyAddress}">Endereço</div>
                         <div class="company-contact" th:if="${companyEmail != null && !companyEmail.isEmpty()}" th:text="${companyEmail}">email@empresa.com</div>

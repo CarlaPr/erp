@@ -282,23 +282,25 @@ public class PdfService {
         if (doOrcamento.isPresent()) {
             return doOrcamento.get();
         }
-        return buscarProfileTahiGlass();
+        return buscarProfilePadrao();
     }
 
-    private Profile buscarProfileTahiGlass() {
+    private Profile buscarProfilePadrao() {
 
         return profileRepository.findAll()
                 .stream()
                 .filter(profile ->
                         profile.getCompanyName() != null
                                 && companyImageService.companyKey(profile)
-                                .filter("tahiglass"::equals)
+                                .filter(key -> "grupoglass".equals(key) || "tahiglass".equals(key))
                                 .isPresent()
                 )
+                .sorted(java.util.Comparator.comparingInt(profile ->
+                        companyImageService.companyKey(profile).filter("grupoglass"::equals).isPresent() ? 0 : 1))
                 .findFirst()
                 .orElseThrow(() ->
                         new IllegalStateException(
-                                "Company Profile da TAHI GLASS não encontrado."
+                                "Perfil empresarial do GRUPO GLASS não encontrado."
                         )
                 );
     }

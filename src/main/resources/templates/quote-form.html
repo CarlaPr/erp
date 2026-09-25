@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-<head th:replace="~{fragments/layout :: head(title=${#strings.isEmpty(quoteId) ? 'Novo Orçamento - Tahi Glass' : 'Editar Orçamento - Tahi Glass'})}"></head>
+<head th:replace="~{fragments/layout :: head(title=${#strings.isEmpty(quoteId) ? 'Novo Orçamento - Grupo Glass' : 'Editar Orçamento - Grupo Glass'})}"></head>
 <body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
@@ -1844,7 +1844,7 @@
 
                 const titleEl = document.getElementById('formTitle');
                 if (titleEl) titleEl.innerText = `Editar Orçamento: ${q.number}`;
-                document.title = `Editar ${q.number} - Tahi Glass`;
+                document.title = `Editar ${q.number} - Grupo Glass`;
 
 
 

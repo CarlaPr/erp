@@ -111,7 +111,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers("/login", "/css/**", "/js/**", "/public/**").permitAll()
-                        .requestMatchers("/favicon.ico", "/favicon.svg", "/favicon-96x96.png",
+                        .requestMatchers("/AppAssets/**", "/favicon.ico",
                                 "/apple-touch-icon.png", "/web-app-manifest-192x192.png",
                                 "/web-app-manifest-512x512.png", "/site.webmanifest").permitAll()
                         .requestMatchers("/admin/users/**").hasAuthority("GESTAO")

@@ -25,9 +25,11 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>A associação é feita pelo nome do arquivo: o perfil "Tahi Glass" usa os arquivos cujo nome
  * contém {@code tahiglass}; "One Glass" usa {@code oneglass}; "Ru Glass" usa {@code ruglass}.
+ * O perfil "Grupo Glass" usa os arquivos cujo nome contém {@code grupoglass}.
  * Dentro de cada empresa, o arquivo que contém {@code logo} é a logo e o que contém
  * {@code assinatura} (ou {@code signature}) é a assinatura. Exemplos válidos:
  * <pre>
+ *   images/grupoglass_logo.png      images/assinatura-grupoglass.png
  *   images/logo-tahiglass.png        images/assinatura-tahiglass.png
  *   images/oneglass-logo.png         images/oneglass-assinatura.png
  *   images/logo_ruglass.jpg          images/ruglass_assinatura.jpg
@@ -42,7 +44,7 @@ public class CompanyImageService {
     private static final Logger log = LoggerFactory.getLogger(CompanyImageService.class);
 
     /** Chaves das empresas suportadas; o nome do arquivo precisa conter uma delas. */
-    static final List<String> COMPANY_KEYS = List.of("tahiglass", "oneglass", "ruglass");
+    static final List<String> COMPANY_KEYS = List.of("grupoglass", "tahiglass", "oneglass", "ruglass");
 
     private static final String IMAGES_LOCATION = "classpath*:images/*";
     private static final List<String> EXTENSIONS = List.of("png", "jpg", "jpeg", "webp", "gif", "svg");
@@ -98,7 +100,7 @@ public class CompanyImageService {
     }
 
     /**
-     * Chave da empresa ({@code tahiglass}, {@code oneglass} ou {@code ruglass}) para o perfil
+     * Chave da empresa ({@code grupoglass}, {@code tahiglass}, {@code oneglass} ou {@code ruglass}) para o perfil
      * informado, ou vazio se o nome da empresa não corresponder a nenhuma conhecida.
      */
     public Optional<String> companyKey(Profile profile) {
