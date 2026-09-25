@@ -3,6 +3,7 @@ package com.alfatahi.erp.entity;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.List;
@@ -58,6 +59,10 @@ public class Quote {
 
     @Column(name = "date_approved")
     private LocalDateTime dateApproved;
+
+    /** Data até a qual o orçamento é válido (inclusive). Aparece no PDF. */
+    @Column(name = "valid_until")
+    private LocalDate validUntil;
 
     @OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("quote")
@@ -125,6 +130,9 @@ public class Quote {
 
     public LocalDateTime getDateCreated() { return dateCreated; }
     public void setDateCreated(LocalDateTime dateCreated) { this.dateCreated = dateCreated; }
+
+    public LocalDate getValidUntil() { return validUntil; }
+    public void setValidUntil(LocalDate validUntil) { this.validUntil = validUntil; }
 
     public LocalDateTime getDateApproved() { return dateApproved; }
     public void setDateApproved(LocalDateTime dateApproved) { this.dateApproved = dateApproved; }

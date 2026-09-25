@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -27,10 +28,15 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
             "ORDER BY q.dateApproved DESC, q.dateCreated DESC")
     List<Quote> findApprovedWithoutWorkOrder();
 
+    /**
+     * Marca como "expired" os orçamentos pendentes cuja data de validade já passou. A validade é
+     * inclusiva: um orçamento válido até 10/05 continua válido durante todo o dia 10/05 e só
+     * expira a partir do dia 11/05 (ou seja, quando {@code validUntil < hoje}).
+     */
     @Modifying
     @Transactional
-    @Query("UPDATE Quote q SET q.status = 'expired' WHERE q.status = 'pending' AND q.dateCreated < :limite")
-    int expirePendingQuotes(@Param("limite") LocalDateTime limite);
+    @Query("UPDATE Quote q SET q.status = 'expired' WHERE q.status = 'pending' AND q.validUntil IS NOT NULL AND q.validUntil < :hoje")
+    int expirePendingQuotes(@Param("hoje") LocalDate hoje);
 
     @Query("SELECT q FROM Quote q WHERE q.status = 'expired' AND q.dateCreated < :limite")
     List<Quote> findExpiredQuotesOlderThan(@Param("limite") LocalDateTime limite);

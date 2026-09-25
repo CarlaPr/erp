@@ -16,6 +16,8 @@ import java.util.UUID;
 @Service
 public class QuoteService {
 
+    public static final int DEFAULT_VALIDITY_DAYS = 15;
+
     private final QuoteRepository quoteRepo;
     private final WorkOrderRepository osRepo;
     private final ScheduleService scheduleService;
@@ -75,8 +77,6 @@ public class QuoteService {
             if (!alreadyApproved && ("cancelled".equals(existing.getStatus()) || "canceled".equals(existing.getStatus()))) {
                 throw new IllegalStateException("A O.S. deste orçamento está cancelada.");
             }
-            // A agenda identifica a O.S. mesmo quando o vínculo antigo foi removido.
-            // Não inferimos vínculos pelo número nem reativamos ordens canceladas.
             if (existing.getQuote() == null) {
                 existing.setQuote(quote);
                 osRepo.saveAndFlush(existing);
@@ -133,14 +133,7 @@ public class QuoteService {
         return os;
     }
 
-    /**
-     * Sincroniza uma O.S. já vinculada a um orçamento aprovado com o estado atual do
-     * orçamento (itens e valor total), depois de o orçamento aprovado ter sido editado.
-     * Reajusta proporcionalmente as contas a receber ainda ativas caso o valor mude.
-     * Não faz nada caso o orçamento não esteja aprovado ou não tenha O.S. vinculada
-     * (por exemplo, se a O.S. foi excluída/desvinculada — nesse caso, use "Recuperar O.S.").
-     */
-    @Transactional
+   @Transactional
     public WorkOrder syncApprovedQuoteToWorkOrder(Quote quote) {
         if (quote == null || !"approved".equals(quote.getStatus())) {
             return null;
@@ -242,16 +235,6 @@ public class QuoteService {
         }
     }
 
-    /**
-     * Exclui definitivamente os orçamentos já marcados como "expired" cuja data de emissão
-     * (dateCreated) seja anterior ao limite informado. Reaproveita deleteQuote para garantir
-     * que vínculos (OS, agenda, visitas técnicas) sejam desfeitos de forma consistente.
-     *
-     * IMPORTANTE: somente orçamentos NÃO aprovados (status "expired") podem ser excluídos por
-     * esta rotina. Orçamentos aprovados devem permanecer no sistema indefinidamente — por isso,
-     * além da consulta já filtrar por status = 'expired', o laço abaixo ignora explicitamente
-     * qualquer registro com status "approved" como segunda camada de proteção.
-     */
     @Transactional
     public int purgeExpiredQuotesOlderThan(LocalDateTime limite) {
         List<Quote> expiradosParaExcluir = quoteRepo.findExpiredQuotesOlderThan(limite);

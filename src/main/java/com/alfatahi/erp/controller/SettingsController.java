@@ -84,6 +84,13 @@ public class SettingsController {
     @PostMapping("/save")
     public String saveSettings(Profile profile) {
         if (profile.getTaxRate() == null) profile.setTaxRate(new BigDecimal("0.06"));
+
+        if (profile.getId() != null) {
+            profileRepository.findById(profile.getId()).ifPresent(existing -> {
+                profile.setLogoUrl(existing.getLogoUrl());
+                profile.setSignatureUrl(existing.getSignatureUrl());
+            });
+        }
         profileRepository.save(profile);
         return "redirect:/settings?success";
     }

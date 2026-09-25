@@ -6,6 +6,7 @@ import com.alfatahi.erp.entity.WorkOrder;
 import com.alfatahi.erp.entity.WorkOrderItem;
 import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.QuoteRepository;
+import com.alfatahi.erp.service.CompanyImageService;
 import com.alfatahi.erp.service.QuoteService;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.hibernate.Hibernate;
@@ -23,16 +24,12 @@ import org.thymeleaf.context.Context;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
 @RequestMapping("/quotes")
@@ -40,29 +37,26 @@ public class QuoteController {
 
     private static final Logger log = LoggerFactory.getLogger(QuoteController.class);
 
-    // Cache em memória para as imagens (logo/assinatura) já baixadas e convertidas em base64.
-    // Evita baixar a mesma logo/assinatura da empresa a cada PDF gerado (o que deixava a
-    // geração lenta e sujeita a falhas de rede repetidas).
-    private static final Map<String, String> IMAGE_DATA_URI_CACHE = new ConcurrentHashMap<>();
-    private static final int IMAGE_CACHE_MAX_ENTRIES = 200;
-
     private final QuoteRepository quoteRepo;
     private final ClientRepository clientRepo;
     private final QuoteService quoteService;
     private final com.alfatahi.erp.service.ScheduleService scheduleService;
     private final com.alfatahi.erp.repository.ProfileRepository profileRepo;
     private final TemplateEngine templateEngine;
+    private final CompanyImageService companyImageService;
 
     public QuoteController(QuoteRepository quoteRepo, ClientRepository clientRepo, QuoteService quoteService,
                            com.alfatahi.erp.service.ScheduleService scheduleService,
                            com.alfatahi.erp.repository.ProfileRepository profileRepo,
-                           TemplateEngine templateEngine) {
+                           TemplateEngine templateEngine,
+                           CompanyImageService companyImageService) {
         this.quoteRepo = quoteRepo;
         this.clientRepo = clientRepo;
         this.quoteService = quoteService;
         this.scheduleService = scheduleService;
         this.profileRepo = profileRepo;
         this.templateEngine = templateEngine;
+        this.companyImageService = companyImageService;
     }
 
     @GetMapping("/pdf/{id}")
@@ -134,20 +128,9 @@ public class QuoteController {
             }
             boolean hasClientDetails = !clientDoc.isEmpty() || !clientPhone.isEmpty() || !clientEmail.isEmpty() || !clientAddr.isEmpty();
 
-            // As três imagens (logo da empresa, assinatura da empresa, assinatura do cliente) são
-            // buscadas em paralelo. Antes eram buscadas uma após a outra, então uma URL lenta ou
-            // fora do ar podia, sozinha, travar a geração do PDF por até ~50s.
-            String logoUrlSrc   = quote.getProfile() != null ? quote.getProfile().getLogoUrl() : null;
-            String sigCoUrlSrc  = quote.getProfile() != null ? quote.getProfile().getSignatureUrl() : null;
-            String sigCliUrlSrc = nvlStr(quote.getClientSignature(), null);
-
-            CompletableFuture<String> logoFuture  = CompletableFuture.supplyAsync(() -> toBase64Uri(logoUrlSrc));
-            CompletableFuture<String> sigCoFuture  = CompletableFuture.supplyAsync(() -> toBase64Uri(sigCoUrlSrc));
-            CompletableFuture<String> sigCliFuture = CompletableFuture.supplyAsync(() -> toBase64Uri(sigCliUrlSrc));
-
-            String logoB64    = logoFuture.join();
-            String sigCoB64   = sigCoFuture.join();
-            String sigCliB64  = sigCliFuture.join();
+            String logoB64   = companyImageService.logoDataUri(quote.getProfile());
+            String sigCoB64  = companyImageService.signatureDataUri(quote.getProfile());
+            String sigCliB64 = clientSignatureDataUri(quote.getClientSignature());
             boolean clientSigned = quote.getClientSignature() != null && !quote.getClientSignature().isBlank();
 
             String num = nvlStr(quote.getNumber(), "ORC-0000").replace("ORC-", "");
@@ -156,10 +139,16 @@ public class QuoteController {
 
             String seller = nvlStr(quote.getSellerName(), "Não informado");
 
+            boolean hasValidUntil = quote.getValidUntil() != null;
+            String validUntilFormatted = hasValidUntil
+                    ? quote.getValidUntil().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+
             Context ctx = new Context(Locale.forLanguageTag("pt-BR"));
             ctx.setVariable("sellerName",        seller);
             ctx.setVariable("numDisplay",        num);
             ctx.setVariable("dateFormatted",     dt);
+            ctx.setVariable("hasValidUntil",     hasValidUntil);
+            ctx.setVariable("validUntilFormatted", validUntilFormatted);
             ctx.setVariable("companyName",       companyName);
             ctx.setVariable("companyDoc",        companyDoc);
             ctx.setVariable("companyAddress",    companyAddress);
@@ -216,26 +205,17 @@ public class QuoteController {
         }
     }
 
+
+
     private void registerFonts(PdfRendererBuilder builder) {
-        int[] weights = {400, 500, 600, 700, 800, 900};
-        for (int weight : weights) {
+        for (int weight : new int[]{400, 500, 600, 700, 800, 900}) {
             String path = "/fonts/Inter-" + weight + ".ttf";
-            // IMPORTANTE: só registra a fonte se o arquivo realmente existir no classpath.
-            // Antes o código chamava builder.useFont(...) incondicionalmente; como os arquivos
-            // /fonts/Inter-*.ttf não existem no projeto, o openhtmltopdf falhava ao tentar
-            // carregá-los assim que precisava desenhar qualquer texto (o template usa
-            // font-family: 'Inter' em praticamente tudo) e a geração do PDF quebrava com
-            // exceção em 100% das chamadas — por isso o botão nunca completava. O
-            // ScheduleController já fazia essa checagem corretamente; faltava aqui.
             if (getClass().getResource(path) != null) {
                 builder.useFont(() -> getClass().getResourceAsStream(path), "Inter", weight,
                         PdfRendererBuilder.FontStyle.NORMAL, true);
-            } else {
-                log.warn("Fonte '{}' não encontrada no classpath; o PDF do orçamento usará a fonte padrão para o peso {}.", path, weight);
             }
         }
     }
-
     private BigDecimal nvl(BigDecimal v) { return v != null ? v : BigDecimal.ZERO; }
     private BigDecimal nvl(BigDecimal v, BigDecimal def) { return v != null ? v : def; }
     private String nvlStr(String v, String def) { return (v != null && !v.isBlank()) ? v : (def != null ? def : ""); }
@@ -245,70 +225,10 @@ public class QuoteController {
         return nf.format(v != null ? v : BigDecimal.ZERO);
     }
 
-    private String toBase64Uri(String url) {
-        if (url == null || url.isBlank()) return null;
-        if (url.startsWith("data:"))       return url;
-
-        String trimmed = url.trim();
-        if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-            // URL inválida/relativa: nem tenta baixar (antes isso gerava uma
-            // MalformedURLException silenciosamente engolida a cada PDF).
-            log.warn("URL de imagem ignorada no PDF (não é http/https): {}", trimmed);
-            return null;
-        }
-
-        String cached = IMAGE_DATA_URI_CACHE.get(trimmed);
-        if (cached != null) return cached;
-
-        try {
-            String result = fetchImageAsDataUri(trimmed, 0);
-            if (result != null) {
-                if (IMAGE_DATA_URI_CACHE.size() >= IMAGE_CACHE_MAX_ENTRIES) {
-                    IMAGE_DATA_URI_CACHE.clear();
-                }
-                IMAGE_DATA_URI_CACHE.put(trimmed, result);
-            } else {
-                log.warn("Não foi possível baixar a imagem para o PDF: {}", trimmed);
-            }
-            return result;
-        } catch (Exception e) {
-            log.warn("Falha ao baixar imagem para o PDF ({}): {}", trimmed, e.getMessage());
-            return null;
-        }
-    }
-
-    private String fetchImageAsDataUri(String url, int redirectCount) throws Exception {
-        if (redirectCount > 5) return null;
-
-        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-        conn.setConnectTimeout(4000);
-        conn.setReadTimeout(6000);
-        conn.setInstanceFollowRedirects(false);
-        conn.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; ERP-PDF-Generator/1.0)");
-
-        int status = conn.getResponseCode();
-        if (status >= 300 && status < 400) {
-            String location = conn.getHeaderField("Location");
-            conn.disconnect();
-            if (location == null || location.isBlank()) return null;
-            String resolved = URI.create(url).resolve(location).toString();
-            return fetchImageAsDataUri(resolved, redirectCount + 1);
-        }
-        if (status != HttpURLConnection.HTTP_OK) {
-            conn.disconnect();
-            return null;
-        }
-
-        byte[] bytes = conn.getInputStream().readAllBytes();
-        String mime  = conn.getContentType();
-        conn.disconnect();
-
-        if (bytes.length == 0) return null;
-        if (mime == null || !mime.toLowerCase().startsWith("image/")) {
-            mime = url.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
-        }
-        mime = mime.split(";")[0].trim();
-        return "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(bytes);
+    private String clientSignatureDataUri(String signature) {
+        if (signature == null || signature.isBlank()) return null;
+        String trimmed = signature.trim();
+        return trimmed.startsWith("data:image/") ? trimmed : null;
     }
 
     @Transactional(readOnly = true)
@@ -434,6 +354,13 @@ public class QuoteController {
         return ResponseEntity.ok(quote);
     }
 
+    private LocalDate resolveValidUntil(LocalDate informed, LocalDateTime issuedAt, LocalDate current) {
+        if (informed != null) return informed;
+        if (current != null) return current;
+        LocalDateTime base = issuedAt != null ? issuedAt : LocalDateTime.now();
+        return base.toLocalDate().plusDays(QuoteService.DEFAULT_VALIDITY_DAYS);
+    }
+
     private void ensureItemDescriptions(List<QuoteItem> items) {
         if (items == null) return;
         for (QuoteItem item : items) {
@@ -465,6 +392,7 @@ public class QuoteController {
             existing.setWarranty(quote.getWarranty());
             existing.setTotalValue(quote.getTotalValue());
             existing.setDiscountPercent(quote.getDiscountPercent());
+            existing.setValidUntil(resolveValidUntil(quote.getValidUntil(), existing.getDateCreated(), existing.getValidUntil()));
 
             existing.getItems().clear();
             if (quote.getItems() != null) {
@@ -476,8 +404,6 @@ public class QuoteController {
 
             quoteRepo.save(existing);
 
-            // Orçamento já aprovado: a O.S. gerada a partir dele precisa refletir os
-            // mesmos itens/valor editados agora, para que os dois não fiquem divergentes.
             if ("approved".equals(existing.getStatus())) {
                 quoteService.syncApprovedQuoteToWorkOrder(existing);
             }
@@ -494,11 +420,12 @@ public class QuoteController {
             quote.setDateCreated(LocalDateTime.now());
         }
 
+        quote.setValidUntil(resolveValidUntil(quote.getValidUntil(), quote.getDateCreated(), null));
+
         if (principal != null) {
             quote.setSellerName(principal.getName());
         }
 
-        // A aprovação deve criar a O.S. pelo serviço, na mesma transação.
         quote.setStatus("pending");
         quote.setDateApproved(null);
         quote.setWorkOrder(null);

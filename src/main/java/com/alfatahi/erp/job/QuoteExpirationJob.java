@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Component
@@ -14,10 +15,6 @@ public class QuoteExpirationJob {
 
     private static final Logger log = LoggerFactory.getLogger(QuoteExpirationJob.class);
 
-    // Orçamentos pendentes viram "expirado" 2 meses após a data de emissão.
-    private static final int MESES_PARA_EXPIRAR = 2;
-
-    // Orçamentos já expirados são excluídos definitivamente 6 meses após a data de emissão.
     private static final int MESES_PARA_EXCLUIR = 6;
 
     private final QuoteRepository quoteRepo;
@@ -31,10 +28,10 @@ public class QuoteExpirationJob {
     @Scheduled(cron = "0 0 0 * * ?")
     public void executeExpirationRoutine() {
 
-        LocalDateTime expirationLimit = LocalDateTime.now().minusMonths(MESES_PARA_EXPIRAR);
+        LocalDate today = LocalDate.now();
 
-        log.info("Iniciando varredura noturna de orçamentos (Expirando emitidos antes de: {})...", expirationLimit);
-        int updatedRows = quoteRepo.expirePendingQuotes(expirationLimit);
+        log.info("Iniciando varredura noturna de orçamentos (Expirando com validade anterior a: {})...", today);
+        int updatedRows = quoteRepo.expirePendingQuotes(today);
         log.info("Varredura concluída com sucesso! Orçamentos expirados: {}", updatedRows);
 
         LocalDateTime deletionLimit = LocalDateTime.now().minusMonths(MESES_PARA_EXCLUIR);

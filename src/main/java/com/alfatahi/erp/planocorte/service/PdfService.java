@@ -2,6 +2,7 @@ package com.alfatahi.erp.planocorte.service;
 
 import com.alfatahi.erp.entity.Profile;
 import com.alfatahi.erp.repository.ProfileRepository;
+import com.alfatahi.erp.service.CompanyImageService;
 import com.alfatahi.erp.planocorte.dto.CroquiVaoChunkDto;
 import com.alfatahi.erp.planocorte.entity.PlanoCorte;
 import com.alfatahi.erp.planocorte.entity.PlanoCorteItem;
@@ -13,33 +14,33 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.io.ByteArrayOutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class PdfService {
 
-    // No PDF, agrupamos no máximo 3 folhas por croqui combinado para melhor visualização.
-    private static final int MAX_FOLHAS_POR_CROQUI_PDF = 3;
+     private static final int MAX_FOLHAS_POR_CROQUI_PDF = 3;
 
     private final TemplateEngine templateEngine;
     private final CroquiService croquiService;
     private final ProfileRepository profileRepository;
+    private final CompanyImageService companyImageService;
 
     public PdfService(
             TemplateEngine templateEngine,
             CroquiService croquiService,
-            ProfileRepository profileRepository) {
+            ProfileRepository profileRepository,
+            CompanyImageService companyImageService) {
 
         this.templateEngine = templateEngine;
         this.croquiService = croquiService;
         this.profileRepository = profileRepository;
+        this.companyImageService = companyImageService;
     }
 
     public byte[] gerarPdfPlanoCorte(
@@ -88,7 +89,7 @@ public class PdfService {
             }
         }
 
-        Profile profile = buscarProfileTahiGlass();
+        Profile profile = resolverProfile(plano);
 
         String companyName = nvlStr(
                 profile.getCompanyName(),
@@ -115,9 +116,7 @@ public class PdfService {
                 ""
         );
 
-        String logoBase64 = toBase64Uri(
-                profile.getLogoUrl()
-        );
+        String logoBase64 = companyImageService.logoDataUri(profile);
 
 
         Context context = new Context();
@@ -238,7 +237,7 @@ public class PdfService {
     public String nomeArquivoPdf(PlanoCorte plano) {
         String empresa;
         try {
-            empresa = nvlStr(buscarProfileTahiGlass().getCompanyName(), "Plano de Corte");
+            empresa = nvlStr(resolverProfile(plano).getCompanyName(), "Plano de Corte");
         } catch (RuntimeException e) {
             empresa = "Plano de Corte";
         }
@@ -254,12 +253,6 @@ public class PdfService {
         return limpo.isEmpty() ? "plano-de-corte" : limpo;
     }
 
-    /**
-     * O Batik usado pelo PDF nao respeita de forma consistente o paint-order do
-     * SVG. Nos rotulos tecnicos, o contorno branco pode ser pintado sobre o
-     * preenchimento e esconder o texto. A versao destinada ao PDF usa preto em
-     * todos os textos e tracos, mantendo apenas os fundos claros.
-     */
     private String prepararSvgParaPdf(String svg) {
         if (svg == null || svg.isBlank()) {
             return svg;
@@ -281,15 +274,26 @@ public class PdfService {
                 "$1 fill=\"#000000\"");
     }
 
+    private Profile resolverProfile(PlanoCorte plano) {
+        Optional<Profile> doOrcamento = Optional.ofNullable(plano)
+                .map(PlanoCorte::getWorkOrder)
+                .map(os -> os.getQuote())
+                .map(q -> q.getProfile());
+        if (doOrcamento.isPresent()) {
+            return doOrcamento.get();
+        }
+        return buscarProfileTahiGlass();
+    }
+
     private Profile buscarProfileTahiGlass() {
 
         return profileRepository.findAll()
                 .stream()
                 .filter(profile ->
                         profile.getCompanyName() != null
-                                && profile.getCompanyName()
-                                .toUpperCase()
-                                .contains("TAHI GLASS")
+                                && companyImageService.companyKey(profile)
+                                .filter("tahiglass"::equals)
+                                .isPresent()
                 )
                 .findFirst()
                 .orElseThrow(() ->
@@ -307,72 +311,5 @@ public class PdfService {
         return value != null && !value.isBlank()
                 ? value
                 : defaultValue;
-    }
-
-
-    private String toBase64Uri(String url) {
-
-        if (url == null || url.isBlank()) {
-            return null;
-        }
-
-        if (url.startsWith("data:")) {
-            return url;
-        }
-
-        HttpURLConnection connection = null;
-
-        try {
-
-            connection =
-                    (HttpURLConnection)
-                            new URL(url).openConnection();
-
-            connection.setConnectTimeout(6000);
-            connection.setReadTimeout(12000);
-
-            connection.setRequestProperty(
-                    "User-Agent",
-                    "ERP-PDF-Generator/1.0"
-            );
-
-            byte[] bytes =
-                    connection
-                            .getInputStream()
-                            .readAllBytes();
-
-            String mime =
-                    connection.getContentType();
-
-            if (mime == null) {
-
-                mime = url
-                        .toLowerCase()
-                        .endsWith(".png")
-                        ? "image/png"
-                        : "image/jpeg";
-            }
-
-            mime = mime
-                    .split(";")[0]
-                    .trim();
-
-            return "data:"
-                    + mime
-                    + ";base64,"
-                    + Base64
-                    .getEncoder()
-                    .encodeToString(bytes);
-
-        } catch (Exception e) {
-
-            return null;
-
-        } finally {
-
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
     }
 }

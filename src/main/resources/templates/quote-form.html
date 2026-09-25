@@ -102,12 +102,17 @@
                         </div>
                     </div>
 
-                    <div class="sm:col-span-1 lg:col-span-4">
+                    <div class="sm:col-span-1 lg:col-span-3">
                         <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2.5 text-sm">Data de Emissão</label>
-                        <input type="date" id="quoteDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base" />
+                        <input type="date" id="quoteDate" onchange="onQuoteDateChanged()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base" />
                     </div>
 
-                    <div class="sm:col-span-1 lg:col-span-4">
+                    <div class="sm:col-span-1 lg:col-span-3">
+                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2.5 text-sm">Válido Até</label>
+                        <input type="date" id="quoteValidUntil" oninput="validUntilTouched = true" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base" required />
+                    </div>
+
+                    <div class="sm:col-span-2 lg:col-span-6">
                         <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2.5 text-sm">Formas de Pagamento</label>
                         <div class="relative">
                             <input type="text" id="quotePayment" readonly placeholder="Selecione as formas..."
@@ -535,6 +540,29 @@
     let editingItemIndex = -1;
     let allClientsData = [];
 
+    // Validade padrão sugerida (dias corridos a partir da emissão). Só é aplicada automaticamente enquanto
+    // o usuário não tiver informado/alterado a data manualmente.
+    const DEFAULT_VALIDITY_DAYS = 15;
+    let validUntilTouched = false;
+
+    // Soma dias corridos a uma data 'yyyy-MM-dd' sem passar por fuso horário (evita "voltar um dia").
+    function addDaysToIsoDate(iso, days) {
+        if (!iso) return '';
+        const [y, m, d] = iso.split('-').map(Number);
+        const target = new Date(y, m - 1, d + days, 12);
+        const mm = String(target.getMonth() + 1).padStart(2, '0');
+        const dd = String(target.getDate()).padStart(2, '0');
+        return `${target.getFullYear()}-${mm}-${dd}`;
+    }
+
+    // Ao mudar a emissão, atualiza a sugestão de validade — a menos que o usuário já tenha escolhido uma.
+    function onQuoteDateChanged() {
+        if (validUntilTouched) return;
+        const validEl = document.getElementById('quoteValidUntil');
+        const issued = document.getElementById('quoteDate').value;
+        if (validEl && issued) validEl.value = addDaysToIsoDate(issued, DEFAULT_VALIDITY_DAYS);
+    }
+
 
 
 
@@ -555,6 +583,7 @@
             clientName: document.getElementById('quoteClientName')?.value || '',
             profileId: profileSelect ? profileSelect.value : '',
             date: document.getElementById('quoteDate')?.value || '',
+            validUntil: document.getElementById('quoteValidUntil')?.value || '',
             payment: document.getElementById('quotePayment')?.value || '',
             installments: document.getElementById('quoteInstallments')?.value || '',
             paymentPlan: document.getElementById('quotePaymentPlan')?.value || '',
@@ -599,6 +628,10 @@
         if (draft.clientName) document.getElementById('quoteClientName').value = draft.clientName;
         if (draft.profileId) document.getElementById('quoteProfile').value = draft.profileId;
         if (draft.date) document.getElementById('quoteDate').value = draft.date;
+        if (draft.validUntil) {
+            document.getElementById('quoteValidUntil').value = draft.validUntil;
+            validUntilTouched = true;
+        }
         if (draft.payment) document.getElementById('quotePayment').value = draft.payment;
         if (draft.installments) { const el = document.getElementById('quoteInstallments'); if (el) el.value = draft.installments; }
         if (draft.paymentPlan) { const el = document.getElementById('quotePaymentPlan'); if (el) el.value = draft.paymentPlan; }
@@ -1628,6 +1661,21 @@
             return;
         }
 
+        const validUntilValue = document.getElementById('quoteValidUntil').value;
+        if (!validUntilValue) {
+            alert('Atenção: Informe até quando o orçamento é válido.');
+            document.getElementById('quoteValidUntil').focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+        // Comparação de strings yyyy-MM-dd é segura (mesmo formato, ordem lexicográfica = cronológica).
+        if (selectedDate && validUntilValue < selectedDate) {
+            alert('Atenção: a data de validade não pode ser anterior à data de emissão.');
+            document.getElementById('quoteValidUntil').focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
         const discInput = document.getElementById('quoteDiscount');
         const discountPct = discInput && discInput.offsetParent !== null ? (parseFloat(discInput.value) || 0) : 0;
 
@@ -1642,6 +1690,7 @@
             client: { id: clientSelect.value },
             profile: { id: profileSelect.value },
             dateCreated: dateToSave,
+            validUntil: validUntilValue,
             paymentMethod: document.getElementById('quotePayment').value,
             installments: installmentsValue,
             paymentPlan: (document.getElementById('quotePaymentPlan')?.offsetParent !== null
@@ -1708,8 +1757,11 @@
         document.querySelectorAll('.pay-method-cb').forEach(cb => cb.checked = (cb.value === 'PIX'));
         document.getElementById('quoteClientName').value = '';
 
-        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         document.getElementById('quoteDate').value = today;
+        validUntilTouched = false;
+        document.getElementById('quoteValidUntil').value = addDaysToIsoDate(today, DEFAULT_VALIDITY_DAYS);
 
         currentItems = [];
         togglePaymentOptions();
@@ -1740,6 +1792,16 @@
 
                 if(q.dateCreated) {
                     document.getElementById('quoteDate').value = q.dateCreated.split('T')[0];
+                }
+
+                // Validade já gravada: respeita o valor salvo (não sobrescreve ao mudar a emissão).
+                const validEl = document.getElementById('quoteValidUntil');
+                if (q.validUntil) {
+                    validEl.value = q.validUntil;
+                    validUntilTouched = true;
+                } else {
+                    validUntilTouched = false;
+                    validEl.value = addDaysToIsoDate(document.getElementById('quoteDate').value, DEFAULT_VALIDITY_DAYS);
                 }
 
                 if(q.profile) {

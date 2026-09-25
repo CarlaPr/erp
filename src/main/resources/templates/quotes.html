@@ -399,176 +399,164 @@
         </div>
     </div>
 
-    <div id="receiptModal" class="fixed inset-0 bg-slate-900/60     backdrop-blur-sm hidden   items-start justify-center   z-50 overflow-y-auto   print:block print:overflow-visible    print:bg-white   py-4 sm:py-8 print:py-0">
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/60     backdrop-blur-sm hidden   items-start justify-center   z-50 overflow-y-auto   print:block print:overflow-visible    print:bg-white   py-4 sm:py-8 print:py-0" role="dialog" aria-modal="true" aria-label="Pré-visualização do orçamento">
+        <style>
+            #receiptModal { position:fixed; inset:0; z-index:50; overflow-y:auto; background:rgba(15,23,42,.60); backdrop-filter:blur(4px); padding:24px 16px; align-items:flex-start; justify-content:center; }
+            #receiptModal:not(.hidden) { display:flex; }
+            #receiptModal.hidden, #receiptModal .hidden { display:none; }
+            #receiptModal *, #receiptModal *::before, #receiptModal *::after { box-sizing:border-box; }
+            #receiptModal h2, #receiptModal h4, #receiptModal h5, #receiptModal p { margin:0; }
+            #receiptModal #printableReceiptArea { width:100%; max-width:210mm; min-width:0; margin:auto; border-radius:16px; background:#fff; color:#1e293b; box-shadow:0 20px 60px #0f172a40; font-family:'Inter',Arial,sans-serif; font-size:10.5px; line-height:1.45; }
+            #receiptModal .receipt-toolbar { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px 20px; background:#f8fafc; border-bottom:1px solid #e2e8f0; border-radius:16px 16px 0 0; }
+            #receiptModal .receipt-toolbar > span { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; }
+            #receiptModal .receipt-toolbar-actions, #receiptModal .receipt-actions { display:flex; gap:8px; }
+            #receiptModal button { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; background:#fff; color:#334155; font:700 12px 'Inter',Arial,sans-serif; cursor:pointer; }
+            #receiptModal button[id^="btnShare"] { background:#059669; color:#fff; border-color:#059669; }
+            #receiptModal button[id^="btnPrint"] { background:#0f172a; color:#fff; border-color:#0f172a; }
+            #receiptModal button:focus-visible, #receiptModal .receipt-items-scroll:focus-visible { outline:3px solid #38bdf8; outline-offset:3px; }
+            #receiptModal [data-lucide], #receiptModal svg { width:12px; height:12px; flex-shrink:0; vertical-align:middle; }
+            #receiptModal button [data-lucide], #receiptModal button svg { width:18px; height:18px; }
+            #receiptModal .receipt-document { padding:12mm; }
+            #receiptModal .receipt-header { display:flex; flex-direction:row; align-items:flex-start; justify-content:space-between; gap:20px; padding:0; margin:0; border:0; }
+            #receiptModal .receipt-company { display:flex; flex:1 1 0; flex-direction:row; align-items:center; gap:14px; min-width:0; width:auto; }
+            #receiptModal .receipt-logo-wrap { flex:0 0 auto; }
+            #receiptModal .receipt-logo-wrap:has(img[style*="display:none"]), #receiptModal .receipt-logo-wrap:has(img[style*="display: none"]) { display:none; }
+            #receiptModal #pdfCompanyLogo { width:120px; height:auto; max-width:120px; max-height:none; object-fit:contain; }
+            #receiptModal .receipt-company-details { display:flex; flex-direction:column; gap:3px; min-width:0; color:#475569; font-size:9.5px; font-weight:600; line-height:1.5; overflow-wrap:anywhere; }
+            #receiptModal .receipt-company-details > * { margin:0; }
+            #receiptModal .receipt-company-details > div { display:flex; align-items:center; flex-wrap:wrap; gap:5px; }
+            #receiptModal .receipt-company-details > div > div { display:flex; align-items:center; gap:5px; }
+            #receiptModal #pdfCompanyName { font-size:13px; font-weight:800; line-height:1.15; text-transform:uppercase; color:#0f172a; letter-spacing:-.3px; }
+            #receiptModal .receipt-number-box { flex:0 0 180px; width:180px; min-width:0; text-align:right; }
+            #receiptModal .receipt-badge { display:block; width:100%; min-width:0; background:#0f172a; color:#fff; padding:13px 18px; border-radius:16px; }
+            #receiptModal .receipt-badge-field { margin:8px 0 0; padding:7px 0 0; border-top:1px solid #334155; }
+            #receiptModal .receipt-badge-field:first-child { margin:0 0 3px; padding:0; border:0; font-size:8px; font-weight:700; letter-spacing:2px; color:#94a3b8; }
+            #receiptModal .receipt-badge-field > span:first-child { display:block; font-size:8px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:1px; }
+            #receiptModal .receipt-badge-field > span:last-child { display:block; max-width:none; font-size:11.5px; font-weight:800; color:#fff; white-space:normal; overflow:visible; overflow-wrap:anywhere; text-overflow:clip; }
+            #receiptModal #recNum { padding:2px 0; font-size:25px; font-weight:800; line-height:1.15; overflow-wrap:anywhere; }
+            #receiptModal #recSeller { text-transform:capitalize; }
+            #receiptModal .receipt-separator { padding:18px 0 20px; }
+            #receiptModal .receipt-separator-line { height:0; border-top:3px solid #0f172a; }
+            #receiptModal .receipt-client { display:flex; align-items:stretch; gap:0; margin-bottom:14px; padding:0; background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; }
+            #receiptModal .receipt-client-bar { width:4px; height:auto; flex:0 0 4px; border-radius:0; background:#0f172a; }
+            #receiptModal .receipt-client-content { width:100%; min-width:0; padding:12px 16px; }
+            #receiptModal .receipt-label { font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#94a3b8; }
+            #receiptModal #recClient { margin-top:3px; font-size:17px; font-weight:800; color:#0f172a; line-height:1.15; overflow-wrap:anywhere; }
+            #receiptModal #pdfClientDetailsPanel { margin-top:9px; padding-top:7px; border-top:1px solid #e2e8f0; font-size:9.5px; color:#475569; font-weight:600; gap:4px 14px; grid-template-columns:repeat(2,minmax(0,1fr)); overflow-wrap:anywhere; }
+            #receiptModal #pdfClientDetailsPanel:not(.hidden) { display:grid; }
+            #receiptModal #pdfClientAddressRow { grid-column:1 / -1; }
+            #receiptModal .receipt-items-scroll { width:100%; overflow-x:auto; border:1px solid #e2e8f0; border-radius:14px 14px 0 0; box-shadow:none; margin:0; }
+            #receiptModal .receipt-items-table { width:100%; min-width:560px; border-collapse:collapse; font-size:10.5px; text-align:left; }
+            #receiptModal .receipt-items-table th { background:#0f172a; color:#fff; font-weight:700; text-transform:uppercase; font-size:8.5px; letter-spacing:1px; padding:9px 10px; }
+            #receiptModal .receipt-items-table th:nth-child(1) { width:50%; text-align:left; padding-left:16px; }
+            #receiptModal .receipt-items-table th:nth-child(2) { width:8%; }
+            #receiptModal .receipt-items-table th:nth-child(3) { width:9%; }
+            #receiptModal .receipt-items-table th:nth-child(4) { width:16%; }
+            #receiptModal .receipt-items-table th:nth-child(5) { width:17%; padding-right:16px; }
+            #receiptModal .receipt-items-table td { padding:9px 10px; border-bottom:1px solid #f1f5f9; vertical-align:top; font-size:10.5px; }
+            #receiptModal .receipt-items-table td:first-child { padding-left:16px; overflow-wrap:anywhere; }
+            #receiptModal .receipt-items-table td:first-child > :first-child { font-size:12px; font-weight:800; color:#0f172a; text-transform:uppercase; line-height:1.25; }
+            #receiptModal .receipt-items-table td:first-child > :not(:first-child) { margin-top:3px; font-size:9.5px; color:#475569; white-space:pre-line; font-weight:500; line-height:1.55; }
+            #receiptModal .receipt-items-table td:nth-child(2), #receiptModal .receipt-items-table td:nth-child(3), #receiptModal .receipt-items-table th:nth-child(2), #receiptModal .receipt-items-table th:nth-child(3) { text-align:center; }
+            #receiptModal .receipt-items-table td:nth-child(n+4), #receiptModal .receipt-items-table th:nth-child(n+4) { text-align:right; }
+            #receiptModal .receipt-items-table td:last-child { padding-right:16px; font-weight:700; }
+            #receiptModal .receipt-totals { border:1px solid #e2e8f0; border-top:0; border-radius:0 0 14px 14px; overflow:hidden; margin-bottom:14px; }
+            #receiptModal .receipt-total-row { display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; }
+            #receiptModal .receipt-total-row > :first-child { font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; }
+            #receiptModal .receipt-total-row > :last-child { text-align:right; font-size:14px; font-weight:700; }
+            #receiptModal #recSubtotalRow { background:#f8fafc; color:#64748b; }
+            #receiptModal #recDiscountRow { background:#fff1f2; color:#be123c; }
+            #receiptModal .receipt-grand-total { background:#0f172a; color:#cbd5e1; }
+            #receiptModal .receipt-grand-total > :first-child { font-size:9.5px; font-weight:800; }
+            #receiptModal #recTotal { font-size:20px; color:#fff; font-weight:800; }
+            #receiptModal #recFinalRow { background:#1e293b; color:#94a3b8; }
+            #receiptModal #recFinalInstallments { color:#34d399; font-size:14.5px; font-weight:800; }
+            #receiptModal .receipt-section { border:1px solid #e2e8f0; border-radius:14px; margin-bottom:12px; overflow:hidden; box-shadow:none; }
+            #receiptModal .receipt-section-heading { display:flex; align-items:center; gap:6px; padding:7px 14px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; color:#475569; }
+            #receiptModal .receipt-section-heading h5 { font-size:8.5px; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; }
+            #receiptModal .receipt-section-body { padding:13px 14px; min-height:0; font-size:10px; color:#334155; font-weight:500; white-space:pre-line; line-height:1.6; overflow-wrap:anywhere; }
+            #receiptModal .receipt-signature-section { border-top:2px dashed #cbd5e1; padding-top:26px; margin-top:18px; }
+            #receiptModal .receipt-signatures { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:30px; padding:0 15px; text-align:center; }
+            #receiptModal .receipt-signature { display:flex; flex-direction:column; justify-content:flex-end; align-items:center; min-width:0; min-height:105px; position:relative; }
+            #receiptModal .receipt-signature img { position:static; max-width:100%; max-height:58px; height:auto; width:auto; object-fit:contain; margin-bottom:6px; }
+            #receiptModal .receipt-signature-caption { width:100%; min-height:48px; border-top:2px solid #0f172a; padding-top:7px; overflow-wrap:anywhere; }
+            #receiptModal .receipt-signature-caption p:first-child { font-size:11.5px; font-weight:800; color:#0f172a; }
+            #receiptModal .receipt-signature-caption p:last-child { font-size:9.5px; color:#64748b; font-weight:600; margin-top:2px; }
+            #receiptModal .receipt-footer { display:block; position:static; width:100%; margin-top:24px; padding:4px 0 0; border-top:1px solid #e2e8f0; font-size:8.5px; color:#94a3b8; overflow-wrap:anywhere; }
+            #receiptModal #pfName { font-size:9.5px; color:#0f172a; font-weight:800; text-transform:uppercase; }
+            #receiptModal #pfDetails, #receiptModal #pfContact { font-size:8.5px; }
+            #receiptModal .receipt-footer > div:last-child { display:none; }
+            #receiptModal .receipt-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-top:1px solid #e2e8f0; padding-top:20px; margin-top:24px; }
+            #receiptModal .receipt-document .font-mono { font-family:inherit; }
+            @media screen and (max-width:640px) {
+                #receiptModal { padding:0; }
+                #receiptModal #printableReceiptArea { border-radius:0; margin:0; }
+                #receiptModal .receipt-toolbar { flex-direction:column; align-items:stretch; padding:14px; border-radius:0; }
+                #receiptModal .receipt-toolbar-actions { display:grid; grid-template-columns:1fr 1fr 44px; }
+                #receiptModal .receipt-toolbar-actions > button { grid-column:auto; padding:8px; }
+                #receiptModal .receipt-document { padding:18px 14px; }
+                #receiptModal .receipt-header { flex-direction:column; gap:16px; }
+                #receiptModal .receipt-company { width:100%; gap:12px; }
+                #receiptModal #pdfCompanyLogo { width:90px; max-width:90px; }
+                #receiptModal .receipt-number-box { flex:auto; width:100%; text-align:left; }
+                #receiptModal .receipt-badge { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 14px; padding:13px 16px; }
+                #receiptModal .receipt-badge-field:first-child, #receiptModal #recNum { grid-column:1 / -1; }
+                #receiptModal .receipt-badge-field { margin:0; }
+                #receiptModal #pdfClientDetailsPanel { grid-template-columns:1fr; }
+                #receiptModal .receipt-actions { grid-template-columns:1fr; }
+                #receiptModal .receipt-signatures { gap:18px; padding:0; }
+                #receiptModal .receipt-total-row { flex-wrap:wrap; }
+                #receiptModal .receipt-total-row > :last-child { margin-left:auto; }
+            }
+            @media print {
+                @page { size:A4 portrait; margin:12mm 12mm 30mm; }
+                #receiptModal { position:absolute !important; inset:0 auto auto 0 !important; width:100% !important; display:block !important; overflow:visible !important; padding:0 !important; background:#fff !important; backdrop-filter:none !important; }
+                #receiptModal #printableReceiptArea { max-width:none; box-shadow:none; border-radius:0; margin:0; }
+                #receiptModal .receipt-document { padding:0; }
+                #receiptModal .receipt-toolbar, #receiptModal .receipt-actions { display:none !important; }
+                #receiptModal .receipt-items-scroll { overflow:visible; }
+                #receiptModal .receipt-items-table { min-width:0; }
+                #receiptModal thead { display:table-header-group; }
+                #receiptModal tr, #receiptModal .receipt-header, #receiptModal .receipt-section, #receiptModal .receipt-signature-section { break-inside:avoid; page-break-inside:avoid; }
+                #receiptModal * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+            }
+        </style>
         <div id="printableReceiptArea" class="bg-white text-slate-900    w-full max-w-4xl   rounded-2xl shadow-2xl   relative font-sans   print:max-w-none   print:w-full  print:shadow-none    rounded-none sm:rounded-2xl">
-            <div class="flex flex-col sm:flex-row     gap-3  justify-between   items-stretch sm:items-center  px-4 sm:px-8 py-4   border-b border-slate-100   print:hidden    bg-slate-50">
-                <span class="text-sm font-bold text-slate-500    uppercase tracking-wider   flex items-center gap-2">
-                    <i data-lucide="file-text" class="w-4 h-4"></i>
+            <div class="flex flex-col sm:flex-row     gap-3  justify-between   items-stretch sm:items-center  px-4 sm:px-8 py-4   border-b border-slate-100   print:hidden    bg-slate-50 receipt-toolbar">
+            <span class="text-sm font-bold text-slate-500    uppercase tracking-wider   flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
 
-                    Pré-visualização do Orçamento
+                Pré-visualização do Orçamento
 
-                </span>
-                <div class="grid grid-cols-2 sm:flex       gap-2 sm:gap-3">
-                    <button id="btnShareWhatsAppTop" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600 text-white     px-3 sm:px-5 py-2.5  rounded-xl font-bold   flex items-center justify-center        gap-2 text-xs sm:text-sm">
+            </span>
+                <div class="grid grid-cols-2 sm:flex       gap-2 sm:gap-3 receipt-toolbar-actions">
+                    <button id="btnShareWhatsAppTop" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600 text-white     px-3 sm:px-5 py-2.5  rounded-xl font-bold   flex items-center justify-center        gap-2 text-xs sm:text-sm" type="button">
 
                         <i data-lucide="message-circle" class="w-4 h-4"></i>
 
                         WhatsApp
 
                     </button>
-                    <button id="btnPrintPdfTop" onclick="generateAndPrintQuotePdf()" class="bg-slate-900 text-white  px-3 sm:px-6 py-2.5  rounded-xl font-bold  flex items-center justify-center     gap-2 text-xs sm:text-sm">
+                    <button id="btnPrintPdfTop" onclick="generateAndPrintQuotePdf()" class="bg-slate-900 text-white  px-3 sm:px-6 py-2.5  rounded-xl font-bold  flex items-center justify-center     gap-2 text-xs sm:text-sm" type="button">
                         <i data-lucide="printer" class="w-4 h-4"></i>
 
                         PDF
 
                     </button>
-                    <button onclick="closeModal('receiptModal')" class="col-span-2 sm:col-span-1    text-slate-400   bg-white border border-slate-200   p-2.5 rounded-xl   flex justify-center">
+                    <button onclick="closeModal('receiptModal')" class="col-span-2 sm:col-span-1    text-slate-400   bg-white border border-slate-200   p-2.5 rounded-xl   flex justify-center" type="button" aria-label="Fechar pré-visualização">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
             </div>
 
-            <style>
-
-                .scrollbar-hide::-webkit-scrollbar {
-                    display: none;
-                }
-
-                .scrollbar-hide {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
-                }
-
-                @media (max-width: 767px) {
-
-                    #printableReceiptArea {
-                        border-radius: 0;
-                    }
-
-                    #printableReceiptArea .receipt-company-header {
-                        flex-direction: column;
-                    }
-
-                    #printableReceiptArea .receipt-company-info {
-                        width: 100%;
-                    }
-
-                    #printableReceiptArea .receipt-number-box {
-                        width: 100%;
-                        min-width: 0;
-                    }
-
-                    #printableReceiptArea .receipt-items-wrapper {
-                        overflow-x: auto;
-                    }
-
-                    #printableReceiptArea .receipt-items-table {
-                        min-width: 620px;
-                    }
-
-                    #printableReceiptArea .receipt-actions {
-                        grid-template-columns: 1fr;
-                    }
-                }
-
-
-                @media print {
-
-                    * {
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                        color-adjust: exact !important;
-                    }
-
-                    @page {
-                        size: A4 portrait;
-                        margin: 10mm;
-                    }
-
-                    html,
-                    body,
-                    main {
-                        height: auto !important;
-                        background-color: white !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                    }
-
-                    body > div:not(main) {
-                        display: none !important;
-                    }
-
-                    main > :not(#receiptModal) {
-                        display: none !important;
-                    }
-
-                    #receiptModal {
-                        position: relative !important;
-                        display: block !important;
-                        height: auto !important;
-                        background: transparent !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-
-                    #printableReceiptArea {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        box-shadow: none !important;
-                        border: none !important;
-                    }
-
-                    table {
-                        width: 100% !important;
-                        border-collapse: collapse !important;
-                    }
-
-                    thead {
-                        display: table-header-group !important;
-                    }
-
-                    tr {
-                        page-break-inside: avoid !important;
-                        page-break-after: auto !important;
-                    }
-
-                    .avoid-break {
-                        page-break-inside: avoid !important;
-                        break-inside: avoid !important;
-                    }
-
-                    .print\:hidden {
-                        display: none !important;
-                    }
-
-                    .fixed-print-footer {
-
-                        position: fixed !important;
-                        bottom: 0 !important;
-                        left: 0 !important;
-                        width: 100% !important;
-                        display: flex !important;
-                        background-color: white !important;
-                        padding-top: 10px !important;
-                        padding-bottom: 5px !important;
-                        border-top: 2px solid #e2e8f0 !important;
-                        z-index: 9999 !important;
-
-                    }
-
-                }
-            </style>
-
-            <div class="p-4 sm:p-6 print:p-0">
-                <div class="receipt-company-header   flex flex-col sm:flex-row    justify-between   items-stretch sm:items-start    gap-5    pb-5 mb-5   border-b-[3px] border-slate-900">
-                    <div class="receipt-company-info     flex flex-col sm:flex-row    items-start gap-4 sm:gap-6   min-w-0">
-                        <div class="shrink-0">
-                            <img id="pdfCompanyLogo" class="max-h-20 sm:max-h-24      max-w-[150px] sm:max-w-[170px]    object-contain mix-blend-multiply"
-                                 alt="Logo"
-                                 style="display:none;"/>
+            <div class="p-4 sm:p-6 print:p-0 receipt-document">
+                <div class="receipt-company-header   flex flex-col sm:flex-row    justify-between   items-stretch sm:items-start    gap-5    pb-5 mb-5   border-b-[3px] border-slate-900 receipt-header">
+                    <div class="receipt-company-info     flex flex-col sm:flex-row    items-start gap-4 sm:gap-6   min-w-0 receipt-company">
+                        <div class="shrink-0 receipt-logo-wrap">
+                            <img id="pdfCompanyLogo" class="max-h-20 sm:max-h-24      max-w-[150px] sm:max-w-[170px]    object-contain mix-blend-multiply" alt="Logo" style="display:none;">
 
                         </div>
-                        <div class="flex flex-col  text-[11px]   text-slate-700 font-semibold  leading-tight   space-y-1   min-w-0">
+                        <div class="flex flex-col  text-[11px]   text-slate-700 font-semibold  leading-tight   space-y-1   min-w-0 receipt-company-details">
                             <h2 id="pdfCompanyName" class="text-sm font-black   tracking-tight  text-slate-900 uppercase  leading-none">
 
                                 NOME DA EMPRESA LTDA
@@ -577,41 +565,42 @@
                             <p id="pdfCompanyDoc">
                                 CNPJ/CPF: 00.000.000/0000-00
                             </p>
+                            <p>GRUPO TAHIGLASS</p>
                             <p id="pdfCompanyAddress">
                                 Endereço da Empresa, 000 - Cidade - Estado
                             </p>
                             <div class="flex items-center gap-1.5 mt-1.5">
                                 <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-500"></i>
                                 <span id="pdfCompanyEmail">
-                                    email@empresa.com
-                                </span>
+                                email@empresa.com
+                            </span>
                             </div>
                             <div class="flex flex-wrap   items-center gap-x-4 gap-y-1">
                                 <div class="flex items-center gap-1.5">
                                     <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-500"></i>
                                     <span id="pdfCompanyPhone">
-                                        +55 (00) 00000-0000
-                                    </span>
+                                    +55 (00) 00000-0000
+                                </span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-500"></i>
                                     <span>
-                                        +55(11) 4107-0623
-                                    </span>
+                                    +55(11) 4107-0623
+                                </span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <i data-lucide="message-circle" class="w-3.5 h-3.5 text-slate-500"></i>
                                     <span>
-                                        1194765-5931
-                                    </span>
+                                    1194765-5931
+                                </span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="receipt-number-box  text-left sm:text-right   shrink-0">
-                        <div class="bg-slate-900 text-white  px-5 py-4 rounded-2xl   inline-block   w-full sm:min-w-[200px]">
-                            <div class="text-[11px] font-bold       font-mono uppercase    tracking-widest  text-slate-400 mb-1">
+                        <div class="bg-slate-900 text-white  px-5 py-4 rounded-2xl   inline-block   w-full sm:min-w-[200px] receipt-badge">
+                            <div class="text-[11px] font-bold       font-mono uppercase    tracking-widest  text-slate-400 mb-1 receipt-badge-field">
 
                                 ORÇAMENTO
 
@@ -621,41 +610,53 @@
                                 N° --
 
                             </div>
-                            <div class="mt-3 pt-2 border-t border-slate-700">
-                                <span class="text-[10px]   text-slate-400    font-bold block    uppercase tracking-wide">
+                            <div class="mt-3 pt-2 border-t border-slate-700 receipt-badge-field">
+                            <span class="text-[10px]   text-slate-400    font-bold block    uppercase tracking-wide">
 
-                                    Data de emissão
+                                Data de emissão
 
-                                </span>
+                            </span>
                                 <span id="recDate" class="text-sm font-black    text-white">
 
-                                    --/--/----
+                                --/--/----
 
-                                </span>
+                            </span>
                             </div>
-                            <div class="mt-2 pt-2   border-t border-slate-700">
-                                <span class="text-[10px]     text-slate-400   font-bold block  uppercase tracking-wide">
+                            <div id="recValidUntilBox" class="mt-2 pt-2   border-t border-slate-700 receipt-badge-field" style="display:none;">
+                            <span class="text-[10px]   text-slate-400    font-bold block    uppercase tracking-wide">
 
-                                    Vendedor(a)
+                                Válido até
 
-                                </span>
+                            </span>
+                                <span id="recValidUntil" class="text-sm font-black    text-white">
 
-                                <span id="recSeller"
-                                      class="text-sm font-black   text-white  truncate     max-w-full sm:max-w-[160px]     inline-block">
+                                --/--/----
 
-                                    --
+                            </span>
+                            </div>
+                            <div class="mt-2 pt-2   border-t border-slate-700 receipt-badge-field">
+                            <span class="text-[10px]     text-slate-400   font-bold block  uppercase tracking-wide">
 
-                                </span>
+                                Vendedor(a)
+
+                            </span>
+
+                                <span id="recSeller" class="text-sm font-black   text-white  truncate     max-w-full sm:max-w-[160px]     inline-block">
+
+                                --
+
+                            </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mb-5   bg-slate-50  border border-slate-200  rounded-xl px-4 sm:px-5 py-4   flex items-start gap-3">
-                    <div class="w-1 h-10    bg-slate-900 rounded-full      shrink-0">
+                <div class="receipt-separator"><div class="receipt-separator-line"></div></div>
+                <div class="mb-5   bg-slate-50  border border-slate-200  rounded-xl px-4 sm:px-5 py-4   flex items-start gap-3 receipt-client">
+                    <div class="w-1 h-10    bg-slate-900 rounded-full      shrink-0 receipt-client-bar">
                     </div>
-                    <div class="w-full min-w-0">
-                        <p class="text-xs font-bold  text-slate-400 uppercase  tracking-widest font-mono">
+                    <div class="w-full min-w-0 receipt-client-content">
+                        <p class="text-xs font-bold  text-slate-400 uppercase  tracking-widest font-mono receipt-label">
 
                             Orçamento elaborado para
                         </p>
@@ -686,7 +687,7 @@
                     </div>
                 </div>
 
-                <div class="receipt-items-wrapper   rounded-xl overflow-hidden    border border-slate-200   shadow-sm mb-0">
+                <div class="receipt-items-wrapper   rounded-xl overflow-hidden    border border-slate-200   shadow-sm mb-0 receipt-items-scroll" tabindex="0" role="region" aria-label="Itens do orçamento; deslize horizontalmente em telas pequenas">
                     <table class="receipt-items-table    w-full text-left  border-collapse text-sm">
                         <thead>
                         <tr class="bg-slate-900 text-white  font-bold uppercase tracking-wider text-xs">
@@ -702,121 +703,112 @@
                     </table>
                 </div>
 
-                <div class="border border-t-0     border-slate-200   rounded-b-xl  overflow-hidden mb-5">
-                    <div id="recSubtotalRow" class="flex justify-between items-center   px-5 py-2.5 bg-slate-50" style="display:none !important;">
-                        <span class="text-xs font-bold   text-slate-500   uppercase tracking-widest font-mono">
+                <div class="border border-t-0     border-slate-200   rounded-b-xl  overflow-hidden mb-5 receipt-totals">
+                    <div id="recSubtotalRow" class="flex justify-between items-center   px-5 py-2.5 bg-slate-50 receipt-total-row" style="display:none;">
+                    <span class="text-xs font-bold   text-slate-500   uppercase tracking-widest font-mono">
 
-                            Subtotal:
+                        Subtotal:
 
-                        </span>
+                    </span>
                         <span id="recSubtotal" class="text-lg font-mono text-slate-700">
 
-                            R$ 0,00
+                        R$ 0,00
 
-                        </span>
+                    </span>
                     </div>
-                    <div id="recDiscountRow" class="flex justify-between items-center   px-5 py-2.5 bg-rose-50" style="display:none !important;">
-                        <span class="text-xs font-bold   text-rose-600  uppercase tracking-widest font-mono">
+                    <div id="recDiscountRow" class="flex justify-between items-center   px-5 py-2.5 bg-rose-50 receipt-total-row" style="display:none;">
+                    <span class="text-xs font-bold   text-rose-600  uppercase tracking-widest font-mono">
 
-                            Desconto:
+                        Desconto:
 
-                        </span>
+                    </span>
                         <span id="recDiscount" class="text-lg font-mono text-rose-700">
 
-                            0%
+                        0%
 
-                        </span>
+                    </span>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row   justify-between    sm:items-center  gap-1  px-5 py-3 bg-slate-900">
-                        <span class="text-xs sm:text-sm   font-black text-slate-300  uppercase tracking-widest font-mono">
+                    <div class="flex flex-col sm:flex-row   justify-between    sm:items-center  gap-1  px-5 py-3 bg-slate-900 receipt-total-row receipt-grand-total">
+                    <span class="text-xs sm:text-sm   font-black text-slate-300  uppercase tracking-widest font-mono">
 
-                            VALOR TOTAL DO ORÇAMENTO
-                        </span>
+                        VALOR TOTAL DO ORÇAMENTO
+                    </span>
                         <span id="recTotal" class="text-xl sm:text-2xl   font-black font-mono  text-white">
 
-                            R$ 0,00
-                        </span>
+                        R$ 0,00
+                    </span>
                     </div>
 
-                    <div id="recFinalRow" class="flex justify-between items-center   px-5 py-2.5 bg-slate-800" style="display:none !important;">
-                        <span class="text-xs font-bold   text-slate-400 uppercase tracking-widest font-mono">
+                    <div id="recFinalRow" class="flex justify-between items-center   px-5 py-2.5 bg-slate-800 receipt-total-row" style="display:none;">
+                    <span class="text-xs font-bold   text-slate-400 uppercase tracking-widest font-mono">
 
-                            Parcelado em:
+                        Parcelado em:
 
-                        </span>
+                    </span>
 
-                        <span id="recFinalInstallments"
-                              class="text-lg sm:text-xl  font-black font-mono  text-emerald-400">
+                        <span id="recFinalInstallments" class="text-lg sm:text-xl  font-black font-mono  text-emerald-400">
 
-                            10x R$ 0,00
-                        </span>
+                        10x R$ 0,00
+                    </span>
                     </div>
                 </div>
 
-                <div class="border border-slate-200   rounded-xl overflow-hidden    mb-5 avoid-break shadow-sm">
-                    <div class="bg-slate-100    border-b border-slate-200    px-4 py-2     flex items-center gap-2">
+                <div class="border border-slate-200   rounded-xl overflow-hidden    mb-5 avoid-break shadow-sm receipt-section">
+                    <div class="bg-slate-100    border-b border-slate-200    px-4 py-2     flex items-center gap-2 receipt-section-heading">
                         <i data-lucide="credit-card" class="w-4 h-4 text-slate-600    print:hidden"></i>
                         <h5 class="text-xs font-black    text-slate-700   uppercase tracking-widest font-mono">Formas de Pagamento Aceitas</h5>
                     </div>
-                    <div id="recPaymentMethods" class="text-sm font-bold   text-slate-800    p-4 bg-white">
+                    <div id="recPaymentMethods" class="text-sm font-bold   text-slate-800    p-4 bg-white receipt-section-body">
                         --
                     </div>
                 </div>
 
-                <div class="border border-slate-200   rounded-xl overflow-hidden   mb-5 avoid-break shadow-sm">
-                    <div class="bg-slate-100   border-b border-slate-200   px-4 py-2   flex items-center gap-2">
+                <div class="border border-slate-200   rounded-xl overflow-hidden   mb-5 avoid-break shadow-sm receipt-section">
+                    <div class="bg-slate-100   border-b border-slate-200   px-4 py-2   flex items-center gap-2 receipt-section-heading">
                         <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-600     print:hidden"></i>
                         <h5 class="text-xs font-black text-slate-700  uppercase tracking-widest font-mono">
-                            Condições & Observações
+                            Condições &amp; Observações
                         </h5>
                     </div>
-                    <div id="recObs" class="whitespace-pre-line    text-xs text-slate-700  leading-relaxed p-4   bg-white min-h-[80px]">
+                    <div id="recObs" class="whitespace-pre-line    text-xs text-slate-700  leading-relaxed p-4   bg-white min-h-[80px] receipt-section-body">
                         --
                     </div>
                 </div>
 
-                <div class="border border-slate-200     rounded-xl overflow-hidden    mb-5 avoid-break shadow-sm">
-                    <div class="bg-slate-100    border-b border-slate-200    px-4 py-2   flex items-center gap-2">
+                <div class="border border-slate-200     rounded-xl overflow-hidden    mb-5 avoid-break shadow-sm receipt-section">
+                    <div class="bg-slate-100    border-b border-slate-200    px-4 py-2   flex items-center gap-2 receipt-section-heading">
                         <i data-lucide="shield-check" class="w-4 h-4 text-slate-600     print:hidden"></i>
                         <h5 class="text-xs font-black     text-slate-700     uppercase tracking-widest font-mono">
                             Termos de Garantia
                         </h5>
                     </div>
-                    <div id="recWarrantyText" class="whitespace-pre-line      text-xs text-slate-700     leading-relaxed p-4    bg-white min-h-[80px]">
+                    <div id="recWarrantyText" class="whitespace-pre-line      text-xs text-slate-700     leading-relaxed p-4    bg-white min-h-[80px] receipt-section-body">
                         --
                     </div>
                 </div>
 
-                <div class="avoid-break      border-t-2 border-dashed   border-slate-300   pt-5 mt-4">
-                    <br class="hidden sm:block">
-                    <div class="grid grid-cols-1 sm:grid-cols-2  gap-12 sm:gap-16    text-center">
+                <div class="avoid-break      border-t-2 border-dashed   border-slate-300   pt-5 mt-4 receipt-signature-section">
+                    <div class="grid grid-cols-1 sm:grid-cols-2  gap-12 sm:gap-16    text-center receipt-signatures">
 
-                        <div class="relative   flex flex-col   items-center justify-end    min-h-[80px]">
-                            <img id="pdfCompanySignature" class="absolute bottom-12  max-h-16   object-contain  pointer-events-none   mix-blend-multiply" style="display:none;"/>
-                            <div class="w-full   border-t-2    border-slate-900   pt-2">
+                        <div class="relative   flex flex-col   items-center justify-end    min-h-[80px] receipt-signature">
+                            <img id="pdfCompanySignature" class="absolute bottom-12  max-h-16   object-contain  pointer-events-none   mix-blend-multiply" style="display:none;">
+                            <div class="w-full   border-t-2    border-slate-900   pt-2 receipt-signature-caption">
                                 <p id="pdfCompanySignatureName" class="font-black       text-slate-900 text-sm">Nome da Empresa</p>
                                 <p id="pdfCompanySignatureDoc" class="text-xs text-slate-500     font-bold mt-0.5">CNPJ/CPF: 00.000.000/0000-00</p>
                             </div>
                         </div>
 
-                        <div class="flex flex-col     items-center justify-end     min-h-[80px]    relative">
-                            <img id="recSignatureClientImage" class="absolute bottom-10  max-h-16  object-contain  pointer-events-none   mix-blend-multiply" style="display:none;"/>
-                            <div class="w-full  border-t-2   border-slate-900   pt-2">
+                        <div class="flex flex-col     items-center justify-end     min-h-[80px]    relative receipt-signature">
+                            <img id="recSignatureClientImage" class="absolute bottom-10  max-h-16  object-contain  pointer-events-none   mix-blend-multiply" style="display:none;">
+                            <div class="w-full  border-t-2   border-slate-900   pt-2 receipt-signature-caption">
                                 <p id="recSignatureClientName" class="font-black    text-slate-900 text-sm">Assinatura do Cliente</p>
                                 <p id="recSignatureClientStatus" class="text-xs    text-slate-500    font-bold mt-0.5">Ciente e de Acordo</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="hidden print:block  w-full" style="height:25mm;"></div>
-                    <div class="mt-6 pt-3  border-t border-slate-100   text-center print:hidden">
-                        <p class="text-[11px]  font-mono text-slate-400  font-bold tracking-wide">
-                            Documento Comercial Processado Digitalmente
-                        </p>
-                    </div>
-
-                    <div class="fixed-print-footer hidden  justify-between items-center    text-slate-500 w-full px-2">
+                    <div class="fixed-print-footer   justify-between items-center    text-slate-500 w-full px-2 receipt-footer">
                         <div>
                             <p id="pfName" class="font-bold  text-slate-800  text-[12px]   uppercase tracking-wide">Nome da Empresa</p>
                             <p id="pfDetails" class="text-[10px]">CNPJ/CPF | Endereço</p>
@@ -826,19 +818,17 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3  gap-3  print:hidden  border-t border-slate-200   pt-6 mt-6">
-                    <button onclick="closeModal('receiptModal')" class="bg-white border border-slate-300  text-slate-700  px-5 py-3  rounded-xl font-bold text-sm hover:bg-slate-50  transition">
+                <div class="grid grid-cols-1 sm:grid-cols-3  gap-3  print:hidden  border-t border-slate-200   pt-6 mt-6 receipt-actions">
+                    <button onclick="closeModal('receiptModal')" class="bg-white border border-slate-300  text-slate-700  px-5 py-3  rounded-xl font-bold text-sm hover:bg-slate-50  transition" type="button" aria-label="Fechar pré-visualização">
                         Fechar Visualização
                     </button>
 
-                    <button id="btnShareWhatsAppBottom" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600  text-white  px-5 py-3  rounded-xl  font-black flex items-center  justify-center gap-2   text-sm">
+                    <button id="btnShareWhatsAppBottom" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600  text-white  px-5 py-3  rounded-xl  font-black flex items-center  justify-center gap-2   text-sm" type="button">
                         <i data-lucide="message-circle" class="w-5 h-5"></i>
                         Compartilhar WhatsApp
                     </button>
 
-                    <button id="btnPrintPdfBottom"
-                            onclick="generateAndPrintQuotePdf()"
-                            class="bg-slate-900 text-white px-5 py-3 rounded-xl font-black flex items-center justify-center gap-2    text-sm">
+                    <button id="btnPrintPdfBottom" onclick="generateAndPrintQuotePdf()" class="bg-slate-900 text-white px-5 py-3 rounded-xl font-black flex items-center justify-center gap-2    text-sm" type="button">
                         <i data-lucide="printer" class="w-5 h-5"></i>
                         Imprimir / Salvar PDF
                     </button>
@@ -1383,6 +1373,17 @@
 
                 if(q.number) setSafeText('recNum', `N° ${q.number.replace('ORC-', '')}`);
                 setSafeText('recDate', q.dateCreated ? new Date(q.dateCreated).toLocaleDateString('pt-BR') : '');
+
+                const recValidBox = document.getElementById('recValidUntilBox');
+                if (recValidBox) {
+                    if (q.validUntil) {
+                        const [vy, vm, vd] = q.validUntil.split('-');
+                        setSafeText('recValidUntil', `${vd}/${vm}/${vy}`);
+                        recValidBox.style.display = 'block';
+                    } else {
+                        recValidBox.style.display = 'none';
+                    }
+                }
                 setSafeText('recClient', q.client ? q.client.name : 'Consumidor Final');
                 setSafeText('recSignatureClientName', q.client ? q.client.name : 'Assinatura do Cliente');
 
@@ -1492,11 +1493,19 @@
                     setSafeText('pfDetails', `CNPJ/CPF: ${pfDocClean} | ${q.profile.address || ''}`);
                     setSafeText('pfContact', `${q.profile.email || ''} | ${q.profile.phone || ''}`);
 
-                    const logoEl = document.getElementById('pdfCompanyLogo');
-                    if(logoEl) { logoEl.src = q.profile.logoUrl || ''; logoEl.style.display = q.profile.logoUrl ? 'block' : 'none'; }
-
-                    const sigEl = document.getElementById('pdfCompanySignature');
-                    if(sigEl) { sigEl.src = q.profile.signatureUrl || ''; sigEl.style.display = q.profile.signatureUrl ? 'block' : 'none'; }
+                    // Logo e assinatura da empresa vêm dos arquivos da pasta "images/" do projeto
+                    // (escolhidos pelo nome da empresa), servidos por /quotes/company-image/{perfil}/...
+                    // Se o arquivo não existir (404), a imagem simplesmente é escondida.
+                    const showCompanyImage = (imgId, kind) => {
+                        const el = document.getElementById(imgId);
+                        if (!el) return;
+                        el.onerror = () => { el.style.display = 'none'; };
+                        el.onload = () => { el.style.display = 'block'; };
+                        el.style.display = 'none';
+                        el.src = q.profile.id ? `/quotes/company-image/${q.profile.id}/${kind}` : '';
+                    };
+                    showCompanyImage('pdfCompanyLogo', 'logo');
+                    showCompanyImage('pdfCompanySignature', 'signature');
                 }
 
                 const sigClientEl = document.getElementById('recSignatureClientImage');
