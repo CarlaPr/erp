@@ -1,12 +1,10 @@
 package com.alfatahi.erp.controller;
 
-import com.alfatahi.erp.service.FinancialPeriod;
-
 import com.alfatahi.erp.entity.AccountsPayable;
-import com.alfatahi.erp.entity.AccountsReceivable;
 import com.alfatahi.erp.entity.Schedule;
 import com.alfatahi.erp.repository.*;
 import com.alfatahi.erp.service.CashLedgerService;
+import com.alfatahi.erp.service.FinancialPeriod;
 import com.alfatahi.erp.service.ScheduleService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

@@ -16,12 +16,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Serve ao navegador a logo/assinatura da empresa lidas da pasta {@code images/} do projeto.
- *
- * <p>Fica sob {@code /quotes/**} de propósito: essa rota já exige perfil GESTAO ou VENDAS no
- * {@code SecurityConfig}, então as imagens herdam a mesma proteção sem nenhuma regra nova.
- */
 @RestController
 @RequestMapping("/quotes/company-image")
 public class CompanyImageController {
@@ -54,7 +48,6 @@ public class CompanyImageController {
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(mime.get()))
-                // Cache curto no navegador: o arquivo só muda com um novo deploy.
                 .cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS).cachePrivate())
                 .body(bytes.get());
     }

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<body>
+<div th:fragment="filter(action, extraQuery, allowAll)" class="financial-period-filter">
+    <style>
+        .financial-period-filter {
+            container: financial-period / inline-size;
+            width: 100%; min-width: 0; max-width: 100%;
+        }
+        .financial-period-filter,
+        .financial-period-filter * { box-sizing: border-box; }
+
+        .financial-period-filter .financial-period-form {
+            display: grid !important;
+            grid-template-columns: minmax(0, 200px) max-content max-content;
+            align-items: end !important;
+            justify-content: start;
+            gap: 8px !important;
+            width: 100% !important;
+            min-width: 0; margin: 0;
+        }
+        .financial-period-filter .financial-period-field {
+            display: block; width: auto !important; min-width: 0;
+            margin: 0; font-size: 11px; font-weight: 700;
+            line-height: 1.4; letter-spacing: .04em; text-transform: uppercase;
+        }
+        .financial-period-filter .financial-period-control {
+            display: block;
+            width: 100% !important; min-width: 0 !important; max-width: 100%;
+            height: 40px !important; min-height: 40px !important;
+            margin: 6px 0 0; padding: 8px 10px;
+            font: inherit; font-size: 14px !important; font-weight: 500;
+            letter-spacing: normal; text-transform: none;
+        }
+        .financial-period-filter .financial-period-action {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: auto !important; min-width: 0;
+            height: 40px !important; min-height: 40px !important;
+            padding: 8px 12px; margin: 0;
+            font-size: 13px; line-height: 1.25; font-weight: 700;
+            text-decoration: none; white-space: nowrap;
+        }
+        .financial-period-filter .financial-period-caption {
+            width: 100%; margin: 8px 0 0 !important;
+            font-size: 11px; line-height: 1.5; overflow-wrap: anywhere;
+        }
+        .financial-period-filter :is(input, button, a):focus-visible {
+            outline: 2px solid #0891b2; outline-offset: 2px;
+        }
+        @container financial-period (max-width: 480px) {
+            .financial-period-filter .financial-period-form {
+                grid-template-columns: minmax(0, 1fr) max-content;
+            }
+            .financial-period-filter .financial-period-all {
+                grid-column: 1 / -1; justify-self: start;
+            }
+            .financial-period-filter .financial-period-control {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+
+    <form method="get" th:action="${action}" class="financial-period-form">
+        <label class="financial-period-field text-slate-500 dark:text-slate-400">
+            Competência
+            <input type="month" name="month" th:value="${reportMonth}" required
+                   class="financial-period-control rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white" />
+        </label>
+        <button type="submit"
+                class="financial-period-action rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">
+            Filtrar
+        </button>
+        <a th:if="${allowAll}" th:href="@{${action}(month='all')}"
+           class="financial-period-action financial-period-all rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 transition-colors">
+            Todos os meses
+        </a>
+    </form>
+
+    <p class="financial-period-caption text-slate-500 dark:text-slate-400" aria-live="polite">
+        <span th:text="${reportLabel}"></span>
+        <span th:if="${reportFrom != null && reportTo != null}"
+              th:text="${' · ' + #temporals.format(reportFrom, 'dd/MM/yyyy') + ' a ' + #temporals.format(reportTo, 'dd/MM/yyyy')}"></span>
+    </p>
+</div>
+</body>
+</html>

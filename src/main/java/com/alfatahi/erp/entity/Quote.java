@@ -13,6 +13,8 @@ import java.util.ArrayList;
 @Table(name = "quotes")
 public class Quote {
 
+    public static final int DEFAULT_DELIVERY_BUSINESS_DAYS = 15;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -63,6 +65,12 @@ public class Quote {
     /** Data até a qual o orçamento é válido (inclusive). Aparece no PDF. */
     @Column(name = "valid_until")
     private LocalDate validUntil;
+
+    @Column(name = "delivery_business_days")
+    private Integer deliveryBusinessDays = DEFAULT_DELIVERY_BUSINESS_DAYS;
+
+    @Column(name = "delivery_date")
+    private LocalDate deliveryDate;
 
     @OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("quote")
@@ -133,6 +141,12 @@ public class Quote {
 
     public LocalDate getValidUntil() { return validUntil; }
     public void setValidUntil(LocalDate validUntil) { this.validUntil = validUntil; }
+
+    public Integer getDeliveryBusinessDays() { return deliveryBusinessDays; }
+    public void setDeliveryBusinessDays(Integer deliveryBusinessDays) { this.deliveryBusinessDays = deliveryBusinessDays; }
+
+    public LocalDate getDeliveryDate() { return deliveryDate; }
+    public void setDeliveryDate(LocalDate deliveryDate) { this.deliveryDate = deliveryDate; }
 
     public LocalDateTime getDateApproved() { return dateApproved; }
     public void setDateApproved(LocalDateTime dateApproved) { this.dateApproved = dateApproved; }

@@ -87,10 +87,6 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.findDto(id));
     }
 
-    /**
-     * Ordens de serviço com prazo de entrega expirando em até 7 dias (ou já expirado) que ainda
-     * não possuem nenhum agendamento. Alimenta a modal de atenção exibida para a role VENDAS.
-     */
     @GetMapping("/pending-schedule-alerts")
     @ResponseBody
     @Transactional(readOnly = true)

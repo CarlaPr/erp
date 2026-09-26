@@ -66,6 +66,14 @@
             </div>
         </div>
 
+        <div th:if="${quote.deliveryBusinessDays != null || quote.deliveryDate != null}" class="mt-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <h3 class="font-bold text-slate-700 uppercase tracking-wider text-xs mb-2">Entrega / Instalação</h3>
+            <div th:if="${quote.deliveryBusinessDays != null}">
+                <strong>Prazo de até: </strong><span th:text="${quote.deliveryBusinessDays + (quote.deliveryBusinessDays == 1 ? ' dia útil' : ' dias úteis')}"></span>
+            </div>
+            <div th:if="${quote.deliveryDate != null}" class="mt-2"><strong>Data de entrega / instalação: </strong><span th:text="${#temporals.format(quote.deliveryDate, 'dd/MM/yyyy')}"></span></div>
+        </div>
+
         <div th:if="${quote.paymentMethod != null && !quote.paymentMethod.isEmpty()}" class="mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm bg-blue-50/70 p-4 rounded-xl border border-blue-200 gap-3 shadow-sm">
             <div class="flex flex-col">
                 <span class="font-bold text-blue-800 uppercase tracking-wider text-[11px] mb-1">Formas de Pagamento Aceitas</span>

@@ -1,14 +1,12 @@
 package com.alfatahi.erp.controller;
 
-import com.alfatahi.erp.service.FinancialPeriod;
-
 import com.alfatahi.erp.entity.Quote;
+import com.alfatahi.erp.entity.Client;
 import com.alfatahi.erp.entity.QuoteItem;
-import com.alfatahi.erp.entity.WorkOrder;
-import com.alfatahi.erp.entity.WorkOrderItem;
 import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.QuoteRepository;
 import com.alfatahi.erp.service.CompanyImageService;
+import com.alfatahi.erp.service.FinancialPeriod;
 import com.alfatahi.erp.service.QuoteService;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.hibernate.Hibernate;
@@ -151,6 +149,9 @@ public class QuoteController {
             ctx.setVariable("dateFormatted",     dt);
             ctx.setVariable("hasValidUntil",     hasValidUntil);
             ctx.setVariable("validUntilFormatted", validUntilFormatted);
+            ctx.setVariable("deliveryBusinessDays", quote.getDeliveryBusinessDays());
+            ctx.setVariable("deliveryDateFormatted", quote.getDeliveryDate() == null ? null
+                    : quote.getDeliveryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             ctx.setVariable("companyName",       companyName);
             ctx.setVariable("companyDoc",        companyDoc);
             ctx.setVariable("companyAddress",    companyAddress);
@@ -370,6 +371,13 @@ public class QuoteController {
     @Transactional
     public ResponseEntity<?> saveAjax(@RequestBody Quote quote, java.security.Principal principal) {
 
+        if (quote.getDeliveryBusinessDays() == null) {
+            quote.setDeliveryBusinessDays(Quote.DEFAULT_DELIVERY_BUSINESS_DAYS);
+        }
+        if (quote.getDeliveryBusinessDays() < 1) {
+            return ResponseEntity.badRequest().body("O prazo de entrega deve ser de pelo menos 1 dia útil.");
+        }
+
         ensureItemDescriptions(quote.getItems());
 
         if (quote.getId() != null) {
@@ -386,6 +394,8 @@ public class QuoteController {
             existing.setTotalValue(quote.getTotalValue());
             existing.setDiscountPercent(quote.getDiscountPercent());
             existing.setValidUntil(resolveValidUntil(quote.getValidUntil(), existing.getDateCreated(), existing.getValidUntil()));
+            existing.setDeliveryBusinessDays(quote.getDeliveryBusinessDays());
+            existing.setDeliveryDate(quote.getDeliveryDate());
 
             existing.getItems().clear();
             if (quote.getItems() != null) {
@@ -468,8 +478,40 @@ public class QuoteController {
     @PostMapping(value = "/add-client-ajax", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<com.alfatahi.erp.entity.Client> addClientAjax(@RequestBody com.alfatahi.erp.entity.Client client) {
+        if (client.getName() == null || client.getName().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        client.setId(null);
         client.setIsActive(true);
         com.alfatahi.erp.entity.Client savedClient = clientRepo.save(client);
         return ResponseEntity.ok(savedClient);
+    }
+
+    @GetMapping("/client-data/{id}")
+    @ResponseBody
+    @Transactional(readOnly = true)
+    public ResponseEntity<Client> getInlineClient(@PathVariable UUID id) {
+        return clientRepo.findById(id).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping(value = "/update-client-ajax/{id}", consumes = "application/json")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<Client> updateInlineClient(@PathVariable UUID id, @RequestBody Client changes) {
+        if (changes.getName() == null || changes.getName().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        return clientRepo.findById(id).map(existing -> {
+            // Atualiza apenas os campos do modal; mantém histórico, observações e situação do cadastro.
+            existing.setName(changes.getName().trim());
+            existing.setType(changes.getType() == null ? "individual" : changes.getType());
+            existing.setDocument(changes.getDocument());
+            existing.setEmail(changes.getEmail());
+            existing.setPhone(changes.getPhone());
+            existing.setAddress(changes.getAddress());
+            existing.setCity(changes.getCity());
+            return ResponseEntity.ok(clientRepo.save(existing));
+        }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

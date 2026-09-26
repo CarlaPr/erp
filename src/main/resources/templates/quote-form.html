@@ -61,11 +61,16 @@
                     </div>
 
                     <div class="lg:col-span-6">
-                        <div class="flex justify-between items-center mb-2.5">
+                        <div class="flex flex-wrap justify-between items-center gap-2 mb-2.5">
                             <label class="block text-slate-700 dark:text-slate-400 font-bold text-sm">Cliente</label>
-                            <button type="button" onclick="toggleModal('clientInlineModal', true)" class="text-xs bg-brand-100 hover:bg-brand-200 text-brand-700 dark:bg-cyan-500/20 dark:hover:bg-cyan-500/30 dark:text-cyan-400 font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all border border-brand-200 dark:border-cyan-500/30 shadow-sm">
+                            <div class="flex flex-wrap gap-2">
+                            <button type="button" id="editQuoteClientButton" onclick="openInlineClientModal(true)" disabled class="text-xs text-slate-700 dark:text-slate-300 font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editar cliente
+                            </button>
+                            <button type="button" onclick="openInlineClientModal()" class="text-xs bg-brand-100 hover:bg-brand-200 text-brand-700 dark:bg-cyan-500/20 dark:hover:bg-cyan-500/30 dark:text-cyan-400 font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all border border-brand-200 dark:border-cyan-500/30 shadow-sm">
                                 <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Novo Cliente
                             </button>
+                            </div>
                         </div>
 
                         <select id="quoteClient" class="hidden" onchange="updateClientDetailsPanel()">
@@ -286,6 +291,26 @@
 
             <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5 sm:p-7 mb-5 lg:mb-6">
                 <h3 class="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+                    <i data-lucide="calendar-days" class="w-4 h-4"></i> Entrega / Instalação
+                </h3>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-8">
+                    <div>
+                        <label for="quoteDeliveryBusinessDays" class="block text-slate-700 dark:text-slate-400 font-bold mb-2.5 text-sm">Prazo de até (dias úteis)</label>
+                        <input type="number" id="quoteDeliveryBusinessDays" min="1" max="2147483647" step="1" value="15" required
+                               class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base" />
+                        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Após a confirmação do pedido e, quando aplicável, do pagamento da entrada.</p>
+                    </div>
+                    <div>
+                        <label for="quoteDeliveryDate" class="block text-slate-700 dark:text-slate-400 font-bold mb-2.5 text-sm">Data de entrega / instalação (opcional)</label>
+                        <input type="date" id="quoteDeliveryDate"
+                               class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base" />
+                        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">A data só aparece no PDF quando informada.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5 sm:p-7 mb-5 lg:mb-6">
+                <h3 class="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-5 flex items-center gap-2">
                     <i data-lucide="clipboard-list" class="w-4 h-4"></i> Condições Comerciais
                 </h3>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-8">
@@ -373,7 +398,7 @@
                     <input type="text" id="searchClientInput" oninput="filterClientsInModal()" placeholder="Buscar por nome, documento ou cidade..." autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-sm transition-colors" />
                     <i data-lucide="search" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400"></i>
                 </div>
-                <button type="button" onclick="closeModal('clientSearchModal'); toggleModal('clientInlineModal', true);" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-4 py-3 rounded-xl transition-colors shadow-sm flex items-center gap-2 whitespace-nowrap text-sm">
+                <button type="button" onclick="closeModal('clientSearchModal'); openInlineClientModal();" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-4 py-3 rounded-xl transition-colors shadow-sm flex items-center gap-2 whitespace-nowrap text-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i> Novo
                 </button>
             </div>
@@ -399,11 +424,12 @@
 
             <h4 class="text-lg font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
                 <i data-lucide="user-plus" class="text-brand-600 dark:text-cyan-400 w-5 h-5"></i>
-                Cadastro de Cliente
+                <span id="inlineClientTitle">Cadastro de Cliente</span>
             </h4>
 
+            <p id="inlineClientStatus" role="status" class="hidden text-sm text-slate-600 dark:text-slate-300 mb-4"></p>
             <div class="space-y-4 text-sm">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <fieldset id="inlineClientFields" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="md:col-span-2">
                         <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
                             Nome Completo / Razão Social *
@@ -442,7 +468,7 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
-                            CEP
+                            CEP (buscar endereço)
                         </label>
                         <input type="text" id="inlineClientCep" maxlength="9" placeholder="00000-000" autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors"/>
                         <p id="inlineCepError" class="hidden text-red-500 text-xs mt-1"></p>
@@ -459,13 +485,13 @@
                         </label>
                         <input type="text" id="inlineClientAddress" maxlength="255" placeholder="Será preenchido com o CEP..." autocomplete="off" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors"/>
                     </div>
-                </div>
+                </fieldset>
 
                 <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800 mt-4">
                     <button type="button" onclick="closeModal('clientInlineModal')" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         Cancelar
                     </button>
-                    <button type="button" onclick="saveInlineClient()" class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold transition-colors shadow-sm">
+                    <button type="button" id="inlineClientSaveButton" onclick="saveInlineClient()" class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                         Salvar e Inserir
                     </button>
                 </div>
@@ -539,6 +565,9 @@
     let currentItems = [];
     let editingItemIndex = -1;
     let allClientsData = [];
+    let inlineClientEditingId = null;
+    let inlineClientVersion = 0;
+    let inlineClientSaving = false;
 
     // Validade padrão sugerida (dias corridos a partir da emissão). Só é aplicada automaticamente enquanto
     // o usuário não tiver informado/alterado a data manualmente.
@@ -584,6 +613,8 @@
             profileId: profileSelect ? profileSelect.value : '',
             date: document.getElementById('quoteDate')?.value || '',
             validUntil: document.getElementById('quoteValidUntil')?.value || '',
+            deliveryBusinessDays: document.getElementById('quoteDeliveryBusinessDays').value,
+            deliveryDate: document.getElementById('quoteDeliveryDate').value,
             payment: document.getElementById('quotePayment')?.value || '',
             installments: document.getElementById('quoteInstallments')?.value || '',
             paymentPlan: document.getElementById('quotePaymentPlan')?.value || '',
@@ -632,11 +663,14 @@
             document.getElementById('quoteValidUntil').value = draft.validUntil;
             validUntilTouched = true;
         }
+        if (draft.deliveryBusinessDays !== undefined) document.getElementById('quoteDeliveryBusinessDays').value = draft.deliveryBusinessDays;
+        if (draft.deliveryDate !== undefined) document.getElementById('quoteDeliveryDate').value = draft.deliveryDate;
         if (draft.payment) document.getElementById('quotePayment').value = draft.payment;
         if (draft.installments) { const el = document.getElementById('quoteInstallments'); if (el) el.value = draft.installments; }
         if (draft.paymentPlan) { const el = document.getElementById('quotePaymentPlan'); if (el) el.value = draft.paymentPlan; }
         if (draft.discount) { const el = document.getElementById('quoteDiscount'); if (el) el.value = draft.discount; }
-        if (draft.observations) document.getElementById('quoteObs').value = draft.observations;
+        if (draft.observations) document.getElementById('quoteObs').value = draft.deliveryBusinessDays === undefined
+            ? observationsWithoutLegacyDeliveryTerm(draft.observations) : draft.observations;
         if (draft.warranty) document.getElementById('quoteWarranty').value = draft.warranty;
         if (Array.isArray(draft.items) && draft.items.length > 0) currentItems = draft.items;
 
@@ -667,6 +701,10 @@
     }
 
     function closeModal(id) {
+        if (id === 'clientInlineModal') {
+            if (inlineClientSaving) return;
+            inlineClientVersion++;
+        }
         toggleModal(id, false);
     }
 
@@ -829,6 +867,7 @@
         if (!select || !panel) return;
 
         const selectedOption = select.options[select.selectedIndex];
+        document.getElementById('editQuoteClientButton').disabled = !selectedOption?.value;
         if (!selectedOption || !selectedOption.value) {
             panel.classList.add('hidden');
             return;
@@ -888,6 +927,51 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
+    async function inlineClientResponse(response) {
+        if (response.status === 401 || response.redirected) throw new Error('Sua sessão expirou. Entre novamente para continuar.');
+        if (response.status === 404) throw new Error('Cliente não encontrado. Atualize a página e selecione novamente.');
+        if (!response.ok) throw new Error('Não foi possível salvar ou carregar o cliente. Tente novamente.');
+        return response.json();
+    }
+
+    async function openInlineClientModal(edit = false) {
+        if (inlineClientSaving) return;
+        const id = edit ? document.getElementById('quoteClient').value : null;
+        if (edit && !id) return;
+        const version = ++inlineClientVersion;
+        inlineClientEditingId = id;
+        const fields = document.getElementById('inlineClientFields');
+        const saveButton = document.getElementById('inlineClientSaveButton');
+        const status = document.getElementById('inlineClientStatus');
+        fields.querySelectorAll('input').forEach(input => input.value = '');
+        document.getElementById('inlineClientType').value = 'individual';
+        fields.querySelectorAll('[id$="Error"]').forEach(error => { error.textContent = ''; error.classList.add('hidden'); });
+        document.getElementById('inlineClientTitle').textContent = edit ? 'Editar Cliente' : 'Cadastro de Cliente';
+        saveButton.textContent = edit ? 'Salvar alterações' : 'Salvar e Inserir';
+        fields.disabled = edit;
+        saveButton.disabled = edit;
+        status.textContent = edit ? 'Carregando dados do cliente…' : '';
+        status.classList.toggle('hidden', !edit);
+        toggleModal('clientInlineModal', true);
+        if (!edit) {
+            document.getElementById('inlineClientName').focus();
+            return;
+        }
+        try {
+            const client = await inlineClientResponse(await fetch(`/quotes/client-data/${encodeURIComponent(id)}`));
+            if (version !== inlineClientVersion) return;
+            for (const [field, property] of Object.entries({Name: 'name', Type: 'type', Doc: 'document', Email: 'email', Phone: 'phone', Address: 'address', City: 'city'})) {
+                document.getElementById('inlineClient' + field).value = client[property] ?? (field === 'Type' ? 'individual' : '');
+            }
+            fields.disabled = false;
+            saveButton.disabled = false;
+            status.textContent = 'As alterações serão salvas no cadastro deste cliente.';
+            document.getElementById('inlineClientName').focus();
+        } catch (error) {
+            if (version === inlineClientVersion) status.textContent = error.message;
+        }
+    }
+
     const inlineCepEl = document.getElementById('inlineClientCep');
 
     inlineCepEl?.addEventListener('input', (e) => {
@@ -900,6 +984,7 @@
     async function buscarCepInline(cep) {
         const cleanCep = cep.replace(/\D/g, '');
         if (cleanCep.length !== 8) return;
+        const version = inlineClientVersion;
 
         const errorEl = document.getElementById('inlineCepError');
         errorEl.classList.add('hidden');
@@ -907,6 +992,7 @@
         try {
             const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
             const data = await res.json();
+            if (version !== inlineClientVersion || inlineClientSaving || inlineCepEl.value.replace(/\D/g, '') !== cleanCep) return;
 
             if (data.erro) {
                 errorEl.textContent = 'CEP não encontrado';
@@ -925,12 +1011,14 @@
                 cityEl.value = data.localidade;
             }
         } catch (err) {
+            if (version !== inlineClientVersion || inlineClientSaving) return;
             errorEl.textContent = 'Erro ao buscar CEP';
             errorEl.classList.remove('hidden');
         }
     }
 
     function saveInlineClient() {
+        if (inlineClientSaving || document.getElementById('inlineClientFields').disabled) return;
         const nameEl = document.getElementById('inlineClientName');
         const typeEl = document.getElementById('inlineClientType');
         const docEl = document.getElementById('inlineClientDoc');
@@ -959,6 +1047,7 @@
             el.classList.remove('hidden');
         }
         let valid = true;
+        ['inlineDocumentError', 'inlineEmailError', 'inlinePhoneError'].forEach(id => showError(id, ''));
         const documentValue = docEl.value.trim();
 
         if (documentValue) {
@@ -1010,24 +1099,27 @@
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
-        fetch('/quotes/add-client-ajax', {
-            method: 'POST',
+        const editingId = inlineClientEditingId;
+        const saveButton = document.getElementById('inlineClientSaveButton');
+        inlineClientSaving = true;
+        document.getElementById('inlineClientFields').disabled = true;
+        saveButton.disabled = true;
+        saveButton.textContent = 'Salvando…';
+
+        return fetch(editingId ? `/quotes/update-client-ajax/${encodeURIComponent(editingId)}` : '/quotes/add-client-ajax', {
+            method: editingId ? 'PUT' : 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 [csrfHeader]: csrfToken
             },
             body: JSON.stringify(payload)
         })
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error('Erro do servidor');
-                }
-                return res.json();
-            })
+            .then(inlineClientResponse)
             .then(savedClient => {
                 const select = document.getElementById('quoteClient');
                 if (select) {
-                    const option = document.createElement('option');
+                    const option = Array.from(select.options).find(option => option.value === savedClient.id)
+                        || document.createElement('option');
                     option.value = savedClient.id;
                     option.textContent = savedClient.name;
 
@@ -1037,8 +1129,8 @@
                     option.setAttribute('data-address', savedClient.address || '');
                     option.setAttribute('data-city', savedClient.city || '');
 
-                    option.selected = true;
-                    select.appendChild(option);
+                    if (!option.parentElement) select.appendChild(option);
+                    select.value = savedClient.id;
 
                     document.getElementById('quoteClientName').value = savedClient.name;
                 }
@@ -1047,13 +1139,21 @@
                 [nameEl, docEl, emailEl, phoneEl, addressEl, cityEl, cepModalEl].forEach(el => {
                     if(el) el.value = '';
                 });
+                inlineClientSaving = false;
                 closeModal('clientInlineModal');
 
                 updateClientDetailsPanel();
+                saveQuoteDraft();
             })
             .catch(err => {
                 console.error(err);
-                alert('Erro ao guardar o cliente.');
+                alert(err.message || 'Erro ao salvar o cliente.');
+            })
+            .finally(() => {
+                inlineClientSaving = false;
+                document.getElementById('inlineClientFields').disabled = false;
+                saveButton.disabled = false;
+                saveButton.textContent = editingId ? 'Salvar alterações' : 'Salvar e Inserir';
             });
     }
 
@@ -1099,9 +1199,6 @@
     `;
 
     const DEFAULT_OBSERVATIONS = `
-    PRAZO DE ENTREGA
-    • Até 15 dias úteis após a confirmação do pedido e, quando aplicável, do pagamento da entrada.
-
     FORMAS DE PAGAMENTO
     • 100% ANTECIPADO: pagamento integral para confirmação do pedido e início da produção.
     • 50% + 50%: 50% de entrada para confirmação do pedido e início da produção, e 50% restantes na conclusão da instalação.
@@ -1685,12 +1782,19 @@
         const instInput = document.getElementById('quoteInstallments');
         const installmentsValue = instInput && instInput.offsetParent !== null ? (parseInt(instInput.value) || 1) : 1;
 
+        const deliveryDaysInput = document.getElementById('quoteDeliveryBusinessDays');
+        if (!deliveryDaysInput.reportValidity()) return;
+        const deliveryDateInput = document.getElementById('quoteDeliveryDate');
+        if (!deliveryDateInput.reportValidity()) return;
+
         const payload = {
             id: document.getElementById('quoteId').value || null,
             client: { id: clientSelect.value },
             profile: { id: profileSelect.value },
             dateCreated: dateToSave,
             validUntil: validUntilValue,
+            deliveryBusinessDays: Number(deliveryDaysInput.value),
+            deliveryDate: deliveryDateInput.value || null,
             paymentMethod: document.getElementById('quotePayment').value,
             installments: installmentsValue,
             paymentPlan: (document.getElementById('quotePaymentPlan')?.offsetParent !== null
@@ -1748,6 +1852,10 @@
             });
     }
 
+    function observationsWithoutLegacyDeliveryTerm(observations) {
+        return (observations || '').replace(/PRAZO DE ENTREGA\s*• Até 15 dias úteis após a confirmação do pedido e, quando aplicável, do pagamento da entrada\.\s*/, '');
+    }
+
     function initNewQuoteForm() {
         document.getElementById('quoteWarranty').value = DEFAULT_WARRANTY;
         document.getElementById('quoteObs').value = DEFAULT_OBSERVATIONS;
@@ -1762,6 +1870,8 @@
         document.getElementById('quoteDate').value = today;
         validUntilTouched = false;
         document.getElementById('quoteValidUntil').value = addDaysToIsoDate(today, DEFAULT_VALIDITY_DAYS);
+        document.getElementById('quoteDeliveryBusinessDays').value = 15;
+        document.getElementById('quoteDeliveryDate').value = '';
 
         currentItems = [];
         togglePaymentOptions();
@@ -1822,7 +1932,12 @@
                 const discInput = document.getElementById('quoteDiscount');
                 if(discInput) discInput.value = q.discountPercent || 0;
 
-                document.getElementById('quoteObs').value = q.observations || '';
+                document.getElementById('quoteDeliveryBusinessDays').value = q.deliveryBusinessDays ?? 15;
+                document.getElementById('quoteDeliveryDate').value = q.deliveryDate || '';
+                // Migra apenas o texto padrão antigo para o campo próprio, preservando observações personalizadas.
+                document.getElementById('quoteObs').value = q.deliveryBusinessDays == null
+                    ? observationsWithoutLegacyDeliveryTerm(q.observations)
+                    : (q.observations || '');
                 document.getElementById('quoteWarranty').value = q.warranty || '';
 
                 currentItems = [];

@@ -307,6 +307,18 @@
 </div>
 
 
+<div class="section-box avoid-break" th:if="${deliveryBusinessDays != null || deliveryDateFormatted != null}">
+    <table>
+        <tr>
+            <td class="section-header-cell" colspan="2"><span class="section-header-text">Entrega / Instalação</span></td>
+        </tr>
+        <tr>
+            <td th:if="${deliveryBusinessDays != null}" class="section-body-cell" style="padding:8px 14px; vertical-align:top;"><strong>Prazo de até: </strong><span th:text="${deliveryBusinessDays + (deliveryBusinessDays == 1 ? ' dia útil' : ' dias úteis')}"></span><br/><span style="font-size:9px;">Após a confirmação do pedido e, quando aplicável, do pagamento da entrada.</span></td>
+            <td th:if="${deliveryDateFormatted != null}" class="section-body-cell" style="padding:8px 14px; vertical-align:top; white-space:nowrap;"><strong>Data de entrega / instalação: </strong><br/><span th:text="${deliveryDateFormatted}"></span></td>
+        </tr>
+    </table>
+</div>
+
 <div class="section-box avoid-break">
     <table>
         <tr>
