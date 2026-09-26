@@ -152,6 +152,9 @@ public class QuoteController {
             ctx.setVariable("deliveryBusinessDays", quote.getDeliveryBusinessDays());
             ctx.setVariable("deliveryDateFormatted", quote.getDeliveryDate() == null ? null
                     : quote.getDeliveryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            ctx.setVariable("approvalDateFormatted", "approved".equals(quote.getStatus())
+                    && quote.getWorkOrder() != null && quote.getDateApproved() != null
+                    ? quote.getDateApproved().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : null);
             ctx.setVariable("companyName",       companyName);
             ctx.setVariable("companyDoc",        companyDoc);
             ctx.setVariable("companyAddress",    companyAddress);
