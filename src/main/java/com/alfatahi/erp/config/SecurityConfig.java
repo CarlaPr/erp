@@ -1,11 +1,11 @@
 package com.alfatahi.erp.config;
 
+import com.alfatahi.erp.security.LoginAttemptService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,6 +20,12 @@ import org.springframework.security.web.csrf.CsrfException;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final LoginAttemptService loginAttemptService;
+
+    public SecurityConfig(LoginAttemptService loginAttemptService) {
+        this.loginAttemptService = loginAttemptService;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -53,6 +59,9 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         return (request, response, authentication) -> {
+
+            loginAttemptService.recordSuccess(authentication.getName());
+
             if (isAjaxRequest(request)) {
                 response.setStatus(HttpServletResponse.SC_OK);
                 response.setContentType("application/json;charset=UTF-8");
@@ -66,12 +75,21 @@ public class SecurityConfig {
     @Bean
     public AuthenticationFailureHandler authenticationFailureHandler() {
         return (request, response, exception) -> {
+
+            String username = request.getParameter("username");
+            if (!loginAttemptService.isLocked(username)) {
+                loginAttemptService.recordFailure(username);
+            }
+            boolean locked = loginAttemptService.isLocked(username);
+
             if (isAjaxRequest(request)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write("{\"status\":\"error\",\"message\":\"Usuário ou senha inválidos.\"}");
+                response.getWriter().write(locked
+                        ? "{\"status\":\"error\",\"error\":\"ACCOUNT_LOCKED\",\"message\":\"Conta temporariamente bloqueada por excesso de tentativas de login. Aguarde 10 minutos após o bloqueio e tente novamente.\"}"
+                        : "{\"status\":\"error\",\"message\":\"Usuário ou senha inválidos.\"}");
             } else {
-                response.sendRedirect(request.getContextPath() + "/login?error");
+                response.sendRedirect(request.getContextPath() + (locked ? "/login?locked" : "/login?error"));
             }
         };
     }
@@ -110,7 +128,7 @@ public class SecurityConfig {
                         .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers("/login", "/css/**", "/js/**", "/public/**").permitAll()
+                                                .requestMatchers("/login", "/css/**", "/js/**", "/public/**", "/ping").permitAll()
                         .requestMatchers("/AppAssets/**", "/favicon.ico",
                                 "/apple-touch-icon.png", "/web-app-manifest-192x192.png",
                                 "/web-app-manifest-512x512.png", "/site.webmanifest").permitAll()
@@ -118,7 +136,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/dashboard", "/payables/**", "/receivables/**",
                                 "/losses/**", "/dre/**", "/suppliers/**",
-                                "/settings/**", "/settings/users/**").hasAuthority("GESTAO")
+                                "/settings/**", "/settings/users/**",
+                                "/financial-closing/**", "/cash-ledger/**").hasAuthority("GESTAO")
 
                         .requestMatchers("/work-orders/**").hasAuthority("GESTAO")
 
@@ -157,7 +176,7 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
-                .httpBasic(Customizer.withDefaults())
+
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint())
                         .accessDeniedHandler(accessDeniedHandler())

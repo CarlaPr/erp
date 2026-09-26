@@ -183,9 +183,17 @@ public class TechnicalVisitDataService {
             opening = openingRepository.findByIdAndTechnicalVisitId(openingId, visitId)
                     .orElseThrow(() -> new IllegalArgumentException("O vão selecionado não pertence a esta visita."));
         }
-        ProcessedPhoto processed = image
-                ? processPhoto(file)
-                : new ProcessedPhoto(file.getBytes(), contentType);
+        ProcessedPhoto processed;
+        if (image) {
+            processed = processPhoto(file);
+        } else {
+            byte[] rawBytes = file.getBytes();
+            if (!matchesDeclaredVideoContainer(rawBytes, contentType)) {
+                throw new IllegalArgumentException(
+                        "O arquivo enviado não corresponde a um vídeo válido no formato declarado.");
+            }
+            processed = new ProcessedPhoto(rawBytes, contentType);
+        }
         TechnicalVisitPhoto photo = new TechnicalVisitPhoto();
         photo.setTechnicalVisit(visit);
         photo.setOpening(opening);
@@ -350,6 +358,22 @@ public class TechnicalVisitDataService {
 
     private boolean isSupportedVideo(String contentType) {
         return Set.of("video/mp4", "video/webm", "video/quicktime").contains(contentType);
+    }
+
+    private boolean matchesDeclaredVideoContainer(byte[] bytes, String contentType) {
+        if (bytes == null || bytes.length < 12) return false;
+
+        boolean isWebm = (bytes[0] & 0xFF) == 0x1A && (bytes[1] & 0xFF) == 0x45
+                && (bytes[2] & 0xFF) == 0xDF && (bytes[3] & 0xFF) == 0xA3;
+
+        boolean isIsoBaseMedia = bytes[4] == 'f' && bytes[5] == 't'
+                && bytes[6] == 'y' && bytes[7] == 'p';
+
+        if ("video/webm".equals(contentType)) {
+            return isWebm;
+        }
+
+        return isIsoBaseMedia;
     }
 
     private String safeOriginalFileName(String originalName) {

@@ -10,7 +10,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        #loginLockedModal::backdrop { background: rgba(2, 6, 23, 0.8); }
+    </style>
 </head>
 
 <body class="bg-[#0B1120] min-h-screen flex items-center justify-center p-4">
@@ -27,7 +30,7 @@
         <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest font-bold text-cyan-400">Autenticação</p>
     </div>
 
-    <div th:if="${param.error}" class="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs font-medium flex items-center gap-2">
+    <div th:if="${param.error != null and param.locked == null}" class="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs font-medium flex items-center gap-2">
         <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
         <span>Usuário ou senha inválidos. Tente novamente.</span>
     </div>
@@ -71,8 +74,34 @@
     </form>
 </div>
 
+<dialog th:if="${param.locked != null}" id="loginLockedModal"
+        aria-labelledby="loginLockedTitle" aria-describedby="loginLockedMessage"
+        class="w-[calc(100%-2rem)] max-w-md bg-[#131C2F] border border-slate-700 p-8 rounded-2xl shadow-2xl text-center text-white">
+    <div class="w-14 h-14 mx-auto mb-5 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+        <i data-lucide="lock-keyhole" class="w-7 h-7" aria-hidden="true"></i>
+    </div>
+    <h2 id="loginLockedTitle" class="text-xl font-bold mb-3">Acesso temporariamente bloqueado</h2>
+    <p id="loginLockedMessage" class="text-sm text-slate-300 leading-relaxed">
+        Você atingiu o limite de tentativas de login.
+        Por segurança, o acesso à sua conta foi bloqueado temporariamente.
+        Aguarde 10 minutos após o bloqueio e tente novamente.
+    </p>
+    <form method="dialog" class="mt-6">
+        <button autofocus type="submit" class="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold py-3 rounded-xl transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-400">
+            Entendi
+        </button>
+    </form>
+</dialog>
+
 <script>
-    lucide.createIcons();
+    const loginLockedModal = document.getElementById('loginLockedModal');
+    if (loginLockedModal) {
+        loginLockedModal.addEventListener('close', () => {
+            document.querySelector('input[name="username"]').focus();
+        });
+        loginLockedModal.showModal();
+    }
+    if (window.lucide) lucide.createIcons();
 
 </script>
 

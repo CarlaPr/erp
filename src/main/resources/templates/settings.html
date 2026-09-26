@@ -96,10 +96,22 @@
             </form>
         </div>
     </div>
-    <div th:if="${#authorization.expression('hasAuthority(''GESTAO'')')}" class="max-w-4xl mt-12 mb-20">
-        <div class="mb-6">
-            <h3 class="text-xl font-black text-slate-900 dark:text-white">Usuários Cadastrados</h3>
+    <div id="registeredUsers" th:if="${#authorization.expression('hasAuthority(''GESTAO'')')}" class="max-w-4xl mt-12 mb-20 scroll-mt-24">
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white">Usuários Cadastrados</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Após o desbloqueio, cinco novas tentativas incorretas bloqueiam o acesso por 10 minutos.</p>
+            </div>
+            <a th:href="@{/settings#registeredUsers}" class="text-sm font-bold text-brand-600 dark:text-cyan-400 inline-flex items-center gap-2">
+                <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i> Atualizar lista
+            </a>
         </div>
+
+        <div th:if="${userUnlockSuccess}" role="status" class="mb-4 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl text-emerald-700 dark:text-emerald-400 text-sm" th:text="${userUnlockSuccess}"></div>
+        <div th:if="${userUnlockError}" role="alert" class="mb-4 p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl text-rose-700 dark:text-rose-400 text-sm" th:text="${userUnlockError}"></div>
+        <p th:if="${!lockedUserIds.isEmpty()}" class="mb-4 text-sm font-bold text-amber-700 dark:text-amber-400">
+            Usuários temporariamente bloqueados: <span th:text="${lockedUserIds.size()}"></span>
+        </p>
 
         <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-x-auto">
             <table class="w-full text-left">
@@ -107,12 +119,31 @@
                 <tr>
                     <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Username</th>
                     <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status do acesso</th>
+                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                <tr th:each="user : ${users}">
+                <tr th:each="user : ${users}" th:with="locked=${lockedUserIds.contains(user.id)}">
                     <td class="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white" th:text="${user.username}"></td>
                     <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400" th:text="${user.role}"></td>
+                    <td class="px-6 py-4 text-sm">
+                        <span th:if="${locked}" class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold">
+                            <i data-lucide="lock-keyhole" class="w-4 h-4 shrink-0" aria-hidden="true"></i> Bloqueado temporariamente
+                        </span>
+                        <span th:unless="${locked}" class="text-emerald-700 dark:text-emerald-400 font-medium">Liberado</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right">
+                        <form th:if="${locked}" th:action="@{/settings/users/{id}/unlock(id=${user.id})}" method="post">
+                            <button type="submit" th:attr="aria-label=|Desbloquear acesso de ${user.username}|" class="inline-flex items-center gap-2 whitespace-nowrap bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 px-4 py-2.5 rounded-xl font-bold transition-all">
+                                <i data-lucide="lock-keyhole-open" class="w-4 h-4" aria-hidden="true"></i> Desbloquear acesso
+                            </button>
+                        </form>
+                        <span th:unless="${locked}" class="text-slate-400">—</span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(users)}">
+                    <td colspan="4" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">Nenhum usuário cadastrado.</td>
                 </tr>
                 </tbody>
             </table>

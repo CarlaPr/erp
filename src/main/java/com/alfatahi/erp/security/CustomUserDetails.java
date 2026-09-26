@@ -12,7 +12,13 @@ public class CustomUserDetails extends User {
     public CustomUserDetails(String username, String password,
                              Collection<? extends GrantedAuthority> authorities,
                              String role) {
-        super(username, password, authorities);
+        this(username, password, authorities, role, true);
+    }
+
+    public CustomUserDetails(String username, String password,
+                             Collection<? extends GrantedAuthority> authorities,
+                             String role, boolean accountNonLocked) {
+        super(username, password, true, true, true, accountNonLocked, authorities);
         this.role = role;
     }
 

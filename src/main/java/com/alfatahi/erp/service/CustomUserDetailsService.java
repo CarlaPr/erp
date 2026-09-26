@@ -3,6 +3,7 @@ package com.alfatahi.erp.service;
 import com.alfatahi.erp.entity.AppUser;
 import com.alfatahi.erp.repository.AppUserRepository;
 import com.alfatahi.erp.security.CustomUserDetails;
+import com.alfatahi.erp.security.LoginAttemptService;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,9 +16,12 @@ import java.util.Collections;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final AppUserRepository userRepository;
+    private final LoginAttemptService loginAttemptService;
 
-    public CustomUserDetailsService(AppUserRepository userRepository) {
+    public CustomUserDetailsService(AppUserRepository userRepository,
+                                     LoginAttemptService loginAttemptService) {
         this.userRepository = userRepository;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @Override
@@ -29,7 +33,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 appUser.getUsername(),
                 appUser.getPassword(),
                 Collections.singletonList(new SimpleGrantedAuthority(appUser.getRole())),
-                appUser.getRole()
+                appUser.getRole(),
+                !loginAttemptService.isLocked(username)
         );
     }
 }

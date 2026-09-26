@@ -18,32 +18,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Resolve a logo e a assinatura de cada empresa (perfil) a partir de arquivos que ficam
- * dentro do próprio projeto, na pasta {@code src/main/resources/images}, em vez de buscá-las
- * na Internet.
- *
- * <p>A associação é feita pelo nome do arquivo: o perfil "Tahi Glass" usa os arquivos cujo nome
- * contém {@code tahiglass}; "One Glass" usa {@code oneglass}; "Ru Glass" usa {@code ruglass}.
- * O perfil "Grupo Glass" usa os arquivos cujo nome contém {@code grupoglass}.
- * Dentro de cada empresa, o arquivo que contém {@code logo} é a logo e o que contém
- * {@code assinatura} (ou {@code signature}) é a assinatura. Exemplos válidos:
- * <pre>
- *   images/grupoglass_logo.png      images/assinatura-grupoglass.png
- *   images/logo-tahiglass.png        images/assinatura-tahiglass.png
- *   images/oneglass-logo.png         images/oneglass-assinatura.png
- *   images/logo_ruglass.jpg          images/ruglass_assinatura.jpg
- * </pre>
- *
- * <p>Nomes de empresa são comparados sem acento, sem espaços e sem pontuação, então "Tahi Glass",
- * "TAHI GLASS", "TahiGlass" e "Tahi-Glass Ltda" resolvem todos para {@code tahiglass}.
- */
 @Service
 public class CompanyImageService {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyImageService.class);
-
-    /** Chaves das empresas suportadas; o nome do arquivo precisa conter uma delas. */
     static final List<String> COMPANY_KEYS = List.of("grupoglass", "tahiglass", "oneglass", "ruglass");
 
     private static final String IMAGES_LOCATION = "classpath*:images/*";
@@ -68,26 +46,19 @@ public class CompanyImageService {
 
     private final PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-    /** Cache do data URI já montado, por nome de arquivo (evita reler/re-codificar a cada PDF). */
     private final Map<String, String> dataUriCache = new ConcurrentHashMap<>();
 
-    /** Lista de imagens da pasta; carregada sob demanda e mantida em memória. */
     private volatile List<ImageFile> imageFiles;
 
-    // ------------------------------------------------------------------ API pública
-
-    /** Data URI (base64) da logo da empresa do perfil, ou {@code null} se não houver arquivo. */
     public String logoDataUri(Profile profile) {
         return dataUriFor(profile, Kind.LOGO);
     }
 
-    /** Data URI (base64) da assinatura da empresa do perfil, ou {@code null} se não houver arquivo. */
     public String signatureDataUri(Profile profile) {
         return dataUriFor(profile, Kind.SIGNATURE);
     }
 
-    /** Indica se existe um arquivo de logo/assinatura em {@code images/} para a empresa do perfil. */
-    public boolean hasImage(Profile profile, Kind kind) {
+   public boolean hasImage(Profile profile, Kind kind) {
         return findImage(profile, kind).isPresent();
     }
 
@@ -99,17 +70,10 @@ public class CompanyImageService {
         return findImage(profile, kind).map(f -> mimeFor(f.fileName()));
     }
 
-    /**
-     * Chave da empresa ({@code grupoglass}, {@code tahiglass}, {@code oneglass} ou {@code ruglass}) para o perfil
-     * informado, ou vazio se o nome da empresa não corresponder a nenhuma conhecida.
-     */
     public Optional<String> companyKey(Profile profile) {
         if (profile == null) return Optional.empty();
         return companyKeyFromName(profile.getCompanyName());
     }
-
-    // ------------------------------------------------------------------ resolução
-
     static Optional<String> companyKeyFromName(String companyName) {
         String normalized = normalize(companyName);
         if (normalized.isEmpty()) return Optional.empty();
@@ -134,9 +98,7 @@ public class CompanyImageService {
     private String dataUriFor(Profile profile, Kind kind) {
         Optional<ImageFile> image = findImage(profile, kind);
         if (image.isEmpty()) {
-            // Só avisa "arquivo não encontrado" quando a empresa é conhecida; o caso de empresa
-            // desconhecida já foi registrado em findImage.
-            if (companyKey(profile).isPresent()) {
+           if (companyKey(profile).isPresent()) {
                 log.warn("Nenhum arquivo de {} encontrado em 'images/' para a empresa '{}'.",
                         kind, profile.getCompanyName());
             }
@@ -180,17 +142,13 @@ public class CompanyImageService {
             } catch (IOException e) {
                 log.warn("Não foi possível listar a pasta 'images/': {}", e.getMessage());
             }
-            // Ordem estável: se houver mais de um candidato, o primeiro em ordem alfabética vence.
-            found.sort((a, b) -> a.fileName().compareToIgnoreCase(b.fileName()));
+           found.sort((a, b) -> a.fileName().compareToIgnoreCase(b.fileName()));
             log.info("Imagens de empresa disponíveis em 'images/': {}",
                     found.stream().map(ImageFile::fileName).toList());
             imageFiles = List.copyOf(found);
             return imageFiles;
         }
     }
-
-    // ------------------------------------------------------------------ utilidades
-
     private static boolean hasImageExtension(String fileName) {
         String lower = fileName.toLowerCase(Locale.ROOT);
         return EXTENSIONS.stream().anyMatch(ext -> lower.endsWith("." + ext));
@@ -204,8 +162,6 @@ public class CompanyImageService {
         if (lower.endsWith(".svg")) return "image/svg+xml";
         return "image/jpeg";
     }
-
-    /** minúsculas, sem acento e apenas letras/dígitos: "Tahi-Glass Ltda" -> "tahiglassltda". */
     static String normalize(String text) {
         if (text == null) return "";
         String semAcento = Normalizer.normalize(text, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
