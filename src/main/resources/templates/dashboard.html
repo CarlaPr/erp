@@ -50,7 +50,7 @@
         <div class="flex-1">
             <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none">Dashboard Executivo</h1>
             <p class="text-slate-500 dark:text-slate-400 mt-1.5 text-sm">
-                Visão consolidada do negócio sobre o mês selecionado ·
+                Visão consolidada do período selecionado ·
                 <span class="text-slate-700 dark:text-slate-300 font-semibold"
                       th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">
                             02/07/2026
@@ -68,7 +68,7 @@
                 </select>
                 <select id="anoSelecionado" onchange="atualizarDashboard()"
                         class="bg-transparent dark:text-white text-sm font-semibold px-3 py-1.5 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer">
-                    <option th:each="a : ${#numbers.sequence(2023, 2026)}"
+                    <option th:each="a : ${#numbers.sequence(anoSelecionado - 5, anoSelecionado + 5)}"
                             th:value="${a}"
                             th:text="${a}"
                             th:selected="${a == anoSelecionado}">2024</option>
@@ -76,11 +76,11 @@
             </div>
 
             <div class="flex items-center gap-3 flex-shrink-0">
-                <a href="/work-orders"
+                <a th:href="@{/work-orders(month=${reportMonth})}"
                    class="flex items-center gap-2 bg-white dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm dark:shadow-none">
                     <i data-lucide="clipboard-list" class="w-4 h-4"></i> Ordens de Serviço
                 </a>
-                <a href="/quotes"
+                <a th:href="@{/quotes(month=${reportMonth})}"
                    class="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 dark:hover:bg-cyan-400 text-white dark:text-slate-900 font-black px-4 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/25">
                     <i data-lucide="file-plus-2" class="w-4 h-4"></i> Novo Orçamento
                 </a>
@@ -101,7 +101,7 @@
         <div class="kpi-card kpi-accent relative bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 card-hover shadow-sm dark:shadow-none"
              style="--accent: linear-gradient(90deg,#f59e0b,#fbbf24); animation-delay:.1s">
             <div class="flex items-start justify-between mb-4">
-                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Receber<br><span class="text-amber-500">Previsto no Mês Selecionado</span></span>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Receber<br><span class="text-amber-500">Previsto no Período</span></span>
                 <span class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center flex-shrink-0">
           <i data-lucide="clock" class="w-4.5 h-4.5 text-amber-600 dark:text-amber-400"></i>
         </span>
@@ -119,7 +119,7 @@
         <div class="kpi-card kpi-accent relative bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 card-hover shadow-sm dark:shadow-none"
              style="--accent: linear-gradient(90deg,#f43f5e,#fb7185); animation-delay:.15s">
             <div class="flex items-start justify-between mb-4">
-                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Pagar<br><span class="text-rose-500">Previsto no Mês Selecionado</span></span>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">A Pagar<br><span class="text-rose-500">Previsto no Período</span></span>
                 <span class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-500/15 flex items-center justify-center flex-shrink-0">
           <i data-lucide="arrow-down-circle" class="w-4.5 h-4.5 text-rose-600 dark:text-rose-400"></i>
         </span>
@@ -137,7 +137,7 @@
         <div class="kpi-card kpi-accent relative bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 card-hover shadow-sm dark:shadow-none"
              style="--accent: linear-gradient(90deg,#10b981,#34d399); animation-delay:.2s">
             <div class="flex items-start justify-between mb-4">
-                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">Saldo<br><span class="text-emerald-500">Real (Caixa)</span></span>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-tight">Saldo<br><span class="text-emerald-500">Acumulado até o fim do período</span></span>
                 <span class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center flex-shrink-0 pulse-dot">
           <i data-lucide="landmark" class="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400"></i>
         </span>
@@ -199,10 +199,10 @@
             <p class="text-[10px] text-slate-400 mt-1">Real + Previsto a Receber − Previsto a Pagar</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 kpi-card card-hover shadow-sm" style="animation-delay:.35s">
-            <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Taxas Cartão (Mês)</p>
+            <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Taxas financeiras (Período)</p>
             <p class="text-xl font-black text-amber-500 dark:text-amber-400"
                th:text="${taxasCartaoMes != null ? 'R$ ' + #numbers.formatDecimal(taxasCartaoMes, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">R$ 0,00</p>
-            <p class="text-[10px] text-slate-400 mt-1">Despesa financeira automática do mês</p>
+            <p class="text-[10px] text-slate-400 mt-1">Despesas financeiras pagas no período</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 kpi-card card-hover shadow-sm" style="animation-delay:.4s">
             <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Receita Antecipada</p>
@@ -214,7 +214,7 @@
             <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Receita Futura</p>
             <p class="text-xl font-black text-violet-500 dark:text-violet-400"
                th:text="${receitasFuturas != null ? 'R$ ' + #numbers.formatDecimal(receitasFuturas, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">R$ 0,00</p>
-            <p class="text-[10px] text-slate-400 mt-1">Pendente com competência no mês</p>
+            <p class="text-[10px] text-slate-400 mt-1">Pendente com vencimento no período</p>
         </div>
     </section>
 
@@ -292,7 +292,7 @@
                     <h2 class="text-base font-black text-slate-900 dark:text-white">Ordens de Serviço</h2>
                     <p class="text-xs text-slate-500 mt-0.5">Distribuição por status</p>
                 </div>
-                <a href="/work-orders" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
+                <a th:href="@{/work-orders(month=${reportMonth})}" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
                     Ver todas <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
@@ -324,7 +324,7 @@
                         <span class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
                           <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
                         </span>
-                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Concluídas (mês)</span>
+                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Concluídas (período)</span>
                     </div>
                     <span class="text-lg font-black text-emerald-500 dark:text-emerald-400" th:text="${osConcluidasMes != null ? osConcluidasMes : 0}">0</span>
                 </div>
@@ -389,7 +389,7 @@
                     <h2 class="text-base font-black text-slate-900 dark:text-white">Orçamentos</h2>
                     <p class="text-xs text-slate-500 mt-0.5">Funil de vendas</p>
                 </div>
-                <a href="/quotes" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
+                <a th:href="@{/quotes(month=${reportMonth})}" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold flex items-center gap-1 transition-colors">
                     Gerir <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
@@ -409,7 +409,7 @@
                 <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-transparent">
                     <span class="w-2 h-8 rounded-full bg-emerald-400 flex-shrink-0"></span>
                     <div class="flex-1">
-                        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wide">Aprovados (mês)</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wide">Aprovados (período)</p>
                         <p class="text-sm font-black text-emerald-500 dark:text-emerald-400 mt-0.5"
                            th:text="${orcamentosAprovados != null ? orcamentosAprovados + ' orçamentos' : '0 orçamentos'}">
                             0 orçamentos
@@ -491,9 +491,9 @@
             <div class="flex items-center justify-between mb-5">
                 <div>
                     <h2 class="text-base font-black text-slate-900 dark:text-white">Despesas Fixas</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Resumo do mês selecionado</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Resumo do período selecionado</p>
                 </div>
-                <a href="/payables/fixed" class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-bold flex items-center gap-1 transition-colors">
+                <a th:href="@{/payables/fixed(month=${reportMonth})}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-bold flex items-center gap-1 transition-colors">
                     Painel <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>
@@ -538,7 +538,7 @@
                 <h2 class="text-base font-black text-slate-900 dark:text-white">Últimas Ordens de Serviço</h2>
                 <p class="text-xs text-slate-500 mt-0.5">5 mais recentes — clique na OS para detalhes</p>
             </div>
-            <a href="/work-orders"
+            <a th:href="@{/work-orders(month=${reportMonth})}"
                class="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 flex items-center gap-1 transition-colors">
                 Ver todas <i data-lucide="arrow-right" class="w-3 h-3"></i>
             </a>
@@ -613,7 +613,7 @@
                         <div class="flex flex-col items-center gap-2">
                             <i data-lucide="package-open" class="w-8 h-8 text-slate-400 dark:text-slate-700"></i>
                             <p class="text-slate-500 font-bold text-sm">Nenhuma ordem de serviço cadastrada.</p>
-                            <a href="/work-orders" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold">Criar primeira OS →</a>
+                            <a th:href="@{/work-orders(month=${reportMonth})}" class="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-bold">Criar primeira OS →</a>
                         </div>
                     </td>
                 </tr>

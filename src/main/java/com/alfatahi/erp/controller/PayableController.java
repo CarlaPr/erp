@@ -1,5 +1,8 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.service.FinancialPeriod;
+import com.alfatahi.erp.service.CashLedgerService;
+
 import com.alfatahi.erp.entity.AccountsPayable;
 import com.alfatahi.erp.entity.AccountsReceivable;
 import com.alfatahi.erp.entity.ExpenseAllocation;
@@ -21,10 +24,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.YearMonth;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +39,7 @@ public class PayableController {
     private final AccountsPayableRepository payableRepository;
     private final SupplierService supplierService;
     private final FinanceService financeService;
+    private final CashLedgerService cashLedgerService;
     private final SupplierRepository supplierRepository;
     private final WorkOrderRepository workOrderRepository;
     private final CategoryCatalogService categoryCatalogService;
@@ -49,6 +50,7 @@ public class PayableController {
     public PayableController(AccountsPayableRepository payableRepository,
                              SupplierService supplierService,
                              FinanceService financeService,
+                             CashLedgerService cashLedgerService,
                              SupplierRepository supplierRepository,
                              WorkOrderRepository workOrderRepository,
                              CategoryCatalogService categoryCatalogService,
@@ -57,6 +59,7 @@ public class PayableController {
         this.payableRepository = payableRepository;
         this.supplierService = supplierService;
         this.financeService = financeService;
+        this.cashLedgerService = cashLedgerService;
         this.supplierRepository = supplierRepository;
         this.workOrderRepository = workOrderRepository;
         this.categoryCatalogService = categoryCatalogService;
@@ -79,13 +82,14 @@ public class PayableController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(required = false) UUID workOrderId,
             @RequestParam(required = false, defaultValue = "false") boolean allMonths,
+            @RequestParam(required = false) String month,
             Model model) {
 
-        if (dateFrom == null && dateTo == null && !allMonths) {
-            LocalDate today = LocalDate.now();
-            dateFrom = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-            dateTo = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
-        }
+        FinancialPeriod period = FinancialPeriod.select(
+                month != null && !month.isBlank() ? month : competencia, allMonths, dateFrom, dateTo);
+        period.addTo(model);
+        dateFrom = period.from();
+        dateTo = period.to();
 
         List<AccountsPayable> list = financeService.listAllPayables().stream()
                 .filter(p -> !("cancelled".equals(p.getStatus()) || "inactive".equals(p.getStatus()))
@@ -103,28 +107,8 @@ public class PayableController {
             String q = costCenter.toLowerCase();
             list = list.stream().filter(p -> p.getCostCenter() != null && p.getCostCenter().toLowerCase().contains(q)).collect(Collectors.toList());
         }
-        if (competencia != null && !competencia.isBlank()) {
-            YearMonth parsed;
-            try {
-                parsed = YearMonth.parse(competencia);
-            } catch (Exception e) {
-                parsed = null;
-            }
-            if (parsed != null) {
-                final YearMonth ymFinal = parsed;
-                list = list.stream().filter(p -> p.getCompetencia() != null && YearMonth.from(p.getCompetencia()).equals(ymFinal)).collect(Collectors.toList());
-            }
-        }
         if (supplierId != null) list = list.stream().filter(p -> p.getSupplier() != null && supplierId.equals(p.getSupplier().getId())).collect(Collectors.toList());
-        if (dateFrom != null || dateTo != null) {
-            final LocalDate df = dateFrom;
-            final LocalDate dt = dateTo;
-            // Vencidos em aberto continuam visíveis fora do período selecionado.
-            list = list.stream().filter(p -> p.isOverdue()
-                    || ((df == null || !p.getDueDate().isBefore(df))
-                    && (dt == null || !p.getDueDate().isAfter(dt))))
-                    .collect(Collectors.toList());
-        }
+        list = list.stream().filter(p -> period.contains(p.getDueDate())).collect(Collectors.toList());
         if (workOrderId != null) list = list.stream().filter(p -> p.getWorkOrder() != null && workOrderId.equals(p.getWorkOrder().getId())).collect(Collectors.toList());
 
         switch (aba == null ? "todas" : aba) {
@@ -136,9 +120,8 @@ public class PayableController {
             default -> {  }
         }
 
-        BigDecimal totalEntradasGeral = financeService.listAllReceivables().stream().filter(r -> "received".equals(r.getStatus()) || "partial".equals(r.getStatus())).map(AccountsReceivable::getNetReceivedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalSaidasGeral = financeService.listAllPayables().stream().filter(p -> "paid".equals(p.getStatus()) || "partial".equals(p.getStatus())).map(AccountsPayable::getPaidAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal saldoReal = totalEntradasGeral.subtract(totalSaidasGeral);
+        BigDecimal saldoReal = period.to() == null ? cashLedgerService.getCurrentBalances().total()
+                : cashLedgerService.getOpeningBalances(period.endExclusive()).total();
 
         BigDecimal total = list.stream().map(AccountsPayable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal pago = list.stream().filter(p -> "paid".equals(p.getStatus()) || "partial".equals(p.getStatus())).map(AccountsPayable::getPaidAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -188,11 +171,13 @@ public class PayableController {
 
     @Transactional(readOnly = true)
     @GetMapping("/fixed")
-    public String fixedAccounts(Model model) {
-        LocalDate hoje = LocalDate.now();
-        YearMonth ym = YearMonth.from(hoje);
-        LocalDate inicioMes = ym.atDay(1);
-        LocalDate fimMes = ym.atEndOfMonth().plusDays(1);
+    public String fixedAccounts(@RequestParam(required = false) String month, Model model) {
+        FinancialPeriod period = FinancialPeriod.select(month, false, null, null);
+        if (period.reference() == null) period = FinancialPeriod.current();
+        period.addTo(model);
+        LocalDate hoje = FinancialPeriod.today();
+        LocalDate inicioMes = period.from();
+        LocalDate fimMes = period.endExclusive();
 
         List<AccountsPayable> fixasOuRecorrentes = financeService.listAllPayables().stream()
                 .filter(p -> !"cancelled".equals(p.getStatus()))
@@ -204,11 +189,11 @@ public class PayableController {
                 .filter(p -> !p.getDueDate().isBefore(inicioMes) && p.getDueDate().isBefore(fimMes))
                 .collect(Collectors.toList());
 
-        List<AccountsPayable> vencidas = fixasOuRecorrentes.stream()
+        List<AccountsPayable> vencidas = doMesAtual.stream()
                 .filter(AccountsPayable::isOverdue)
                 .collect(Collectors.toList());
 
-        List<AccountsPayable> pagas = fixasOuRecorrentes.stream()
+        List<AccountsPayable> pagas = doMesAtual.stream()
                 .filter(p -> "paid".equals(p.getStatus()))
                 .sorted((a, b) -> {
                     LocalDate da = a.getPaymentDate() != null ? a.getPaymentDate() : a.getDueDate();
@@ -239,14 +224,14 @@ public class PayableController {
                 .map(AccountsPayable::getBalance)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        List<AccountsPayable> proximosVencimentos = fixasOuRecorrentes.stream()
+        List<AccountsPayable> proximosVencimentos = doMesAtual.stream()
                 .filter(p -> ("pending".equals(p.getStatus()) || "partial".equals(p.getStatus())) && !p.getDueDate().isBefore(hoje))
                 .sorted((a, b) -> a.getDueDate().compareTo(b.getDueDate()))
                 .limit(5)
                 .collect(Collectors.toList());
 
         model.addAttribute("currentPage", "payables");
-        model.addAttribute("mesAtualLabel", String.format("%02d/%d", hoje.getMonthValue(), hoje.getYear()));
+        model.addAttribute("mesAtualLabel", period.label());
         model.addAttribute("doMesAtual", doMesAtual);
         model.addAttribute("vencidas", vencidas);
         model.addAttribute("pagas", pagas);
@@ -448,7 +433,10 @@ public class PayableController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(required = false) UUID workOrderId,
+            @RequestParam(required = false) String month,
+            @RequestParam(required = false, defaultValue = "false") boolean allMonths,
             jakarta.servlet.http.HttpServletResponse response) throws Exception {
+        FinancialPeriod period = FinancialPeriod.select(month, allMonths, dateFrom, dateTo);
 
         List<AccountsPayable> list = financeService.listAllPayables().stream()
                 .filter(p -> !("cancelled".equals(p.getStatus()) || "inactive".equals(p.getStatus()))
@@ -466,8 +454,7 @@ public class PayableController {
         if (status != null && !status.isBlank()) list = list.stream().filter(p -> status.equals(p.getStatus())).collect(Collectors.toList());
         if (category != null && !category.isBlank()) list = list.stream().filter(p -> category.equalsIgnoreCase(p.getCategory())).collect(Collectors.toList());
         if (supplierId != null) list = list.stream().filter(p -> p.getSupplier() != null && supplierId.equals(p.getSupplier().getId())).collect(Collectors.toList());
-        if (dateFrom != null) list = list.stream().filter(p -> !p.getDueDate().isBefore(dateFrom)).collect(Collectors.toList());
-        if (dateTo != null) list = list.stream().filter(p -> !p.getDueDate().isAfter(dateTo)).collect(Collectors.toList());
+        list = list.stream().filter(p -> period.contains(p.getDueDate())).collect(Collectors.toList());
         if (workOrderId != null) list = list.stream().filter(p -> p.getWorkOrder() != null && workOrderId.equals(p.getWorkOrder().getId())).collect(Collectors.toList());
 
         response.setContentType("text/csv; charset=UTF-8");
@@ -538,7 +525,7 @@ public class PayableController {
             p.setExpenseType("VARIAVEL".equalsIgnoreCase(p.getCategory()) ? "VARIAVEL" : "FIXA");
         }
         if (p.getCompetencia() == null && p.getDueDate() != null) {
-            p.setCompetencia(p.getDueDate().withDayOfMonth(1));
+            p.setCompetencia(FinancialPeriod.referenceFor(p.getDueDate()).atDay(1));
         }
     }
 

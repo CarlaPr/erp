@@ -1,5 +1,7 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.service.FinancialPeriod;
+
 import com.alfatahi.erp.dto.CashLedgerEntryDto;
 import com.alfatahi.erp.service.CashLedgerService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,15 +29,22 @@ public class CashLedgerController {
     public String index(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String month,
             Model model) {
-
-        if (from == null) from = LocalDate.now().withDayOfMonth(1);
-        if (to   == null) to   = LocalDate.now();
+        FinancialPeriod period = FinancialPeriod.select(month, false, from, to);
+        if (period.from() == null || period.to() == null) {
+            period = new FinancialPeriod(null,
+                    period.from() != null ? period.from() : FinancialPeriod.current().from(),
+                    period.to() != null ? period.to() : FinancialPeriod.current().to());
+        }
+        period.addTo(model);
+        from = period.from();
+        to = period.to();
 
         CashLedgerService.BalanceSummary openingBalances = cashLedgerService.getOpeningBalances(from);
         BigDecimal openingBalance = openingBalances.total();
         List<CashLedgerEntryDto> entries = cashLedgerService.buildLedger(from, to, openingBalance);
-        CashLedgerService.BalanceSummary currentBalances = cashLedgerService.getCurrentBalances();
+        CashLedgerService.BalanceSummary currentBalances = cashLedgerService.getOpeningBalances(to.plusDays(1));
 
         BigDecimal totalEntradas = entries.stream()
                 .map(CashLedgerEntryDto::getEntrada)

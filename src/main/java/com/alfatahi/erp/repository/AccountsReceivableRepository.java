@@ -31,15 +31,15 @@ public interface AccountsReceivableRepository extends JpaRepository<AccountsRece
     BigDecimal sumEntradasRealByPeriod(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
 
-    @Query("SELECT COALESCE(SUM(r.grossReceivedAmount), 0) FROM AccountsReceivable r " +
+    @Query("SELECT COALESCE(SUM(m.amount), 0) FROM FinancialMovement m JOIN m.accountsReceivable r " +
             "WHERE r.status IN ('received', 'partial') " +
-            "AND r.paymentDate >= :inicio AND r.paymentDate < :fim " +
-            "AND r.referenceMonth > :fim")
+            "AND m.movementDate >= :inicio AND m.movementDate < :fim " +
+            "AND r.dueDate >= :fim")
     BigDecimal sumReceitasAntecipadas(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
     @Query("SELECT COALESCE(SUM(r.totalAmount - COALESCE(r.grossReceivedAmount,0)), 0) FROM AccountsReceivable r " +
             "WHERE r.status IN ('pending', 'partial') " +
-            "AND r.referenceMonth >= :inicio AND r.referenceMonth < :fim")
+            "AND r.dueDate >= :inicio AND r.dueDate < :fim")
     BigDecimal sumReceitasFuturas(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
     @Query("SELECT SUM(a.totalAmount) FROM AccountsReceivable a WHERE a.status != 'cancelled'")

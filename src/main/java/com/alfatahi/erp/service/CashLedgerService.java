@@ -50,6 +50,18 @@ public class CashLedgerService {
         return summarize(movementRepository.findAllByMovementDateBefore(LocalDate.now().plusDays(1)));
     }
 
+    public record PeriodSummary(BigDecimal in, BigDecimal out, BigDecimal financialExpenses) { }
+
+    @Transactional(readOnly = true)
+    public PeriodSummary getPeriodSummary(LocalDate from, LocalDate to) {
+        List<CashLedgerEntryDto> entries = buildLedger(from, to, BigDecimal.ZERO);
+        BigDecimal in = entries.stream().map(CashLedgerEntryDto::getEntrada).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal out = entries.stream().map(CashLedgerEntryDto::getSaida).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal fees = entries.stream().filter(CashLedgerEntryDto::isFinancialExpense)
+                .map(CashLedgerEntryDto::getSaida).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new PeriodSummary(in, out, fees);
+    }
+
     private BalanceSummary summarize(List<FinancialMovement> movements) {
         BigDecimal bank = BigDecimal.ZERO;
         BigDecimal cash = BigDecimal.ZERO;

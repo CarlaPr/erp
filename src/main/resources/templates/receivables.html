@@ -42,11 +42,12 @@
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
         <div class="bg-indigo-600 dark:bg-indigo-900 p-6 rounded-2xl shadow-md border-none">
-            <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1">Saldo Real (Atual)</span>
+            <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1">Saldo acumulado</span>
+            <p class="text-xs text-indigo-200 mb-2" th:text="${reportTo != null ? 'Até ' + #temporals.format(reportTo, 'dd/MM/yyyy') : 'Até hoje'}"></p>
             <p class="text-lg sm:text-xl lg:text-2xl font-black text-white" th:text="'R$ ' + ${#numbers.formatDecimal(saldoReal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-emerald-500">
-            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Recebido (Filtro)</span>
+            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Recebido das contas do período</span>
             <p class="text-lg sm:text-xl lg:text-2xl font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(valRecebido, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-amber-500">
@@ -62,6 +63,7 @@
     <form method="GET"
           action="/receivables"
           class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 shadow-sm">
+        <input th:if="${reportAllMonths}" type="hidden" name="allMonths" value="true">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end mb-5">
             <div class="lg:col-span-2">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Buscar</label>
@@ -98,14 +100,13 @@
             </div>
         </div>
 
-        <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">Recebíveis vencidos pendentes ou parciais também aparecem fora do período, respeitando os demais filtros, até o recebimento integral.</p>
-        <div class="flex flex-col lg:flex-row justify-between items-end gap-5">
+         <div class="flex flex-col lg:flex-row justify-between items-end gap-5">
             <div class="w-full lg:w-1/3">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Período (Vencimento)</label>
                 <div class="flex gap-2">
-                    <input type="date" name="dateFrom" th:value="${filterDateFrom}"
+                    <input type="date" name="dateFrom" onchange="this.form.querySelector('[name=allMonths]')?.remove()" th:value="${filterDateFrom}"
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 outline-none focus:border-emerald-500 transition-all text-sm"/>
-                    <input type="date" name="dateTo" th:value="${filterDateTo}"
+                    <input type="date" name="dateTo" onchange="this.form.querySelector('[name=allMonths]')?.remove()" th:value="${filterDateTo}"
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 outline-none focus:border-emerald-500 transition-all text-sm"/>
                 </div>
             </div>
@@ -116,8 +117,8 @@
                     <i data-lucide="filter" class="w-4 h-4"></i>
                     Filtrar
                 </button>
-                <a href="/receivables" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2" title="Voltar para visualização da semana atual">
-                    <i data-lucide="calendar" class="w-4 h-4"></i> Semana Atual
+                <a href="/receivables" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2" title="Voltar para o período de referência atual">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Referência Atual
                 </a>
                 <a href="/receivables?allMonths=true" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2">
                     <i data-lucide="calendar-days" class="w-4 h-4"></i> Todos os Meses
@@ -742,8 +743,8 @@
 
             <div class="p-6 space-y-6">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Selecione o Mês</label>
-                    <input type="month" id="exportMonth" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all text-base">
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Mês de referência (dia 6 ao dia 5 seguinte)</label>
+                    <input type="month" id="exportMonth" th:value="${reportMonth}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all text-base">
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4">
@@ -1497,13 +1498,8 @@
             alert('Por favor, selecione um mês!');
             return;
         }
-        const [year, month] = monthInput.split('-');
-        const dateFrom = `${year}-${month}-01`;
-        const lastDay = new Date(year, month, 0).getDate();
-        const dateTo = `${year}-${month}-${lastDay}`;
-
         const currentPath = window.location.pathname;
-        const url = `${currentPath}/export?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+        const url = `${currentPath}/export?month=${encodeURIComponent(monthInput)}`;
 
         window.location.href = url;
         closeModal('exportModal');

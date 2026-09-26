@@ -108,7 +108,7 @@
                 <table class="w-full text-sm text-left">
                     <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800/50">
                     <tr>
-                        <th class="p-4">Período</th>
+                        <th class="p-4">Referência / Período</th>
                         <th class="p-4 text-right">Saldo Inicial</th>
                         <th class="p-4 text-right">Entradas</th>
                         <th class="p-4 text-right">Saídas</th>
@@ -119,9 +119,9 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
                     <tr th:each="c : ${closings}" class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                        <td class="p-4 font-semibold text-slate-700 dark:text-slate-300"
-                            th:text="${#temporals.format(c.periodStart, 'dd/MM/yyyy')} + ' a ' + ${#temporals.format(c.periodEnd, 'dd/MM/yyyy')}">
-                            06/07/2026 a 05/08/2026
+                        <td class="p-4 font-semibold text-slate-700 dark:text-slate-300">
+                            <span class="block font-bold uppercase" th:text="${#temporals.format(c.periodStart, 'MMMM yyyy', #locale)}"></span>
+                            <span class="text-xs" th:text="${#temporals.format(c.periodStart, 'dd/MM/yyyy')} + ' a ' + ${#temporals.format(c.periodEnd, 'dd/MM/yyyy')}"></span>
                         </td>
                         <td class="p-4 text-right font-mono text-slate-500"
                             th:text="|R$ ${#numbers.formatDecimal(c.openingBalance, 1, 'POINT', 2, 'COMMA')}|">R$ 0</td>

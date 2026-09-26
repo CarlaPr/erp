@@ -16,19 +16,20 @@ import java.util.List;
 public class FinancialClosingService {
 
 
-    private static final int DIA_INICIO_PERIODO = 6;
+    private static final int DIA_INICIO_PERIODO = FinancialPeriod.START_DAY;
 
 
-    private static final int DIA_FIM_PERIODO = 5;
 
     private final FinancialClosingRepository closingRepo;
+    private final CashLedgerService cashLedgerService;
     private final AccountsReceivableRepository receivableRepo;
     private final AccountsPayableRepository payableRepo;
 
     public FinancialClosingService(FinancialClosingRepository closingRepo,
                                     AccountsReceivableRepository receivableRepo,
-                                    AccountsPayableRepository payableRepo) {
+                                    AccountsPayableRepository payableRepo, CashLedgerService cashLedgerService) {
         this.closingRepo   = closingRepo;
+        this.cashLedgerService = cashLedgerService;
         this.receivableRepo = receivableRepo;
         this.payableRepo    = payableRepo;
     }
@@ -39,7 +40,7 @@ public class FinancialClosingService {
 
 
     public LocalDate periodoFim(LocalDate periodStart) {
-        return periodStart.plusMonths(1).withDayOfMonth(DIA_FIM_PERIODO);
+        return FinancialPeriod.monthly(java.time.YearMonth.from(periodStart)).to();
     }
 
 
@@ -48,14 +49,14 @@ public class FinancialClosingService {
     }
 
     public boolean periodoLiberadoParaFechamento(LocalDate periodStart) {
-        return !LocalDate.now().isBefore(dataLiberacaoFechamento(periodStart));
+        return !FinancialPeriod.today().isBefore(dataLiberacaoFechamento(periodStart));
     }
 
 
     public LocalDate proximoPeriodoParaFechar() {
         return closingRepo.findLatestClosing()
                 .map(fc -> fc.getPeriodStart().plusMonths(1))
-                .orElse(LocalDate.now().withDayOfMonth(DIA_INICIO_PERIODO).minusMonths(1));
+                .orElse(FinancialPeriod.current().from().minusMonths(1));
     }
 
     @Transactional
@@ -65,7 +66,7 @@ public class FinancialClosingService {
         LocalDate periodEnd   = periodoFim(periodStart);
 
         LocalDate dataLiberacao = dataLiberacaoFechamento(periodStart);
-        if (LocalDate.now().isBefore(dataLiberacao)) {
+        if (FinancialPeriod.today().isBefore(dataLiberacao)) {
             throw new IllegalStateException(
                     "O fechamento do período de " + periodStart + " a " + periodEnd
                             + " só pode ser executado a partir de " + dataLiberacao + ".");
@@ -89,17 +90,18 @@ public class FinancialClosingService {
 
         BigDecimal openingBalance = closingRepo.findLatestClosing()
                 .map(FinancialClosing::getClosingBalance)
-                .orElse(BigDecimal.ZERO);
+                .orElseGet(() -> cashLedgerService.getOpeningBalances(periodStart).total());
 
         LocalDate queryStart = periodStart;
         LocalDate queryEnd   = periodEnd.plusDays(1);
 
-        BigDecimal totalIn      = nvl(receivableRepo.sumEntradasRealByPeriod(queryStart, queryEnd));
-        BigDecimal totalOut     = nvl(payableRepo.sumSaidasRealByPeriod(queryStart, queryEnd));
+        CashLedgerService.PeriodSummary cash = cashLedgerService.getPeriodSummary(queryStart, periodEnd);
+        BigDecimal totalIn = cash.in();
+        BigDecimal totalOut = cash.out();
 
 
 
-        BigDecimal financialExp = nvl(payableRepo.sumDespesasFinanceirasRecebidas(queryStart, queryEnd));
+        BigDecimal financialExp = cash.financialExpenses();
         BigDecimal pending      = nvl(receivableRepo.sumPendentesByPeriod(queryStart, queryEnd));
         BigDecimal received     = totalIn;
 

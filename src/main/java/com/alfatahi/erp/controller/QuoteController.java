@@ -1,5 +1,7 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.service.FinancialPeriod;
+
 import com.alfatahi.erp.entity.Quote;
 import com.alfatahi.erp.entity.QuoteItem;
 import com.alfatahi.erp.entity.WorkOrder;
@@ -262,38 +264,29 @@ public class QuoteController {
             return q2.getNumber().compareTo(q1.getNumber());
         });
 
-        if (month == null || month.isEmpty()) {
-            month = DateTimeFormatter.ofPattern("yyyy-MM").format(LocalDateTime.now());
-        }
-
-        final String finalMonth = month;
+        FinancialPeriod period = FinancialPeriod.select(month, false, null, null);
+        period.addTo(model);
+        month = period.reference() == null ? "all" : period.monthValue();
         List<Quote> filteredList = todosOrcamentos.stream().filter(q -> {
             if (status != null && !status.isEmpty() && !q.getStatus().equals(status)) return false;
             if (number != null && !number.isEmpty() && !q.getNumber().toLowerCase().contains(number.toLowerCase())) return false;
             if (name != null && !name.isEmpty() && q.getClient() != null && !q.getClient().getName().toLowerCase().contains(name.toLowerCase())) return false;
 
-            if (finalMonth != null && !finalMonth.equals("all")) {
-                if (q.getDateCreated() == null) return false;
-                String quoteYearMonth = DateTimeFormatter.ofPattern("yyyy-MM").format(q.getDateCreated());
-                if (!quoteYearMonth.equals(finalMonth)) return false;
-            }
+            if (!period.contains(ordenarPorAprovacao ? q.getDateApproved() : q.getDateCreated())) return false;
             return true;
         }).collect(java.util.stream.Collectors.toList());
 
         List<Map<String, String>> disponiveis = new ArrayList<>();
-        LocalDateTime dataLoop = LocalDateTime.now();
 
-        for (int i = 0; i < 12; i++) {
-            LocalDateTime target = dataLoop.minusMonths(i);
-            String val = target.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-
-            String label = target.format(DateTimeFormatter.ofPattern("MMMM / yyyy", Locale.forLanguageTag("pt-BR")));
-            label = label.substring(0, 1).toUpperCase() + label.substring(1);
-
-            Map<String, String> itemMes = new HashMap<>();
-            itemMes.put("value", val);
-            itemMes.put("label", i == 0 ? label + " (Mês Atual)" : label);
-            disponiveis.add(itemMes);
+        java.util.SortedSet<java.time.YearMonth> references = new java.util.TreeSet<>(java.util.Comparator.reverseOrder());
+        references.add(FinancialPeriod.referenceFor(FinancialPeriod.today()));
+        if (period.reference() != null) references.add(period.reference());
+        for (Quote quote : todosOrcamentos) {
+            if (quote.getDateCreated() != null) references.add(FinancialPeriod.referenceFor(quote.getDateCreated().toLocalDate()));
+            if (quote.getDateApproved() != null) references.add(FinancialPeriod.referenceFor(quote.getDateApproved().toLocalDate()));
+        }
+        for (java.time.YearMonth reference : references) {
+            disponiveis.add(Map.of("value", reference.toString(), "label", FinancialPeriod.monthly(reference).label()));
         }
 
         List<com.alfatahi.erp.entity.Profile> profiles = profileRepo.findAll();

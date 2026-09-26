@@ -7,7 +7,68 @@
 <div th:replace="~{fragments/layout :: topbar}"></div>
 <div th:replace="~{fragments/layout :: pending-schedule-alert}"></div>
 
-<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+<style>
+    #workOrdersPage { min-width: 0; }
+    #osFilters { container-type: inline-size; }
+    #osFilters, #osFilters * { box-sizing: border-box; }
+    #osFilters .os-period-filter {
+        min-width: 0;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .dark #osFilters .os-period-filter { border-color: #334155; }
+    #osFilters .os-period-filter > :not(script):not(style) {
+        width: 100%; max-width: 100%; min-width: 0; margin: 0;
+    }
+    #osFilters .os-period-filter form {
+        display: flex; flex-wrap: wrap; align-items: flex-end;
+        gap: 1rem; width: 100%; min-width: 0;
+    }
+    #osFilters .os-period-filter :is(.flex, .grid) {
+        min-width: 0; max-width: 100%;
+    }
+    #osFilters .os-period-filter .flex { flex-wrap: wrap; }
+    #osFilters .os-period-filter form > :not(input):not(script):not(style) {
+        min-width: 0; max-width: 100%;
+    }
+    #osFilters .os-filter-grid {
+        display: grid; grid-template-columns: minmax(0, 1fr);
+        gap: 1rem; align-items: end;
+    }
+    #osFilters .os-filter-grid > div { min-width: 0; }
+    #osFilters .os-filter-actions { display: flex; align-items: flex-end; }
+    #osFilters input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+    #osFilters select {
+        min-width: 0; max-width: 100%; min-height: 48px;
+        font-size: 16px;
+    }
+    #osFilters .os-filter-grid :is(input, select, button) { width: 100%; }
+    #osFilters button { min-height: 48px; white-space: normal; }
+    @container (min-width: 600px) {
+        #osFilters .os-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        #osFilters .os-filter-search, #osFilters .os-filter-actions { grid-column: 1 / -1; }
+        #osFilters .os-filter-actions { justify-content: flex-end; }
+        #osFilters .os-filter-actions button { width: auto; }
+    }
+    @container (min-width: 1050px) {
+        #osFilters .os-filter-grid {
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr) minmax(0, 1fr) auto;
+        }
+        #osFilters .os-filter-search, #osFilters .os-filter-actions { grid-column: auto; }
+    }
+    @media (max-width: 639px) {
+        #osFilters .os-period-filter form { flex-direction: column; align-items: stretch; }
+        #osFilters .os-period-filter form > :not(input[type="hidden"]):not(script):not(style) {
+            width: 100%;
+        }
+        #osFilters .os-period-filter input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+        #osFilters .os-period-filter select { width: 100%; }
+        #osFilters .os-period-filter .grid { grid-template-columns: minmax(0, 1fr); }
+    }
+</style>
+
+<main id="workOrdersPage" class="min-w-0 flex-1 lg:ml-72 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 pt-20 lg:pt-8 w-full min-h-screen">
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5 gap-4">
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Ordens de Serviço</h2>
@@ -20,6 +81,48 @@
             <i data-lucide="plus-circle" class="w-5 h-5"></i> Nova OS
         </button>
     </header>
+    <section id="osFilters" aria-labelledby="osFiltersTitle" class="bg-white dark:bg-[#131C2F] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm mb-8">
+        <div class="mb-5">
+            <h3 id="osFiltersTitle" class="text-base font-bold text-slate-900 dark:text-white">Filtros das ordens de serviço</h3>
+        </div>
+        <div class="os-period-filter">
+            <div th:replace="~{fragments/financial-period :: filter('/work-orders', '', true)}"></div>
+        </div>
+        <div class="os-filter-grid">
+            <div class="os-filter-search">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2" for="filterSearch">Buscar O.S.</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </div>
+                    <input type="text" id="filterSearch" oninput="applyOsFilters()" placeholder="Nº da OS, orçamento, título ou cliente..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2" for="filterMonth">Agendamento</label>
+                <select id="filterMonth" onchange="applyOsFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm">
+                    <option value="all" selected>Todas as O.S. do período</option>
+                    <option value="unscheduled">Sem instalação agendada</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2" for="filterStatus">Status</label>
+                <select id="filterStatus" onchange="applyOsFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm">
+                    <option value="all">Todos os Status</option>
+                    <option value="in_progress">Em Andamento</option>
+                    <option value="completed">Entregue</option>
+                    <option value="cancelled">Cancelado</option>
+                </select>
+            </div>
+            <div class="os-filter-actions">
+                <button type="button" onclick="clearOsFilters()" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-bold py-3 px-4 rounded-xl transition-colors text-sm flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700">
+                    <i data-lucide="filter-x" class="w-4 h-4"></i> Limpar busca e filtros
+                </button>
+            </div>
+        </div>
+    </section>
+
+
 
 
 
@@ -33,7 +136,7 @@
             <p class="text-2xl font-black text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(totalCost, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Lucro Bruto Global</p>
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Lucro Bruto do Período</p>
             <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(globalProfit, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-brand-600 dark:border-l-cyan-500">
@@ -42,53 +145,6 @@
         </div>
     </div>
 
-    <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm mb-8">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
-            <div class="md:col-span-2">
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Buscar O.S.</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
-                        <i data-lucide="search" class="w-4 h-4"></i>
-                    </div>
-                    <input type="text" id="filterSearch" onkeyup="applyOsFilters()" placeholder="Nº da OS ou Orçamento, Título ou Cliente..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm" />
-                </div>
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Mês (Instalação)</label>
-                <select id="filterMonth" onchange="applyOsFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm">
-                    <option value="current_view" selected>Visão Atual</option>
-                    <option value="all">Todos os Meses</option>
-                    <option value="unscheduled">Sem instalação agendada</option>
-                    <option value="01">Janeiro</option>
-                    <option value="02">Fevereiro</option>
-                    <option value="03">Março</option>
-                    <option value="04">Abril</option>
-                    <option value="05">Maio</option>
-                    <option value="06">Junho</option>
-                    <option value="07">Julho</option>
-                    <option value="08">Agosto</option>
-                    <option value="09">Setembro</option>
-                    <option value="10">Outubro</option>
-                    <option value="11">Novembro</option>
-                    <option value="12">Dezembro</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Status</label>
-                <select id="filterStatus" onchange="applyOsFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm">
-                    <option value="all">Todos os Status</option>
-                    <option value="in_progress">Em Andamento</option>
-                    <option value="completed">Entregue</option>
-                    <option value="cancelled">Cancelado</option>
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button type="button" onclick="clearOsFilters()" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-bold py-3 px-4 rounded-xl transition-colors text-sm flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700">
-                    <i data-lucide="filter-x" class="w-4 h-4"></i> Limpar Filtros
-                </button>
-            </div>
-        </div>
-    </div>
 
     <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 shadow-sm">
         <div class="space-y-4">
@@ -97,8 +153,7 @@
                  th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}"
                  class="js-os-card bg-slate-50 dark:bg-[#1A2533] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 relative overflow-hidden flex flex-col sm:flex-row gap-4 sm:gap-6 hover:border-brand-300 dark:hover:border-slate-600 transition-all hover:shadow-md"
                  th:data-status="${wo.status}"
-                 th:data-month="${wo.installDate != null ? #temporals.format(wo.installDate, 'MM') : ''}"
-                 th:data-year="${wo.installDate != null ? #temporals.format(wo.installDate, 'yyyy') : ''}"
+                 th:data-install-date="${wo.installDate != null ? #temporals.format(wo.installDate, 'yyyy-MM-dd') : ''}"
                  th:data-search="${wo.number + ' ' + (wo.quote != null ? wo.quote.number : '') + ' ' + (wo.title != null ? wo.title : '') + ' ' + (wo.client != null ? wo.client.name : '')}">
 
                 <div class="absolute left-0 top-0 bottom-0 w-1.5"
@@ -435,9 +490,6 @@
         const statusTerm = document.getElementById('filterStatus').value.toLowerCase();
         const monthTerm = document.getElementById('filterMonth').value;
 
-        const now = new Date();
-        const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
-        const currentYear = String(now.getFullYear());
 
         const cards = document.querySelectorAll('.js-os-card');
         let visibleCount = 0;
@@ -445,13 +497,11 @@
         cards.forEach(card => {
             const searchData = (card.getAttribute('data-search') || '').toLowerCase();
             const statusData = (card.getAttribute('data-status') || '').toLowerCase();
-            const monthData = card.getAttribute('data-month') || '';
-            const yearData = card.getAttribute('data-year') || '';
+            const installDate = card.getAttribute('data-install-date') || '';
 
             const isCompleted = statusData === 'completed' || statusData === 'delivered';
             const isCancelled = statusData === 'cancelled' || statusData === 'canceled';
             const isInProgress = !isCompleted && !isCancelled;
-            const isCurrentMonth = monthData === currentMonth && yearData === currentYear;
 
             let matchStatus = false;
             if (statusTerm === 'all') {
@@ -466,20 +516,7 @@
                 matchStatus = statusTerm === statusData;
             }
 
-            let matchMonth = false;
-            if (monthTerm === 'current_view') {
-                // Visão padrão:
-                // 1) todas as OS em andamento, mesmo de meses anteriores;
-                // 2) todas as OS do mês corrente, independentemente do status.
-                // A busca textual também encontra ordens antigas na visão padrão.
-                matchMonth = searchTerm.length > 0 || isInProgress || isCurrentMonth;
-            } else if (monthTerm === 'unscheduled') {
-                matchMonth = monthData === '';
-            } else if (monthTerm === 'all') {
-                matchMonth = true;
-            } else {
-                matchMonth = monthTerm === monthData;
-            }
+            const matchMonth = monthTerm !== 'unscheduled' || installDate === '';
 
             const matchSearch = searchData.includes(searchTerm);
 
@@ -495,10 +532,7 @@
 
         const summary = document.getElementById('osFilterSummary');
         if (summary) {
-            summary.textContent = `Exibindo ${visibleCount} de ${cards.length} ordens de serviço.`
-                + (monthTerm === 'current_view' && !searchTerm
-                    ? ''
-                    : '');
+            summary.textContent = `Exibindo ${visibleCount} de ${cards.length} ordens de serviço do período.`;
         }
         const emptyStateFilter = document.getElementById('emptyStateFilter');
         if (visibleCount === 0 && cards.length > 0) {
@@ -982,7 +1016,7 @@
         const monthFilter = document.getElementById('filterMonth');
         const statusFilter = document.getElementById('filterStatus');
 
-        if (monthFilter) monthFilter.value = 'current_view';
+        if (monthFilter) monthFilter.value = 'all';
         if (statusFilter) statusFilter.value = 'all';
         const search = new URLSearchParams(window.location.search).get('search');
         if (search) document.getElementById('filterSearch').value = search;

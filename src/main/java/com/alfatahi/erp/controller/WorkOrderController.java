@@ -1,5 +1,7 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.service.FinancialPeriod;
+
 import com.alfatahi.erp.dto.WorkOrderPaymentStatusDto;
 import com.alfatahi.erp.entity.*;
 import com.alfatahi.erp.repository.*;
@@ -58,8 +60,11 @@ public class WorkOrderController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public String index(Model model) {
-        List<WorkOrder> orders = workOrderRepo.findAllWithItemsOrderByCreatedAtDesc();
+    public String index(@RequestParam(required = false) String month, Model model) {
+        FinancialPeriod period = FinancialPeriod.select(month, false, null, null);
+        period.addTo(model);
+        List<WorkOrder> orders = workOrderRepo.findAllWithItemsOrderByCreatedAtDesc().stream()
+                .filter(wo -> period.contains(wo.getCreatedAt())).toList();
 
         Profile profile = profileRepository.findAll().stream().findFirst().orElseGet(() -> {
             Profile p = new Profile();

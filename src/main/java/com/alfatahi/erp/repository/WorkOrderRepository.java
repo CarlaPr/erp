@@ -37,7 +37,7 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, UUID> {
     Integer findMaxWorkOrderSequence();
 
     @Query("SELECT COALESCE(SUM(w.totalValue), 0) FROM WorkOrder w " +
-            "WHERE LOWER(w.status) IN ('completed', 'done', 'concluida') " +
+            "WHERE LOWER(w.status) IN ('completed', 'done', 'delivered', 'concluida') " +
             "AND w.installDate >= :inicio AND w.installDate < :fim")
     BigDecimal sumRevenueConcludedByPeriod(@Param("inicio") LocalDate inicio,
                                            @Param("fim") LocalDate fim);

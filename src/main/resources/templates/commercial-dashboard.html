@@ -35,14 +35,14 @@
         </div>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 relative overflow-hidden shadow-sm group hover:shadow-md transition-all">
-            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Total Orçamentos</span>
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Orçamentos emitidos no período</span>
             <p class="text-4xl font-black text-slate-900 dark:text-white mt-2" th:text="${totalQuotes}">0</p>
             <i data-lucide="file-text" class="w-16 h-16 text-cyan-600/10 dark:text-cyan-500/10 absolute -right-2 -bottom-2 group-hover:scale-110 transition-transform"></i>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 relative overflow-hidden shadow-sm group hover:shadow-md transition-all">
-            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Total Clientes</span>
+            <span class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Clientes cadastrados no período</span>
             <p class="text-4xl font-black text-slate-900 dark:text-white mt-2" th:text="${totalClients}">0</p>
             <i data-lucide="users" class="w-16 h-16 text-emerald-600/10 dark:text-emerald-500/10 absolute -right-2 -bottom-2 group-hover:scale-110 transition-transform"></i>
         </div>
@@ -54,7 +54,7 @@
                 <i data-lucide="zap" class="w-4 h-4 text-brand-600 dark:text-cyan-400"></i> Menu Rápido
             </h3>
             <div class="flex flex-col gap-3">
-                <a href="/quotes" class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-brand-500 dark:hover:border-cyan-500/50 transition-all group shadow-sm hover:shadow-md">
+                <a th:href="@{/quotes(month=${reportAllMonths ? 'all' : reportMonth})}" class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-brand-500 dark:hover:border-cyan-500/50 transition-all group shadow-sm hover:shadow-md">
                     <div class="flex items-center gap-4">
                         <div class="bg-brand-100 dark:bg-cyan-500/10 p-2.5 rounded-xl text-brand-600 dark:text-cyan-400"><i data-lucide="file-signature" class="w-5 h-5"></i></div>
                         <span class="font-bold text-base text-slate-700 dark:text-slate-200 group-hover:text-brand-600 dark:group-hover:text-white transition-colors">Orçamentos</span>

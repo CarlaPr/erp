@@ -116,7 +116,7 @@ public class RecurrenceService {
         ap.setTotalAmount(rec.getBaseAmount());
         ap.setPaidAmount(BigDecimal.ZERO);
         ap.setDueDate(dueDate);
-        ap.setCompetencia(dueDate.withDayOfMonth(1));
+        ap.setCompetencia(FinancialPeriod.referenceFor(dueDate).atDay(1));
         ap.setStatus("pending");
         ap.setPaymentMethod(rec.getPaymentMethod());
         ap.setDocumentNumber(rec.getDocumentNumber());

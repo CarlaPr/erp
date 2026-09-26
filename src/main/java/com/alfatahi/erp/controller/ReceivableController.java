@@ -1,5 +1,8 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.service.FinancialPeriod;
+import com.alfatahi.erp.service.CashLedgerService;
+
 import com.alfatahi.erp.entity.AccountsPayable;
 import com.alfatahi.erp.entity.AccountsReceivable;
 import com.alfatahi.erp.entity.WorkOrder;
@@ -18,11 +21,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.beans.PropertyEditorSupport;
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +37,7 @@ public class ReceivableController {
     private final ClientService clientService;
     private final WorkOrderService workOrderService;
     private final FinanceService financeService;
+    private final CashLedgerService cashLedgerService;
     private final ClientRepository clientRepository;
     private final WorkOrderRepository workOrderRepository;
 
@@ -43,12 +45,14 @@ public class ReceivableController {
                                 ClientService clientService,
                                 WorkOrderService workOrderService,
                                 FinanceService financeService,
+                             CashLedgerService cashLedgerService,
                                 ClientRepository clientRepository,
                                 WorkOrderRepository workOrderRepository) {
         this.receivableRepository = receivableRepository;
         this.clientService = clientService;
         this.workOrderService = workOrderService;
         this.financeService = financeService;
+        this.cashLedgerService = cashLedgerService;
         this.clientRepository = clientRepository;
         this.workOrderRepository = workOrderRepository;
     }
@@ -86,13 +90,13 @@ public class ReceivableController {
             @RequestParam(required = false) String paymentMethod,
             @RequestParam(required = false) UUID workOrderId,
             @RequestParam(required = false, defaultValue = "false") boolean allMonths,
+            @RequestParam(required = false) String month,
             Model model) {
 
-        if (dateFrom == null && dateTo == null && !allMonths) {
-            LocalDate today = LocalDate.now();
-            dateFrom = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-            dateTo = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
-        }
+        FinancialPeriod period = FinancialPeriod.select(month, allMonths, dateFrom, dateTo);
+        period.addTo(model);
+        dateFrom = period.from();
+        dateTo = period.to();
 
         List<AccountsReceivable> allReceivables = receivableRepository.findAllByOrderByDueDateAsc();
         Set<UUID> linkedWorkOrderIds = allReceivables.stream()
@@ -123,16 +127,7 @@ public class ReceivableController {
         if (clientId != null) {
             list = list.stream().filter(r -> r.getClient() != null && clientId.equals(r.getClient().getId())).collect(Collectors.toList());
         }
-        if (dateFrom != null || dateTo != null) {
-            final LocalDate df = dateFrom;
-            final LocalDate dt = dateTo;
-            final LocalDate today = LocalDate.now();
-            // Vencidos em aberto continuam visíveis fora do período selecionado.
-            list = list.stream().filter(r -> (("pending".equals(r.getStatus()) || "partial".equals(r.getStatus())) && r.getDueDate().isBefore(today))
-                    || ((df == null || !r.getDueDate().isBefore(df))
-                    && (dt == null || !r.getDueDate().isAfter(dt))))
-                    .collect(Collectors.toList());
-        }
+        list = list.stream().filter(r -> period.contains(r.getDueDate())).collect(Collectors.toList());
         if (paymentMethod != null && !paymentMethod.isBlank()) {
             list = list.stream().filter(r -> paymentMethod.equals(r.getPaymentMethod())).collect(Collectors.toList());
         }
@@ -140,17 +135,8 @@ public class ReceivableController {
             list = list.stream().filter(r -> r.getWorkOrder() != null && workOrderId.equals(r.getWorkOrder().getId())).collect(Collectors.toList());
         }
 
-        BigDecimal totalEntradasGeral = receivableRepository.findAll().stream()
-                .filter(r -> "received".equals(r.getStatus()) || "partial".equals(r.getStatus()))
-                .map(AccountsReceivable::getNetReceivedAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalSaidasGeral = financeService.listAllPayables().stream()
-                .filter(p -> "paid".equals(p.getStatus()) || "partial".equals(p.getStatus()))
-                .map(AccountsPayable::getPaidAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal saldoReal = totalEntradasGeral.subtract(totalSaidasGeral);
+        BigDecimal saldoReal = period.to() == null ? cashLedgerService.getCurrentBalances().total()
+                : cashLedgerService.getOpeningBalances(period.endExclusive()).total();
 
         BigDecimal faturado = list.stream().map(AccountsReceivable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal recebido = list.stream().map(AccountsReceivable::getNetReceivedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -227,7 +213,7 @@ public class ReceivableController {
         }
 
         if (receivable.getReferenceMonth() == null) {
-            receivable.setReferenceMonth(receivable.getDueDate().withDayOfMonth(1));
+            receivable.setReferenceMonth(FinancialPeriod.referenceFor(receivable.getDueDate()).atDay(1));
         }
 
         receivable.setStatus("pending");
@@ -346,7 +332,10 @@ public class ReceivableController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(required = false) String paymentMethod,
             @RequestParam(required = false) UUID workOrderId,
+            @RequestParam(required = false) String month,
+            @RequestParam(required = false, defaultValue = "false") boolean allMonths,
             jakarta.servlet.http.HttpServletResponse response) throws Exception {
+        FinancialPeriod period = FinancialPeriod.select(month, allMonths, dateFrom, dateTo);
 
         List<AccountsReceivable> list = receivableRepository.findAllByOrderByDueDateAsc().stream()
                 .filter(r -> !"cancelled".equals(r.getStatus()) || "cancelled".equals(status))
@@ -362,8 +351,7 @@ public class ReceivableController {
         }
         if (status != null && !status.isBlank()) list = list.stream().filter(r -> status.equals(r.getStatus())).collect(Collectors.toList());
         if (clientId != null) list = list.stream().filter(r -> r.getClient() != null && clientId.equals(r.getClient().getId())).collect(Collectors.toList());
-        if (dateFrom != null) list = list.stream().filter(r -> !r.getDueDate().isBefore(dateFrom)).collect(Collectors.toList());
-        if (dateTo != null) list = list.stream().filter(r -> !r.getDueDate().isAfter(dateTo)).collect(Collectors.toList());
+        list = list.stream().filter(r -> period.contains(r.getDueDate())).collect(Collectors.toList());
         if (paymentMethod != null && !paymentMethod.isBlank()) list = list.stream().filter(r -> paymentMethod.equals(r.getPaymentMethod())).collect(Collectors.toList());
         if (workOrderId != null) list = list.stream().filter(r -> r.getWorkOrder() != null && workOrderId.equals(r.getWorkOrder().getId())).collect(Collectors.toList());
 

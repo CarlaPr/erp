@@ -1,5 +1,7 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.service.FinancialPeriod;
+
 import com.alfatahi.erp.entity.AccountsPayable;
 import com.alfatahi.erp.entity.AccountsReceivable;
 import com.alfatahi.erp.entity.Schedule;
@@ -51,49 +53,45 @@ public class WebController {
 
     @GetMapping("/dashboard")
     public String dashboard(
+            @RequestParam(required = false) String month,
             @RequestParam(name = "mes", required = false) Integer mes,
             @RequestParam(name = "ano", required = false) Integer ano,
             Model model) {
-        LocalDate hoje      = LocalDate.now();
+        LocalDate hoje = FinancialPeriod.today();
+        YearMonth currentReference = FinancialPeriod.referenceFor(hoje);
 
-        if (mes == null) mes = hoje.getMonthValue();
-        if (ano == null) ano = hoje.getYear();
+        if (mes == null) mes = currentReference.getMonthValue();
+        if (ano == null) ano = currentReference.getYear();
 
-        if (mes < 1 || mes > 12) mes = hoje.getMonthValue();
-        if (ano < 2000 || ano > 2100) ano = hoje.getYear();
+        if (mes < 1 || mes > 12) mes = currentReference.getMonthValue();
+        if (ano < 2000 || ano > 2100) ano = currentReference.getYear();
 
-        YearMonth ym = YearMonth.of(ano, mes);
-        LocalDate inicioMes = ym.atDay(1);
-        LocalDate fimMes    = ym.atEndOfMonth().plusDays(1);
+        FinancialPeriod period = month == null || month.isBlank()
+                ? FinancialPeriod.monthly(YearMonth.of(ano, mes))
+                : FinancialPeriod.select(month, false, null, null);
+        if (period.reference() == null) period = FinancialPeriod.current();
+        mes = period.reference().getMonthValue();
+        ano = period.reference().getYear();
+        period.addTo(model);
+        LocalDate inicioMes = period.from();
+        LocalDate fimMes = period.endExclusive();
+        LocalDate overdueCutoff = hoje.isBefore(fimMes) ? hoje : fimMes;
 
 
 
 
-        BigDecimal totalRecebidoReal = receivableRepo.findAll().stream()
-                .filter(r -> ("received".equals(r.getStatus()) || "partial".equals(r.getStatus()))
-                        && r.getPaymentDate() != null)
-                .map(AccountsReceivable::getReceivedAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalPagoReal = payableRepo.findAll().stream()
-                .filter(p -> ("paid".equals(p.getStatus()) || "partial".equals(p.getStatus()))
-                        && p.getPaymentDate() != null)
-                .map(AccountsPayable::getPaidAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal saldoReal = totalRecebidoReal.subtract(totalPagoReal);
+        BigDecimal saldoReal = cashLedgerService.getOpeningBalances(fimMes).total();
+        CashLedgerService.PeriodSummary cashPeriod = cashLedgerService.getPeriodSummary(inicioMes, period.to());
 
         BigDecimal entradasHoje = BigDecimal.ZERO;
         BigDecimal saidasHoje = BigDecimal.ZERO;
-        if (mes == hoje.getMonthValue() && ano == hoje.getYear()) {
-            entradasHoje = receivableRepo.sumEntradasRealByPeriod(hoje, hoje.plusDays(1));
-            if (entradasHoje == null) entradasHoje = BigDecimal.ZERO;
-
-            saidasHoje = payableRepo.sumSaidasRealByPeriod(hoje, hoje.plusDays(1));
-            if (saidasHoje == null) saidasHoje = BigDecimal.ZERO;
+        if (!hoje.isBefore(inicioMes) && hoje.isBefore(fimMes)) {
+            CashLedgerService.PeriodSummary todayCash = cashLedgerService.getPeriodSummary(hoje, hoje);
+            entradasHoje = todayCash.in();
+            saidasHoje = todayCash.out();
         }
 
-        BigDecimal taxasCartaoMes = nvl(receivableRepo.sumTaxasCartaoByPeriod(inicioMes, fimMes));
+        BigDecimal taxasCartaoMes = cashPeriod.financialExpenses();
 
 
 
@@ -125,23 +123,25 @@ public class WebController {
         BigDecimal aReceberAtrasado = receivableRepo.findAll().stream()
                 .filter(r -> ("pending".equals(r.getStatus()) || "partial".equals(r.getStatus()))
                         && r.getDueDate() != null
-                        && r.getDueDate().isBefore(fimMes))
+                        && !r.getDueDate().isBefore(inicioMes)
+                        && r.getDueDate().isBefore(overdueCutoff))
                 .map(r -> r.getBalance() != null ? r.getBalance() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal aPagarVencido = payableRepo.findAll().stream()
                 .filter(p -> ("pending".equals(p.getStatus()) || "partial".equals(p.getStatus()))
                         && p.getDueDate() != null
-                        && p.getDueDate().isBefore(fimMes))
+                        && !p.getDueDate().isBefore(inicioMes)
+                        && p.getDueDate().isBefore(overdueCutoff))
                 .map(p -> p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
 
 
 
-        BigDecimal receitaBrutaMes = nvl(receivableRepo.sumReceivedByMonthAndYear(inicioMes, fimMes));
+        BigDecimal receitaBrutaMes = cashPeriod.in();
         
-        BigDecimal totalDespesasMes = nvl(payableRepo.sumSaidasRealByPeriod(inicioMes, fimMes));
+        BigDecimal totalDespesasMes = cashPeriod.out();
 
         BigDecimal totalPerdas = nvl(lossRepo.sumFinancialImpactByPeriod(inicioMes, fimMes));
 
@@ -175,6 +175,7 @@ public class WebController {
         long osConcluidasMes = workOrderRepo.findAll().stream()
                 .filter(wo -> ("completed".equalsIgnoreCase(wo.getStatus())
                         || "done".equalsIgnoreCase(wo.getStatus())
+                        || "delivered".equalsIgnoreCase(wo.getStatus())
                         || "concluida".equalsIgnoreCase(wo.getStatus()))
                         && wo.getInstallDate() != null
                         && !wo.getInstallDate().isBefore(inicioMes)
@@ -210,12 +211,13 @@ public class WebController {
                 .count();
 
         long osAtrasadas = workOrderRepo.findAll().stream()
-                .filter(w -> !"concluida".equalsIgnoreCase(w.getStatus())
-                        && !"cancelada".equalsIgnoreCase(w.getStatus())
+                .filter(w -> !java.util.Set.of("concluida", "completed", "done", "delivered", "cancelada", "cancelled", "canceled")
+                        .contains(w.getStatus() == null ? "" : w.getStatus().toLowerCase(java.util.Locale.ROOT))
                         && w.getInstallDate() != null
-                        && w.getInstallDate().isBefore(fimMes)
+                        && w.getInstallDate().isBefore(overdueCutoff)
                         && w.getCreatedAt() != null
-                        && !w.getCreatedAt().toLocalDate().isBefore(inicioMes))
+                        && !w.getCreatedAt().toLocalDate().isBefore(inicioMes)
+                        && w.getCreatedAt().toLocalDate().isBefore(fimMes))
                 .count();
 
         long osConcluidas = workOrderRepo.findAll().stream()
@@ -226,6 +228,8 @@ public class WebController {
                 .count();
 
         List<?> ultimasOs = workOrderRepo.findAll().stream()
+                .filter(w -> w.getCreatedAt() != null && !w.getCreatedAt().toLocalDate().isBefore(inicioMes)
+                        && w.getCreatedAt().toLocalDate().isBefore(fimMes))
                 .sorted((a, b) -> {
                     if (a.getCreatedAt() == null && b.getCreatedAt() == null) return 0;
                     if (a.getCreatedAt() == null) return 1;
@@ -279,6 +283,7 @@ public class WebController {
         BigDecimal fixedPagoMes = nvl(payableRepo.sumFixedPaidByMonth(inicioMes, fimMes));
         BigDecimal fixedPendenteMes = nvl(payableRepo.sumFixedPendingByMonth(inicioMes, fimMes));
         List<AccountsPayable> proximasContasFixas = payableRepo.findUpcomingFixedDue(hoje).stream()
+                .filter(p -> p.getDueDate() != null && !p.getDueDate().isBefore(inicioMes) && p.getDueDate().isBefore(fimMes))
                 .limit(5)
                 .collect(Collectors.toList());
 

@@ -1,5 +1,7 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.service.FinancialPeriod;
+
 import com.alfatahi.erp.entity.AccountsPayable;
 import com.alfatahi.erp.entity.AccountsReceivable;
 import com.alfatahi.erp.entity.Loss;
@@ -34,13 +36,16 @@ public class LossController {
     }
 
     @GetMapping
-    public String index(Model model) {
-        List<Loss> losses = lossRepo.findAllByOrderByOccurrenceDateDesc();
+    public String index(@RequestParam(required = false) String month, Model model) {
+        FinancialPeriod period = FinancialPeriod.select(month, false, null, null);
+        period.addTo(model);
+        List<Loss> losses = lossRepo.findAllByOrderByOccurrenceDateDesc().stream()
+                .filter(loss -> period.contains(loss.getOccurrenceDate())).toList();
 
         BigDecimal totalLoss = losses.stream().map(Loss::getFinancialImpact).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalRevenue = recRepo.findAll().stream().map(AccountsReceivable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalCosts = payRepo.findAll().stream().map(AccountsPayable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalRevenue = recRepo.findAll().stream().filter(r -> !"cancelled".equals(r.getStatus()) && period.contains(r.getDueDate())).map(AccountsReceivable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCosts = payRepo.findAll().stream().filter(p -> !"cancelled".equals(p.getStatus()) && !"inactive".equals(p.getStatus()) && period.contains(p.getDueDate())).map(AccountsPayable::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal pctRevenue = totalRevenue.compareTo(BigDecimal.ZERO) > 0 ?
                 totalLoss.multiply(new BigDecimal("100")).divide(totalRevenue, 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;

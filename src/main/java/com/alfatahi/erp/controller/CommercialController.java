@@ -1,5 +1,7 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.service.FinancialPeriod;
+
 import com.alfatahi.erp.entity.Quote;
 import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.QuoteRepository;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,19 +31,24 @@ public class CommercialController {
     }
 
     @GetMapping
-    public String dashboard(Model model) {
-        List<Quote> allQuotes = quoteRepo.findAll();
-        long totalClients = clientRepo.count();
+    public String dashboard(@RequestParam(required = false) String month, Model model) {
+        FinancialPeriod period = FinancialPeriod.select(month, false, null, null);
+        period.addTo(model);
+        List<Quote> quotes = quoteRepo.findAll();
+        List<Quote> allQuotes = quotes.stream().filter(q -> period.contains(q.getDateCreated())).toList();
+        List<Quote> sales = quotes.stream().filter(q -> "approved".equals(q.getStatus())
+                && period.contains(q.getDateApproved())).toList();
+        long totalClients = clientRepo.findAll().stream().filter(c -> period.contains(c.getCreatedAt())).count();
         long totalQuotes = allQuotes.size();
 
         long pending = allQuotes.stream().filter(q -> "pending".equals(q.getStatus())).count();
-        long approved = allQuotes.stream().filter(q -> "approved".equals(q.getStatus())).count();
+        long approved = sales.size();
         long expired = allQuotes.stream().filter(q -> "expired".equals(q.getStatus())).count();
         long cancelled = allQuotes.stream().filter(q -> "cancelled".equals(q.getStatus())).count();
 
-        BigDecimal valorVendido = allQuotes.stream()
+        BigDecimal valorVendido = sales.stream()
                 .filter(q -> "approved".equals(q.getStatus()))
-                .map(Quote::getTotalValue)
+                .map(q -> q.getTotalValue() != null ? q.getTotalValue() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         long totalReceipts = approved;
