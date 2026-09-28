@@ -86,10 +86,12 @@ public class ReceivableController {
             @RequestParam(required = false) UUID workOrderId,
             @RequestParam(required = false, defaultValue = "false") boolean allMonths,
             @RequestParam(required = false) String month,
+            @RequestParam(required = false, defaultValue = "false") boolean currentWeek,
             Model model) {
 
-        FinancialPeriod period = FinancialPeriod.select(month, allMonths, dateFrom, dateTo);
-        period.addTo(model);
+        AccountListingPeriod listingPeriod = AccountListingPeriod.select(month, allMonths, dateFrom, dateTo, currentWeek);
+        FinancialPeriod period = listingPeriod.period();
+        listingPeriod.addTo(model);
         dateFrom = period.from();
         dateTo = period.to();
 
@@ -122,7 +124,7 @@ public class ReceivableController {
         if (clientId != null) {
             list = list.stream().filter(r -> r.getClient() != null && clientId.equals(r.getClient().getId())).collect(Collectors.toList());
         }
-        list = list.stream().filter(r -> period.contains(r.getDueDate())).collect(Collectors.toList());
+        list = list.stream().filter(r -> listingPeriod.contains(r.getDueDate(), r.getStatus())).collect(Collectors.toList());
         if (paymentMethod != null && !paymentMethod.isBlank()) {
             list = list.stream().filter(r -> paymentMethod.equals(r.getPaymentMethod())).collect(Collectors.toList());
         }
@@ -200,9 +202,6 @@ public class ReceivableController {
         if (receivable.getPaymentStage() == null || receivable.getPaymentStage().isBlank()) {
             receivable.setPaymentStage("unico");
         }
-
-        // Evita duas contas ativas com o mesmo estágio de pagamento (ex.: duas "entrada")
-        // para a mesma O.S., o que deixaria o status de pagamento da O.S. inconsistente.
         if (wo != null && hasDuplicatePaymentStage(wo, receivable.getPaymentStage(), null)) {
             return "redirect:/receivables?error=duplicate_payment_stage";
         }
@@ -266,11 +265,7 @@ public class ReceivableController {
         return "redirect:/receivables";
     }
 
-    /**
-     * Verifica se já existe outra conta a receber ativa (não cancelada) com o mesmo
-     * estágio de pagamento para a mesma O.S. — ex.: duas "entrada" para a mesma O.S.
-     * "unico" e "recebimento_total" são tratados como o mesmo estágio (pagamento integral).
-     */
+
     private boolean hasDuplicatePaymentStage(WorkOrder wo, String stage, UUID excludeReceivableId) {
         String normalizedStage = (stage == null || stage.isBlank()) ? "unico" : stage;
         return receivableRepository.findByWorkOrderId(wo.getId()).stream()

@@ -94,22 +94,22 @@
     </header>
 
     <div class="flex flex-wrap gap-2 mb-6 payables-tabs">
-        <a th:href="@{/payables(aba='todas',month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
+        <a th:href="@{/payables(aba='todas',currentWeek=${filterCurrentWeek},month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
            th:classappend="${filterAba == null or filterAba == 'todas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
            class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Todas</a>
-        <a th:href="@{/payables(aba='fixas',month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
+        <a th:href="@{/payables(aba='fixas',currentWeek=${filterCurrentWeek},month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
            th:classappend="${filterAba == 'fixas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
            class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Fixas</a>
-        <a th:href="@{/payables(aba='recorrentes',month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
+        <a th:href="@{/payables(aba='recorrentes',currentWeek=${filterCurrentWeek},month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
            th:classappend="${filterAba == 'recorrentes'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
            class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Recorrentes</a>
-        <a th:href="@{/payables(aba='vencidas',month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
+        <a th:href="@{/payables(aba='vencidas',currentWeek=${filterCurrentWeek},month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
            th:classappend="${filterAba == 'vencidas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
            class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Vencidas</a>
-        <a th:href="@{/payables(aba='pagas',month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
+        <a th:href="@{/payables(aba='pagas',currentWeek=${filterCurrentWeek},month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
            th:classappend="${filterAba == 'pagas'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
            class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Pagas</a>
-        <a th:href="@{/payables(aba='provisionamentos',month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
+        <a th:href="@{/payables(aba='provisionamentos',currentWeek=${filterCurrentWeek},month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
            th:classappend="${filterAba == 'provisionamentos'} ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
            class="px-4 py-2 rounded-xl text-sm font-bold transition-all">Provisionamentos</a>
         <a th:href="@{/payables/fixed(month=${reportMonth})}"
@@ -140,6 +140,7 @@
 
     <form method="GET" action="/payables" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 mb-8 shadow-sm payables-filter">
         <input th:if="${reportAllMonths}" type="hidden" name="allMonths" value="true">
+        <input th:if="${filterCurrentWeek}" type="hidden" name="currentWeek" value="true">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end mb-5">
             <div class="lg:col-span-2">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Buscar</label>
@@ -189,9 +190,9 @@
             <div class="w-full lg:w-1/3">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Período (Vencimento)</label>
                 <div class="flex gap-2">
-                    <input type="date" name="dateFrom" onchange="this.form.querySelector('[name=allMonths]')?.remove()" th:value="${filterDateFrom}"
+                    <input type="date" name="dateFrom" onchange="this.form.querySelector('[name=allMonths]')?.remove(); this.form.querySelector('[name=currentWeek]')?.remove()" th:value="${filterDateFrom}"
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 outline-none focus:border-rose-500 transition-all text-sm"/>
-                    <input type="date" name="dateTo" onchange="this.form.querySelector('[name=allMonths]')?.remove()" th:value="${filterDateTo}"
+                    <input type="date" name="dateTo" onchange="this.form.querySelector('[name=allMonths]')?.remove(); this.form.querySelector('[name=currentWeek]')?.remove()" th:value="${filterDateTo}"
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 outline-none focus:border-rose-500 transition-all text-sm"/>
                 </div>
             </div>
@@ -201,8 +202,8 @@
                 <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl px-6 py-3 text-sm transition-all shadow-md shadow-rose-500/20 flex items-center gap-2">
                     <i data-lucide="filter" class="w-4 h-4"></i> Filtrar
                 </button>
-                <a href="/payables" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2" title="Voltar para o período de referência atual">
-                    <i data-lucide="calendar" class="w-4 h-4"></i> Referência Atual
+                <a href="/payables" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2" title="Voltar para a semana atual">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Semana Atual
                 </a>
                 <a href="/payables?allMonths=true" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl px-4 py-3 text-sm transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2">
                     <i data-lucide="calendar-days" class="w-4 h-4"></i> Todos os Meses
@@ -996,7 +997,7 @@
             <div class="p-6 space-y-6">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Mês de referência (dia 6 ao dia 5 seguinte)</label>
-                    <input type="month" id="exportMonth" th:value="${reportMonth}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all text-base">
+                    <input type="month" id="exportMonth" th:value="${filterCurrentWeek ? T(com.alfatahi.erp.service.FinancialPeriod).current().monthValue() : reportMonth}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all text-base">
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4">

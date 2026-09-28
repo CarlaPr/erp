@@ -77,11 +77,13 @@ public class PayableController {
             @RequestParam(required = false) UUID workOrderId,
             @RequestParam(required = false, defaultValue = "false") boolean allMonths,
             @RequestParam(required = false) String month,
+            @RequestParam(required = false, defaultValue = "false") boolean currentWeek,
             Model model) {
 
-        FinancialPeriod period = FinancialPeriod.select(
-                month != null && !month.isBlank() ? month : competencia, allMonths, dateFrom, dateTo);
-        period.addTo(model);
+        AccountListingPeriod listingPeriod = AccountListingPeriod.select(
+                month != null && !month.isBlank() ? month : competencia, allMonths, dateFrom, dateTo, currentWeek);
+        FinancialPeriod period = listingPeriod.period();
+        listingPeriod.addTo(model);
         dateFrom = period.from();
         dateTo = period.to();
 
@@ -102,7 +104,7 @@ public class PayableController {
             list = list.stream().filter(p -> p.getCostCenter() != null && p.getCostCenter().toLowerCase().contains(q)).collect(Collectors.toList());
         }
         if (supplierId != null) list = list.stream().filter(p -> p.getSupplier() != null && supplierId.equals(p.getSupplier().getId())).collect(Collectors.toList());
-        list = list.stream().filter(p -> period.contains(p.getDueDate())).collect(Collectors.toList());
+        list = list.stream().filter(p -> listingPeriod.contains(p.getDueDate(), p.getStatus())).collect(Collectors.toList());
         if (workOrderId != null) list = list.stream().filter(p -> p.getWorkOrder() != null && workOrderId.equals(p.getWorkOrder().getId())).collect(Collectors.toList());
 
         switch (aba == null ? "todas" : aba) {
@@ -332,14 +334,7 @@ public class PayableController {
         return "redirect:/payables";
     }
 
-    /**
-     * Aplica o rateio por OS informado no formulário (múltiplas OS com valor
-     * individual cada), substituindo o rateio anterior da conta. Só é chamado
-     * quando o formulário efetivamente enviou o bloco de rateio
-     * (allocationsSubmitted=true) — contas antigas, salvas antes deste
-     * recurso existir, não são tocadas e por isso nunca recebem custo
-     * automático retroativo.
-     */
+
     private void applyWorkOrderAllocations(UUID payableId, List<UUID> workOrderIds,
                                            List<BigDecimal> workOrderValues, List<String> workOrderDescriptions) {
         if (payableId == null) return;
@@ -479,12 +474,6 @@ public class PayableController {
     }
 
 
-
-    /**
-     * Monta, para cada conta a pagar listada, o JSON com o rateio por O.S.
-     * já cadastrado (usado para pré-preencher o modal de edição). Contas sem
-     * nenhuma alocação simplesmente retornam uma lista vazia "[]".
-     */
     private Map<UUID, String> buildAllocationsJsonByPayable(List<AccountsPayable> list) {
         Map<UUID, String> result = new LinkedHashMap<>();
         if (list.isEmpty()) return result;
