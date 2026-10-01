@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <th:block th:replace="~{fragments/branding :: icons}"></th:block>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Assinar Recibo - Grupo Glass</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <style>
+        canvas { touch-action: none; }
+    </style>
+</head>
+<body class="bg-slate-100 p-4 font-sans text-slate-800 flex items-center justify-center min-h-screen">
+
+<div class="max-w-xl w-full mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-slate-200">
+
+    <div class="text-center mb-8 border-b border-slate-200 pb-6">
+        <h1 class="text-3xl font-black text-slate-900 mb-1">Recibo <span th:text="${receipt.number}"></span></h1>
+        <p class="text-lg text-slate-500 font-medium" th:text="${receipt.clientName}"></p>
+        <p class="text-sm text-slate-400 mt-1" th:if="${!receipt.companyName.isEmpty()}" th:text="${receipt.companyName}"></p>
+    </div>
+
+    <div class="bg-slate-50 rounded-xl p-5 mb-8 border border-slate-200">
+        <h2 class="font-black text-slate-700 mb-3 uppercase tracking-wider text-sm">Resumo dos Serviços</h2>
+        <ul class="text-sm divide-y divide-slate-200">
+            <li th:each="item : ${receipt.items}" class="py-3">
+                <div class="flex justify-between items-start gap-4">
+                    <span class="font-medium text-slate-700 leading-tight break-words min-w-0">
+                        <span class="font-bold text-slate-900" th:text="${item.quantity + 'x'}"></span>
+                        <span th:text="${item.description}"></span>
+                    </span>
+                    <span class="font-bold text-slate-900 whitespace-nowrap" th:text="${item.subtotal}"></span>
+                </div>
+            </li>
+        </ul>
+
+        <div class="mt-4 pt-4 border-t border-slate-300">
+            <div th:if="${receipt.hasDiscount}" class="flex justify-between items-center mb-2">
+                <span class="font-bold text-slate-500 text-sm uppercase">Subtotal</span>
+                <span class="text-sm font-bold text-slate-500" th:text="${receipt.gross}"></span>
+            </div>
+            <div th:if="${receipt.hasDiscount}" class="flex justify-between items-center mb-3 pb-3 border-b border-slate-100">
+                <span class="font-bold text-rose-500 text-sm uppercase">Desconto</span>
+                <span class="text-sm font-bold text-rose-500" th:text="${'- ' + receipt.discount}"></span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="font-black text-slate-700 text-lg">VALOR RECEBIDO</span>
+                <span class="text-2xl font-black text-emerald-600" th:text="${receipt.total}"></span>
+            </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div class="bg-white p-3 rounded-xl border border-slate-200">
+                <span class="block text-[10px] uppercase font-bold text-slate-500 mb-0.5">Data de emissão</span>
+                <span class="font-bold text-slate-900" th:text="${receipt.issueDate}"></span>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200">
+                <span class="block text-[10px] uppercase font-bold text-slate-500 mb-0.5">Data de recebimento</span>
+                <span class="font-bold text-slate-900" th:text="${receipt.receivedDate}"></span>
+            </div>
+        </div>
+
+        <div th:if="${!receipt.description.isEmpty()}" class="mt-4 text-sm bg-white p-4 rounded-xl border border-slate-200">
+            <h3 class="font-bold text-slate-700 uppercase tracking-wider text-xs mb-2">Declaração de recebimento</h3>
+            <p class="whitespace-pre-line text-slate-700 leading-relaxed" th:text="${receipt.description}"></p>
+        </div>
+
+        <div th:if="${!receipt.paymentTerms.isEmpty()}" class="mt-4 text-sm bg-blue-50/70 p-4 rounded-xl border border-blue-200">
+            <h3 class="font-bold text-blue-800 uppercase tracking-wider text-[11px] mb-1">Condições de Pagamento</h3>
+            <p class="whitespace-pre-line text-blue-900 font-semibold" th:text="${receipt.paymentTerms}"></p>
+        </div>
+
+        <div th:if="${!receipt.warranty.isEmpty()}" class="mt-4 text-sm bg-white p-4 rounded-xl border border-slate-200">
+            <h3 class="font-bold text-slate-700 uppercase tracking-wider text-xs mb-2">Termos de Garantia</h3>
+            <p class="whitespace-pre-line text-slate-700 leading-relaxed" th:text="${receipt.warranty}"></p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(receipt.photos)}" class="mt-4">
+            <h3 class="font-bold text-slate-700 uppercase tracking-wider text-xs mb-2">Fotos do serviço finalizado</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <a th:each="url : ${receipt.photos}" th:href="${url}" target="_blank" rel="noopener">
+                    <img th:src="${url}" alt="Foto do serviço" class="w-full h-32 object-cover rounded-lg border border-slate-200" loading="lazy">
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${!receipt.signed}">
+        <h3 class="font-bold text-slate-900 mb-1 text-lg">Área de Assinatura</h3>
+        <p class="text-sm text-slate-500 mb-4">Ao assinar, você declara estar ciente do recebimento descrito neste recibo. Assine no quadro abaixo usando seu dedo ou mouse.</p>
+
+        <div class="border-2 border-dashed border-slate-300 rounded-xl overflow-hidden bg-white relative mb-5 shadow-inner">
+            <canvas id="signaturePad" class="w-full h-56 cursor-crosshair"></canvas>
+        </div>
+
+        <div class="flex gap-3">
+            <button id="clearBtn" class="flex-1 py-3.5 px-4 rounded-xl font-bold border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">Refazer</button>
+            <button id="saveBtn" class="flex-[2] py-3.5 px-4 rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-lg flex justify-center items-center gap-2">
+                Confirmar e Assinar
+            </button>
+        </div>
+    </div>
+
+    <div th:if="${receipt.signed}" class="text-center p-8 bg-emerald-50 rounded-2xl border border-emerald-100">
+        <div class="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-500/30">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h3 class="text-2xl font-black text-emerald-800 mb-2">Assinado com Sucesso!</h3>
+        <p class="text-emerald-600 font-medium">O cliente confirmou estar ciente do recibo.</p>
+        <img th:if="${receipt.clientSignature != null}" th:src="${receipt.clientSignature}" alt="Assinatura" class="mx-auto mt-6 max-h-32 mix-blend-multiply border-t border-emerald-200 pt-6 w-full object-contain" />
+    </div>
+</div>
+
+<script th:if="${!receipt.signed}" th:inline="javascript">
+    const canvas = document.getElementById('signaturePad');
+
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+    }
+    window.onresize = resizeCanvas;
+    resizeCanvas();
+
+    const signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgba(255, 255, 255, 1)',
+        penColor: 'rgb(15, 23, 42)',
+        minWidth: 1.5,
+        maxWidth: 3.5
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => signaturePad.clear());
+
+    document.getElementById('saveBtn').addEventListener('click', function () {
+        if (signaturePad.isEmpty()) {
+            alert("Por favor, faça sua assinatura antes de confirmar.");
+            return;
+        }
+
+        this.innerText = 'Processando...';
+        this.disabled = true;
+
+        const dataUrl = signaturePad.toDataURL('image/png');
+        const token = /*[[${receipt.token}]]*/ '';
+
+        fetch('/public/receipts/' + encodeURIComponent(token) + '/sign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ signature: dataUrl })
+        }).then(res => {
+            if (res.ok || res.status === 409) { window.location.reload(); }
+            else { alert('Erro ao salvar assinatura.'); this.innerText = 'Confirmar e Assinar'; this.disabled = false; }
+        }).catch(() => {
+            alert('Erro de comunicação. Verifique a conexão e tente novamente.');
+            this.innerText = 'Confirmar e Assinar';
+            this.disabled = false;
+        });
+    });
+</script>
+</body>
+</html>

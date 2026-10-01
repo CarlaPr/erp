@@ -51,22 +51,48 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm lg:col-span-1">
             <h3 class="text-slate-800 dark:text-white font-bold text-sm mb-5 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="zap" class="w-4 h-4 text-brand-600 dark:text-cyan-400"></i> Menu Rápido
+                <i data-lucide="zap" class="w-4 h-4 text-brand-600 dark:text-cyan-400"></i>
+                Menu Rápido
             </h3>
+
             <div class="flex flex-col gap-3">
-                <a th:href="@{/quotes(month=${reportAllMonths ? 'all' : reportMonth})}" class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-brand-500 dark:hover:border-cyan-500/50 transition-all group shadow-sm hover:shadow-md">
+                <a th:href="@{/quotes(month=${reportAllMonths ? 'all' : reportMonth})}"
+                   class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-brand-500 dark:hover:border-cyan-500/50 transition-all group shadow-sm hover:shadow-md">
                     <div class="flex items-center gap-4">
-                        <div class="bg-brand-100 dark:bg-cyan-500/10 p-2.5 rounded-xl text-brand-600 dark:text-cyan-400"><i data-lucide="file-signature" class="w-5 h-5"></i></div>
-                        <span class="font-bold text-base text-slate-700 dark:text-slate-200 group-hover:text-brand-600 dark:group-hover:text-white transition-colors">Orçamentos</span>
+                        <div class="bg-brand-100 dark:bg-cyan-500/10 p-2.5 rounded-xl text-brand-600 dark:text-cyan-400">
+                            <i data-lucide="file-signature" class="w-5 h-5"></i>
+                        </div>
+                        <span class="font-bold text-base text-slate-700 dark:text-slate-200 group-hover:text-brand-600 dark:group-hover:text-white transition-colors">
+                    Orçamentos
+                </span>
                     </div>
                     <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400 group-hover:text-brand-600 dark:group-hover:text-white transition-colors"></i>
                 </a>
-                <a href="/clients" class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500/50 transition-all group shadow-sm hover:shadow-md">
+
+                <a href="/clients"
+                   class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500/50 transition-all group shadow-sm hover:shadow-md">
                     <div class="flex items-center gap-4">
-                        <div class="bg-emerald-100 dark:bg-emerald-500/10 p-2.5 rounded-xl text-emerald-600 dark:text-emerald-400"><i data-lucide="user-plus" class="w-5 h-5"></i></div>
-                        <span class="font-bold text-base text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-white transition-colors">Clientes</span>
+                        <div class="bg-emerald-100 dark:bg-emerald-500/10 p-2.5 rounded-xl text-emerald-600 dark:text-emerald-400">
+                            <i data-lucide="user-plus" class="w-5 h-5"></i>
+                        </div>
+                        <span class="font-bold text-base text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-white transition-colors">
+                    Clientes
+                </span>
                     </div>
                     <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-white transition-colors"></i>
+                </a>
+
+                <a th:href="@{/receipts}"
+                   class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-violet-500 dark:hover:border-violet-500/50 transition-all group shadow-sm hover:shadow-md">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-violet-100 dark:bg-violet-500/10 p-2.5 rounded-xl text-violet-600 dark:text-violet-400">
+                            <i data-lucide="receipt" class="w-5 h-5"></i>
+                        </div>
+                        <span class="font-bold text-base text-slate-700 dark:text-slate-200 group-hover:text-violet-600 dark:group-hover:text-white transition-colors">
+                    Recibos
+                </span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-white transition-colors"></i>
                 </a>
             </div>
         </div>

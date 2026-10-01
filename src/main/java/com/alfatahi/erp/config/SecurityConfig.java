@@ -143,7 +143,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/cut-plans", "/cut-plans/**").hasAnyAuthority("GESTAO", "VENDAS")
 
-                        .requestMatchers("/commercial/**", "/quotes/**", "/clients/**")
+                        .requestMatchers("/commercial/**", "/quotes/**", "/clients/**", "/receipts/**")
                         .hasAnyAuthority("GESTAO", "VENDAS")
 
                         .requestMatchers("/agenda/**", "/login-success").hasAnyAuthority("GESTAO", "VENDAS", "TECNICO")
