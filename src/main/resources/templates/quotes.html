@@ -18,7 +18,7 @@
     <div class="mb-5 -mx-3 px-3 sm:mx-0 sm:px-0">
         <div class="flex flex-col sm:flex-row sm:items-center gap-2 bg-white dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
 
-            <a href="/quotes/new"
+            <a data-permission="edit" href="/quotes/new"
                class="order-1 w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-5 py-3 sm:py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm transition-all border border-transparent">
                 <i data-lucide="plus-circle" class="w-5 h-5"></i>
                 Novo Orçamento
@@ -141,7 +141,7 @@
 
                     <td class="px-5 py-5">
                         <div class="flex items-center justify-center gap-1">
-                            <button th:if="${q.status == 'pending' || q.status == 'expired'}"
+                            <button data-permission="edit" th:if="${q.status == 'pending' || q.status == 'expired'}"
                                     th:data-id="${q.id}"
                                     onclick="approveQuote(this.getAttribute('data-id'))"
                                     class="text-emerald-600  hover:text-emerald-800   dark:text-emerald-400   dark:hover:text-emerald-300   p-2 rounded-lg   hover:bg-emerald-50   dark:hover:bg-emerald-500/10   transition-colors"
@@ -149,14 +149,14 @@
                                 <i data-lucide="check-circle" class="w-5 h-5"></i>
                             </button>
 
-                            <a th:if="${q.status == 'pending' || q.status == 'expired' || q.status == 'approved'}"
+                            <a data-permission="edit" th:if="${q.status == 'pending' || q.status == 'expired' || q.status == 'approved'}"
                                th:href="@{/quotes/{id}/edit(id=${q.id})}"
                                class="text-blue-600 hover:text-blue-800   dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-lg  hover:bg-blue-50   dark:hover:bg-blue-500/10      transition-colors"
                                th:title="${q.status == 'approved'} ? 'Editar Orçamento Aprovado (atualiza a O.S. vinculada)' : 'Editar Orçamento'">
                                 <i data-lucide="pencil" class="w-5 h-5"></i>
                             </a>
 
-                            <button th:if="${q.status == 'pending' || q.status == 'expired'}"
+                            <button data-permission="delete" th:if="${q.status == 'pending' || q.status == 'expired'}"
                                     th:data-id="${q.id}"
                                     onclick="deleteQuote(this.getAttribute('data-id'))"
                                     class="text-rose-600 hover:text-rose-800     dark:text-rose-400 dark:hover:text-rose-300   p-2 rounded-lg    hover:bg-rose-50      dark:hover:bg-rose-500/10     transition-colors"
@@ -171,7 +171,7 @@
                                 <i data-lucide="printer" class="w-5 h-5"></i>
                             </button>
 
-                            <button th:data-id="${q.id}"
+                            <button data-permission="visit-plan" th:data-id="${q.id}"
                                     th:data-client="${q.client != null ? q.client.name : ''}"
                                     onclick="openScheduleVisitModal(
                                             this.getAttribute('data-id'),
@@ -292,7 +292,7 @@
                     </p>
 
                     <div class="grid grid-cols-2 gap-2">
-                        <button th:if="${q.status == 'pending' || q.status == 'expired'}"
+                        <button data-permission="edit" th:if="${q.status == 'pending' || q.status == 'expired'}"
                                 th:data-id="${q.id}"
                                 onclick="approveQuote(this.getAttribute('data-id'))"
                                 class="min-h-[46px]    rounded-xl    bg-emerald-50 dark:bg-emerald-500/10   text-emerald-700 dark:text-emerald-400   font-bold text-xs   flex items-center justify-center gap-2   border border-emerald-100     dark:border-emerald-500/20">
@@ -301,7 +301,7 @@
                             Aprovar
                         </button>
 
-                        <a th:if="${q.status == 'pending' || q.status == 'expired' || q.status == 'approved'}"
+                        <a data-permission="edit" th:if="${q.status == 'pending' || q.status == 'expired' || q.status == 'approved'}"
                            th:href="@{/quotes/{id}/edit(id=${q.id})}"
                            class="min-h-[46px]    rounded-xl   bg-blue-50 dark:bg-blue-500/10  text-blue-700 dark:text-blue-400   font-bold text-xs   flex items-center justify-center gap-2  border border-blue-100   dark:border-blue-500/20">
                             <i data-lucide="pencil" class="w-4 h-4"></i>
@@ -315,7 +315,7 @@
                             PDF / Imprimir
                         </button>
 
-                        <button th:data-id="${q.id}"
+                        <button data-permission="visit-plan" th:data-id="${q.id}"
                                 th:data-client="${q.client != null ? q.client.name : ''}"
                                 onclick="openScheduleVisitModal(
                                     this.getAttribute('data-id'),
@@ -346,7 +346,7 @@
                             </span>
                         </button>
 
-                        <button th:if="${q.status == 'pending' || q.status == 'expired'}"
+                        <button data-permission="delete" th:if="${q.status == 'pending' || q.status == 'expired'}"
                                 th:data-id="${q.id}"
                                 onclick="deleteQuote(this.getAttribute('data-id'))"
                                 class="min-h-[46px]  rounded-xl  bg-rose-50 dark:bg-rose-500/10  text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center justify-center gap-2 border border-rose-100  dark:border-rose-500/20">
@@ -391,7 +391,7 @@
                         class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">
                     Cancelar
                 </button>
-                <button type="button" onclick="executeDeleteQuote()"
+                <button data-permission="delete" type="button" onclick="executeDeleteQuote()"
                         class="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-base">
                     Excluir
                 </button>
@@ -860,7 +860,7 @@
                 <button type="button" onclick="closeModal('approvalConfirmModal')" class="w-1/2 px-5 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-base">
                     Cancelar
                 </button>
-                <button type="button" onclick="executeApproval()" class="w-1/2 px-5 py-3 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-900 font-black hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20 text-base">
+                <button data-permission="edit" type="button" onclick="executeApproval()" class="w-1/2 px-5 py-3 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-900 font-black hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20 text-base">
                     Confirmar
                 </button>
             </div>
@@ -916,7 +916,7 @@
                         class="w-full px-5 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm flex items-center justify-center gap-2">
                     <i data-lucide="copy" class="w-4 h-4"></i> Copiar Link Novamente
                 </button>
-                <button type="button" onclick="executeResetSignature()"
+                <button data-permission="delete" type="button" onclick="executeResetSignature()"
                         class="w-full px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-sm flex items-center justify-center gap-2">
                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reverter Assinatura
                 </button>
@@ -966,7 +966,7 @@
                         class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">
                     Cancelar
                 </button>
-                <button type="button" onclick="executeScheduleVisit()"
+                <button data-permission="visit-plan" type="button" onclick="executeScheduleVisit()"
                         class="px-6 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-black shadow-lg shadow-fuchsia-500/20 transition-all text-base">
                     Agendar Visita
                 </button>

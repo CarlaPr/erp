@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<body>
+<section th:fragment="settings-permissions" id="pagePermissions" th:if="${@pageAccess.isManager()}"
+         class="max-w-6xl mt-12 mb-20 scroll-mt-24">
+    <div class="mb-6 flex items-center gap-3">
+        <div class="p-2 bg-indigo-500/10 rounded-lg text-indigo-500"><i data-lucide="shield-check" class="w-6 h-6"></i></div>
+        <div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white">Permissões por usuário e página</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Libere ou bloqueie páginas e escolha quais ações cada pessoa pode executar.</p>
+        </div>
+    </div>
+    <div th:if="${permissionsSuccess}" role="status" class="mb-4 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm" th:text="${permissionsSuccess}"></div>
+    <div th:if="${permissionsError}" role="alert" class="mb-4 p-4 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 text-sm" th:text="${permissionsError}"></div>
+    <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
+        <form th:action="@{/settings#pagePermissions}" method="get" class="p-6 border-b border-slate-200 dark:border-slate-700">
+            <label for="permissionUser" class="block text-sm font-bold mb-2">Usuário</label>
+            <div class="flex flex-wrap gap-3">
+                <select id="permissionUser" name="permissionUser" th:disabled="${#lists.isEmpty(permissionUsers)}"
+                        class="w-full sm:w-auto sm:min-w-72 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3">
+                    <option th:if="${selectedPermissionUser == null}" value="">Selecione um usuário</option>
+                    <option th:each="user : ${permissionUsers}" th:value="${user.id}"
+                            th:selected="${selectedPermissionUser != null and user.id == selectedPermissionUser.id}"
+                            th:text="${user.username + ' · ' + user.role}"></option>
+                </select>
+                <button type="submit" th:disabled="${#lists.isEmpty(permissionUsers)}" class="px-5 py-3 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm">Carregar permissões</button>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-3">Usuários com a role Gestão mantêm acesso completo. Somente a gestão pode alterar permissões.</p>
+        </form>
+        <div th:if="${selectedPermissionUser == null}" class="p-6 text-sm text-slate-500">Selecione um usuário de Vendas ou Técnico. Se a lista estiver vazia, crie primeiro o acesso.</div>
+        <form th:if="${selectedPermissionUser != null}" id="userPermissionsForm"
+              th:action="@{/settings/users/{id}/permissions(id=${selectedPermissionUser.id})}" th:object="${permissionForm}" method="post">
+            <div class="p-6 bg-indigo-50/60 dark:bg-indigo-500/5 text-sm space-y-2">
+                <p>Configurando <strong th:text="${selectedPermissionUser.username}"></strong> (<span th:text="${selectedPermissionUser.role}"></span>).</p>
+                <p><strong>Padrão da role</strong> segue o acesso original do perfil. <strong>Personalizado</strong> usa as opções marcadas nesta página.</p>
+                <p>Para revogar o acesso, escolha Personalizado e desmarque Visualizar. Editar e excluir dependem de Visualizar e podem ser liberados separadamente. As mudanças entram em vigor ao salvar.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left min-w-[760px]">
+                    <thead class="bg-slate-50 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-700">
+                    <tr class="text-xs uppercase tracking-wider text-slate-500">
+                        <th scope="col" class="px-6 py-4">Página</th>
+                        <th scope="col" class="px-4 py-4">Acesso</th>
+                        <th scope="col" class="px-4 py-4">Visualizar</th>
+                        <th scope="col" class="px-4 py-4">Criar / editar</th>
+                        <th scope="col" class="px-4 py-4">Excluir / cancelar</th>
+                        <th scope="col" class="px-4 py-4"><span class="sr-only">Revogar acesso</span></th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    <tr th:each="page, stat : ${permissionPages}" class="permission-row"
+                        th:attr="data-default-view=${permissionDefaults[page.key].canView},data-default-edit=${permissionDefaults[page.key].canEdit},data-default-delete=${permissionDefaults[page.key].canDelete},data-writable=${page.writable}">
+                        <td class="px-6 py-4">
+                            <span class="text-sm font-bold" th:text="${page.label}"></span>
+                            <span th:unless="${page.writable}" class="block text-xs text-slate-400 mt-1">Página de consulta</span>
+                            <input type="hidden" th:field="*{pages[__${stat.index}__].pageKey}">
+                        </td>
+                        <td class="px-4 py-4">
+                            <select th:field="*{pages[__${stat.index}__].mode}" data-permission-mode
+                                    th:attr="aria-label=|Tipo de acesso a ${page.label}|"
+                                    class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
+                                <option value="default">Padrão da role</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                        </td>
+                        <td class="px-4 py-4"><input type="checkbox" th:field="*{pages[__${stat.index}__].view}" data-permission-view th:attr="aria-label=|Visualizar ${page.label}|" class="w-5 h-5 accent-indigo-600"></td>
+                        <td class="px-4 py-4"><input type="checkbox" th:field="*{pages[__${stat.index}__].edit}" data-permission-edit th:attr="aria-label=|Criar ou editar ${page.label}|" class="w-5 h-5 accent-indigo-600"></td>
+                        <td class="px-4 py-4"><input type="checkbox" th:field="*{pages[__${stat.index}__].delete}" data-permission-delete th:attr="aria-label=|Excluir ou cancelar em ${page.label}|" class="w-5 h-5 accent-indigo-600"></td>
+                        <td class="px-4 py-4"><button type="button" data-permission-revoke class="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline whitespace-nowrap" th:attr="aria-label=|Bloquear ${page.label}|">Bloquear página</button></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-6 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center gap-4">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> Salvar permissões</button>
+                <p class="text-xs text-slate-500 dark:text-slate-400">O usuário não precisa sair e entrar novamente.</p>
+            </div>
+        </form>
+    </div>
+    <script th:src="@{/js/settings-permissions.js}" defer></script>
+</section>
+</body>
+</html>

@@ -53,7 +53,7 @@
                 <span th:text="'Disponível a partir de ' + ${#temporals.format(dataLiberacao, 'dd/MM/yyyy')} + '.'">Disponível em breve.</span>
             </div>
 
-            <form th:if="${canClose}" th:action="@{/financial-closing/execute}" method="POST" class="space-y-4">
+            <form data-permission="edit" th:if="${canClose}" th:action="@{/financial-closing/execute}" method="POST" class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Ano</label>
@@ -96,7 +96,7 @@
         <div class="lg:col-span-2 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
             <div class="p-5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3">
                 <h3 class="text-base font-black text-slate-900 dark:text-white">Histórico de Fechamentos</h3>
-                <form th:if="${!#lists.isEmpty(closings)}" th:action="@{/financial-closing/reopen-last}" method="POST">
+                <form data-permission="delete" th:if="${!#lists.isEmpty(closings)}" th:action="@{/financial-closing/reopen-last}" method="POST">
                     <button type="submit"
                             onclick="return confirm('Reabrir o fechamento mais recente? Ele será removido do histórico e o período voltará a ficar pendente para ser refeito.')"
                             class="flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline">

@@ -2,46 +2,35 @@ package com.alfatahi.erp.config;
 
 import com.alfatahi.erp.entity.AppUser;
 import com.alfatahi.erp.repository.AppUserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 @Component
 public class DataInitializer implements CommandLineRunner {
-
-    private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
-
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final String adminPassword;
 
-    public DataInitializer(AppUserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public DataInitializer(AppUserRepository userRepository, PasswordEncoder passwordEncoder,
+                           @Value("${ADMIN_PASSWORD:}") String adminPassword) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.adminPassword = adminPassword;
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         if (userRepository.findByUsername("admin").isEmpty()) {
-
-            String adminPass = System.getenv("ADMIN_PASSWORD");
-            boolean isRandomPassword = false;
-
-            if (adminPass == null || adminPass.isBlank()) {
-                adminPass = UUID.randomUUID().toString().substring(0, 8);
-                isRandomPassword = true;
+            if (adminPassword == null || adminPassword.isBlank() || adminPassword.length() < 10) {
+                throw new IllegalStateException("Defina ADMIN_PASSWORD com pelo menos 10 caracteres para criar o administrador inicial. Nenhum usuário admin foi criado.");
             }
-
             AppUser gestor = new AppUser();
             gestor.setUsername("admin");
-            gestor.setId(UUID.randomUUID());
-            gestor.setPassword(passwordEncoder.encode(adminPass));
+            gestor.setPassword(passwordEncoder.encode(adminPassword));
             gestor.setRole("GESTAO");
             userRepository.save(gestor);
-
         }
     }
 }

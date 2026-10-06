@@ -3,13 +3,13 @@
 <body>
 <th:block th:fragment="modal">
 <div id="newVisitModal" class="modal-shell hidden">
-    <form onsubmit="createVisit(event)" class="modal-card max-w-lg">
+    <form data-permission="visit-plan" onsubmit="createVisit(event)" class="modal-card max-w-lg">
         <button type="button" onclick="toggleModal('newVisitModal', false)" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
         <h3 class="text-xl font-black text-slate-900 dark:text-white">Nova visita técnica</h3>
         <p class="text-sm text-slate-500 mt-1 mb-5">Selecione um cliente mesmo que ainda não exista orçamento.</p>
         <div class="flex items-center justify-between gap-3 mb-2">
             <label class="form-label mb-0">Cliente *</label>
-            <button type="button" onclick="openInlineClientModal()" class="inline-client-trigger">
+            <button data-permission="edit" type="button" onclick="openInlineClientModal()" class="inline-client-trigger">
                 <i data-lucide="user-plus" class="w-4 h-4"></i> Novo cliente
             </button>
         </div>
@@ -46,7 +46,7 @@
                     <input id="clientSearchInput" type="search" autocomplete="off" placeholder="Pesquisar por nome ou cidade..." class="client-search-input" oninput="filterClientOptions()">
                     <button id="clearClientSearch" type="button" onclick="clearClientSearchInput()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
-                <button type="button" onclick="openInlineClientModal()" class="client-search-new-button">
+                <button data-permission="edit" type="button" onclick="openInlineClientModal()" class="client-search-new-button">
                     <i data-lucide="user-plus" class="w-4 h-4"></i> Novo cliente
                 </button>
             </div>
@@ -70,7 +70,7 @@
 </div>
 
 <div id="clientInlineModal" class="modal-shell client-inline-shell hidden" role="dialog" aria-modal="true" aria-labelledby="clientInlineTitle">
-    <form id="inlineClientForm" onsubmit="saveInlineClient(event)" class="modal-card max-w-xl">
+    <form data-permission="edit" id="inlineClientForm" onsubmit="saveInlineClient(event)" class="modal-card max-w-xl">
         <button type="button" onclick="closeInlineClientModal()" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
         <div class="pr-12 mb-5">
             <p class="text-[10px] font-black uppercase tracking-widest text-fuchsia-600 dark:text-fuchsia-400">Novo cliente</p>

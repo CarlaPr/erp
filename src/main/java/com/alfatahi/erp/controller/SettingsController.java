@@ -7,9 +7,10 @@ import com.alfatahi.erp.repository.AppUserRepository;
 import com.alfatahi.erp.repository.ProfileRepository;
 import com.alfatahi.erp.repository.ServiceCategoryRepository;
 import com.alfatahi.erp.security.LoginAttemptService;
+import com.alfatahi.erp.security.PageAccessService;
+import com.alfatahi.erp.service.UserPermissionsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -32,19 +33,24 @@ public class SettingsController {
 
     private final AppUserRepository userRepository;
     private final LoginAttemptService loginAttemptService;
+    private final UserPermissionsService userPermissions;
+    private final PageAccessService pageAccess;
 
     @Autowired
     private ServiceCategoryRepository serviceCategoryRepository;
 
     public SettingsController(ProfileRepository profileRepository, AppUserRepository userRepository,
-                              LoginAttemptService loginAttemptService) {
+                              LoginAttemptService loginAttemptService, UserPermissionsService userPermissions,
+                              PageAccessService pageAccess) {
         this.profileRepository = profileRepository;
         this.userRepository = userRepository;
         this.loginAttemptService = loginAttemptService;
+        this.userPermissions = userPermissions;
+        this.pageAccess = pageAccess;
     }
 
     @GetMapping
-    public String getSettings(Model model) {
+    public String getSettings(Model model, @RequestParam(required = false) UUID permissionUser) {
         List<Profile> profiles = profileRepository.findAll();
         if (profiles.isEmpty()) {
             Profile p = new Profile();
@@ -67,6 +73,18 @@ public class SettingsController {
         model.addAttribute("currentPage", "settings");
         model.addAttribute("profiles", profiles);
         model.addAttribute("categories", categories);
+        List<AppUser> permissionUsers = users.stream().filter(user -> !"GESTAO".equals(user.getRole()))
+                .sorted(Comparator.comparing(AppUser::getUsername, String.CASE_INSENSITIVE_ORDER)).toList();
+        AppUser selectedUser = permissionUsers.stream().filter(user -> user.getId().equals(permissionUser))
+                .findFirst().orElse(permissionUser == null && !permissionUsers.isEmpty() ? permissionUsers.getFirst() : null);
+        model.addAttribute("permissionUsers", permissionUsers);
+        model.addAttribute("selectedPermissionUser", selectedUser);
+        model.addAttribute("permissionPages", pageAccess.modules());
+        if (selectedUser != null) {
+            model.addAttribute("permissionForm", userPermissions.formFor(selectedUser));
+            model.addAttribute("permissionDefaults", pageAccess.modules().stream().collect(Collectors.toMap(
+                    page -> page.getKey(), page -> pageAccess.defaults(page, selectedUser.getRole()))));
+        }
         return "settings";
     }
 

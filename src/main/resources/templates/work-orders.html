@@ -75,7 +75,7 @@
             <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Gestão de projetos, custos operacionais e margens.</p>
         </div>
 
-        <button type="button"
+        <button data-permission="edit" type="button"
                 onclick="openNewOsModal()"
                 class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20 text-sm">
             <i data-lucide="plus-circle" class="w-5 h-5"></i> Nova OS
@@ -178,11 +178,11 @@
                         </div>
 
                         <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                            <button type="button" th:data-id="${wo.id}" onclick="editOs(this.getAttribute('data-id'))"
+                            <button data-permission="edit" type="button" th:data-id="${wo.id}" onclick="editOs(this.getAttribute('data-id'))"
                                     class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar">
                                 <i data-lucide="edit" class="w-5 h-5"></i>
                             </button>
-                            <button type="button" th:data-id="${wo.id}" onclick="openDeleteOsModal(this.getAttribute('data-id'))"
+                            <button data-permission="delete" type="button" th:data-id="${wo.id}" onclick="openDeleteOsModal(this.getAttribute('data-id'))"
                                     class="p-2 hover:bg-rose-100 dark:hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg transition-colors" title="Excluir Definitivamente">
                                 <i data-lucide="trash-2" class="w-5 h-5"></i>
                             </button>
@@ -265,7 +265,7 @@
             <ul class="mt-4 space-y-3">
                 <li th:each="q : ${approvedWithoutWorkOrder}" class="flex flex-wrap items-center justify-between gap-3 border-t border-amber-200 dark:border-amber-800 pt-3">
                     <span class="font-semibold" th:text="${q.number + ' — ' + (q.client != null ? q.client.name : 'Sem cliente')}"></span>
-                    <button type="button" th:data-quote-id="${q.id}" onclick="recoverWorkOrder(this)" class="rounded-lg bg-amber-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">Recuperar O.S.</button>
+                    <button data-permission="edit" type="button" th:data-quote-id="${q.id}" onclick="recoverWorkOrder(this)" class="rounded-lg bg-amber-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">Recuperar O.S.</button>
                 </li>
             </ul>
         </section>
@@ -292,7 +292,7 @@
                         class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">
                     Cancelar
                 </button>
-                <button type="button" onclick="executeDeleteOS()"
+                <button data-permission="delete" type="button" onclick="executeDeleteOS()"
                         class="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-base">
                     Confirmar Exclusão
                 </button>
@@ -310,7 +310,7 @@
 
                 <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-8 border-b border-slate-200 dark:border-slate-700 pb-4" id="modalTitle">OS: OS-1002</h3>
 
-                <form id="osForm" onsubmit="saveFullOS(event)" class="space-y-8 text-sm">
+                <form data-permission="edit" id="osForm" onsubmit="saveFullOS(event)" class="space-y-8 text-sm">
                     <input type="hidden" id="osId" />
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 dark:bg-slate-800/30 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50">
@@ -386,7 +386,7 @@
                                 <h5 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                     <i data-lucide="package" class="w-5 h-5 text-brand-600 dark:text-cyan-400"></i> Materiais / Produtos
                                 </h5>
-                                <button type="button" onclick="addMaterial()" class="text-brand-600 hover:text-brand-700 dark:text-cyan-400 dark:hover:text-cyan-300 font-bold text-sm flex items-center gap-1.5 hover:underline">
+                                <button data-permission="edit" type="button" onclick="addMaterial()" class="text-brand-600 hover:text-brand-700 dark:text-cyan-400 dark:hover:text-cyan-300 font-bold text-sm flex items-center gap-1.5 hover:underline">
                                     <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Insumo
                                 </button>
                             </div>
@@ -404,7 +404,7 @@
                                 <h5 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                     <i data-lucide="wrench" class="w-5 h-5 text-amber-500"></i> Custos Operacionais
                                 </h5>
-                                <button type="button" onclick="addOperational()" class="text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 font-bold text-sm flex items-center gap-1.5 hover:underline">
+                                <button data-permission="edit" type="button" onclick="addOperational()" class="text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 font-bold text-sm flex items-center gap-1.5 hover:underline">
                                     <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Despesa
                                 </button>
                             </div>
@@ -447,7 +447,7 @@
 
             <div class="bg-slate-50 dark:bg-[#0F172A] border-t border-slate-200 dark:border-slate-800 p-8 flex justify-end gap-4 rounded-b-2xl">
                 <button type="button" onclick="closeModal('osModal')" class="px-8 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">Sair</button>
-                <button type="button" onclick="saveFullOS(event)" class="px-8 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 transition-all text-base">Gravar O.S.</button>
+                <button data-permission="edit" type="button" onclick="saveFullOS(event)" class="px-8 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-black shadow-lg shadow-brand-500/20 dark:shadow-cyan-500/20 transition-all text-base">Gravar O.S.</button>
             </div>
         </div>
     </div>
@@ -859,7 +859,7 @@
                 <div class="text-slate-500 dark:text-slate-400 text-sm font-bold w-full">
                     <span class="text-[10px] uppercase block mb-1">Total</span>R$ ${formatBRL(rowTotal)}
                 </div>
-                <button type="button" onclick="removeMaterial(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 bg-rose-50 dark:bg-transparent p-1.5 rounded-lg transition-colors">
+                <button data-permission="edit" type="button" onclick="removeMaterial(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 bg-rose-50 dark:bg-transparent p-1.5 rounded-lg transition-colors">
                     <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -905,7 +905,7 @@
                     <input type="text" value="${o.obs}" onchange="operationalItems[${idx}].obs=this.value"
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm outline-none focus:border-amber-500 transition-colors">
                 </div>
-                <button type="button" onclick="removeOperational(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 pb-1.5 bg-rose-50 dark:bg-transparent p-1.5 rounded-lg transition-colors">
+                <button data-permission="edit" type="button" onclick="removeOperational(${idx})" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 pb-1.5 bg-rose-50 dark:bg-transparent p-1.5 rounded-lg transition-colors">
                     <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
             </div>

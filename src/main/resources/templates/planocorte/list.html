@@ -15,7 +15,7 @@
                 Planeje o corte de vidro a partir das OS's já aprovadas.
             </p>
         </div>
-        <button
+        <button data-permission="edit"
                 type="button"
                 onclick="toggleModal(true)"
                 class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20">
@@ -139,7 +139,7 @@
 <!--                            title="Editar cabeçalho">-->
 <!--                        <i data-lucide="edit-3" class="w-5 h-5"></i>-->
 <!--                    </a>-->
-                    <form
+                    <form data-permission="delete"
                             th:action="@{/cut-plans/{id}/excluir(id=${p.id})}"
                             method="POST"
                             class="inline-block">
@@ -179,7 +179,7 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </a>
             </header>
-            <form th:action="@{/cut-plans/salvar}"
+            <form data-permission="edit" th:action="@{/cut-plans/salvar}"
                     th:object="${planoCorteForm}"
                     method="POST"
                     class="p-6 space-y-5">

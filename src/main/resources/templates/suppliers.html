@@ -13,7 +13,7 @@
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Fornecedores</h2>
             <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Controle de parceiros, distribuidores de vidro, perfis e acessórios.</p>
         </div>
-        <button onclick="toggleModal(true)" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20">
+        <button data-permission="edit" onclick="toggleModal(true)" class="bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-brand-500/20 dark:shadow-cyan-500/20">
             <i data-lucide="truck" class="w-5 h-5"></i> Novo Fornecedor
         </button>
     </header>
@@ -42,10 +42,10 @@
                           th:text="${sup.category != null && !sup.category.isEmpty() ? sup.category : 'Geral'}">Vidros</span>
                 </td>
                 <td class="p-5 text-center space-x-3">
-                    <a th:href="@{/suppliers/edit/{id}(id=${sup.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors" title="Editar">
+                    <a data-permission="edit" th:href="@{/suppliers/edit/{id}(id=${sup.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors" title="Editar">
                         <i data-lucide="edit-3" class="w-5 h-5"></i>
                     </a>
-                    <form th:action="@{/suppliers/delete/{id}(id=${sup.id})}" method="POST" class="inline-block">
+                    <form data-permission="delete" th:action="@{/suppliers/delete/{id}(id=${sup.id})}" method="POST" class="inline-block">
                         <button type="submit" onclick="return confirm('Excluir fornecedor?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Excluir">
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
@@ -67,7 +67,7 @@
                 </a>
             </header>
 
-            <form th:action="@{/suppliers/save}" th:object="${newSupplier}" method="POST" class="p-6 space-y-5">
+            <form data-permission="edit" th:action="@{/suppliers/save}" th:object="${newSupplier}" method="POST" class="p-6 space-y-5">
                 <input type="hidden" th:field="*{id}" />
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">

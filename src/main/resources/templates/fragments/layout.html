@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <script th:if="${pagePermission != null}" th:inline="javascript">
+        window.pagePermissions = {
+            manager: /*[[${@pageAccess.isManager()}]]*/ false,
+            writable: /*[[${pageHasWriteActions}]]*/ false,
+            edit: /*[[${pagePermission.canEdit}]]*/ false,
+            delete: /*[[${pagePermission.canDelete}]]*/ false,
+            visitPlan: /*[[${@pageAccess.canPlanVisits()}]]*/ false,
+            visitField: /*[[${@pageAccess.canWorkVisits()}]]*/ false
+        };
+        for (const action of ['edit', 'delete', 'visitPlan', 'visitField']) {
+            document.documentElement.dataset['can' + action.charAt(0).toUpperCase() + action.slice(1)] = String(window.pagePermissions[action]);
+        }
+    </script>
+    <script th:src="@{/js/page-permissions.js}" defer></script>
 
     <th:block th:replace="~{fragments/branding :: icons}"></th:block>
 
@@ -49,6 +63,10 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; }
+        html[data-can-edit="false"] [data-permission~="edit"],
+        html[data-can-delete="false"] [data-permission~="delete"],
+        html[data-can-visit-plan="false"] [data-permission~="visit-plan"],
+        html[data-can-visit-field="false"] [data-permission~="visit-field"] { display: none !important; }
         html.transition-theme * {
             transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
@@ -78,79 +96,79 @@
 
         <nav class="flex-1 overflow-y-auto px-5 py-2 space-y-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
 
-            <div sec:authorize="hasAnyAuthority('GESTAO', 'TECNICO', 'VENDAS')" class="space-y-1">
+            <div th:if="${@pageAccess.canViewAny('commercial', 'quotes', 'receipts', 'agenda', 'technical-visits', 'clients')}" class="space-y-1">
                 <div class="px-3 pt-3 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Comercial</div>
 
-                <a href="/commercial" sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" th:classappend="${currentPage == 'commercial'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('commercial')}" href="/commercial" th:classappend="${currentPage == 'commercial'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="line-chart" class="w-4 h-4"></i> Dashboard Vendas
                 </a>
-                <a href="/quotes" sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" th:classappend="${currentPage == 'quotes'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('quotes')}" href="/quotes" th:classappend="${currentPage == 'quotes'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="file-signature" class="w-4 h-4"></i> Orçamentos
                 </a>
-                <a href="/receipts" sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" th:classappend="${currentPage == 'receipts'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('receipts')}" href="/receipts" th:classappend="${currentPage == 'receipts'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="receipt" class="w-4 h-4"></i> Recibos
                 </a>
-                <a href="/agenda" sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS', 'TECNICO')" th:classappend="${currentPage == 'agenda'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('agenda')}" href="/agenda" th:classappend="${currentPage == 'agenda'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="calendar-clock" class="w-4 h-4"></i> Agenda Comercial
                 </a>
-                <a href="/technical-visits" sec:authorize="hasAnyAuthority('GESTAO', 'TECNICO')" th:classappend="${currentPage == 'technical-visits'} ? 'bg-fuchsia-50 text-fuchsia-600 border-l-4 border-fuchsia-600 dark:bg-fuchsia-500/10 dark:text-fuchsia-400 dark:border-fuchsia-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('technical-visits')}" href="/technical-visits" th:classappend="${currentPage == 'technical-visits'} ? 'bg-fuchsia-50 text-fuchsia-600 border-l-4 border-fuchsia-600 dark:bg-fuchsia-500/10 dark:text-fuchsia-400 dark:border-fuchsia-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="clipboard-list" class="w-4 h-4"></i> Visitas Técnicas
                 </a>
-                <a href="/clients" sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" th:classappend="${currentPage == 'clients'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('clients')}" href="/clients" th:classappend="${currentPage == 'clients'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="users" class="w-4 h-4"></i> Clientes
                 </a>
             </div>
 
-            <div sec:authorize="hasAnyAuthority('GESTAO', 'VENDAS')" class="space-y-1">
+            <div th:if="${@pageAccess.canViewAny('cut-plans', 'cut-plans-regras', 'cut-plans-parametros', 'cut-plans-catalogo')}" class="space-y-1">
                 <div class="px-3 pt-6 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Plano de Corte</div>
 
-                <a href="/cut-plans" th:classappend="${currentPage == 'cut-plans'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('cut-plans')}" href="/cut-plans" th:classappend="${currentPage == 'cut-plans'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="scissors" class="w-4 h-4"></i> Plano de Corte
                 </a>
-                <a href="/cut-plans/regras-tecnicas" sec:authorize="hasAnyAuthority('GESTAO')" th:classappend="${currentPage == 'cut-plans-regras'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('cut-plans-regras')}" href="/cut-plans/regras-tecnicas" th:classappend="${currentPage == 'cut-plans-regras'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="ruler" class="w-4 h-4"></i> Regras Técnicas
                 </a>
-                <a href="/cut-plans/parametros-servico" sec:authorize="hasAnyAuthority('GESTAO')" th:classappend="${currentPage == 'cut-plans-parametros'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('cut-plans-parametros')}" href="/cut-plans/parametros-servico" th:classappend="${currentPage == 'cut-plans-parametros'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Parâmetros de Serviço
                 </a>
-                <a href="/cut-plans/catalogo" th:classappend="${currentPage == 'cut-plans-catalogo'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('cut-plans-catalogo')}" href="/cut-plans/catalogo" th:classappend="${currentPage == 'cut-plans-catalogo'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="package" class="w-4 h-4"></i> Catálogo de Insumos
                 </a>
             </div>
 
-            <div sec:authorize="hasAuthority('GESTAO')" class="space-y-1">
+            <div th:if="${@pageAccess.isManager() or @pageAccess.canViewAny('dashboard', 'work-orders', 'receivables', 'payables', 'losses', 'cash-ledger', 'financial-closing', 'suppliers')}" class="space-y-1">
                 <div class="px-3 pt-6 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Administrativo</div>
 
-                <a href="/dashboard" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'dashboard'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('dashboard')}" href="/dashboard" th:classappend="${currentPage == 'dashboard'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Executivo
                 </a>
-                <a href="/work-orders" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'work-orders'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('work-orders')}" href="/work-orders" th:classappend="${currentPage == 'work-orders'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Ordens de Serviço
                 </a>
 
-                <a href="/receivables" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'receivables'} ? 'bg-emerald-50 text-emerald-600 border-l-4 border-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('receivables')}" href="/receivables" th:classappend="${currentPage == 'receivables'} ? 'bg-emerald-50 text-emerald-600 border-l-4 border-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="trending-up" class="w-4 h-4"></i> Contas a Receber
                 </a>
-                <a href="/payables" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'payables'} ? 'bg-rose-50 text-rose-600 border-l-4 border-rose-600 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('payables')}" href="/payables" th:classappend="${currentPage == 'payables'} ? 'bg-rose-50 text-rose-600 border-l-4 border-rose-600 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="trending-down" class="w-4 h-4"></i> Contas a Pagar
                 </a>
-                <a href="/payables/fixed" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" class="flex items-center gap-3 pl-9 pr-3 py-2 rounded-r-lg transition-all text-xs font-semibold text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent">
+                <a th:if="${@pageAccess.canView('payables')}" href="/payables/fixed" class="flex items-center gap-3 pl-9 pr-3 py-2 rounded-r-lg transition-all text-xs font-semibold text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent">
                     <i data-lucide="repeat" class="w-3.5 h-3.5"></i> Contas Fixas
                 </a>
-                <a href="/losses" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'losses'} ? 'bg-amber-50 text-amber-600 border-l-4 border-amber-500 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('losses')}" href="/losses" th:classappend="${currentPage == 'losses'} ? 'bg-amber-50 text-amber-600 border-l-4 border-amber-500 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="alert-triangle" class="w-4 h-4"></i> Controle de Perdas
                 </a>
-                <a href="/cash-ledger" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'cash-ledger'} ? 'bg-teal-50 text-teal-600 border-l-4 border-teal-600 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('cash-ledger')}" href="/cash-ledger" th:classappend="${currentPage == 'cash-ledger'} ? 'bg-teal-50 text-teal-600 border-l-4 border-teal-600 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="book-open" class="w-4 h-4"></i> Fluxo de Caixa
                 </a>
-                <a href="/financial-closing" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'financial-closing'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('financial-closing')}" href="/financial-closing" th:classappend="${currentPage == 'financial-closing'} ? 'bg-violet-50 text-violet-600 border-l-4 border-violet-600 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="calendar-check" class="w-4 h-4"></i> Fechamento Mensal
                 </a>
 
-                <a href="/suppliers" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'suppliers'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.canView('suppliers')}" href="/suppliers" th:classappend="${currentPage == 'suppliers'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="truck" class="w-4 h-4"></i> Fornecedores
                 </a>
-                <a href="/settings" sec:authorize="hasAnyAuthority('ADMIN', 'GESTAO')" th:classappend="${currentPage == 'settings'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
+                <a th:if="${@pageAccess.isManager()}" href="/settings" th:classappend="${currentPage == 'settings'} ? 'bg-brand-50 text-brand-600 border-l-4 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-l-4 border-transparent'" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg transition-all text-sm font-semibold">
                     <i data-lucide="settings" class="w-4 h-4"></i> Configurações
                 </a>
             </div>
@@ -192,7 +210,7 @@
     </form>
 </header>
 
-<div th:fragment="pending-schedule-alert" sec:authorize="hasAuthority('VENDAS')">
+<div th:fragment="pending-schedule-alert" sec:authorize="hasAuthority('VENDAS')" th:if="${@pageAccess.canView('agenda')}">
     <script src="/js/pending-schedule-alert.js"></script>
 </div>
 

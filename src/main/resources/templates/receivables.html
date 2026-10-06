@@ -23,7 +23,7 @@
             </p>
         </div>
 
-        <button
+        <button data-permission="edit"
                 onclick="openModal('receivableModal')"
                 class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 sm:px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-emerald-500/20 text-sm sm:text-base">
 
@@ -140,7 +140,7 @@
         <h3 class="text-sm font-bold text-slate-900 dark:text-white">Ordens de Serviço sem conta a receber</h3>
         <p th:if="${#lists.isEmpty(pendingWorkOrders)}" class="text-sm text-slate-500 dark:text-slate-400 mt-3">Nenhuma OS com criação pendente.</p>
         <div th:unless="${#lists.isEmpty(pendingWorkOrders)}" class="flex flex-wrap gap-2 mt-3">
-            <button type="button" th:each="wo : ${pendingWorkOrders}"
+            <button data-permission="edit" type="button" th:each="wo : ${pendingWorkOrders}"
                     th:data-id="${wo.id}" th:data-number="${wo.number}"
                     th:data-client-id="${wo.client != null ? wo.client.id : ''}"
                     th:data-client-name="${wo.client != null ? wo.client.name : ''}"
@@ -243,7 +243,7 @@
 
                 <td class="p-5 text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <button th:if="${r.status != 'received' and r.status != 'cancelled'}"
+                        <button data-permission="edit" th:if="${r.status != 'received' and r.status != 'cancelled'}"
                                 th:data-id="${r.id}"
                                 th:data-balance="${r.balance}"
                                 onclick="openReceiveModal(this.dataset.id, this.dataset.balance)"
@@ -251,7 +251,7 @@
                             <i data-lucide="check-circle" class="w-5 h-5"></i>
                         </button>
 
-                        <button th:if="${r != null and r.status != 'cancelled'}"
+                        <button data-permission="edit" th:if="${r != null and r.status != 'cancelled'}"
                                 th:data-id="${r?.id}"
                                 th:data-description="${r?.description}"
                                 th:data-total="${r?.totalAmount}"
@@ -279,7 +279,7 @@
                             <i data-lucide="edit" class="w-5 h-5"></i>
                         </button>
 
-                        <button th:if="${r != null and r.status != 'cancelled'}"
+                        <button data-permission="delete" th:if="${r != null and r.status != 'cancelled'}"
                                 th:data-id="${r.id}"
                                 onclick="confirmCancel(this.dataset.id)"
                                 class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Cancelar Receita">
@@ -300,7 +300,7 @@
                 </button>
             </div>
 
-            <form id="receivableForm" th:action="@{/receivables/save}" th:object="${newReceivable}" method="POST" class="p-8 space-y-6">
+            <form data-permission="edit" id="receivableForm" th:action="@{/receivables/save}" th:object="${newReceivable}" method="POST" class="p-8 space-y-6">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -501,7 +501,7 @@
                 </button>
             </div>
 
-            <form id="receiveForm" method="POST" class="p-8 space-y-6">
+            <form data-permission="edit" id="receiveForm" method="POST" class="p-8 space-y-6">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                 <div>
@@ -582,7 +582,7 @@
                 </button>
             </div>
 
-            <form id="editForm" method="POST" class="p-8 space-y-6">
+            <form data-permission="edit" id="editForm" method="POST" class="p-8 space-y-6">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -718,7 +718,7 @@
             <h3 class="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white mb-2">Cancelar Receita?</h3>
             <p class="text-base text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">A conta será marcada como cancelada e removida dos cálculos e fluxo de caixa. O histórico será preservado.</p>
 
-            <form id="cancelForm" method="POST">
+            <form data-permission="delete" id="cancelForm" method="POST">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="flex gap-4 justify-center">
                     <button type="button" onclick="closeModal('cancelModal')" class="w-1/2 px-6 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">Não</button>

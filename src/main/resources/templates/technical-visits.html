@@ -18,7 +18,7 @@
                 <span th:if="${visitRole == 'GESTAO'}">Central de visitas técnicas</span>
             </h1>
             </div>
-        <button sec:authorize="hasAnyAuthority('GESTAO','VENDAS')" type="button" onclick="toggleModal('newVisitModal', true)" class="visit-primary-action">
+        <button data-permission="visit-plan" th:if="${@pageAccess.canPlanVisits()}" type="button" onclick="toggleModal('newVisitModal', true)" class="visit-primary-action">
             <i data-lucide="calendar-plus" class="w-4 h-4"></i> Agendar visita
         </button>
     </header>
@@ -72,8 +72,8 @@
                     </div>
                     <div class="grid grid-cols-2 sm:flex gap-2 shrink-0">
                         <button type="button" onclick="openMaps()" class="px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="map" class="w-4 h-4"></i> Google Maps</button>
-                        <button sec:authorize="hasAnyAuthority('GESTAO','TECNICO')" id="startVisitButton" type="button" onclick="startTechnicalVisit()" class="hidden px-3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black items-center justify-center gap-1.5"><i data-lucide="play" class="w-4 h-4"></i> Iniciar</button>
-                        <button sec:authorize="hasAnyAuthority('GESTAO','VENDAS')" type="button" onclick="openVisitEditor()" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="calendar-cog" class="w-4 h-4"></i> Agenda</button>
+                        <button data-permission="visit-field" th:if="${@pageAccess.canWorkVisits()}" id="startVisitButton" type="button" onclick="startTechnicalVisit()" class="hidden px-3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black items-center justify-center gap-1.5"><i data-lucide="play" class="w-4 h-4"></i> Iniciar</button>
+                        <button data-permission="visit-plan" th:if="${@pageAccess.canPlanVisits()}" type="button" onclick="openVisitEditor()" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="calendar-cog" class="w-4 h-4"></i> Agenda</button>
                     </div>
                 </div>
             </div>
@@ -87,7 +87,7 @@
             <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
                 <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
                     <div><h3 class="font-black text-slate-900 dark:text-white">Medições dos vãos</h3><p class="text-xs text-slate-500 mt-0.5">Ex.: vão para box, espelho, porta ou janela.</p></div>
-                    <button sec:authorize="hasAnyAuthority('GESTAO','TECNICO')" type="button" onclick="openOpeningEditor()" class="field-action-button"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar vão</button>
+                    <button data-permission="visit-field" th:if="${@pageAccess.canWorkVisits()}" type="button" onclick="openOpeningEditor()" class="field-action-button"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar vão</button>
                 </div>
                 <div id="openingsList" class="p-3 sm:p-5 grid grid-cols-1 2xl:grid-cols-2 gap-4"></div>
             </div>
@@ -95,9 +95,9 @@
             <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
                 <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div><h3 class="font-black text-slate-900 dark:text-white">Fotos e vídeos da visita</h3><p class="text-xs text-slate-500 mt-0.5">Informe o vão de referência. Vídeos são carregados somente ao abrir.</p></div>
-                    <div sec:authorize="hasAnyAuthority('GESTAO','TECNICO')" class="flex gap-2">
-                        <button type="button" onclick="document.getElementById('photoFile').click()" class="px-3 py-2 rounded-lg bg-slate-800 dark:bg-slate-700 text-white text-xs font-black flex items-center gap-1"><i data-lucide="camera" class="w-4 h-4"></i> Foto</button>
-                        <button type="button" onclick="document.getElementById('videoFile').click()" class="px-3 py-2 rounded-lg bg-fuchsia-600 text-white text-xs font-black flex items-center gap-1"><i data-lucide="video" class="w-4 h-4"></i> Vídeo</button>
+                    <div th:if="${@pageAccess.canWorkVisits()}" class="flex gap-2">
+                        <button data-permission="visit-field" type="button" onclick="document.getElementById('photoFile').click()" class="px-3 py-2 rounded-lg bg-slate-800 dark:bg-slate-700 text-white text-xs font-black flex items-center gap-1"><i data-lucide="camera" class="w-4 h-4"></i> Foto</button>
+                        <button data-permission="visit-field" type="button" onclick="document.getElementById('videoFile').click()" class="px-3 py-2 rounded-lg bg-fuchsia-600 text-white text-xs font-black flex items-center gap-1"><i data-lucide="video" class="w-4 h-4"></i> Vídeo</button>
                     </div>
                     <input id="photoFile" type="file" accept="image/*" capture="environment" class="hidden" onchange="openPhotoEditor(this)">
                     <input id="videoFile" type="file" accept="video/mp4,video/webm,video/quicktime" class="hidden" onchange="openVideoUploader(this)">
@@ -105,18 +105,18 @@
                 <div id="photosList" class="p-3 sm:p-5 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3"></div>
             </div>
 
-            <div sec:authorize="hasAnyAuthority('GESTAO','TECNICO')" id="completeVisitSection" class="rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-500/10 p-5 sm:p-6">
+            <div th:if="${@pageAccess.canWorkVisits()}" id="completeVisitSection" class="rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-500/10 p-5 sm:p-6">
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
                         <h3 id="completeVisitTitle" class="font-black text-emerald-950 dark:text-emerald-200">Finalizar atendimento em campo</h3>
                         <p id="completeVisitDescription" class="text-sm text-emerald-800/80 dark:text-emerald-300/80 mt-1">Confira as medições, fotos e vídeos antes de concluir.</p>
                     </div>
-                    <button id="completeVisitButton" type="button" onclick="completeTechnicalVisit()" class="w-full lg:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 disabled:opacity-60 disabled:cursor-wait">
+                    <button data-permission="visit-field" id="completeVisitButton" type="button" onclick="completeTechnicalVisit()" class="w-full lg:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 disabled:opacity-60 disabled:cursor-wait">
                         <i data-lucide="circle-check-big" class="w-5 h-5"></i> CONCLUIR VISITA TÉCNICA
                     </button>
                 </div>
             </div>
-            <div th:if="${visitRole == 'VENDAS'}" class="sales-readonly-card">
+            <div th:unless="${@pageAccess.canWorkVisits()}" class="sales-readonly-card">
                 <div class="sales-readonly-icon"><i data-lucide="eye" class="w-5 h-5"></i></div>
                 <div><h3>Acompanhamento em modo leitura</h3><p>O conteúdo registrado em campo pode ser consultado aqui. Alterações de medidas, anexos e conclusão ficam com a equipe técnica ou a gestão.</p></div>
             </div>
@@ -137,7 +137,7 @@
 
 <div th:replace="~{fragments/new-technical-visit :: modal}"></div>
 <div id="visitEditorModal" class="modal-shell hidden">
-    <form onsubmit="saveVisit(event)" class="modal-card max-w-lg">
+    <form data-permission="visit-plan" onsubmit="saveVisit(event)" class="modal-card max-w-lg">
         <button type="button" onclick="toggleModal('visitEditorModal', false)" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
         <h3 class="text-xl font-black text-slate-900 dark:text-white mb-5">Dados da visita</h3>
         <div class="grid grid-cols-2 gap-3 mb-4"><div><label class="form-label">Data</label><input id="editVisitDate" type="date" class="form-input"></div><div><label class="form-label">Horário</label><input id="editVisitTime" type="time" class="form-input"></div></div>
@@ -149,7 +149,7 @@
 </div>
 
 <div id="openingModal" class="modal-shell hidden">
-    <form onsubmit="saveOpening(event)" class="modal-card max-w-4xl">
+    <form data-permission="visit-field" onsubmit="saveOpening(event)" class="modal-card max-w-4xl">
         <button type="button" onclick="toggleModal('openingModal', false)" class="modal-close"><i data-lucide="x" class="w-5 h-5"></i></button>
         <input id="openingId" type="hidden">
         <h3 id="openingModalTitle" class="text-xl font-black text-slate-900 dark:text-white">Adicionar vão</h3>
@@ -201,7 +201,7 @@
         </select>
         <div class="grid grid-cols-2 gap-3 mt-4">
             <button type="button" onclick="closePhotoEditor()" class="rounded-xl border border-slate-300 dark:border-slate-700 py-3 text-sm font-black">Cancelar</button>
-            <button id="saveEditedPhotoButton" type="button" onclick="saveEditedPhoto()" class="rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-3 text-sm font-black">Salvar foto otimizada</button>
+            <button data-permission="visit-field" id="saveEditedPhotoButton" type="button" onclick="saveEditedPhoto()" class="rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-3 text-sm font-black">Salvar foto otimizada</button>
         </div>
     </div>
 </div>
@@ -218,7 +218,7 @@
         <p class="text-[11px] text-slate-500 mt-2">Para manter o sistema leve, o limite é 12 MB. Use vídeos curtos em MP4 ou WebM.</p>
         <div class="grid grid-cols-2 gap-3 mt-5">
             <button type="button" onclick="closeVideoUploader()" class="rounded-xl border border-slate-300 dark:border-slate-700 py-3 text-sm font-black">Cancelar</button>
-            <button id="saveVideoButton" type="button" onclick="uploadVideo()" class="rounded-xl bg-fuchsia-600 text-white py-3 text-sm font-black">Enviar vídeo</button>
+            <button data-permission="visit-field" id="saveVideoButton" type="button" onclick="uploadVideo()" class="rounded-xl bg-fuchsia-600 text-white py-3 text-sm font-black">Enviar vídeo</button>
         </div>
     </div>
 </div>
@@ -244,8 +244,9 @@
     const VISITS = /*[[${visits}]]*/ [];
     const INITIAL_VISIT_ID = /*[[${selectedVisitId}]]*/ null;
     const USER_ROLE = /*[[${visitRole}]]*/ 'VENDAS';
-    const CAN_PLAN = USER_ROLE === 'GESTAO' || USER_ROLE === 'VENDAS';
-    const CAN_FIELD = USER_ROLE === 'GESTAO' || USER_ROLE === 'TECNICO';
+    const CAN_PLAN = /*[[${@pageAccess.canPlanVisits()}]]*/ false;
+    const CAN_FIELD = /*[[${@pageAccess.canWorkVisits()}]]*/ false;
+    const CAN_DELETE = /*[[${@pageAccess.canDelete('technical-visits')}]]*/ false;
     const SERVICE_LABELS = {ABRIGO_PIA:'Abrigo de Pia',PORTA_CORRER:'Porta de Correr',JANELA_PADRAO:'Janela Padrão',PORTA_ABRIR:'Porta de Abrir',VIDRO_FIXO_PERFIL_U:'Vidro Fixo',JANELA_BASCULANTE:'Janela Basculante',SACADA:'Sacada',ESPELHO:'Espelho',BOX_BANHEIRO_PADRAO:'Box de Banheiro Padrão'};
     let currentVisit = null;
     let galleryIndex = 0;
@@ -382,14 +383,14 @@
         }
     }
 
-    function renderOpenings(){ const wrap=$('openingsList'); wrap.innerHTML=''; currentVisit.openings.forEach(o=>{ const actions=CAN_FIELD?`<div class="flex"><button class="p-2" title="Editar" onclick="editOpening('${o.id}')"><i data-lucide="pencil" class="w-4 h-4"></i></button><button class="p-2 text-rose-500" title="Excluir" onclick="deleteOpening('${o.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`:''; const card=document.createElement('article'); card.className='rounded-xl border border-slate-200 dark:border-slate-700 p-4 min-w-0'; const dimensions=o.grossHeightLeftMm!=null?`<div class="grid grid-cols-2 gap-1 text-[11px] mt-3"><span>Alt. esq.: <b>${fmt(o.grossHeightLeftMm)}</b></span><span>Alt. dir.: <b>${fmt(o.grossHeightRightMm)}</b></span><span>Larg. sup.: <b>${fmt(o.grossWidthTopMm)}</b></span><span>Larg. inf.: <b>${fmt(o.grossWidthBottomMm)}</b></span></div>`:`<p class="text-sm mt-2"><b>${fmt(o.widthMm)}</b> × <b>${fmt(o.heightMm)}</b></p>`; card.innerHTML=`<div class="flex items-start justify-between gap-2"><div class="min-w-0"><h4 class="font-black text-slate-900 dark:text-white truncate">${esc(o.name)}</h4><div class="flex flex-wrap gap-1.5 mt-1"><span class="text-[9px] px-2 py-1 rounded-md bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 font-black uppercase">${esc(SERVICE_LABELS[o.serviceCategory]||'Serviço não informado')}</span><span class="text-[9px] px-2 py-1 text-emerald-600 font-black uppercase">Disponível no plano de corte</span></div></div>${actions}</div>${dimensions}${o.notes?`<p class="text-xs text-slate-500 mt-2">${esc(o.notes)}</p>`:''}<div class="mt-3 space-y-1">${o.features.map(f=>`<div class="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-2 text-[11px]"><b>${esc(f.name||f.type)}</b> · ${esc(f.referenceHorizontal)} ${fmt(f.distanceHorizontalMm)} · ${esc(f.referenceVertical)} ${fmt(f.distanceVerticalMm)}${f.diameterMm?' · Ø '+fmt(f.diameterMm):''}${f.widthMm?' · '+fmt(f.widthMm)+' × '+fmt(f.heightMm):''}</div>`).join('')||'<p class="text-[11px] text-slate-400">Sem furos ou recortes.</p>'}</div>`; wrap.appendChild(card); }); if(!wrap.children.length) wrap.innerHTML='<p class="2xl:col-span-2 text-sm text-center text-slate-400 py-8">Nenhuma medição adicionada. Use “Adicionar vão”.</p>'; lucide.createIcons(); }
+    function renderOpenings(){ const wrap=$('openingsList'); wrap.innerHTML=''; currentVisit.openings.forEach(o=>{ const actions=(CAN_FIELD||CAN_DELETE)?`<div class="flex"><button data-permission="visit-field" class="p-2" title="Editar" onclick="editOpening('${o.id}')"><i data-lucide="pencil" class="w-4 h-4"></i></button><button data-permission="delete" class="p-2 text-rose-500" title="Excluir" onclick="deleteOpening('${o.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`:''; const card=document.createElement('article'); card.className='rounded-xl border border-slate-200 dark:border-slate-700 p-4 min-w-0'; const dimensions=o.grossHeightLeftMm!=null?`<div class="grid grid-cols-2 gap-1 text-[11px] mt-3"><span>Alt. esq.: <b>${fmt(o.grossHeightLeftMm)}</b></span><span>Alt. dir.: <b>${fmt(o.grossHeightRightMm)}</b></span><span>Larg. sup.: <b>${fmt(o.grossWidthTopMm)}</b></span><span>Larg. inf.: <b>${fmt(o.grossWidthBottomMm)}</b></span></div>`:`<p class="text-sm mt-2"><b>${fmt(o.widthMm)}</b> × <b>${fmt(o.heightMm)}</b></p>`; card.innerHTML=`<div class="flex items-start justify-between gap-2"><div class="min-w-0"><h4 class="font-black text-slate-900 dark:text-white truncate">${esc(o.name)}</h4><div class="flex flex-wrap gap-1.5 mt-1"><span class="text-[9px] px-2 py-1 rounded-md bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 font-black uppercase">${esc(SERVICE_LABELS[o.serviceCategory]||'Serviço não informado')}</span><span class="text-[9px] px-2 py-1 text-emerald-600 font-black uppercase">Disponível no plano de corte</span></div></div>${actions}</div>${dimensions}${o.notes?`<p class="text-xs text-slate-500 mt-2">${esc(o.notes)}</p>`:''}<div class="mt-3 space-y-1">${o.features.map(f=>`<div class="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-2 text-[11px]"><b>${esc(f.name||f.type)}</b> · ${esc(f.referenceHorizontal)} ${fmt(f.distanceHorizontalMm)} · ${esc(f.referenceVertical)} ${fmt(f.distanceVerticalMm)}${f.diameterMm?' · Ø '+fmt(f.diameterMm):''}${f.widthMm?' · '+fmt(f.widthMm)+' × '+fmt(f.heightMm):''}</div>`).join('')||'<p class="text-[11px] text-slate-400">Sem furos ou recortes.</p>'}</div>`; wrap.appendChild(card); }); if(!wrap.children.length) wrap.innerHTML='<p class="2xl:col-span-2 text-sm text-center text-slate-400 py-8">Nenhuma medição adicionada. Use “Adicionar vão”.</p>'; lucide.createIcons(); }
     function renderPhotos(){
         const wrap=$('photosList'); wrap.innerHTML='';
         currentVisit.photos.forEach((p,index)=>{
             const d=document.createElement('figure'); d.className='relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 aspect-square cursor-pointer';
             const preview=p.video?`<div class="w-full h-full bg-slate-900 text-white flex flex-col items-center justify-center gap-2"><i data-lucide="play-circle" class="w-11 h-11"></i><span class="text-[10px] font-black uppercase">Vídeo</span></div>`:`<img loading="lazy" src="/technical-visits/${currentVisit.id}/photos/${p.id}" alt="${esc(p.caption||p.fileName)}" class="w-full h-full object-cover">`;
             const opening=p.openingName?`<span class="absolute top-2 left-2 max-w-[70%] bg-fuchsia-600/90 text-white text-[9px] font-black px-2 py-1 rounded-md truncate">${esc(p.openingName)}</span>`:'';
-            d.innerHTML=`<button type="button" onclick="openMediaGallery(${index})" class="absolute inset-0 w-full h-full text-left">${preview}</button>${opening}<figcaption class="absolute inset-x-0 bottom-0 bg-slate-950/75 text-white text-[10px] p-2 truncate pointer-events-none">${esc(p.caption||p.fileName)}</figcaption>${CAN_FIELD?`<button type="button" onclick="event.stopPropagation();deletePhoto('${p.id}')" class="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg" aria-label="Excluir anexo"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>`:''}`;
+            d.innerHTML=`<button type="button" onclick="openMediaGallery(${index})" class="absolute inset-0 w-full h-full text-left">${preview}</button>${opening}<figcaption class="absolute inset-x-0 bottom-0 bg-slate-950/75 text-white text-[10px] p-2 truncate pointer-events-none">${esc(p.caption||p.fileName)}</figcaption>${CAN_DELETE?`<button data-permission="delete" type="button" onclick="event.stopPropagation();deletePhoto('${p.id}')" class="absolute top-2 right-2 bg-rose-600 text-white p-1.5 rounded-lg" aria-label="Excluir anexo"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>`:''}`;
             wrap.appendChild(d);
         });
         if(!wrap.children.length) wrap.innerHTML='<p class="col-span-full text-sm text-center text-slate-400 py-8">Nenhuma foto ou vídeo anexado.</p>';

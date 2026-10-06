@@ -37,10 +37,10 @@
 
     <section id="tab-vidros" class="tab-panel space-y-5">
         <div class="flex flex-wrap justify-between items-center gap-3">
-            <button type="button" onclick="toggleCollapse('importVidrosPanel')" class="text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1.5">
+            <button data-permission="edit" type="button" onclick="toggleCollapse('importVidrosPanel')" class="text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1.5">
                 <i data-lucide="upload" class="w-4 h-4"></i> Importar em lote (.csv / .xlsx)
             </button>
-            <button onclick="abrirModalNovo('vidroModal', 'vidroForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
+            <button data-permission="edit" onclick="abrirModalNovo('vidroModal', 'vidroForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i> Novo Vidro
             </button>
         </div>
@@ -48,7 +48,7 @@
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">
                 Vidros com o mesmo <strong>nome</strong> são atualizados; os demais são criados. Toda mudança de valor/m² fica registrada no histórico de preço.
             </p>
-            <form th:action="@{/cut-plans/catalogo/vidros/importar}" method="POST" enctype="multipart/form-data" class="flex flex-wrap items-center gap-3">
+            <form data-permission="edit" th:action="@{/cut-plans/catalogo/vidros/importar}" method="POST" enctype="multipart/form-data" class="flex flex-wrap items-center gap-3">
                 <input type="file" name="arquivo" accept=".csv,.xlsx,.xls" required
                        class="text-sm border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-slate-100 dark:file:bg-slate-800 file:text-slate-700 dark:file:text-slate-200 file:text-sm dark:bg-slate-900 dark:text-white" />
                 <button type="submit" class="bg-slate-900 dark:bg-slate-700 text-white text-sm font-semibold rounded-lg px-4 py-2 hover:bg-slate-800 transition">Importar</button>
@@ -87,8 +87,8 @@
                         <button type="button" onclick="verHistorico(this)" th:attr="data-vidro-id=${v.id},data-vidro-nome=${v.nome}" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Histórico de preço">
                             <i data-lucide="history" class="w-4 h-4"></i>
                         </button>
-                        <a th:href="@{/cut-plans/catalogo/vidros/{id}/editar(id=${v.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
-                        <form th:action="@{/cut-plans/catalogo/vidros/{id}/inativar(id=${v.id})}" method="POST" class="inline-block">
+                        <a data-permission="edit" th:href="@{/cut-plans/catalogo/vidros/{id}/editar(id=${v.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
+                        <form data-permission="delete" th:action="@{/cut-plans/catalogo/vidros/{id}/inativar(id=${v.id})}" method="POST" class="inline-block">
                             <button type="submit" onclick="return confirm('Inativar este vidro?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Inativar"><i data-lucide="power-off" class="w-4 h-4"></i></button>
                         </form>
                     </td>
@@ -101,7 +101,7 @@
 
     <section id="tab-aluminio" class="tab-panel space-y-5">
         <div class="flex justify-end">
-            <button onclick="abrirModalNovo('perfilModal', 'perfilForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
+            <button data-permission="edit" onclick="abrirModalNovo('perfilModal', 'perfilForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i> Novo Perfil
             </button>
         </div>
@@ -130,8 +130,8 @@
                         <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase" th:classappend="${p.ativo} ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'" th:text="${p.ativo} ? 'Ativo' : 'Inativo'">Ativo</span>
                     </td>
                     <td class="p-4 text-center space-x-1 whitespace-nowrap">
-                        <a th:href="@{/cut-plans/catalogo/aluminio/{id}/editar(id=${p.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
-                        <form th:action="@{/cut-plans/catalogo/aluminio/{id}/inativar(id=${p.id})}" method="POST" class="inline-block">
+                        <a data-permission="edit" th:href="@{/cut-plans/catalogo/aluminio/{id}/editar(id=${p.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
+                        <form data-permission="delete" th:action="@{/cut-plans/catalogo/aluminio/{id}/inativar(id=${p.id})}" method="POST" class="inline-block">
                             <button type="submit" onclick="return confirm('Inativar este perfil?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Inativar"><i data-lucide="power-off" class="w-4 h-4"></i></button>
                         </form>
                     </td>
@@ -144,7 +144,7 @@
 
     <section id="tab-ferragens" class="tab-panel space-y-5">
         <div class="flex justify-end">
-            <button onclick="abrirModalNovo('ferragemModal', 'ferragemForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
+            <button data-permission="edit" onclick="abrirModalNovo('ferragemModal', 'ferragemForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i> Nova Ferragem
             </button>
         </div>
@@ -173,8 +173,8 @@
                         <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase" th:classappend="${f.ativo} ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'" th:text="${f.ativo} ? 'Ativo' : 'Inativo'">Ativo</span>
                     </td>
                     <td class="p-4 text-center space-x-1 whitespace-nowrap">
-                        <a th:href="@{/cut-plans/catalogo/ferragens/{id}/editar(id=${f.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
-                        <form th:action="@{/cut-plans/catalogo/ferragens/{id}/inativar(id=${f.id})}" method="POST" class="inline-block">
+                        <a data-permission="edit" th:href="@{/cut-plans/catalogo/ferragens/{id}/editar(id=${f.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
+                        <form data-permission="delete" th:action="@{/cut-plans/catalogo/ferragens/{id}/inativar(id=${f.id})}" method="POST" class="inline-block">
                             <button type="submit" onclick="return confirm('Inativar esta ferragem?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Inativar"><i data-lucide="power-off" class="w-4 h-4"></i></button>
                         </form>
                     </td>
@@ -187,7 +187,7 @@
 
     <section id="tab-silicones" class="tab-panel space-y-5">
         <div class="flex justify-end">
-            <button onclick="abrirModalNovo('siliconeModal', 'siliconeForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
+            <button data-permission="edit" onclick="abrirModalNovo('siliconeModal', 'siliconeForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i> Novo Silicone
             </button>
         </div>
@@ -213,8 +213,8 @@
                         <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase" th:classappend="${s.ativo} ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'" th:text="${s.ativo} ? 'Ativo' : 'Inativo'">Ativo</span>
                     </td>
                     <td class="p-4 text-center space-x-1 whitespace-nowrap">
-                        <a th:href="@{/cut-plans/catalogo/silicones/{id}/editar(id=${s.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
-                        <form th:action="@{/cut-plans/catalogo/silicones/{id}/inativar(id=${s.id})}" method="POST" class="inline-block">
+                        <a data-permission="edit" th:href="@{/cut-plans/catalogo/silicones/{id}/editar(id=${s.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
+                        <form data-permission="delete" th:action="@{/cut-plans/catalogo/silicones/{id}/inativar(id=${s.id})}" method="POST" class="inline-block">
                             <button type="submit" onclick="return confirm('Inativar este silicone?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Inativar"><i data-lucide="power-off" class="w-4 h-4"></i></button>
                         </form>
                     </td>
@@ -227,7 +227,7 @@
 
     <section id="tab-acessorios" class="tab-panel space-y-5">
         <div class="flex justify-end">
-            <button onclick="abrirModalNovo('acessorioModal', 'acessorioForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
+            <button data-permission="edit" onclick="abrirModalNovo('acessorioModal', 'acessorioForm')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 text-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i> Novo Acessório
             </button>
         </div>
@@ -253,8 +253,8 @@
                         <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase" th:classappend="${a.ativo} ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'" th:text="${a.ativo} ? 'Ativo' : 'Inativo'">Ativo</span>
                     </td>
                     <td class="p-4 text-center space-x-1 whitespace-nowrap">
-                        <a th:href="@{/cut-plans/catalogo/acessorios/{id}/editar(id=${a.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
-                        <form th:action="@{/cut-plans/catalogo/acessorios/{id}/inativar(id=${a.id})}" method="POST" class="inline-block">
+                        <a data-permission="edit" th:href="@{/cut-plans/catalogo/acessorios/{id}/editar(id=${a.id})}" class="text-brand-600 hover:text-brand-800 dark:text-cyan-400 dark:hover:text-cyan-300 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-cyan-500/10 transition-colors inline-block" title="Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></a>
+                        <form data-permission="delete" th:action="@{/cut-plans/catalogo/acessorios/{id}/inativar(id=${a.id})}" method="POST" class="inline-block">
                             <button type="submit" onclick="return confirm('Inativar este acessório?')" class="text-rose-600 hover:text-rose-800 dark:text-rose-500 dark:hover:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Inativar"><i data-lucide="power-off" class="w-4 h-4"></i></button>
                         </form>
                     </td>
@@ -271,7 +271,7 @@
                 <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditingVidro} ? 'Editar Vidro' : 'Novo Vidro'">Formulário</h3>
                 <a th:href="@{/cut-plans/catalogo(tab='vidros')}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></a>
             </header>
-            <form th:action="@{/cut-plans/catalogo/vidros}" th:object="${vidroForm}" method="POST" class="p-6 space-y-5">
+            <form data-permission="edit" th:action="@{/cut-plans/catalogo/vidros}" th:object="${vidroForm}" method="POST" class="p-6 space-y-5">
                 <input type="hidden" th:field="*{id}" />
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2">
@@ -342,7 +342,7 @@
                 <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditingPerfil} ? 'Editar Perfil' : 'Novo Perfil de Alumínio'">Formulário</h3>
                 <a th:href="@{/cut-plans/catalogo(tab='aluminio')}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></a>
             </header>
-            <form th:action="@{/cut-plans/catalogo/aluminio}" th:object="${perfilForm}" method="POST" class="p-6 space-y-5">
+            <form data-permission="edit" th:action="@{/cut-plans/catalogo/aluminio}" th:object="${perfilForm}" method="POST" class="p-6 space-y-5">
                 <input type="hidden" th:field="*{id}" />
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Linha</label>
@@ -375,7 +375,7 @@
                 <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditingFerragem} ? 'Editar Ferragem' : 'Nova Ferragem'">Formulário</h3>
                 <a th:href="@{/cut-plans/catalogo(tab='ferragens')}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></a>
             </header>
-            <form th:action="@{/cut-plans/catalogo/ferragens}" th:object="${ferragemForm}" method="POST" class="p-6 space-y-5">
+            <form data-permission="edit" th:action="@{/cut-plans/catalogo/ferragens}" th:object="${ferragemForm}" method="POST" class="p-6 space-y-5">
                 <input type="hidden" th:field="*{id}" />
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Categoria</label>
@@ -439,7 +439,7 @@
                 <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditingSilicone} ? 'Editar Silicone' : 'Novo Silicone'">Formulário</h3>
                 <a th:href="@{/cut-plans/catalogo(tab='silicones')}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></a>
             </header>
-            <form th:action="@{/cut-plans/catalogo/silicones}" th:object="${siliconeForm}" method="POST" class="p-6 space-y-5">
+            <form data-permission="edit" th:action="@{/cut-plans/catalogo/silicones}" th:object="${siliconeForm}" method="POST" class="p-6 space-y-5">
                 <input type="hidden" th:field="*{id}" />
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2"><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Marca</label>
@@ -470,7 +470,7 @@
                 <h3 class="text-xl font-bold text-slate-900 dark:text-white" th:text="${isEditingAcessorio} ? 'Editar Acessório' : 'Novo Acessório'">Formulário</h3>
                 <a th:href="@{/cut-plans/catalogo(tab='acessorios')}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg border border-slate-200 dark:border-transparent"><i data-lucide="x" class="w-5 h-5"></i></a>
             </header>
-            <form th:action="@{/cut-plans/catalogo/acessorios}" th:object="${acessorioForm}" method="POST" class="p-6 space-y-5">
+            <form data-permission="edit" th:action="@{/cut-plans/catalogo/acessorios}" th:object="${acessorioForm}" method="POST" class="p-6 space-y-5">
                 <input type="hidden" th:field="*{id}" />
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2"><label class="block text-sm font-bold text-slate-700 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome</label>

@@ -87,7 +87,7 @@
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Contas a Pagar</h2>
             <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Controlo de fornecedores, despesas fixas e CMV.</p>
         </div>
-        <button onclick="openNewPayableModal()"
+        <button data-permission="edit" onclick="openNewPayableModal()"
                 class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-rose-500/20 text-base">
             <i data-lucide="plus" class="w-5 h-5"></i> Nova Despesa
         </button>
@@ -289,17 +289,17 @@
                     <span th:if="${p.status == 'cancelled'}" class="payable-status px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-500/20 dark:text-slate-400 dark:border-transparent uppercase">Cancelado</span>
                 </div>
                 <div class="payable-actions">
-                    <button th:if="${p.status != 'paid' and p.status != 'cancelled'}" th:data-id="${p.id}" th:data-balance="${p.balance}" onclick="openPayModal(this.dataset.id, this.dataset.balance)" class="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10" title="Registrar pagamento">
+                    <button data-permission="edit" th:if="${p.status != 'paid' and p.status != 'cancelled'}" th:data-id="${p.id}" th:data-balance="${p.balance}" onclick="openPayModal(this.dataset.id, this.dataset.balance)" class="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10" title="Registrar pagamento">
                         <i data-lucide="check-circle" class="w-5 h-5"></i>
                     </button>
-                    <button th:if="${p.status != 'cancelled'}"
+                    <button data-permission="edit" th:if="${p.status != 'cancelled'}"
                             th:data-id="${p.id}" th:data-description="${p.description}" th:data-category="${p.category}" th:data-subcategory="${p.subcategory}" th:data-total="${p.totalAmount}" th:data-duedate="${p.dueDate}" th:data-payment="${p.paymentMethod}" th:data-document="${p.documentNumber}" th:data-recurring="${p.recurring}" th:data-notes="${p.notes}" th:data-supplier="${p.supplier != null ? p.supplier.id : ''}" th:data-workorder="${p.workOrder != null ? p.workOrder.id : ''}" th:data-paidamount="${p.paidAmount}" th:data-expensetype="${p.expenseType}" th:data-expensenature="${p.expenseNature}" th:data-costcenter="${p.costCenter}" th:data-competencia="${p.competencia}" th:data-recurrenceid="${p.recurrenceId}" th:data-allocations="${allocationsJsonByPayable.get(p.id)}" onclick="openEditModal(this.dataset)" class="text-brand-600 hover:bg-brand-50 dark:text-cyan-400 dark:hover:bg-cyan-500/10" title="Editar">
                         <i data-lucide="edit" class="w-5 h-5"></i>
                     </button>
-                    <button th:if="${p.status != 'cancelled' and p.recurrenceId == null}" th:data-id="${p.id}" onclick="confirmCancel(this.dataset.id)" class="text-rose-600 hover:bg-rose-50 dark:text-rose-500 dark:hover:bg-rose-500/10" title="Cancelar conta">
+                    <button data-permission="delete" th:if="${p.status != 'cancelled' and p.recurrenceId == null}" th:data-id="${p.id}" onclick="confirmCancel(this.dataset.id)" class="text-rose-600 hover:bg-rose-50 dark:text-rose-500 dark:hover:bg-rose-500/10" title="Cancelar conta">
                         <i data-lucide="trash-2" class="w-5 h-5"></i>
                     </button>
-                    <button th:if="${p.status != 'cancelled' and p.recurrenceId != null}" th:data-id="${p.id}" th:data-recurrenceid="${p.recurrenceId}" onclick="confirmCancelRecurrence(this.dataset.id, this.dataset.recurrenceid)" class="text-rose-600 hover:bg-rose-50 dark:text-rose-500 dark:hover:bg-rose-500/10" title="Cancelar série recorrente">
+                    <button data-permission="delete" th:if="${p.status != 'cancelled' and p.recurrenceId != null}" th:data-id="${p.id}" th:data-recurrenceid="${p.recurrenceId}" onclick="confirmCancelRecurrence(this.dataset.id, this.dataset.recurrenceid)" class="text-rose-600 hover:bg-rose-50 dark:text-rose-500 dark:hover:bg-rose-500/10" title="Cancelar série recorrente">
                         <i data-lucide="trash-2" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -399,7 +399,7 @@
 
                 <td class="p-5 text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <button
+                        <button data-permission="edit"
                                 th:if="${p.status != 'paid' and p.status != 'cancelled'}"
                                 th:data-id="${p.id}"
                                 th:data-balance="${p.balance}"
@@ -408,7 +408,7 @@
                             <i data-lucide="check-circle" class="w-5 h-5"></i>
                         </button>
 
-                        <button
+                        <button data-permission="edit"
                                 th:if="${p.status != 'cancelled'}"
                                 th:data-id="${p.id}"
                                 th:data-description="${p.description}"
@@ -434,7 +434,7 @@
                             <i data-lucide="edit" class="w-5 h-5"></i>
                         </button>
 
-                        <button
+                        <button data-permission="delete"
                                 th:if="${p.status != 'cancelled' and p.recurrenceId == null}"
                                 th:data-id="${p.id}"
                                 onclick="confirmCancel(this.dataset.id)"
@@ -443,7 +443,7 @@
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
 
-                        <button
+                        <button data-permission="delete"
                                 th:if="${p.status != 'cancelled' and p.recurrenceId != null}"
                                 th:data-id="${p.id}"
                                 th:data-recurrenceid="${p.recurrenceId}"
@@ -483,7 +483,7 @@
                 </button>
             </div>
 
-            <form id="newPayableForm" th:action="@{/payables/save}" th:object="${newPayable}" method="POST" class="p-8 space-y-6">
+            <form data-permission="edit" id="newPayableForm" th:action="@{/payables/save}" th:object="${newPayable}" method="POST" class="p-8 space-y-6">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2">
@@ -519,7 +519,7 @@
                     <div class="lg:col-span-3">
                         <div class="flex items-center justify-between mb-2">
                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Rateio por O.S. (opcional)</label>
-                            <button type="button" onclick="addAllocationRow('new')" class="text-rose-600 hover:text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center gap-1 hover:underline">
+                            <button data-permission="edit" type="button" onclick="addAllocationRow('new')" class="text-rose-600 hover:text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center gap-1 hover:underline">
                                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Adicionar O.S.
                             </button>
                         </div>
@@ -715,7 +715,7 @@
                 </button>
             </div>
 
-            <form id="payForm" method="POST" class="p-8 space-y-6">
+            <form data-permission="edit" id="payForm" method="POST" class="p-8 space-y-6">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
                 <div>
@@ -765,7 +765,7 @@
                 </button>
             </div>
 
-            <form id="editForm" method="POST" class="p-8 space-y-6">
+            <form data-permission="edit" id="editForm" method="POST" class="p-8 space-y-6">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <input type="hidden" name="id" id="editId">
 
@@ -807,7 +807,7 @@
                     <div class="lg:col-span-3">
                         <div class="flex items-center justify-between mb-2">
                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Rateio por O.S. (opcional)</label>
-                            <button type="button" onclick="addAllocationRow('edit')" class="text-brand-600 hover:text-brand-700 dark:text-cyan-400 font-bold text-xs flex items-center gap-1 hover:underline">
+                            <button data-permission="edit" type="button" onclick="addAllocationRow('edit')" class="text-brand-600 hover:text-brand-700 dark:text-cyan-400 font-bold text-xs flex items-center gap-1 hover:underline">
                                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Adicionar O.S.
                             </button>
                         </div>
@@ -918,7 +918,7 @@
             <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Cancelar Conta?</h3>
             <p class="text-base text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">A conta será marcada como cancelada e removida dos cálculos e fluxo de caixa. O histórico será preservado.</p>
 
-            <form id="cancelForm" method="POST">
+            <form data-permission="delete" id="cancelForm" method="POST">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="flex gap-4 justify-center">
                     <button type="button" onclick="closeModal('cancelModal')" class="w-1/2 px-6 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-base">Não</button>
@@ -943,7 +943,7 @@
             </div>
             <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">Esta conta pertence a uma série recorrente. Escolha como deseja proceder:</p>
 
-            <form id="recurrenceDeleteForm" method="POST" class="space-y-3">
+            <form data-permission="delete" id="recurrenceDeleteForm" method="POST" class="space-y-3">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
                 <label class="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors">

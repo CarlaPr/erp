@@ -4,11 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Representa uma Ordem de Serviço com prazo de entrega próximo de vencer (ou já vencido)
- * e que ainda não possui nenhum agendamento definido (data marcada na Agenda Comercial).
- * Usado para alimentar a modal de atenção exibida para usuários da role VENDAS.
- */
 public class PendingScheduleAlertDto {
 
     private UUID scheduleId;

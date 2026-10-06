@@ -8,7 +8,6 @@ import com.alfatahi.erp.planocorte.entity.ReferenciaHorizontal;
 import com.alfatahi.erp.planocorte.entity.ReferenciaVertical;
 import com.alfatahi.erp.planocorte.entity.TipoAncoragem;
 import com.alfatahi.erp.planocorte.entity.TipoAnotacao;
-import com.alfatahi.erp.planocorte.entity.TipoBorda;
 import com.alfatahi.erp.planocorte.entity.TipoElemento;
 import com.alfatahi.erp.planocorte.entity.TipoFolha;
 import com.alfatahi.erp.planocorte.entity.TipoFuracao;

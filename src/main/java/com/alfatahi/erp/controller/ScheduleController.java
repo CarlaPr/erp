@@ -12,6 +12,7 @@ import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.service.ScheduleService;
 import com.alfatahi.erp.service.TechnicalVisitService;
 import com.alfatahi.erp.util.SecurityUtils;
+import com.alfatahi.erp.security.PageAccessService;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -46,24 +47,28 @@ public class ScheduleController {
     private final AppUserRepository appUserRepo;
     private final TemplateEngine templateEngine;
     private final ClientRepository clientRepository;
+    private final PageAccessService pageAccess;
 
     public ScheduleController(ScheduleService scheduleService, TechnicalVisitService technicalVisitService,
-                               AppUserRepository appUserRepo, TemplateEngine templateEngine, ClientRepository clientRepository) {
+                               AppUserRepository appUserRepo, TemplateEngine templateEngine, ClientRepository clientRepository,
+                               PageAccessService pageAccess) {
         this.scheduleService = scheduleService;
         this.technicalVisitService = technicalVisitService;
         this.appUserRepo = appUserRepo;
         this.templateEngine = templateEngine;
         this.clientRepository = clientRepository;
+        this.pageAccess = pageAccess;
     }
 
     @GetMapping
     @Transactional(readOnly = true)
     public String index(Model model) {
-        boolean isTecnico = SecurityUtils.isTecnico();
+        boolean isTecnico = isTechnicianWithDefaultAccess();
 
 
         List<ScheduleDto> schedules = scheduleService.listAllDto();
-        List<TechnicalVisitDto> technicalVisits = technicalVisitService.listAllDto();
+        List<TechnicalVisitDto> technicalVisits = pageAccess.canView("technical-visits")
+                ? technicalVisitService.listAllDto() : List.of();
 
         List<String> vendedores = appUserRepo.findByRole("VENDAS").stream()
                 .map(AppUser::getUsername)
@@ -78,6 +83,10 @@ public class ScheduleController {
         model.addAttribute("kpis", scheduleService.getKpis());
 
         return "agenda";
+    }
+
+    private boolean isTechnicianWithDefaultAccess() {
+        return !pageAccess.isManager() && SecurityUtils.isTecnico() && !pageAccess.hasCustomAccess("agenda");
     }
 
     @GetMapping("/view-data/{id}")
@@ -97,7 +106,7 @@ public class ScheduleController {
     @PostMapping(value = "/save-ajax", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> saveAjax(@RequestBody ScheduleSaveRequest request) {
-        if (SecurityUtils.isTecnico()) {
+        if (isTechnicianWithDefaultAccess()) {
             return forbidden();
         }
         try {
@@ -122,7 +131,7 @@ public class ScheduleController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> changeDeadline(@PathVariable UUID id,
                                                                 @RequestBody Map<String, String> body) {
-        if (SecurityUtils.isTecnico()) {
+        if (isTechnicianWithDefaultAccess()) {
             return forbidden();
         }
         try {
@@ -146,7 +155,7 @@ public class ScheduleController {
     @PostMapping(value = "/occurrences/add", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> addOccurrence(@RequestBody ScheduleOccurrenceSaveRequest request) {
-        if (SecurityUtils.isTecnico()) {
+        if (isTechnicianWithDefaultAccess()) {
             return forbidden();
         }
         try {
@@ -167,7 +176,7 @@ public class ScheduleController {
     @PostMapping(value = "/occurrences/update", consumes = "application/json")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> updateOccurrence(@RequestBody ScheduleOccurrenceSaveRequest request) {
-        if (SecurityUtils.isTecnico()) {
+        if (isTechnicianWithDefaultAccess()) {
             return forbidden();
         }
         try {
@@ -189,7 +198,7 @@ public class ScheduleController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> removeOccurrence(@PathVariable UUID occurrenceId,
                                                                   @RequestBody(required = false) Map<String, String> body) {
-        if (SecurityUtils.isTecnico()) {
+        if (isTechnicianWithDefaultAccess()) {
             return forbidden();
         }
         try {
@@ -209,7 +218,7 @@ public class ScheduleController {
     @PostMapping("/cancel/{id}")
     @ResponseBody
     public ResponseEntity<?> cancel(@PathVariable UUID id, @RequestBody(required = false) String reason) {
-        if (SecurityUtils.isTecnico()) {
+        if (isTechnicianWithDefaultAccess()) {
             return forbidden();
         }
         try {

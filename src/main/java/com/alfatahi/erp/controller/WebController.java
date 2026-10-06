@@ -28,7 +28,7 @@ public class WebController {
     }
 
     @GetMapping("/")
-    public String home() { return "redirect:/dashboard"; }
+    public String home() { return "redirect:/login-success"; }
 
     @GetMapping("/dashboard")
     public String dashboard(@RequestParam(required = false) String month,

@@ -24,7 +24,7 @@
                 Gerenciamento da carteira de clientes do sistema.
             </p>
         </div>
-        <button
+        <button data-permission="edit"
                 type="button"
                 onclick="toggleModal(true)"
                 class="w-full lg:w-auto
@@ -301,7 +301,7 @@
                     </td>
                     <td class="px-4 lg:px-5 py-4">
                         <div class="flex justify-center items-center gap-1">
-                            <a
+                            <a data-permission="edit"
                                     th:href="@{/clients/edit/{id}(id=${client.id})}"
                                     class="text-brand-600
                                            hover:text-brand-800
@@ -319,7 +319,7 @@
 
                                 <i data-lucide="edit-3" class="w-5 h-5"></i>
                             </a>
-                            <form
+                            <form data-permission="delete"
                                     th:action="@{/clients/delete/{id}(id=${client.id})}"
                                     method="POST"
                                     class="inline-flex">
@@ -458,7 +458,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
-                    <a th:href="@{/clients/edit/{id}(id=${client.id})}"
+                    <a data-permission="edit" th:href="@{/clients/edit/{id}(id=${client.id})}"
                             class="w-10 h-10
                                    flex items-center justify-center
                                    rounded-xl
@@ -474,7 +474,7 @@
                         <i data-lucide="edit-3" class="w-5 h-5"></i>
 
                     </a>
-                    <form th:action="@{/clients/delete/{id}(id=${client.id})}" method="POST">
+                    <form data-permission="delete" th:action="@{/clients/delete/{id}(id=${client.id})}" method="POST">
                         <input
                                 type="hidden"
                                 name="_method"
@@ -769,7 +769,7 @@
 
                 </a>
             </header>
-            <form th:action="@{/clients/save}"
+            <form data-permission="edit" th:action="@{/clients/save}"
                     th:object="${newClient}"
                     method="POST"
                     class="p-4 sm:p-6">

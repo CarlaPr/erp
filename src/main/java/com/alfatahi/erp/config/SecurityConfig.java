@@ -1,11 +1,13 @@
 package com.alfatahi.erp.config;
 
 import com.alfatahi.erp.security.LoginAttemptService;
+import com.alfatahi.erp.security.PageAccessService;
+import com.alfatahi.erp.security.PageModule;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,9 +24,11 @@ import org.springframework.security.web.csrf.CsrfException;
 public class SecurityConfig {
 
     private final LoginAttemptService loginAttemptService;
+    private final PageAccessService pageAccess;
 
-    public SecurityConfig(LoginAttemptService loginAttemptService) {
+    public SecurityConfig(LoginAttemptService loginAttemptService, PageAccessService pageAccess) {
         this.loginAttemptService = loginAttemptService;
+        this.pageAccess = pageAccess;
     }
 
     @Bean
@@ -132,37 +136,12 @@ public class SecurityConfig {
                         .requestMatchers("/AppAssets/**", "/favicon.ico",
                                 "/apple-touch-icon.png", "/web-app-manifest-192x192.png",
                                 "/web-app-manifest-512x512.png", "/site.webmanifest").permitAll()
-                        .requestMatchers("/admin/users/**").hasAuthority("GESTAO")
-
-                        .requestMatchers("/dashboard", "/payables/**", "/receivables/**",
-                                "/losses/**", "/dre/**", "/suppliers/**",
-                                "/settings/**", "/settings/users/**",
-                                "/financial-closing/**", "/cash-ledger/**").hasAuthority("GESTAO")
-
-                        .requestMatchers("/work-orders/**").hasAuthority("GESTAO")
-
-                        .requestMatchers("/cut-plans", "/cut-plans/**").hasAnyAuthority("GESTAO", "VENDAS")
-
-                        .requestMatchers("/commercial/**", "/quotes/**", "/clients/**", "/receipts/**")
-                        .hasAnyAuthority("GESTAO", "VENDAS")
-
-                        .requestMatchers("/agenda/**", "/login-success").hasAnyAuthority("GESTAO", "VENDAS", "TECNICO")
-                        .requestMatchers(HttpMethod.POST,
-                                "/technical-visits/create",
-                                "/technical-visits/*")
-                        .hasAnyAuthority("GESTAO", "VENDAS")
-                        .requestMatchers(HttpMethod.POST,
-                                "/technical-visits/*/start",
-                                "/technical-visits/*/complete",
-                                "/technical-visits/*/openings",
-                                "/technical-visits/*/photos")
-                        .hasAnyAuthority("GESTAO", "TECNICO")
-                        .requestMatchers(HttpMethod.DELETE,
-                                "/technical-visits/*/openings/*",
-                                "/technical-visits/*/photos/*")
-                        .hasAnyAuthority("GESTAO", "TECNICO")
-                        .requestMatchers("/technical-visits/**").hasAnyAuthority("GESTAO", "VENDAS", "TECNICO")
-
+                        .requestMatchers(PageAccessService::isManagementRequest)
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                pageAccess.isManager(authentication.get(), context.getRequest())))
+                        .requestMatchers(request -> PageModule.fromPath(PageAccessService.requestPath(request)).isPresent())
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                pageAccess.authorize(authentication.get(), context.getRequest())))
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
