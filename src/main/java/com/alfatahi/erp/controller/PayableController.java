@@ -39,6 +39,7 @@ public class PayableController {
     private final CategoryCatalogService categoryCatalogService;
     private final RecurrenceService recurrenceService;
     private final ExpenseAllocationRepository expenseAllocationRepository;
+    private final PayableCategoryService payableCategoryService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public PayableController(AccountsPayableRepository payableRepository,
@@ -49,7 +50,8 @@ public class PayableController {
                              WorkOrderRepository workOrderRepository,
                              CategoryCatalogService categoryCatalogService,
                              RecurrenceService recurrenceService,
-                             ExpenseAllocationRepository expenseAllocationRepository) {
+                             ExpenseAllocationRepository expenseAllocationRepository,
+                             PayableCategoryService payableCategoryService) {
         this.payableRepository = payableRepository;
         this.supplierService = supplierService;
         this.financeService = financeService;
@@ -59,6 +61,7 @@ public class PayableController {
         this.categoryCatalogService = categoryCatalogService;
         this.recurrenceService = recurrenceService;
         this.expenseAllocationRepository = expenseAllocationRepository;
+        this.payableCategoryService = payableCategoryService;
     }
 
     @Transactional(readOnly = true)
@@ -97,7 +100,7 @@ public class PayableController {
             list = list.stream().filter(p -> p.getDescription().toLowerCase().contains(q) || (p.getSupplier() != null && p.getSupplier().getName().toLowerCase().contains(q)) || (p.getDocumentNumber() != null && p.getDocumentNumber().toLowerCase().contains(q))).collect(Collectors.toList());
         }
         if (status != null && !status.isBlank()) list = list.stream().filter(p -> status.equals(p.getStatus())).collect(Collectors.toList());
-        if (category != null && !category.isBlank()) list = list.stream().filter(p -> category.equalsIgnoreCase(p.getCategory())).collect(Collectors.toList());
+        list = payableCategoryService.filterByCategory(list, category);
         if (subcategory != null && !subcategory.isBlank()) list = list.stream().filter(p -> subcategory.equalsIgnoreCase(p.getSubcategory())).collect(Collectors.toList());
         if (costCenter != null && !costCenter.isBlank()) {
             String q = costCenter.toLowerCase();
@@ -137,6 +140,7 @@ public class PayableController {
         model.addAttribute("valPago", pago);
         model.addAttribute("valPendente", pendente);
         model.addAttribute("valAtraso", emAtraso);
+        model.addAttribute("payableCategorySummary", payableCategoryService.summarize(list));
 
         model.addAttribute("filterSearch", search);
         model.addAttribute("filterStatus", status);
@@ -441,7 +445,7 @@ public class PayableController {
             ).collect(Collectors.toList());
         }
         if (status != null && !status.isBlank()) list = list.stream().filter(p -> status.equals(p.getStatus())).collect(Collectors.toList());
-        if (category != null && !category.isBlank()) list = list.stream().filter(p -> category.equalsIgnoreCase(p.getCategory())).collect(Collectors.toList());
+        list = payableCategoryService.filterByCategory(list, category);
         if (supplierId != null) list = list.stream().filter(p -> p.getSupplier() != null && supplierId.equals(p.getSupplier().getId())).collect(Collectors.toList());
         list = list.stream().filter(p -> period.contains(p.getDueDate())).collect(Collectors.toList());
         if (workOrderId != null) list = list.stream().filter(p -> p.getWorkOrder() != null && workOrderId.equals(p.getWorkOrder().getId())).collect(Collectors.toList());

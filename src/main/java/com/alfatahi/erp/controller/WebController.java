@@ -3,6 +3,7 @@ package com.alfatahi.erp.controller;
 import com.alfatahi.erp.repository.DashboardRepository;
 import com.alfatahi.erp.repository.LossRepository;
 import com.alfatahi.erp.service.FinancialPeriod;
+import com.alfatahi.erp.service.PayableCategoryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,10 +18,13 @@ import java.time.YearMonth;
 public class WebController {
     private final DashboardRepository dashboardRepository;
     private final LossRepository lossRepository;
+    private final PayableCategoryService payableCategoryService;
 
-    public WebController(DashboardRepository dashboardRepository, LossRepository lossRepository) {
+    public WebController(DashboardRepository dashboardRepository, LossRepository lossRepository,
+                         PayableCategoryService payableCategoryService) {
         this.dashboardRepository = dashboardRepository;
         this.lossRepository = lossRepository;
+        this.payableCategoryService = payableCategoryService;
     }
 
     @GetMapping("/")
@@ -55,6 +59,7 @@ public class WebController {
         model.addAttribute("resumoAnual", months);
         model.addAttribute("faturamentoMes", revenue);
         model.addAttribute("osPorFormaPagamento", dashboardRepository.paymentMethods(period));
+        model.addAttribute("payableCategorySummary", payableCategoryService.summarize(period));
 
         BigDecimal losses = lossRepository.sumFinancialImpactByPeriod(period.from(), period.endExclusive());
         if (losses == null) losses = BigDecimal.ZERO;

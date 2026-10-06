@@ -1,4 +1,5 @@
 package com.alfatahi.erp.repository;
+import com.alfatahi.erp.dto.PayableCategoryTotals;
 import com.alfatahi.erp.entity.AccountsPayable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,6 +11,18 @@ import java.util.List;
 import java.util.UUID;
 
 public interface AccountsPayableRepository extends JpaRepository<AccountsPayable, UUID> {
+
+    @Query("""
+            SELECT new com.alfatahi.erp.dto.PayableCategoryTotals(p.category, p.subcategory, COUNT(p),
+                COALESCE(SUM(p.totalAmount), 0),
+                COALESCE(SUM(CASE WHEN p.status IN ('paid', 'partial') THEN p.paidAmount ELSE 0 END), 0))
+            FROM AccountsPayable p
+            WHERE p.status NOT IN ('cancelled', 'inactive')
+              AND p.dueDate >= :inicio AND p.dueDate < :fim
+            GROUP BY p.category, p.subcategory
+            """)
+    List<PayableCategoryTotals> summarizeCategoriesByPeriod(
+            @Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
     List<AccountsPayable> findAllByOrderByDueDateAsc();
 

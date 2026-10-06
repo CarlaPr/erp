@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<body>
+<details th:fragment="collapsible-card"
+         class="pc-kpi-disclosure bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl mb-8 shadow-sm">
+    <summary class="flex items-center justify-between gap-4 p-4 sm:p-6">
+        <span class="text-base font-black text-slate-900 dark:text-white">Despesas por categoria e subcategoria</span>
+        <span class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <span class="pc-kpi-expand-label">Expandir</span>
+            <span class="pc-kpi-collapse-label">Recolher</span>
+            <svg class="pc-kpi-disclosure-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </span>
+    </summary>
+    <section th:replace="~{fragments/payable-category-kpi :: card}"></section>
+</details>
+<section th:fragment="card" data-payable-category-kpi
+         class="pc-kpi bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 mb-8 shadow-sm">
+    <link rel="stylesheet" th:href="@{/css/payable-category-kpi.css}">
+    <div class="pc-kpi-header">
+        <div>
+            <h2 class="text-base font-black text-slate-900 dark:text-white">Despesas por categoria e subcategoria</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" th:text="${reportLabel}">Período selecionado</p>
+        </div>
+        <a th:if="${currentPage == 'dashboard'}" th:href="@{/payables(month=${reportMonth})}"
+           class="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline whitespace-nowrap">Ver contas →</a>
+    </div>
+
+    <div class="pc-kpi-totals">
+        <div><span>Contas</span><strong th:text="${payableCategorySummary.count}">0</strong></div>
+        <div><span>Valor das contas</span><strong th:text="|R$ ${#numbers.formatDecimal(payableCategorySummary.totalAmount, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong></div>
+        <div><span>Valor pago</span><strong class="text-emerald-600 dark:text-emerald-400" th:text="|R$ ${#numbers.formatDecimal(payableCategorySummary.paidAmount, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong></div>
+    </div>
+
+    <p th:if="${#lists.isEmpty(payableCategorySummary.categories)}" class="pc-kpi-empty">Nenhuma despesa ativa encontrada nesta seleção.</p>
+
+    <th:block th:unless="${#lists.isEmpty(payableCategorySummary.categories)}">
+        <div class="pc-kpi-controls" data-chart-controls hidden>
+            <label class="pc-kpi-metric">Agrupar por
+                <select data-chart-group aria-label="Agrupamento das despesas">
+                    <option value="subcategory">Subcategoria</option>
+                    <option value="category">Categoria</option>
+                </select>
+            </label>
+            <label class="pc-kpi-metric">Comparar por
+                <select data-chart-metric aria-label="Medida do gráfico de despesas por categoria">
+                    <option value="paid">Valor pago</option>
+                    <option value="total">Valor das contas</option>
+                    <option value="count">Quantidade de contas</option>
+                </select>
+            </label>
+            <div class="pc-kpi-toggle" role="group" aria-label="Tipo de gráfico de despesas por categoria">
+                <button type="button" data-chart-view="pie" aria-pressed="true">Pizza</button>
+                <button type="button" data-chart-view="bar" aria-pressed="false">Barras</button>
+            </div>
+        </div>
+        <div class="pc-kpi-body">
+            <div class="pc-kpi-visual" data-chart-visual hidden>
+                <div class="pc-kpi-pie" data-chart-pie role="img" aria-label="Distribuição das despesas por categoria"></div>
+                <div class="pc-kpi-bars" data-chart-bars hidden></div>
+                <p class="pc-kpi-empty" data-chart-empty hidden></p>
+                <p class="pc-kpi-caption" data-chart-caption aria-live="polite"></p>
+            </div>
+            <div class="pc-kpi-table-wrap">
+                <table class="pc-kpi-table">
+                    <caption class="sr-only">Quantidade, valor das contas e valor pago por categoria ou subcategoria.</caption>
+                    <thead><tr><th scope="col" data-group-heading>Categoria / subcategoria</th><th scope="col">Contas</th><th scope="col">Valor das contas</th><th scope="col">Valor pago</th></tr></thead>
+                    <tbody data-category-group="category" hidden>
+                    <tr th:each="category : ${payableCategorySummary.categories}" data-category-row
+                        th:attr="data-code=${category.code},data-category=${category.name},data-unconfigured=${category.unconfigured},data-count=${category.count},data-total=${category.totalAmount},data-paid=${category.paidAmount}">
+                        <th scope="row"><span class="pc-kpi-category"><span class="pc-kpi-dot" data-category-dot aria-hidden="true"></span><span th:text="${category.name}">Categoria</span></span></th>
+                        <td><strong th:text="${category.count}">0</strong><small th:text="|${#numbers.formatDecimal(category.countPercentage, 1, 'POINT', 2, 'COMMA')}% das contas|">0,00% das contas</small></td>
+                        <td><strong th:text="|R$ ${#numbers.formatDecimal(category.totalAmount, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong><small th:text="|${#numbers.formatDecimal(category.totalPercentage, 1, 'POINT', 2, 'COMMA')}% do valor|">0,00% do valor</small></td>
+                        <td><strong th:text="|R$ ${#numbers.formatDecimal(category.paidAmount, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong><small th:text="|${#numbers.formatDecimal(category.paidPercentage, 1, 'POINT', 2, 'COMMA')}% do pago|">0,00% do pago</small></td>
+                    </tr>
+                    </tbody>
+                    <tbody data-category-group="subcategory">
+                    <tr th:each="category : ${payableCategorySummary.subcategories}" data-category-row
+                        th:attr="data-code=${category.code},data-category=${category.name},data-unconfigured=${category.unconfigured},data-count=${category.count},data-total=${category.totalAmount},data-paid=${category.paidAmount}">
+                        <th scope="row"><span class="pc-kpi-category"><span class="pc-kpi-dot" data-category-dot aria-hidden="true"></span><span th:text="${category.name}">Categoria / subcategoria</span></span></th>
+                        <td><strong th:text="${category.count}">0</strong><small th:text="|${#numbers.formatDecimal(category.countPercentage, 1, 'POINT', 2, 'COMMA')}% das contas|">0,00% das contas</small></td>
+                        <td><strong th:text="|R$ ${#numbers.formatDecimal(category.totalAmount, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong><small th:text="|${#numbers.formatDecimal(category.totalPercentage, 1, 'POINT', 2, 'COMMA')}% do valor|">0,00% do valor</small></td>
+                        <td><strong th:text="|R$ ${#numbers.formatDecimal(category.paidAmount, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong><small th:text="|${#numbers.formatDecimal(category.paidPercentage, 1, 'POINT', 2, 'COMMA')}% do pago|">0,00% do pago</small></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </th:block>
+    <script defer th:src="@{/js/payable-category-kpi.js}"></script>
+</section>
+</body>
+</html>
