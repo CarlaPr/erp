@@ -156,7 +156,6 @@ public class DashboardRepository {
                     income.put(rs.getInt("month"), rs.getBigDecimal("income"));
                     expenses.put(rs.getInt("month"), rs.getBigDecimal("expenses"));
                 });
-        // Read the recorded closing balance; an absent closing stays null, not zero.
         Map<LocalDate, BigDecimal> closings = new HashMap<>();
         jdbc.query("""
                 SELECT period_start, closing_balance FROM financial_closings

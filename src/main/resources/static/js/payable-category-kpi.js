@@ -80,10 +80,8 @@
             ? `${integer.format(value)} ${value === 1 ? 'conta' : 'contas'}`
             : currency.format(value);
 
-        // Função que desenha as fatias do gráfico, com opção de ofuscar as não selecionadas
         const drawPie = (hoveredIndex = -1) => {
             const stops = slices.map((s, idx) => {
-                // Ao focar, adiciona "66" ao final do HEX das outras fatias (aprox 40% de opacidade)
                 const color = (hoveredIndex !== -1 && hoveredIndex !== idx) ? s.color + '66' : s.color;
                 return `${color} ${s.startPercent}% ${s.endPercent}%`;
             });
@@ -99,7 +97,6 @@
             pie.style.cursor = 'default';
         };
 
-        // Lógica matemática para capturar o ângulo exato do mouse na pizza
         pie.addEventListener('mousemove', (e) => {
             if (pie.hidden || !slices.length) {
                 handlePieLeave();
@@ -111,22 +108,22 @@
                 handlePieLeave();
                 return;
             }
-            // Usa o centro e os dois raios reais, inclusive após zoom ou redimensionamento.
+
             const x = e.clientX - rect.left - rect.width / 2;
             const y = e.clientY - rect.top - rect.height / 2;
 
-            // Cancela se o mouse passar pelas quinas transparentes (fora do raio da borda redonda)
+
             const distanceSquared = (x / (rect.width / 2)) ** 2 + (y / (rect.height / 2)) ** 2;
             if (distanceSquared > 1 || distanceSquared === 0) {
                 handlePieLeave();
                 return;
             }
 
-            // Mesmo sentido do conic-gradient: zero às 12 horas, girando no sentido horário.
+
             const fullTurn = 2 * Math.PI;
             const angle = (Math.atan2(x, -y) + fullTurn) % fullTurn;
             const percentAngle = angle / fullTurn * 100;
-            // Intervalos [início, fim) evitam selecionar duas fatias na mesma borda.
+
             const hoveredIndex = slices.findIndex(s => percentAngle >= s.startPercent && percentAngle < s.endPercent);
 
             if (hoveredIndex !== -1) {
@@ -135,14 +132,14 @@
                     drawPie(hoveredIndex);
                     const slice = slices[hoveredIndex];
                     tooltipDot.style.backgroundColor = slice.color;
-                    // Nomes vindos do cadastro são texto, inclusive quando contêm HTML.
+
                     tooltipName.textContent = slice.row.name;
                     valueLabel.textContent = metricSelect.value === 'count' ? 'Quantidade:' : 'Valor:';
                     tooltipValue.textContent = formatValue(slice.value);
                     tooltipShare.textContent = `${percent.format(slice.share)}%`;
                 }
 
-                // Posiciona e verifica limites da tela para o tooltip não quebrar barra de rolagem
+
                 tooltip.hidden = false;
                 const tooltipRect = tooltip.getBoundingClientRect();
                 const margin = 8;
@@ -215,7 +212,7 @@
                     slices.push({
                         row: row,
                         startPercent: startPercent,
-                        // Fecha a última fatia em 100%, sem lacuna por arredondamento.
+
                         endPercent: slices.length === positiveRows.length - 1 ? 100 : accumulatedValue / total * 100,
                         share: share,
                         value: row[metric],
@@ -223,7 +220,7 @@
                     });
                 }
 
-                // Renderização das Barras
+
                 const bar = document.createElement('div');
                 const label = document.createElement('div');
                 label.className = 'pc-kpi-bar-label';

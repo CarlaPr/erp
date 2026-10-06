@@ -110,7 +110,6 @@ public class PayableCategoryService {
 
     private record GroupLabel(String code, String name, boolean unconfigured) { }
 
-    // Categorias inativas continuam identificando as contas do histórico.
     private Map<String, ExpenseCategory> catalog() {
         return categoryRepository.findAllByOrderByDisplayOrderAsc().stream()
                 .collect(Collectors.toMap(c -> normalize(c.getCode()), Function.identity(), (a, b) -> a, LinkedHashMap::new));

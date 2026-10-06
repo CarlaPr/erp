@@ -324,8 +324,7 @@ public class PayableController {
                 return "redirect:/payables?error=invalid_recurrence";
             }
             payable.setRecurring(true);
-            // Contas recorrentes: o rateio por OS se aplica apenas ao primeiro lançamento gerado
-            // agora (o do vencimento informado), não é replicado nas ocorrências futuras.
+
             List<AccountsPayable> created = recurrenceService.createRecurrence(payable, freq, endType, recurrenceCount, recurrenceEndDate);
             payableIdForAllocation = created.isEmpty() ? null : created.get(0).getId();
         } else {
@@ -380,8 +379,7 @@ public class PayableController {
 
     @PostMapping("/cancel/{id}")
     public String cancel(@PathVariable UUID id) {
-        // cancelPayable também remove as alocações de OS e os custos que elas
-        // haviam lançado, evitando que um custo fique "órfão" na OS.
+
         financeService.cancelPayable(id);
         return "redirect:/payables";
     }
