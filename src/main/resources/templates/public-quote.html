@@ -26,16 +26,12 @@
             <li th:each="item : ${quote.items}" class="py-3 flex flex-col gap-1">
                 <div class="flex justify-between items-start gap-4">
                     <span class="font-medium text-slate-700 leading-tight">
-                        <span class="font-bold text-slate-900" th:text="${item.quantity + 'x'}"></span>
-                        <span th:text="${(item.category ?: 'Item') + ' - ' + item.product}"></span>
+                        <span class="font-bold text-slate-900" th:text="${item.pricingQuantity + 'x'}"></span>
+                        <span class="whitespace-pre-line" th:text="${(item.category ?: 'Item') + ' - ' + (item.product ?: '')}"></span>
                     </span>
                     <span class="font-bold text-slate-900 whitespace-nowrap"
                           th:with="
-                            w=${item.width != null ? item.width : 0},
-                            h=${item.height != null ? item.height : 0},
-                            m2=${(w > 0 && h > 0) ? (w * h) : 1},
-                            price=${item.unitPrice != null ? item.unitPrice : 0},
-                            subtotal=${item.quantity * m2 * price}"
+                            subtotal=${item.subtotal}"
                           th:text="${'R$ ' + #numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}">
                     </span>
                 </div>

@@ -33,15 +33,6 @@ public class QuoteService {
         this.workOrderService = workOrderService;
     }
 
-    private BigDecimal calcularAreaM2(BigDecimal width, BigDecimal height) {
-        BigDecimal w = width != null ? width : BigDecimal.ZERO;
-        BigDecimal h = height != null ? height : BigDecimal.ZERO;
-        if (w.compareTo(BigDecimal.ZERO) > 0 && h.compareTo(BigDecimal.ZERO) > 0) {
-            return w.multiply(h);
-        }
-        return BigDecimal.ONE;
-    }
-
     @Transactional
     public void approveQuote(UUID quoteId) {
         Quote quote = quoteRepo.findByIdForUpdate(quoteId)
@@ -167,13 +158,11 @@ public class QuoteService {
         return saved;
     }
 
-    private BigDecimal computeFinalTotal(Quote quote) {
+    public BigDecimal computeFinalTotal(Quote quote) {
         BigDecimal subtotal = BigDecimal.ZERO;
         if (quote.getItems() != null && !quote.getItems().isEmpty()) {
             for (QuoteItem item : quote.getItems()) {
-                BigDecimal area = calcularAreaM2(item.getWidth(), item.getHeight());
-                BigDecimal precoComArea = item.getUnitPrice().multiply(area);
-                subtotal = subtotal.add(item.getQuantity().multiply(precoComArea));
+                subtotal = subtotal.add(item.getSubtotal());
             }
         }
 
@@ -181,12 +170,12 @@ public class QuoteService {
         if (quote.getDiscountPercent() != null
                 && quote.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
             discountAmount = subtotal.multiply(quote.getDiscountPercent())
-                    .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+                    .divide(new BigDecimal("100"));
         }
 
         BigDecimal finalTotal = subtotal.subtract(discountAmount);
         if (finalTotal.compareTo(BigDecimal.ZERO) < 0) finalTotal = BigDecimal.ZERO;
-        return finalTotal;
+        return finalTotal.setScale(2, RoundingMode.HALF_UP);
     }
 
     private List<WorkOrderItem> buildWorkOrderItems(Quote quote, WorkOrder os) {
@@ -194,16 +183,11 @@ public class QuoteService {
         if (quote.getItems() == null) return items;
         for (QuoteItem qi : quote.getItems()) {
             WorkOrderItem osItem = new WorkOrderItem();
-            BigDecimal w = qi.getWidth() != null ? qi.getWidth() : BigDecimal.ZERO;
-            BigDecimal h = qi.getHeight() != null ? qi.getHeight() : BigDecimal.ZERO;
-            String dimensions = (w.compareTo(BigDecimal.ZERO) > 0 || h.compareTo(BigDecimal.ZERO) > 0)
-                    ? " (LxA: " + w + "x" + h + ")" : "";
             String cat = qi.getCategory() != null ? qi.getCategory() : "Item";
             String prod = qi.getProduct() != null ? qi.getProduct() : "Sem descrição";
-            osItem.setDescription(cat + " - " + prod + dimensions);
-            osItem.setQuantity(qi.getQuantity());
-            BigDecimal area = calcularAreaM2(w, h);
-            osItem.setUnitPrice(qi.getUnitPrice().multiply(area));
+            osItem.setDescription(cat + " - " + prod);
+            osItem.setQuantity(qi.getPricingQuantity());
+            osItem.setUnitPrice(qi.getCalculatedUnitPrice());
             osItem.setUnitCost(BigDecimal.ZERO);
             osItem.setWorkOrder(os);
             items.add(osItem);

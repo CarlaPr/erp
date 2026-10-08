@@ -25,6 +25,7 @@ public class PublicQuoteController {
         Quote quote = quoteRepo.findByPublicToken(token)
                 .orElseThrow(() -> new RuntimeException("Orçamento não encontrado ou link inválido."));
 
+        quote.getItems().forEach(item -> org.hibernate.Hibernate.initialize(item.getMeasurements()));
         model.addAttribute("quote", quote);
         return "public-quote";
     }

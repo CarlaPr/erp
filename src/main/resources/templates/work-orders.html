@@ -664,14 +664,15 @@
                         soldItems = [];
                         if (qData.items) {
                             qData.items.forEach(qi => {
-                                let m2 = (qi.width > 0 && qi.height > 0) ? (qi.width * qi.height) : 1;
-                                let valorTotal = qi.quantity * m2 * qi.unitPrice;
+                                const quantity = Number(qi.pricingQuantity ?? qi.quantity ?? 1);
+                                const unitPrice = Number(qi.calculatedUnitPrice ?? qi.unitPrice ?? 0);
+                                const valorTotal = Number(qi.subtotal ?? quantity * unitPrice);
                                 soldItems.push({
                                     id: null,
-                                    description: `${qi.category || 'Item'} - ${qi.product || ''} (LxA: ${qi.width || 0}x${qi.height || 0})`,
-                                    quantity: qi.quantity,
+                                    description: `${qi.category || 'Item'} - ${qi.product || ''}`,
+                                    quantity,
                                     totalValue: valorTotal,
-                                    unitPrice: valorTotal / qi.quantity
+                                    unitPrice
                                 });
                             });
                         }

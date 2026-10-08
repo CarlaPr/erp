@@ -993,6 +993,7 @@
 
 </main>
 
+<script th:src="@{/js/quote-measurements.js}"></script>
 <script>
     let currentActiveClientForPdf = "Consumidor Final";
     let currentActiveNumberForPdf = "000";
@@ -1435,9 +1436,8 @@
                 if(itemsTbody) {
                     itemsTbody.innerHTML = '';
                     q.items.forEach(item => {
-                        let m2 = (item.width > 0 && item.height > 0) ? (item.width * item.height) : 1;
-                        let precoPecaUnitaria = m2 * item.unitPrice;
-                        let sub = item.quantity * precoPecaUnitaria;
+                        let precoPecaUnitaria = QuoteMeasurements.unitTotal(item);
+                        let sub = QuoteMeasurements.subtotal(item);
                         calculatedGross += sub;
 
                         itemsTbody.innerHTML += `
@@ -1447,7 +1447,7 @@
                             <span class="text-sm text-slate-600 font-normal whitespace-pre-line leading-tight block mt-1 p-0">${item.product}</span>
                         </td>
                         <td class="py-2.5 px-3 text-center text-slate-500 font-mono text-xs">un</td>
-                        <td class="py-2.5 px-3 text-center font-bold text-slate-900 text-sm">${item.quantity}</td>
+                        <td class="py-2.5 px-3 text-center font-bold text-slate-900 text-sm">${QuoteMeasurements.pricingQuantity(item)}</td>
                         <td class="py-2.5 px-3 text-right font-mono text-slate-600 text-sm">${formatarMoeda(precoPecaUnitaria)}</td>
                         <td class="py-2.5 px-3 text-right pr-4 font-mono font-bold text-slate-900 text-sm">${formatarMoeda(sub)}</td>
                     </tr>`;

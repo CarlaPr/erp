@@ -65,6 +65,7 @@ public class QuoteController {
         try {
             Quote quote = quoteRepo.findById(id).orElseThrow();
             Hibernate.initialize(quote.getItems());
+            quote.getItems().forEach(item -> Hibernate.initialize(item.getMeasurements()));
             if (quote.getProfile() != null) Hibernate.initialize(quote.getProfile());
             if (quote.getClient() != null)  Hibernate.initialize(quote.getClient());
 
@@ -72,14 +73,9 @@ public class QuoteController {
             BigDecimal gross = BigDecimal.ZERO;
 
             for (QuoteItem item : quote.getItems()) {
-                BigDecimal w   = nvl(item.getWidth());
-                BigDecimal h   = nvl(item.getHeight());
-                BigDecimal qty = nvl(item.getQuantity(), BigDecimal.ONE);
-                BigDecimal up  = nvl(item.getUnitPrice());
-
-                BigDecimal m2        = (w.compareTo(BigDecimal.ZERO) > 0 && h.compareTo(BigDecimal.ZERO) > 0) ? w.multiply(h) : BigDecimal.ONE;
-                BigDecimal calcUnit  = m2.multiply(up);
-                BigDecimal subtotal  = qty.multiply(calcUnit);
+                BigDecimal qty = item.getPricingQuantity();
+                BigDecimal calcUnit = item.getCalculatedUnitPrice();
+                BigDecimal subtotal = item.getSubtotal();
                 gross = gross.add(subtotal);
 
                 Map<String, String> row = new LinkedHashMap<>();
@@ -339,6 +335,7 @@ public class QuoteController {
         Quote quote = quoteRepo.findById(id).orElseThrow();
 
         Hibernate.initialize(quote.getItems());
+        quote.getItems().forEach(item -> Hibernate.initialize(item.getMeasurements()));
 
         if (quote.getWorkOrder() != null) {
             Hibernate.initialize(quote.getWorkOrder().getItems());
@@ -369,6 +366,10 @@ public class QuoteController {
         }
     }
 
+    private boolean validMeasurementNumber(BigDecimal value) {
+        return value != null && value.signum() > 0 && value.stripTrailingZeros().scale() <= 2;
+    }
+
     @PostMapping(value = "/save-ajax", consumes = "application/json")
     @ResponseBody
     @Transactional
@@ -382,6 +383,17 @@ public class QuoteController {
         }
 
         ensureItemDescriptions(quote.getItems());
+
+        for (QuoteItem item : quote.getItems()) {
+            for (var measure : item.getMeasurements()) {
+                if (measure == null || !validMeasurementNumber(measure.getWidth()) || !validMeasurementNumber(measure.getHeight())
+                        || !validMeasurementNumber(measure.getQuantity() != null ? measure.getQuantity() : item.getQuantity())
+                        || !validMeasurementNumber(measure.getUnitPrice() != null ? measure.getUnitPrice() : item.getUnitPrice())) {
+                    return ResponseEntity.badRequest().body("Informe medidas, quantidade e preço maiores que zero, com até duas casas decimais, em cada medida do item.");
+                }
+            }
+        }
+        quote.setTotalValue(quoteService.computeFinalTotal(quote));
 
         if (quote.getId() != null) {
             Quote existing = quoteRepo.findById(quote.getId()).orElseThrow();
@@ -506,8 +518,7 @@ public class QuoteController {
             return ResponseEntity.badRequest().build();
         }
         return clientRepo.findById(id).map(existing -> {
-            // Atualiza apenas os campos do modal; mantém histórico, observações e situação do cadastro.
-            existing.setName(changes.getName().trim());
+             existing.setName(changes.getName().trim());
             existing.setType(changes.getType() == null ? "individual" : changes.getType());
             existing.setDocument(changes.getDocument());
             existing.setEmail(changes.getEmail());
