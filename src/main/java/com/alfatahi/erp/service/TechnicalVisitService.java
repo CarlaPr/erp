@@ -110,6 +110,7 @@ public class TechnicalVisitService {
         if (v.getClient() != null) {
             dto.setClientId(v.getClient().getId());
             dto.setClientName(v.getClient().getName());
+            dto.setClientPhone(v.getClient().getPhone());
 
             String addr = v.getClient().getAddress() != null ? v.getClient().getAddress() : "";
             String city = v.getClient().getCity() != null ? v.getClient().getCity() : "";

@@ -15,6 +15,7 @@ public class TechnicalVisitDto {
     private UUID clientId;
     private String clientName;
     private String clientAddress;
+    private String clientPhone;
 
     private LocalDate visitDate;
     private LocalTime visitTime;
@@ -43,6 +44,9 @@ public class TechnicalVisitDto {
 
     public String getClientAddress() { return clientAddress; }
     public void setClientAddress(String clientAddress) { this.clientAddress = clientAddress; }
+
+    public String getClientPhone() { return clientPhone; }
+    public void setClientPhone(String clientPhone) { this.clientPhone = clientPhone; }
 
     public LocalDate getVisitDate() { return visitDate; }
     public void setVisitDate(LocalDate visitDate) { this.visitDate = visitDate; }

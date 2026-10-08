@@ -617,6 +617,7 @@
             clientId: v.clientId,
             clientName: v.clientName,
             clientAddress: v.clientAddress,
+            clientPhone: v.clientPhone,
             serviceType: 'Visita Técnica',
             approvalDate: null,
             deadlineDate: null,
@@ -943,14 +944,19 @@
             const row = document.createElement('div');
             row.className = 'border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50 dark:bg-slate-900';
             row.innerHTML = `
-                <div class="flex justify-between items-start mb-3">
-                    <div>
-                        <p class="font-black text-slate-900 dark:text-white">${s.clientName || 'Sem cliente'}</p>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex gap-1">
-                            <i data-lucide="map-pin" class="w-3.5 h-3.5 shrink-0"></i> ${s.clientAddress || 'Endereço não informado'}
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-3 mb-3">
+                    <div class="min-w-0 w-full flex-1 space-y-2">
+                        <p class="font-black text-slate-900 dark:text-white break-words whitespace-pre-line"><span data-client-name></span></p>
+                        <p class="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
+                            <span class="min-w-0 break-words whitespace-pre-line"><b>Endereço:</b> <span data-client-address></span></span>
+                        </p>
+                        <p class="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
+                            <i data-lucide="phone" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
+                            <span class="min-w-0 break-words whitespace-pre-line"><b>Telefone:</b> <span data-client-phone></span></span>
                         </p>
                     </div>
-                    <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase ${meta.badge || ''}">${meta.label || s.status}</span>
+                    <span class="shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase ${meta.badge || ''}">${meta.label || s.status}</span>
                 </div>
 
                 <div class="mb-4 p-2.5 bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-lg shadow-inner">
@@ -989,6 +995,9 @@
                     ${!IS_TECNICO ? `<button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="window.location.href='/quotes'">Abrir Orçamento</button>` : ''}
                 </div>
             `;
+            row.querySelector('[data-client-name]').textContent = s.clientName?.trim() || 'Sem cliente';
+            row.querySelector('[data-client-address]').textContent = s.clientAddress?.trim() || 'Endereço não informado';
+            row.querySelector('[data-client-phone]').textContent = s.clientPhone?.trim() || 'Telefone não informado';
             list.appendChild(row);
         });
 

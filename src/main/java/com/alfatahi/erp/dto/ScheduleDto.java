@@ -20,6 +20,7 @@ public class ScheduleDto {
 
     private UUID clientId;
     private String clientName;
+    private String clientPhone;
 
     private String serviceType;
 
@@ -88,6 +89,9 @@ public class ScheduleDto {
 
     public String getClientName() { return clientName; }
     public void setClientName(String clientName) { this.clientName = clientName; }
+
+    public String getClientPhone() { return clientPhone; }
+    public void setClientPhone(String clientPhone) { this.clientPhone = clientPhone; }
 
     public String getServiceType() { return serviceType; }
     public void setServiceType(String serviceType) { this.serviceType = serviceType; }

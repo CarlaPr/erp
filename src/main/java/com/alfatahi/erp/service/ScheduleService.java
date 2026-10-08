@@ -648,6 +648,7 @@ public class ScheduleService {
         if (s.getClient() != null) {
             dto.setClientId(s.getClient().getId());
             dto.setClientName(s.getClient().getName());
+            dto.setClientPhone(s.getClient().getPhone());
 
             String addr = s.getClient().getAddress() != null ? s.getClient().getAddress() : "";
             String city = s.getClient().getCity() != null ? s.getClient().getCity() : "";
