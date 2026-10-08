@@ -26,9 +26,9 @@ public class SacadaCalculadora implements ServicoCalculadora {
     @Override
     public ResultadoCalculoServico calcular(EntradaCalculoServico entrada) {
         CategoriaServico cat = getCategoria();
-        BigDecimal descontoAltura = parametros.valor(cat, "DESCONTO_ALTURA_MM", BigDecimal.valueOf(170));
-        BigDecimal descontoEsquerdo = parametros.valor(cat, "DESCONTO_LATERAL_ESQUERDO_MM", BigDecimal.valueOf(100));
-        BigDecimal descontoDireito = parametros.valor(cat, "DESCONTO_LATERAL_DIREITO_MM", BigDecimal.valueOf(100));
+        BigDecimal descontoAltura = parametros.valor(cat, "DESCONTO_ALTURA_MM", BigDecimal.valueOf(155));
+        BigDecimal descontoEsquerdo = parametros.valor(cat, "DESCONTO_LATERAL_ESQUERDO_MM", BigDecimal.valueOf(10));
+        BigDecimal descontoDireito = parametros.valor(cat, "DESCONTO_LATERAL_DIREITO_MM", BigDecimal.valueOf(10));
         BigDecimal descontoEntreFolhas = parametros.valor(cat, "DESCONTO_ENTRE_FOLHAS_MM", BigDecimal.valueOf(3));
 
         int quantidadeFolhas = CalculoUtil.folhasOuPadrao(entrada.quantidadeFolhas(), 1);
