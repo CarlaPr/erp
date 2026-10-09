@@ -61,6 +61,7 @@
     </style>
 
     <form method="get" th:action="${action}" class="financial-period-form">
+        <input th:if="${periodStatusFilter != null}" type="hidden" name="status" th:value="${periodStatusFilter}" />
         <label class="financial-period-field text-slate-500 dark:text-slate-400">
             Competência
             <input type="month" name="month" th:value="${reportMonth}" required
@@ -70,7 +71,7 @@
                 class="financial-period-action rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">
             Filtrar
         </button>
-        <a th:if="${allowAll}" th:href="@{${action}(month='all')}"
+        <a th:if="${allowAll}" th:href="${periodStatusFilter != null} ? @{${action}(month='all',status=${periodStatusFilter})} : @{${action}(month='all')}"
            class="financial-period-action financial-period-all rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 transition-colors">
             Todos os meses
         </a>

@@ -3,7 +3,6 @@ package com.alfatahi.erp.controller;
 import com.alfatahi.erp.dto.TechnicalVisitDto;
 import com.alfatahi.erp.dto.TechnicalVisitSaveRequest;
 import com.alfatahi.erp.service.TechnicalVisitService;
-import com.alfatahi.erp.util.SecurityUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -47,9 +46,6 @@ public class TechnicalVisitController {
 
     @PostMapping(value = "/agenda/technical-visits/save-ajax", consumes = "application/json")
     public ResponseEntity<Map<String, Object>> saveAjax(@RequestBody TechnicalVisitSaveRequest request) {
-        if (SecurityUtils.isTecnico()) {
-            return forbidden();
-        }
         try {
             technicalVisitService.update(request);
             Map<String, Object> body = new LinkedHashMap<>();
@@ -65,9 +61,6 @@ public class TechnicalVisitController {
 
     @DeleteMapping("/agenda/technical-visits/{id}")
     public ResponseEntity<?> delete(@PathVariable UUID id) {
-        if (SecurityUtils.isTecnico()) {
-            return forbidden();
-        }
         try {
             technicalVisitService.delete(id);
             return ResponseEntity.ok().build();
@@ -86,10 +79,4 @@ public class TechnicalVisitController {
         return ResponseEntity.badRequest().body(body);
     }
 
-    private ResponseEntity<Map<String, Object>> forbidden() {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("ok", false);
-        body.put("error", "Seu perfil não tem permissão para esta ação.");
-        return ResponseEntity.status(403).body(body);
-    }
 }

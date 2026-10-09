@@ -29,7 +29,6 @@ public class PageAccessService {
     }
 
     public static String requestPath(HttpServletRequest request) {
-        // Match the same decoded application path used by MVC, including encoded URL characters.
         return UrlPathHelper.defaultInstance.getPathWithinApplication(request);
     }
 
@@ -61,7 +60,6 @@ public class PageAccessService {
                 user.getUsername(), user.getRole(), "GESTAO".equals(user.getRole()) ? Map.of() : permissions.findByUserId(user.getId()).stream()
                 .collect(Collectors.toMap(UserPagePermission::getPageKey, permission -> permission))))
                 .orElseGet(() -> new Snapshot(auth.getName(), "", Map.of()));
-        // Cache only within this request. Active sessions see grants/revocations on their next request.
         if (request != null) request.setAttribute(SNAPSHOT_KEY, result);
         return result;
     }
@@ -86,9 +84,6 @@ public class PageAccessService {
         boolean write = view && page.isWritable();
         if (page == PageModule.AGENDA && "TECNICO".equals(role)) {
             return new Access(view, true, false, false); // Technician notes keep their existing access.
-        }
-        if (page == PageModule.TECHNICAL_VISITS) {
-            return new Access(view, write, "GESTAO".equals(role) || "TECNICO".equals(role), false);
         }
         return new Access(view, write, write, false);
     }
@@ -128,7 +123,6 @@ public class PageAccessService {
     private boolean authorize(Snapshot snapshot, String method, String path) {
         PageModule page = PageModule.fromPath(path).orElse(null);
         if (page == null) return false;
-        // The editor reads compatible glass without requiring access to catalog management.
         if (("GET".equals(method) || "HEAD".equals(method))
                 && path.equals("/cut-plans/catalogo/vidros-compativeis")
                 && access(PageModule.CUT_PLANS, snapshot).canView()) return true;
@@ -142,7 +136,6 @@ public class PageAccessService {
             if (field && "VENDAS".equals(snapshot.role())) return false;
             if (!field && "TECNICO".equals(snapshot.role())) return false;
         }
-        // Client changes embedded in another page must also respect the client's permissions.
         if ((path.equals("/quotes/add-client-ajax") || path.startsWith("/quotes/update-client-ajax/")
                 || path.equals("/technical-visits/clients"))
                 && !access(PageModule.CLIENTS, snapshot).allows(PageAction.EDIT)) return false;

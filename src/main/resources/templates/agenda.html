@@ -459,14 +459,14 @@
             </div>
 
             <div class="flex flex-wrap justify-between items-center gap-3">
-                <button data-permission="delete" type="button" onclick="openDeleteVisitModalFromEdit()" class="px-5 py-3 rounded-xl text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex items-center gap-2">
+                <button data-permission="visit-delete" type="button" onclick="openDeleteVisitModalFromEdit()" class="px-5 py-3 rounded-xl text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex items-center gap-2">
                     <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Visita
                 </button>
                 <div class="flex gap-3">
                     <button type="button" onclick="closeModal('visitModal')" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
                         Voltar
                     </button>
-                    <button data-permission="edit" type="button" onclick="submitVisitForm()" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white font-black shadow-lg shadow-brand-500/20 transition-all text-sm">
+                    <button data-permission="visit-plan" type="button" onclick="submitVisitForm()" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white font-black shadow-lg shadow-brand-500/20 transition-all text-sm">
                         Salvar
                     </button>
                 </div>
@@ -489,7 +489,7 @@
                 <button type="button" onclick="closeModal('deleteVisitModal')" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
                     Voltar
                 </button>
-                <button data-permission="delete" type="button" onclick="confirmDeleteVisit()" class="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-sm">
+                <button data-permission="visit-delete" type="button" onclick="confirmDeleteVisit()" class="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-500/20 transition-all text-sm">
                     Confirmar Exclusão
                 </button>
             </div>
@@ -983,12 +983,12 @@
                     ` : `
                         <button data-permission="edit" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openTechnicianNoteModal('${s.id}')">Registrar Observação</button>
                     `) : isVisit ? `
-                        <button data-permission="edit" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-fuchsia-600 text-white hover:opacity-90" onclick="openVisitModal('${s.id}')">Editar Visita</button>
+                        <button data-permission="visit-plan" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-fuchsia-600 text-white hover:opacity-90" onclick="openVisitModal('${s.id}')">Editar Visita</button>
                         <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-fuchsia-300 text-fuchsia-700 dark:text-fuchsia-300" onclick="window.location.href='/technical-visits?visit=${s.id}'">Ver medições</button>
-                        <button data-permission="delete" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white hover:opacity-90" onclick="quickDeleteVisit('${s.id}')">Excluir Visita</button>
                     ` : `
                         <button data-permission="edit" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white dark:bg-cyan-500 dark:text-slate-900 hover:opacity-90" onclick="openEditModal('${s.id}')">Gerenciar (Agendar/Editar)</button>
                     `}
+                    ${isVisit ? `<button data-permission="visit-delete" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white hover:opacity-90" onclick="quickDeleteVisit('${s.id}')">Excluir Visita</button>` : ''}
                     <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1" onclick="openMapsAddress(decodeURIComponent('${encodeURIComponent(s.clientAddress || '')}'))">
                         <i data-lucide="map" class="w-3.5 h-3.5"></i> Google Maps
                     </button>
@@ -1180,15 +1180,15 @@
                 <td class="p-4">${s.scheduledDate ? fmtBR(s.scheduledDate) : '<span class="text-slate-400 italic">Não agendado</span>'}</td>
                 <td class="p-4"><span class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase ${meta.badge || ''}">${meta.label || s.status}</span></td>
                 <td class="p-4 text-right whitespace-nowrap">
+                    ${s.kind === 'VISITA_TECNICA' ? `<button data-permission="visit-delete" type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Excluir Visita Técnica" onclick="quickDeleteVisit('${s.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                     <button type="button" class="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg" title="Abrir no Google Maps" onclick="openMapsAddress(decodeURIComponent('${encodeURIComponent(s.clientAddress || '')}'))"><i data-lucide="map" class="w-4 h-4"></i></button>
                     ${IS_TECNICO ? (s.kind === 'VISITA_TECNICA' ? `
                         <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Registrar medições" onclick="openTechnicianVisitView('${s.id}')"><i data-lucide="ruler" class="w-4 h-4"></i></button>
                     ` : `
                         <button data-permission="edit" type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Registrar Observação" onclick="openTechnicianNoteModal('${s.id}')"><i data-lucide="clipboard-edit" class="w-4 h-4"></i></button>
                     `) : s.kind === 'VISITA_TECNICA' ? `
-                        <button data-permission="edit" type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar Visita Técnica" onclick="openVisitModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button data-permission="visit-plan" type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar Visita Técnica" onclick="openVisitModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
                         <button type="button" class="p-2 text-fuchsia-600 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-500/10 rounded-lg" title="Ver medições" onclick="window.location.href='/technical-visits?visit=${s.id}'"><i data-lucide="ruler" class="w-4 h-4"></i></button>
-                        <button data-permission="delete" type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Excluir Visita Técnica" onclick="quickDeleteVisit('${s.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     ` : `
                         <button data-permission="edit" type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar / Agendar" onclick="openEditModal('${s.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
                         <button type="button" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Abrir Orçamento" onclick="window.location.href='/quotes'"><i data-lucide="file-signature" class="w-4 h-4"></i></button>
@@ -1613,11 +1613,12 @@
     async function confirmDeleteVisit() {
         const id = document.getElementById('visitId').value;
         try {
-            const res = await fetch(`/agenda/technical-visits/${id}`, { method: 'DELETE', headers: csrfHeaders(false) });
-            if (res.ok) {
+            const res = await fetch(`/agenda/technical-visits/${id}`, { method: 'DELETE', headers: { ...csrfHeaders(false), 'Accept': 'application/json' } });
+            if (res.ok && !res.redirected) {
                 window.location.reload();
             } else {
-                alert('Erro ao excluir visita técnica.');
+                const error = await res.json().catch(() => ({}));
+                alert(error.message || error.error || 'Erro ao excluir visita técnica.');
             }
         } catch (err) {
             console.error(err);

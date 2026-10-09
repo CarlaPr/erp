@@ -35,7 +35,7 @@ public class ClientService {
         if (search != null && !search.trim().isEmpty()) {
             return clientRepository.searchClients(search);
         }
-        return clientRepository.findAll();
+        return clientRepository.findByIsActiveTrueOrderByNameAsc();
     }
 
     public void delete(UUID id) {

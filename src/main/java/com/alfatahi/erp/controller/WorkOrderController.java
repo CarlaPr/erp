@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collections;
+import java.util.Locale;
+import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -58,11 +60,16 @@ public class WorkOrderController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public String index(@RequestParam(required = false) String month, Model model) {
+    public String index(@RequestParam(required = false) String month,
+                        @RequestParam(required = false) String status, Model model) {
         FinancialPeriod period = FinancialPeriod.select(month, false, null, null);
         period.addTo(model);
+        String statusFilter = normalizeStatusFilter(status);
+        model.addAttribute("selectedStatus", statusFilter);
+        model.addAttribute("periodStatusFilter", statusFilter);
         List<WorkOrder> orders = workOrderRepo.findAllWithItemsOrderByCreatedAtDesc().stream()
-                .filter(wo -> period.contains(wo.getCreatedAt())).toList();
+                .filter(wo -> belongsToListing(wo, period))
+                .filter(wo -> matchesStatusFilter(wo, statusFilter)).toList();
 
         Profile profile = profileRepository.findAll().stream().findFirst().orElseGet(() -> {
             Profile p = new Profile();
@@ -81,12 +88,12 @@ public class WorkOrderController {
 
         if (!isTecnico) {
             totalRevenue = orders.stream()
-                    .filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus()))
+                    .filter(wo -> !isCancelled(wo))
                     .map(wo -> wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             totalCost = orders.stream()
-                    .filter(wo -> !"cancelled".equals(wo.getStatus()) && !"canceled".equals(wo.getStatus()))
+                    .filter(wo -> !isCancelled(wo))
                     .map(wo -> wo.getTotalCost() != null ? wo.getTotalCost() : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -113,6 +120,47 @@ public class WorkOrderController {
         model.addAttribute("currentPage", "work-orders");
 
         return "work-orders";
+    }
+
+    private static final Set<String> COMPLETED_STATUSES = Set.of("completed", "delivered", "done", "concluida", "concluída");
+    private static final Set<String> CANCELLED_STATUSES = Set.of("cancelled", "canceled");
+    private static final Set<String> STATUS_FILTERS = Set.of("active", "all", "in_progress", "completed", "cancelled");
+
+    private static String normalizeStatusFilter(String status) {
+        String normalized = status == null ? "" : status.trim().toLowerCase(Locale.ROOT);
+        return STATUS_FILTERS.contains(normalized) ? normalized : "active";
+    }
+
+    private static String orderStatus(WorkOrder order) {
+        return order.getStatus() == null ? "" : order.getStatus().trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean isCompleted(WorkOrder order) {
+        return COMPLETED_STATUSES.contains(orderStatus(order));
+    }
+
+    private static boolean isCancelled(WorkOrder order) {
+        return CANCELLED_STATUSES.contains(orderStatus(order));
+    }
+
+    private static boolean isInProgress(WorkOrder order) {
+        return !isCompleted(order) && !isCancelled(order);
+    }
+
+    private static boolean belongsToListing(WorkOrder order, FinancialPeriod period) {
+        if (period.contains(order.getCreatedAt())) return true;
+        return isInProgress(order) && period.from() != null && order.getCreatedAt() != null
+                && order.getCreatedAt().toLocalDate().isBefore(period.from());
+    }
+
+    private static boolean matchesStatusFilter(WorkOrder order, String filter) {
+        return switch (filter) {
+            case "all" -> true;
+            case "completed" -> isCompleted(order);
+            case "cancelled" -> isCancelled(order);
+            case "in_progress" -> isInProgress(order);
+            default -> !isCompleted(order);
+        };
     }
 
     @PostMapping("/recover/{quoteId}")

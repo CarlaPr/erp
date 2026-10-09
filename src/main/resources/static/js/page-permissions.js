@@ -2,10 +2,10 @@
     const permissions = window.pagePermissions;
     if (!permissions) return;
     const allowed = { edit: permissions.edit, delete: permissions.delete,
-        'visit-plan': permissions.visitPlan, 'visit-field': permissions.visitField };
+        'visit-plan': permissions.visitPlan, 'visit-field': permissions.visitField,
+        'visit-delete': permissions.visitDelete };
     const denied = element => element?.closest('[data-permission]')?.dataset.permission
         .split(/\s+/).some(action => allowed[action] === false);
-    // The server enforces every request. These guards also cover buttons rendered by page scripts.
     document.addEventListener('click', event => {
         if (denied(event.target)) {
             event.preventDefault();
@@ -18,7 +18,8 @@
             event.stopImmediatePropagation();
         }
     }, true);
-    if (!permissions.manager && permissions.writable && !permissions.edit && !permissions.delete) {
+    const hasVisitActions = permissions.page === 'agenda' && (permissions.visitPlan || permissions.visitDelete);
+    if (!permissions.manager && permissions.writable && !permissions.edit && !permissions.delete && !hasVisitActions) {
         const main = document.querySelector('main');
         if (main) {
             const notice = document.createElement('p');

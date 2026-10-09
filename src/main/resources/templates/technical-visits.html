@@ -70,10 +70,11 @@
                         <p id="detailWhen" class="text-sm font-bold text-slate-700 dark:text-slate-300 mt-2"></p>
                         <p id="detailNotes" class="text-xs text-slate-500 mt-2 whitespace-pre-line"></p>
                     </div>
-                    <div class="grid grid-cols-2 sm:flex gap-2 shrink-0">
+                    <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 md:max-w-sm shrink-0">
                         <button type="button" onclick="openMaps()" class="px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="map" class="w-4 h-4"></i> Google Maps</button>
                         <button data-permission="visit-field" th:if="${@pageAccess.canWorkVisits()}" id="startVisitButton" type="button" onclick="startTechnicalVisit()" class="hidden px-3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black items-center justify-center gap-1.5"><i data-lucide="play" class="w-4 h-4"></i> Iniciar</button>
                         <button data-permission="visit-plan" th:if="${@pageAccess.canPlanVisits()}" type="button" onclick="openVisitEditor()" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="calendar-cog" class="w-4 h-4"></i> Agenda</button>
+                        <button data-permission="delete" th:if="${@pageAccess.canDelete('technical-visits')}" id="deleteVisitButton" type="button" onclick="deleteTechnicalVisit()" class="px-3 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black flex items-center justify-center gap-1.5"><i data-lucide="trash-2" class="w-4 h-4"></i> Excluir visita</button>
                     </div>
                 </div>
             </div>
@@ -341,6 +342,20 @@
             currentVisit.status=data.status||'EM_ANDAMENTO';
             selectVisit(currentVisit.id);
         }catch(error){ alert(error.message||'Não foi possível iniciar a visita.'); }
+        finally{ if(button)button.disabled=false; }
+    }
+    async function deleteTechnicalVisit(){
+        if(!CAN_DELETE||!currentVisit)return;
+        if(!confirm('Excluir esta visita técnica, suas medições, fotos e vídeos? Esta ação não pode ser desfeita.'))return;
+        const button=$('deleteVisitButton'); if(button)button.disabled=true;
+        try{
+            const response=await fetch('/agenda/technical-visits/'+currentVisit.id,{method:'DELETE',headers:{...csrfHeaders(false),'Accept':'application/json'}});
+            if(!response.ok||response.redirected){
+                const error=await response.json().catch(()=>({}));
+                throw new Error(error.message||error.error||'Não foi possível excluir a visita técnica.');
+            }
+            location.href='/technical-visits';
+        }catch(error){ alert(error.message||'Erro de comunicação com o servidor.'); }
         finally{ if(button)button.disabled=false; }
     }
     function openMaps(){ if(!currentVisit)return; window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(currentVisit.clientAddress),'_blank','noopener'); }

@@ -84,6 +84,7 @@
     <section id="osFilters" aria-labelledby="osFiltersTitle" class="bg-white dark:bg-[#131C2F] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm mb-8">
         <div class="mb-5">
             <h3 id="osFiltersTitle" class="text-base font-bold text-slate-900 dark:text-white">Filtros das ordens de serviço</h3>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Inclui as ordens em andamento de meses anteriores. Para consultar concluídas, selecione o status no filtro.</p>
         </div>
         <div class="os-period-filter">
             <div th:replace="~{fragments/financial-period :: filter('/work-orders', '', true)}"></div>
@@ -101,17 +102,18 @@
             <div>
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2" for="filterMonth">Agendamento</label>
                 <select id="filterMonth" onchange="applyOsFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm">
-                    <option value="all" selected>Todas as O.S. do período</option>
+                    <option value="all" selected>Todos os agendamentos</option>
                     <option value="unscheduled">Sem instalação agendada</option>
                 </select>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2" for="filterStatus">Status</label>
-                <select id="filterStatus" onchange="applyOsFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm">
-                    <option value="all">Todos os Status</option>
-                    <option value="in_progress">Em Andamento</option>
-                    <option value="completed">Entregue</option>
-                    <option value="cancelled">Cancelado</option>
+                <select id="filterStatus" onchange="changeOsStatus()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-all text-sm">
+                    <option value="active" th:selected="${selectedStatus == 'active'}">Não concluídas</option>
+                    <option value="all" th:selected="${selectedStatus == 'all'}">Todos os status</option>
+                    <option value="in_progress" th:selected="${selectedStatus == 'in_progress'}">Em andamento</option>
+                    <option value="completed" th:selected="${selectedStatus == 'completed'}">Concluídas / entregues</option>
+                    <option value="cancelled" th:selected="${selectedStatus == 'cancelled'}">Canceladas</option>
                 </select>
             </div>
             <div class="os-filter-actions">
@@ -136,7 +138,7 @@
             <p class="text-2xl font-black text-rose-600 dark:text-rose-400" th:text="'R$ ' + ${#numbers.formatDecimal(totalCost, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Lucro Bruto do Período</p>
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Lucro Bruto das O.S. listadas</p>
             <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400" th:text="'R$ ' + ${#numbers.formatDecimal(globalProfit, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
         <div class="bg-white dark:bg-[#131C2F] p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm border-l-4 border-l-brand-600 dark:border-l-cyan-500">
@@ -150,14 +152,14 @@
         <div class="space-y-4">
 
             <div th:each="wo : ${orders}"
-                 th:with="receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}"
+                 th:with="orderStatus=${#strings.toLowerCase(#strings.trim(wo.status))}, completed=${orderStatus == 'completed' or orderStatus == 'delivered' or orderStatus == 'done' or orderStatus == 'concluida' or orderStatus == 'concluída'}, receita=${wo.totalValue != null ? wo.totalValue : 0}, custo=${wo.getTotalCost() != null ? wo.getTotalCost() : 0}, lucro=${receita - custo}, margem=${receita > 0 ? (lucro * 100 / receita) : 0}"
                  class="js-os-card bg-slate-50 dark:bg-[#1A2533] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 sm:p-6 relative overflow-hidden flex flex-col sm:flex-row gap-4 sm:gap-6 hover:border-brand-300 dark:hover:border-slate-600 transition-all hover:shadow-md"
                  th:data-status="${wo.status}"
                  th:data-install-date="${wo.installDate != null ? #temporals.format(wo.installDate, 'yyyy-MM-dd') : ''}"
                  th:data-search="${wo.number + ' ' + (wo.quote != null ? wo.quote.number : '') + ' ' + (wo.title != null ? wo.title : '') + ' ' + (wo.client != null ? wo.client.name : '')}">
 
                 <div class="absolute left-0 top-0 bottom-0 w-1.5"
-                     th:classappend="${wo.status == 'completed' or wo.status == 'delivered'} ? 'bg-emerald-500' : 'bg-brand-600 dark:bg-cyan-500'"></div>
+                     th:classappend="${completed} ? 'bg-emerald-500' : 'bg-brand-600 dark:bg-cyan-500'"></div>
 
                 <div class="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-slate-800 flex items-center justify-center shrink-0 border border-brand-100 dark:border-slate-700">
                     <i data-lucide="clipboard-list" class="w-7 h-7 text-brand-600 dark:text-cyan-400"></i>
@@ -170,10 +172,10 @@
                             <span class="font-black text-slate-900 dark:text-white text-lg tracking-tight" th:text="${wo.number}">OS-0000</span>
 
                             <span class="px-3 py-1 rounded-lg text-xs font-bold tracking-wider uppercase border"
-                                  th:classappend="${wo.status == 'completed' or wo.status == 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent' :
+                                  th:classappend="${completed ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent' :
                               (wo.status == 'cancelled' or wo.status == 'canceled' ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-transparent' :
                               'bg-brand-50 text-brand-700 border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent')}"
-                                  th:text="${wo.status == 'completed' or wo.status == 'delivered' ? 'Entregue' :
+                                  th:text="${completed ? 'Entregue' :
                         (wo.status == 'cancelled' or wo.status == 'canceled' ? 'Cancelado' : 'Em Andamento')}">Status</span>
                         </div>
 
@@ -485,6 +487,18 @@
     }
 
 
+    function changeOsStatus() {
+        const url = new URL(window.location.href);
+        url.searchParams.set('status', document.getElementById('filterStatus').value);
+        const search = document.getElementById('filterSearch').value.trim();
+        if (search) url.searchParams.set('search', search);
+        else url.searchParams.delete('search');
+        const scheduling = document.getElementById('filterMonth').value;
+        if (scheduling === 'unscheduled') url.searchParams.set('scheduling', scheduling);
+        else url.searchParams.delete('scheduling');
+        window.location.href = url.toString();
+    }
+
     function applyOsFilters() {
         const searchTerm = document.getElementById('filterSearch').value.trim().toLowerCase();
         const statusTerm = document.getElementById('filterStatus').value.toLowerCase();
@@ -496,15 +510,17 @@
 
         cards.forEach(card => {
             const searchData = (card.getAttribute('data-search') || '').toLowerCase();
-            const statusData = (card.getAttribute('data-status') || '').toLowerCase();
+            const statusData = (card.getAttribute('data-status') || '').trim().toLowerCase();
             const installDate = card.getAttribute('data-install-date') || '';
 
-            const isCompleted = statusData === 'completed' || statusData === 'delivered';
+            const isCompleted = ['completed', 'delivered', 'done', 'concluida', 'concluída'].includes(statusData);
             const isCancelled = statusData === 'cancelled' || statusData === 'canceled';
             const isInProgress = !isCompleted && !isCancelled;
 
             let matchStatus = false;
-            if (statusTerm === 'all') {
+            if (statusTerm === 'active') {
+                matchStatus = !isCompleted;
+            } else if (statusTerm === 'all') {
                 matchStatus = true;
             } else if (statusTerm === 'completed') {
                 matchStatus = isCompleted;
@@ -532,7 +548,7 @@
 
         const summary = document.getElementById('osFilterSummary');
         if (summary) {
-            summary.textContent = `Exibindo ${visibleCount} de ${cards.length} ordens de serviço do período.`;
+            summary.textContent = `Exibindo ${visibleCount} de ${cards.length} ordens de serviço na listagem.`;
         }
         const emptyStateFilter = document.getElementById('emptyStateFilter');
         if (visibleCount === 0 && cards.length > 0) {
@@ -546,9 +562,9 @@
 
     function clearOsFilters() {
         document.getElementById('filterSearch').value = '';
-        document.getElementById('filterStatus').value = 'all';
+        document.getElementById('filterStatus').value = 'active';
         document.getElementById('filterMonth').value = 'all';
-        applyOsFilters();
+        changeOsStatus();
     }
 
     async function recoverWorkOrder(button) {
@@ -1015,11 +1031,10 @@
     }
     document.addEventListener('DOMContentLoaded', function() {
         const monthFilter = document.getElementById('filterMonth');
-        const statusFilter = document.getElementById('filterStatus');
+        const parameters = new URLSearchParams(window.location.search);
 
-        if (monthFilter) monthFilter.value = 'all';
-        if (statusFilter) statusFilter.value = 'all';
-        const search = new URLSearchParams(window.location.search).get('search');
+        if (monthFilter) monthFilter.value = parameters.get('scheduling') === 'unscheduled' ? 'unscheduled' : 'all';
+        const search = parameters.get('search');
         if (search) document.getElementById('filterSearch').value = search;
 
         applyOsFilters();

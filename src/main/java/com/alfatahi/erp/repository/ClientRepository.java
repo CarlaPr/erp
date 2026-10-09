@@ -15,9 +15,9 @@ public interface ClientRepository extends JpaRepository<Client, UUID> {
     @Query("SELECT c FROM Client c WHERE c.isActive = true OR c.isActive IS NULL ORDER BY LOWER(c.name)")
     List<Client> findSelectableClients();
 
-    @Query("SELECT c FROM Client c WHERE " +
+    @Query("SELECT c FROM Client c WHERE c.isActive = true AND (" +
             "LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
             "LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(c.document) LIKE LOWER(CONCAT('%', :search, '%'))")
+            "LOWER(c.document) LIKE LOWER(CONCAT('%', :search, '%')))")
     List<Client> searchClients(@Param("search") String search);
 }

@@ -1544,33 +1544,35 @@
             .catch(err => console.error("Erro ao carregar recibo:", err));
     }
 
+    let quoteIdToDelete = null;
+
     function deleteQuote(id) {
         quoteIdToDelete = id;
         toggleModal('deleteQuoteModal', true);
     }
 
-    function executeDeleteQuote() {
+    async function executeDeleteQuote() {
         if (!quoteIdToDelete) return;
 
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
 
-        const headers = {};
-        if (csrfToken) {
-            headers[csrfHeader] = csrfToken;
-        }
+        const headers = { 'Accept': 'application/json' };
+        if (csrfToken) headers[csrfHeader] = csrfToken;
 
-        fetch(`/quotes/${quoteIdToDelete}`, {
-            method: 'DELETE',
-            headers: headers
-        }).then(response => {
-            if (response.ok) {
-                window.location.reload();
-            } else {
-                console.error("Erro ao deletar orçamento.");
-                alert('Erro ao excluir Orçamento.');
+        try {
+            const response = await fetch(`/quotes/${quoteIdToDelete}`, {
+                method: 'DELETE',
+                headers: headers
+            });
+            if (!response.ok || response.redirected) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.message || error.error || 'Erro ao excluir orçamento.');
             }
-        }).catch(err => console.error("Erro crítico:", err));
+            window.location.reload();
+        } catch (error) {
+            alert(error.message || 'Erro de comunicação com o servidor.');
+        }
     }
 
     function openScheduleVisitModal(quoteId, clientName) {
