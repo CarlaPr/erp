@@ -50,7 +50,7 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
 
 
     @Query("SELECT SUM(a.totalAmount) FROM AccountsPayable a " +
-            "WHERE UPPER(a.expenseType) != 'VARIAVEL' " +
+            "WHERE UPPER(a.expenseType) = 'FIXA' " +
             "AND a.financialExpense = false " +
             "AND a.status != 'cancelled' " +
             "AND a.dueDate >= :inicio AND a.dueDate < :fim")
@@ -77,21 +77,21 @@ public interface AccountsPayableRepository extends JpaRepository<AccountsPayable
 
 
     @Query("SELECT COALESCE(SUM(p.totalAmount), 0) FROM AccountsPayable p " +
-            "WHERE UPPER(p.category) = 'FIXA' AND p.status != 'cancelled' " +
+            "WHERE UPPER(p.expenseType) = 'FIXA' AND p.status != 'cancelled' " +
             "AND p.dueDate >= :inicio AND p.dueDate < :fim")
     BigDecimal sumFixedTotalByMonth(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
     @Query("SELECT COALESCE(SUM(p.paidAmount), 0) FROM AccountsPayable p " +
-            "WHERE UPPER(p.category) = 'FIXA' AND p.status IN ('paid', 'partial') " +
+            "WHERE UPPER(p.expenseType) = 'FIXA' AND p.status IN ('paid', 'partial') " +
             "AND p.dueDate >= :inicio AND p.dueDate < :fim")
     BigDecimal sumFixedPaidByMonth(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
     @Query("SELECT COALESCE(SUM(p.totalAmount - p.paidAmount), 0) FROM AccountsPayable p " +
-            "WHERE UPPER(p.category) = 'FIXA' AND p.status IN ('pending', 'partial') " +
+            "WHERE UPPER(p.expenseType) = 'FIXA' AND p.status IN ('pending', 'partial') " +
             "AND p.dueDate >= :inicio AND p.dueDate < :fim")
     BigDecimal sumFixedPendingByMonth(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
-    @Query("SELECT p FROM AccountsPayable p WHERE UPPER(p.category) = 'FIXA' " +
+    @Query("SELECT p FROM AccountsPayable p WHERE UPPER(p.expenseType) = 'FIXA' " +
             "AND p.status IN ('pending', 'partial') AND p.dueDate >= :hoje " +
             "ORDER BY p.dueDate ASC")
     List<AccountsPayable> findUpcomingFixedDue(@Param("hoje") LocalDate hoje);

@@ -5,9 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/** Pages that can receive an individual permission. Settings stays management-only. */
 public enum PageModule {
-    DASHBOARD("dashboard", "Dashboard Administrativo", false, Set.of(), "/dashboard", "/dre"),
+    DASHBOARD("dashboard", "Dashboard Administrativo", false, Set.of(), "/dashboard"),
     COMMERCIAL("commercial", "Dashboard Vendas", false, Set.of("VENDAS"), "/commercial"),
     QUOTES("quotes", "Orçamentos", true, Set.of("VENDAS"), "/quotes"),
     RECEIPTS("receipts", "Recibos", true, Set.of("VENDAS"), "/receipts"),
@@ -24,6 +23,7 @@ public enum PageModule {
     LOSSES("losses", "Perdas e Prejuízos", true, Set.of(), "/losses"),
     CASH_LEDGER("cash-ledger", "Livro Caixa", false, Set.of(), "/cash-ledger"),
     FINANCIAL_CLOSING("financial-closing", "Fechamento Mensal", true, Set.of(), "/financial-closing"),
+    DRE("dre", "DRE Gerencial e Plano de Contas da DRE", true, Set.of(), "/dre"),
     SUPPLIERS("suppliers", "Fornecedores", true, Set.of(), "/suppliers");
 
     private final String key;

@@ -245,24 +245,8 @@ public class FinanceService {
                 : FinancialMovement.BalanceLocation.BANK;
     }
 
-    /**
-     * Um item a ratear: OS de destino, valor a lançar como custo naquela OS,
-     * e descrição opcional (se vazia, usa a descrição da conta a pagar).
-     */
     public record AllocationInput(UUID workOrderId, BigDecimal value, String description) {}
 
-    /**
-     * Substitui as alocações de OS de uma Conta a Pagar pelas informadas em
-     * {@code inputs}, mantendo o custo lançado em cada OS sempre em sincronia
-     * (sem duplicidade): alocações removidas apagam o custo correspondente na
-     * OS; alocações mantidas apenas atualizam o valor/descrição do custo já
-     * existente; alocações novas criam um novo item de custo na OS.
-     *
-     * Chamado apenas ao salvar/editar contas a pagar a partir de agora — não
-     * é aplicado retroativamente a contas antigas, então elas nunca ganham
-     * alocações nem custos automáticos a menos que o usuário as edite e
-     * explicitamente informe o rateio por OS.
-     */
     @Transactional
     public void replaceAllocations(UUID payableId, List<AllocationInput> inputs) {
         AccountsPayable ap = payableRepository.findById(payableId)
@@ -274,7 +258,6 @@ public class FinanceService {
                 .filter(i -> i.workOrderId() != null && i.value() != null && i.value().compareTo(BigDecimal.ZERO) > 0)
                 .toList();
 
-        // Mantém no máximo uma alocação por OS (evita lançar o mesmo custo duas vezes na mesma OS).
         java.util.Map<UUID, ExpenseAllocation> existingByWorkOrder = new java.util.LinkedHashMap<>();
         for (ExpenseAllocation ea : existing) {
             if (ea.getWorkOrder() != null) existingByWorkOrder.put(ea.getWorkOrder().getId(), ea);
@@ -285,8 +268,7 @@ public class FinanceService {
             keptWorkOrderIds.add(input.workOrderId());
         }
 
-        // Remove alocações que não estão mais presentes -> apaga o custo correspondente na OS.
-        for (ExpenseAllocation ea : existing) {
+         for (ExpenseAllocation ea : existing) {
             UUID woId = ea.getWorkOrder() != null ? ea.getWorkOrder().getId() : null;
             if (woId == null || !keptWorkOrderIds.contains(woId)) {
                 deleteAllocationAndCost(ea);
@@ -299,9 +281,7 @@ public class FinanceService {
                     ? input.description() : ap.getDescription();
 
             if (ea != null) {
-                // Alocação já existia para esta OS: apenas atualiza valor/descrição do custo já lançado,
-                // sem criar um novo item (evita duplicidade).
-                ea.setValue(input.value());
+               ea.setValue(input.value());
                 ea.setDescription(description);
                 ea.setPercentage(computePercentage(input.value(), ap.getTotalAmount()));
                 syncWorkOrderItem(ea, description, input.value());
@@ -333,7 +313,6 @@ public class FinanceService {
         }
     }
 
-    /** Remove todas as alocações de uma Conta a Pagar e os custos que elas haviam lançado nas OS. */
     @Transactional
     public void removeAllocationsAndCosts(UUID payableId) {
         List<ExpenseAllocation> existing = expenseAllocationRepository.findByAccountsPayableId(payableId);

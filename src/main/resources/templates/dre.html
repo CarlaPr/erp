@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='DRE Gerencial - Grupo Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+<div th:replace="~{fragments/layout :: pending-schedule-alert}"></div>
+
+<style>
+    .dre-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+    .dre-table th, .dre-table td { padding: .55rem .75rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .dre-table thead th { position: sticky; top: 0; z-index: 3; background: #f8fafc; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+    .dre-table tbody th, .dre-table tbody td { border-bottom: 1px solid #f1f5f9; }
+    .dre-table .dre-label { position: sticky; left: 0; z-index: 2; background: #fff; text-align: left; min-width: 22rem; max-width: 30rem; white-space: normal; }
+    .dre-table thead .dre-label { z-index: 4; background: #f8fafc; }
+    .dre-table td.num { text-align: right; }
+    .dre-table tr.dre-section th, .dre-table tr.dre-section td { background: #f1f5f9; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 800; color: #475569; }
+    .dre-table tr.dre-subtotal th, .dre-table tr.dre-subtotal td { background: #f8fafc; font-weight: 700; }
+    .dre-table tr.dre-result th, .dre-table tr.dre-result td { background: #eef2ff; font-weight: 800; border-top: 1px solid #c7d2fe; border-bottom: 1px solid #c7d2fe; }
+    .dre-table tr.dre-memo th, .dre-table tr.dre-memo td { font-style: italic; color: #64748b; }
+    .dre-table tr.dre-detail th, .dre-table tr.dre-detail td { font-size: .8rem; color: #64748b; background: #fcfdff; }
+    .dre-table tr.dre-detail .dre-label { padding-left: 2.6rem; }
+    .dre-table td.drill:hover { background: rgba(99,102,241,.08); cursor: pointer; text-decoration: underline; }
+    .dre-toggle svg { transition: transform .15s ease; }
+    .dre-toggle.open svg { transform: rotate(90deg); }
+    .dark .dre-table thead th, .dark .dre-table thead .dre-label { background: #0f172a; color: #94a3b8; border-bottom-color: #1e293b; }
+    .dark .dre-table tbody th, .dark .dre-table tbody td { border-bottom-color: #1e293b; }
+    .dark .dre-table .dre-label { background: #131C2F; }
+    .dark .dre-table tr.dre-section th, .dark .dre-table tr.dre-section td { background: #1e293b; color: #cbd5e1; }
+    .dark .dre-table tr.dre-subtotal th, .dark .dre-table tr.dre-subtotal td { background: #0f172a; }
+    .dark .dre-table tr.dre-result th, .dark .dre-table tr.dre-result td { background: #1e1b4b; border-top-color: #3730a3; border-bottom-color: #3730a3; }
+    .dark .dre-table tr.dre-detail th, .dark .dre-table tr.dre-detail td { background: #101a2e; color: #94a3b8; }
+    .dark .dre-table td.drill:hover { background: rgba(129,140,248,.14); }
+    @media print {
+        aside, nav, header .no-print, .no-print, #dreModal { display: none !important; }
+        main { margin-left: 0 !important; padding: 0 !important; }
+        .dre-table .dre-label { position: static; }
+        .dre-table tr.dre-detail { display: none !important; }
+        body { background: #fff !important; color: #000 !important; }
+    }
+</style>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen">
+
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">DRE Gerencial</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Demonstração do Resultado por <strong>competência</strong>
+                (<strong>dia 6</strong> ao <strong>dia 5</strong> do mês seguinte). Análise vertical (AV %) sobre a receita bruta.
+            </p>
+        </div>
+        <div class="no-print flex flex-wrap items-center gap-2">
+            <a th:href="@{/dre/mapeamento}"
+               class="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm hover:border-indigo-400">
+                <i data-lucide="list-tree" class="w-4 h-4"></i> Plano de contas da DRE
+            </a>
+            <a th:href="@{/dre/export(view=${view},month=${monthValue},ano=${ano})}"
+               class="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm hover:border-emerald-400">
+                <i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
+            </a>
+            <button type="button" onclick="window.print()"
+                    class="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm hover:border-slate-400">
+                <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF
+            </button>
+        </div>
+    </header>
+
+    <!-- Filtros -->
+    <form method="get" th:action="@{/dre}" class="no-print mb-6 flex flex-wrap items-center gap-3">
+        <div class="inline-flex rounded-xl border border-slate-300 dark:border-slate-700 overflow-hidden text-sm font-bold">
+            <a th:href="@{/dre(view='month',month=${monthValue})}"
+               th:classappend="${view == 'month'} ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'"
+               class="px-4 py-2.5">Mensal</a>
+            <a th:href="@{/dre(view='year',month=${monthValue},ano=${ano})}"
+               th:classappend="${view == 'year'} ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'"
+               class="px-4 py-2.5 border-l border-slate-300 dark:border-slate-700">Anual</a>
+        </div>
+
+        <input type="hidden" name="view" th:value="${view}">
+
+        <div th:if="${view == 'month'}" class="flex items-center gap-2">
+            <a th:href="@{/dre(view='month',month=${prevMonthValue})}" title="Mês anterior"
+               class="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </a>
+            <input type="month" name="month" th:value="${monthValue}" onchange="this.form.submit()"
+                   class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500">
+            <a th:href="@{/dre(view='month',month=${nextMonthValue})}" title="Próximo mês"
+               class="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </a>
+            <span class="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                Período: <strong th:text="${periodDescription}">06/09/2026 a 05/10/2026</strong>
+            </span>
+        </div>
+
+        <div th:if="${view == 'year'}" class="flex items-center gap-2">
+            <select name="ano" onchange="this.form.submit()"
+                    class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500">
+                <option th:each="y : ${years}" th:value="${y}" th:text="${y}" th:selected="${y == ano}">2026</option>
+            </select>
+            <span class="text-xs text-slate-500 dark:text-slate-400">Competências de janeiro a dezembro (cada uma do dia 6 ao dia 5).</span>
+        </div>
+    </form>
+
+    <!-- Alerta: lançamentos sem classificação -->
+    <div th:if="${report.unclassifiedCount > 0}"
+         class="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-900 dark:text-amber-200 rounded-2xl p-4 text-sm">
+        <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 text-amber-500"></i>
+        <div class="flex-1">
+            <strong th:text="|${report.unclassifiedCount} ${report.unclassifiedCount == 1 ? 'lançamento' : 'lançamentos'} sem classificação para a DRE|">2 lançamentos sem classificação</strong>
+            somando <strong th:text="'R$ ' + ${#numbers.formatDecimal(report.unclassifiedTotal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</strong>.
+            Eles já entram no resultado (linha "Não classificado"), mas precisam de uma categoria/subcategoria correta em Contas a Pagar
+            (ex.: contas antigas das categorias "Fixa" e "Variável").
+        </div>
+        <button type="button" class="js-open-unclassified no-print shrink-0 bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all">
+            Ver lançamentos
+        </button>
+    </div>
+
+    <!-- Indicadores -->
+    <section class="grid grid-cols-2 xl:grid-cols-6 gap-3 mb-6" aria-label="Indicadores do período">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Receita bruta</p>
+            <p class="text-xl font-black text-slate-900 dark:text-white mt-1" th:text="'R$ ' + ${#numbers.formatDecimal(report.kpis.grossRevenue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            <p class="text-xs text-slate-500 mt-1" th:text="${report.focusLabel}">Setembro de 2026</p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lucro bruto</p>
+            <p class="text-xl font-black mt-1" th:classappend="${report.kpis.grossProfit.signum() < 0} ? 'text-rose-600' : 'text-slate-900 dark:text-white'"
+               th:text="'R$ ' + ${#numbers.formatDecimal(report.kpis.grossProfit, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            <p class="text-xs text-slate-500 mt-1">Margem <strong th:text="${#numbers.formatDecimal(report.kpis.grossMarginPct, 1, 'POINT', 1, 'COMMA')} + '%'">0%</strong></p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Resultado operacional</p>
+            <p class="text-xl font-black mt-1" th:classappend="${report.kpis.operatingResult.signum() < 0} ? 'text-rose-600' : 'text-slate-900 dark:text-white'"
+               th:text="'R$ ' + ${#numbers.formatDecimal(report.kpis.operatingResult, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            <p class="text-xs text-slate-500 mt-1">Margem <strong th:text="${#numbers.formatDecimal(report.kpis.operatingMarginPct, 1, 'POINT', 1, 'COMMA')} + '%'">0%</strong></p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lucro líquido</p>
+            <p class="text-xl font-black mt-1" th:classappend="${report.kpis.netProfit.signum() < 0} ? 'text-rose-600' : 'text-emerald-600 dark:text-emerald-400'"
+               th:text="'R$ ' + ${#numbers.formatDecimal(report.kpis.netProfit, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            <p class="text-xs text-slate-500 mt-1">Margem <strong th:text="${#numbers.formatDecimal(report.kpis.netMarginPct, 1, 'POINT', 1, 'COMMA')} + '%'">0%</strong></p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm"
+             title="Receita menos custos e despesas que variam com as vendas (impostos sobre vendas, materiais, comissões, taxas de cartão...).">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Margem de contribuição</p>
+            <p class="text-xl font-black text-slate-900 dark:text-white mt-1" th:text="'R$ ' + ${#numbers.formatDecimal(report.kpis.contributionMargin, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+            <p class="text-xs text-slate-500 mt-1">
+                <strong th:text="${#numbers.formatDecimal(report.kpis.contributionMarginPct, 1, 'POINT', 1, 'COMMA')} + '%'">0%</strong> da receita
+            </p>
+        </div>
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm"
+             title="Faturamento necessário para cobrir os custos e despesas fixos (custos fixos ÷ % de margem de contribuição).">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ponto de equilíbrio</p>
+            <p class="text-xl font-black text-slate-900 dark:text-white mt-1"
+               th:text="${report.kpis.breakEvenRevenue != null ? 'R$ ' + #numbers.formatDecimal(report.kpis.breakEvenRevenue, 1, 'POINT', 2, 'COMMA') : '—'}">R$ 0,00</p>
+            <p class="text-xs text-slate-500 mt-1">Custos fixos <strong th:text="'R$ ' + ${#numbers.formatDecimal(report.kpis.fixedCosts, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</strong></p>
+        </div>
+    </section>
+
+    <!-- DRE -->
+    <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between gap-3 px-5 py-3 border-b border-slate-200 dark:border-slate-800/80">
+            <h3 class="text-sm font-black text-slate-900 dark:text-white" th:text="'Demonstração do Resultado — ' + ${report.focusLabel}">Demonstração do Resultado</h3>
+            <div class="no-print flex items-center gap-2 text-xs">
+                <button type="button" id="dreExpandAll" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">Expandir detalhes</button>
+                <span class="text-slate-300">|</span>
+                <button type="button" id="dreCollapseAll" class="font-bold text-slate-500 hover:underline">Recolher</button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto max-h-[75vh]">
+            <table class="dre-table text-sm" id="dreTable"
+                   th:attr="data-range-from=${rangeFrom},data-range-to=${rangeTo}">
+                <thead>
+                <tr>
+                    <th class="dre-label">Descrição</th>
+                    <th th:each="label : ${report.monthLabels}" class="text-right" th:text="${label}">Set/26</th>
+                    <th th:if="${report.showVariation}" class="text-right" title="Variação do valor em relação ao mês anterior (com sinal de resultado).">Var. %</th>
+                    <th th:if="${report.showTotal}" class="text-right">Total</th>
+                    <th class="text-right" title="Análise vertical: percentual sobre a receita bruta.">AV %</th>
+                </tr>
+                </thead>
+                <tbody>
+                <th:block th:each="line : ${report.lines}">
+                    <tr th:classappend="${line.kind.name() == 'SECTION'} ? 'dre-section' : (${line.kind.name() == 'SUBTOTAL'} ? 'dre-subtotal' : (${line.kind.name() == 'RESULT'} ? 'dre-result' : (${line.kind.name() == 'MEMO'} ? 'dre-memo' : '')))"
+                        th:attr="data-key=${line.key},data-drillable=${line.drillable}">
+                        <th class="dre-label" th:title="${line.hint}">
+                            <span class="inline-flex items-center gap-1.5">
+                                <button type="button" th:if="${line.hasDetails}" class="dre-toggle no-print text-slate-400 hover:text-indigo-500" th:attr="data-target=${line.key}" aria-label="Mostrar detalhes">
+                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                </button>
+                                <span th:text="${line.label}" th:classappend="${line.alert} ? 'text-amber-600 dark:text-amber-400' : ''">Receita</span>
+                                <button type="button" th:if="${line.drillable}" class="dre-drill-all no-print text-slate-300 hover:text-indigo-500" title="Ver lançamentos do período">
+                                    <i data-lucide="list" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </span>
+                        </th>
+                        <th:block th:if="${line.kind.name() == 'SECTION'}">
+                            <td th:each="label : ${report.monthLabels}"></td>
+                            <td th:if="${report.showVariation}"></td>
+                            <td th:if="${report.showTotal}"></td>
+                            <td></td>
+                        </th:block>
+                        <th:block th:unless="${line.kind.name() == 'SECTION'}">
+                            <td th:each="v, st : ${line.values}" class="num"
+                                th:classappend="${line.drillable} ? 'drill' : ''"
+                                th:attr="data-month=${monthKeys[st.index]}">
+                                <span th:text="${v.signum() == 0 ? '—' : #numbers.formatDecimal(v, 1, 'POINT', 2, 'COMMA')}"
+                                      th:classappend="${v.signum() < 0} ? 'text-rose-600 dark:text-rose-400' : (${v.signum() > 0 and line.kind.name() == 'RESULT'} ? 'text-emerald-600 dark:text-emerald-400' : '')">0,00</span>
+                            </td>
+                            <td th:if="${report.showVariation}" class="num">
+                                <span th:if="${line.variation != null}"
+                                      th:text="${(line.variation.signum() > 0 ? '+' : '') + #numbers.formatDecimal(line.variation, 1, 'POINT', 1, 'COMMA')} + '%'"
+                                      th:classappend="${line.variation.signum() < 0} ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">0%</span>
+                                <span th:if="${line.variation == null}" class="text-slate-300">—</span>
+                            </td>
+                            <td th:if="${report.showTotal}" class="num font-bold"
+                                th:classappend="${line.drillable} ? 'drill' : ''" th:attr="data-month=''">
+                                <span th:text="${line.total.signum() == 0 ? '—' : #numbers.formatDecimal(line.total, 1, 'POINT', 2, 'COMMA')}"
+                                      th:classappend="${line.total.signum() < 0} ? 'text-rose-600 dark:text-rose-400' : (${line.total.signum() > 0 and line.kind.name() == 'RESULT'} ? 'text-emerald-600 dark:text-emerald-400' : '')">0,00</span>
+                            </td>
+                            <td class="num text-slate-500 dark:text-slate-400">
+                                <span th:with="pctValue=${report.showTotal ? line.avTotal : line.av[line.av.length - 1]}"
+                                      th:text="${pctValue.signum() == 0 ? '—' : #numbers.formatDecimal(pctValue, 1, 'POINT', 1, 'COMMA') + '%'}">0%</span>
+                            </td>
+                        </th:block>
+                    </tr>
+
+                    <tr th:each="d : ${line.details}" class="dre-detail hidden"
+                        th:attr="data-parent=${line.key},data-key=${line.key},data-category=${d.category},data-sub=${d.subcategory},data-drillable='true'">
+                        <th class="dre-label" th:text="${d.label}">Categoria › Subcategoria</th>
+                        <td th:each="v, st : ${d.values}" class="num drill" th:attr="data-month=${monthKeys[st.index]}">
+                            <span th:text="${v.signum() == 0 ? '—' : #numbers.formatDecimal(v, 1, 'POINT', 2, 'COMMA')}">0,00</span>
+                        </td>
+                        <td th:if="${report.showVariation}"></td>
+                        <td th:if="${report.showTotal}" class="num drill" th:attr="data-month=''">
+                            <span th:text="${d.total.signum() == 0 ? '—' : #numbers.formatDecimal(d.total, 1, 'POINT', 2, 'COMMA')}">0,00</span>
+                        </td>
+                        <td></td>
+                    </tr>
+                </th:block>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Como a DRE é calculada -->
+    <details class="mt-6 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5 text-sm text-slate-600 dark:text-slate-300">
+        <summary class="cursor-pointer font-black text-slate-900 dark:text-white">Como esta DRE é calculada</summary>
+        <ul class="mt-3 space-y-2 list-disc pl-5">
+            <li><strong>Receita bruta:</strong> valor das O.S. (orçamentos aprovados, não canceladas), no mês de competência da data de aprovação — a mesma regra do Dashboard.</li>
+            <li><strong>Custos e despesas:</strong> contas a pagar não canceladas, pelo mês de <em>competência</em> e pelo valor total (pagas ou ainda a pagar). Cada subcategoria alimenta uma linha da DRE conforme o <a class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline" th:href="@{/dre/mapeamento}">Plano de contas da DRE</a>.</li>
+            <li><strong>Descontos concedidos e taxas de cartão:</strong> vêm dos recebimentos e entram no mês do pagamento (a taxa de cartão fica no resultado financeiro).</li>
+            <li><strong>Fora da DRE:</strong> investimentos (compra de máquinas, veículos, móveis...), parcelas do principal de empréstimos, reservas de caixa e retiradas/distribuição de lucros não são despesa — aparecem abaixo do lucro líquido para mostrar quanto realmente sobrou. Os <em>juros</em> de empréstimos devem ser lançados em "Despesas Financeiras › Juros".</li>
+            <li><strong>Provisões trabalhistas</strong> (13º, férias, FGTS, INSS) contam como despesa de pessoal. Lance a provisão mensal <em>ou</em> o pagamento, nunca os dois, para não duplicar.</li>
+            <li><strong>Perdas:</strong> o valor do Controle de Perdas é informativo; a reposição do material já está nos custos pagos.</li>
+            <li><strong>EBITDA:</strong> como não há depreciação lançada, o resultado operacional coincide com o EBITDA.</li>
+        </ul>
+    </details>
+</main>
+
+<!-- Modal de lançamentos -->
+<div id="dreModal" class="fixed inset-0 z-[80] hidden items-center justify-center p-4 bg-slate-900/60" role="dialog" aria-modal="true" aria-labelledby="dreModalTitle">
+    <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+        <div class="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200 dark:border-slate-800/80">
+            <div>
+                <h3 id="dreModalTitle" class="text-base font-black text-slate-900 dark:text-white">Lançamentos</h3>
+                <p id="dreModalSubtitle" class="text-xs text-slate-500 mt-0.5"></p>
+            </div>
+            <button type="button" id="dreModalClose" class="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white" aria-label="Fechar">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="overflow-auto flex-1">
+            <table class="w-full text-sm">
+                <thead class="sticky top-0 bg-slate-50 dark:bg-slate-900 text-[10px] uppercase tracking-wider text-slate-500">
+                <tr>
+                    <th class="text-left px-4 py-2.5">Data</th>
+                    <th class="text-left px-4 py-2.5">Descrição</th>
+                    <th class="text-left px-4 py-2.5">Fornecedor / Cliente</th>
+                    <th class="text-left px-4 py-2.5">Origem</th>
+                    <th class="text-left px-4 py-2.5">Status</th>
+                    <th class="text-right px-4 py-2.5">Valor</th>
+                </tr>
+                </thead>
+                <tbody id="dreModalBody"></tbody>
+            </table>
+            <p id="dreModalEmpty" class="hidden p-8 text-center text-sm text-slate-500">Nenhum lançamento encontrado neste recorte.</p>
+        </div>
+        <div class="flex items-center justify-between px-5 py-3 border-t border-slate-200 dark:border-slate-800/80 text-sm">
+            <span id="dreModalCount" class="text-slate-500"></span>
+            <strong id="dreModalTotal" class="text-slate-900 dark:text-white"></strong>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+
+<script>
+(function () {
+    const table = document.getElementById('dreTable');
+    if (!table) return;
+    const rangeFrom = table.dataset.rangeFrom;
+    const rangeTo = table.dataset.rangeTo;
+    const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    // ── expandir / recolher detalhes ──
+    function setOpen(button, open) {
+        const key = button.dataset.target;
+        button.classList.toggle('open', open);
+        table.querySelectorAll('tr.dre-detail[data-parent="' + key + '"]').forEach(function (row) {
+            row.classList.toggle('hidden', !open);
+        });
+    }
+    table.querySelectorAll('.dre-toggle').forEach(function (button) {
+        button.addEventListener('click', function () { setOpen(button, !button.classList.contains('open')); });
+    });
+    document.getElementById('dreExpandAll').addEventListener('click', function () {
+        table.querySelectorAll('.dre-toggle').forEach(function (b) { setOpen(b, true); });
+    });
+    document.getElementById('dreCollapseAll').addEventListener('click', function () {
+        table.querySelectorAll('.dre-toggle').forEach(function (b) { setOpen(b, false); });
+    });
+
+    // ── modal "ver lançamentos" ──
+    const modal = document.getElementById('dreModal');
+    const body = document.getElementById('dreModalBody');
+    function closeModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    document.getElementById('dreModalClose').addEventListener('click', closeModal);
+    modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+
+    function cell(text, className) {
+        const td = document.createElement('td');
+        td.className = 'px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 ' + (className || '');
+        td.textContent = text == null ? '' : text;
+        return td;
+    }
+
+    async function openEntries(group, from, to, category, sub, subtitle) {
+        const params = new URLSearchParams({ group: group, from: from, to: to });
+        if (category) params.set('category', category);
+        if (sub) params.set('subcategory', sub);
+        body.innerHTML = '';
+        document.getElementById('dreModalTitle').textContent = 'Carregando...';
+        document.getElementById('dreModalSubtitle').textContent = subtitle || '';
+        document.getElementById('dreModalEmpty').classList.add('hidden');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        try {
+            const response = await fetch('/dre/lancamentos?' + params.toString(), { headers: { 'Accept': 'application/json' } });
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const data = await response.json();
+            document.getElementById('dreModalTitle').textContent = data.title;
+            (data.entries || []).forEach(function (entry) {
+                const tr = document.createElement('tr');
+                tr.appendChild(cell(entry.date));
+                tr.appendChild(cell(entry.description, 'font-semibold text-slate-800 dark:text-slate-100'));
+                tr.appendChild(cell(entry.party));
+                tr.appendChild(cell(entry.detail, 'text-xs text-slate-500'));
+                tr.appendChild(cell(entry.status));
+                tr.appendChild(cell(brl.format(entry.amount), 'text-right font-semibold'));
+                body.appendChild(tr);
+            });
+            document.getElementById('dreModalEmpty').classList.toggle('hidden', (data.entries || []).length > 0);
+            document.getElementById('dreModalCount').textContent = data.count + (data.count === 1 ? ' lançamento' : ' lançamentos');
+            document.getElementById('dreModalTotal').textContent = 'Total: ' + brl.format(data.total);
+        } catch (err) {
+            document.getElementById('dreModalTitle').textContent = 'Não foi possível carregar os lançamentos';
+            document.getElementById('dreModalCount').textContent = '';
+            document.getElementById('dreModalTotal').textContent = '';
+        }
+    }
+
+    function rowContext(element) {
+        const row = element.closest('tr');
+        return { key: row.dataset.key, category: row.dataset.category || '', sub: row.dataset.sub || '' };
+    }
+
+    table.addEventListener('click', function (e) {
+        const drillAll = e.target.closest('.dre-drill-all');
+        if (drillAll) {
+            const ctx = rowContext(drillAll);
+            openEntries(ctx.key, rangeFrom, rangeTo, '', '', 'Período completo exibido');
+            return;
+        }
+        const td = e.target.closest('td.drill');
+        if (td) {
+            const ctx = rowContext(td);
+            const month = td.dataset.month;
+            openEntries(ctx.key, month || rangeFrom, month || rangeTo, ctx.category, ctx.sub,
+                        month ? 'Competência ' + month : 'Período completo exibido');
+        }
+    });
+
+    document.querySelectorAll('.js-open-unclassified').forEach(function (button) {
+        button.addEventListener('click', function () {
+            openEntries('NAO_CLASSIFICADO', rangeFrom, rangeTo, '', '', 'Contas a pagar sem linha da DRE definida');
+        });
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+})();
+</script>
+</body>
+</html>

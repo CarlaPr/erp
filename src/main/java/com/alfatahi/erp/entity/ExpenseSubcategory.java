@@ -40,6 +40,12 @@ public class ExpenseSubcategory {
     @Column(name = "is_active")
     private Boolean active = true;
 
+    @Column(name = "dre_group", length = 40)
+    private String dreGroup;
+
+    @Column(name = "cost_behavior", length = 10)
+    private String costBehavior;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public ExpenseCategory getCategory() { return category; }
@@ -54,6 +60,10 @@ public class ExpenseSubcategory {
     public void setSegment(String segment) { this.segment = segment; }
     public Integer getDisplayOrder() { return displayOrder; }
     public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
+    public String getDreGroup() { return dreGroup; }
+    public void setDreGroup(String dreGroup) { this.dreGroup = dreGroup; }
+    public String getCostBehavior() { return costBehavior; }
+    public void setCostBehavior(String costBehavior) { this.costBehavior = costBehavior; }
     public Boolean getActive() { return active != null ? active : true; }
     public void setActive(Boolean active) { this.active = active; }
 }

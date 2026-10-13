@@ -30,6 +30,9 @@ public class ExpenseCategory {
     @Column(name = "is_active")
     private Boolean active = true;
 
+    @Column(name = "dre_group", length = 40)
+    private String dreGroup;
+
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<ExpenseSubcategory> subcategories = new ArrayList<>();
@@ -44,6 +47,8 @@ public class ExpenseCategory {
     public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
     public Boolean getActive() { return active != null ? active : true; }
     public void setActive(Boolean active) { this.active = active; }
+    public String getDreGroup() { return dreGroup; }
+    public void setDreGroup(String dreGroup) { this.dreGroup = dreGroup; }
     public List<ExpenseSubcategory> getSubcategories() { return subcategories; }
     public void setSubcategories(List<ExpenseSubcategory> subcategories) { this.subcategories = subcategories; }
 }

@@ -90,7 +90,8 @@ public class PayableController {
         dateFrom = period.from();
         dateTo = period.to();
 
-        List<AccountsPayable> list = financeService.listAllPayables().stream()
+        List<AccountsPayable> allPayables = financeService.listAllPayables();
+        List<AccountsPayable> list = allPayables.stream()
                 .filter(p -> !("cancelled".equals(p.getStatus()) || "inactive".equals(p.getStatus()))
                         || ("cancelled".equals(status) || "inactive".equals(status)))
                 .collect(Collectors.toList());
@@ -111,7 +112,7 @@ public class PayableController {
         if (workOrderId != null) list = list.stream().filter(p -> p.getWorkOrder() != null && workOrderId.equals(p.getWorkOrder().getId())).collect(Collectors.toList());
 
         switch (aba == null ? "todas" : aba) {
-            case "fixas" -> list = list.stream().filter(p -> "FIXA".equalsIgnoreCase(p.getCategory())).collect(Collectors.toList());
+            case "fixas" -> list = list.stream().filter(PayableController::isFixedAccount).collect(Collectors.toList());
             case "recorrentes" -> list = list.stream().filter(p -> Boolean.TRUE.equals(p.getRecurring())).collect(Collectors.toList());
             case "vencidas" -> list = list.stream().filter(AccountsPayable::isOverdue).collect(Collectors.toList());
             case "pagas" -> list = list.stream().filter(p -> "paid".equals(p.getStatus())).collect(Collectors.toList());
@@ -133,6 +134,8 @@ public class PayableController {
         model.addAttribute("suppliers", supplierRepository.findByIsActiveTrueOrderByNameAsc());
         model.addAttribute("workOrders", workOrderRepository.findAll());
         model.addAttribute("categories", categoryCatalogService.listActiveCategories());
+        model.addAttribute("filterCategories", categoryCatalogService.listFilterCategories(
+                allPayables.stream().map(AccountsPayable::getCategory).collect(Collectors.toSet())));
         model.addAttribute("allocationsJsonByPayable", buildAllocationsJsonByPayable(list));
 
         model.addAttribute("saldoReal", saldoReal);
@@ -181,7 +184,7 @@ public class PayableController {
 
         List<AccountsPayable> fixasOuRecorrentes = financeService.listAllPayables().stream()
                 .filter(p -> !"cancelled".equals(p.getStatus()))
-                .filter(p -> "FIXA".equalsIgnoreCase(p.getCategory()) || Boolean.TRUE.equals(p.getRecurring()))
+                .filter(p -> isFixedAccount(p) || Boolean.TRUE.equals(p.getRecurring()))
                 .sorted((a, b) -> a.getDueDate().compareTo(b.getDueDate()))
                 .collect(Collectors.toList());
 
@@ -505,8 +508,15 @@ public class PayableController {
         return result;
     }
 
+   private static boolean isFixedAccount(AccountsPayable p) {
+        return "FIXA".equalsIgnoreCase(p.getExpenseType()) || "FIXA".equalsIgnoreCase(p.getCategory());
+    }
+
     private void applyDerivedFields(AccountsPayable p) {
-        if (p.getExpenseType() == null || p.getExpenseType().isBlank()) {
+        String derivedType = categoryCatalogService.resolveExpenseType(p.getCategory(), p.getSubcategory());
+        if (derivedType != null) {
+            p.setExpenseType(derivedType);
+        } else if (p.getExpenseType() == null || p.getExpenseType().isBlank()) {
             p.setExpenseType("VARIAVEL".equalsIgnoreCase(p.getCategory()) ? "VARIAVEL" : "FIXA");
         }
         if (p.getCompetencia() == null && p.getDueDate() != null) {

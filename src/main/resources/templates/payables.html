@@ -168,7 +168,7 @@
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Categoria</label>
                 <select name="category" id="filterCategorySelect" onchange="updateSubcategories(this,'filterSubcategorySelect', '')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 transition-all text-sm font-semibold">
                     <option value="">Todas</option>
-                    <option th:each="c : ${categories}" th:value="${c.code}" th:text="${c.name}" th:selected="${filterCategory == c.code}"></option>
+                    <option th:each="c : ${filterCategories}" th:value="${c.code}" th:text="${c.name}" th:selected="${filterCategory == c.code}"></option>
                     <option value="__UNCONFIGURED__" th:selected="${filterCategory == '__UNCONFIGURED__'}">Sem categoria configurada</option>
                 </select>
             </div>
@@ -243,8 +243,10 @@
                 <div class="payable-info-item">
                     <small>Categoria</small>
                     <strong th:switch="${p.category}">
-                        <span th:case="'FIXA'">Fixa</span>
-                        <span th:case="'VARIAVEL'">Variável</span>
+                        <span th:case="'FIXA'">Fixa (reclassificar)</span>
+                        <span th:case="'VARIAVEL'">Variável (reclassificar)</span>
+                        <span th:case="'COMERCIAL'">Comercial</span>
+                        <span th:case="'SOCIOS'">Retiradas</span>
                         <span th:case="'PROVISIONAMENTO'">Provisão</span>
                         <span th:case="'IMPOSTOS'">Impostos</span>
                         <span th:case="'INVESTIMENTOS'">Investimentos</span>
@@ -356,8 +358,8 @@
 
                 <td class="p-5">
                     <th:block th:switch="${p.category}">
-                        <span th:case="'FIXA'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-transparent uppercase tracking-wide">Fixa</span>
-                        <span th:case="'VARIAVEL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent uppercase tracking-wide">Variável</span>
+                        <span th:case="'FIXA'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-transparent uppercase tracking-wide">Fixa (reclassificar)</span>
+                        <span th:case="'VARIAVEL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-transparent uppercase tracking-wide">Variável (reclassificar)</span>
                         <span th:case="'PROVISIONAMENTO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-transparent uppercase tracking-wide">Provisão</span>
                         <span th:case="'IMPOSTOS'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-transparent uppercase tracking-wide">Impostos</span>
                         <span th:case="'INVESTIMENTOS'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-transparent uppercase tracking-wide">Investimentos</span>
@@ -366,6 +368,8 @@
                         <span th:case="'PESSOAL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200 dark:bg-fuchsia-500/10 dark:text-fuchsia-400 dark:border-transparent uppercase tracking-wide">Pessoal</span>
                         <span th:case="'OPERACIONAL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-500/10 dark:text-teal-400 dark:border-transparent uppercase tracking-wide">Operacional</span>
                         <span th:case="'ADMINISTRATIVO'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-transparent uppercase tracking-wide">Administrativo</span>
+                        <span th:case="'COMERCIAL'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200 dark:bg-pink-500/10 dark:text-pink-400 dark:border-transparent uppercase tracking-wide">Comercial</span>
+                        <span th:case="'SOCIOS'" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-50 text-slate-700 border border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-transparent uppercase tracking-wide">Retiradas</span>
                         <span th:case="*" th:if="${p.category != null}" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-700/40 dark:text-slate-300 dark:border-transparent uppercase tracking-wide" th:text="${p.category}"></span>
                     </th:block>
 
@@ -777,7 +781,8 @@
 
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Categoria *</label>
-                        <select name="category" id="editCategory" onchange="updateSubcategories(this,'editSubcategory')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
+                        <select name="category" id="editCategory" required onchange="updateSubcategories(this,'editSubcategory')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-all text-base">
+                            <option value="">Selecione a categoria...</option>
                             <option th:each="c : ${categories}" th:value="${c.code}" th:text="${c.name}"></option>
                         </select>
                     </div>
@@ -1385,7 +1390,9 @@
         document.getElementById('editForm').action = '/payables/edit/' + ds.id;
         document.getElementById('editId').value = ds.id;
         document.getElementById('editDescription').value = ds.description;
-        document.getElementById('editCategory').value = ds.category;
+        const editCategorySelect = document.getElementById('editCategory');
+        editCategorySelect.value = ds.category;
+        if (editCategorySelect.selectedIndex < 0) editCategorySelect.value = '';
         document.getElementById('editTotalAmount').value = ds.total ? formatBRLCurrency(ds.total) : '';
         document.getElementById('editDueDate').value = ds.duedate;
         document.getElementById('editPaymentMethod').value = ds.payment || 'PIX';

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Plano de Contas da DRE - Grupo Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+<div th:replace="~{fragments/layout :: pending-schedule-alert}"></div>
+
+<main class="lg:ml-72 px-4 sm:px-6 lg:px-8 pb-28 pt-20 lg:pt-8 w-full min-h-screen">
+
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-5">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Plano de contas da DRE</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-3xl">
+                Define em qual <strong>linha da DRE</strong> cada subcategoria de Contas a Pagar entra e se o custo é
+                <strong>fixo</strong> ou <strong>variável</strong> (usado na margem de contribuição e no ponto de equilíbrio).
+                Subcategorias marcadas como <em>Fora da DRE</em> (investimentos, principal de dívidas, reservas e retiradas) não reduzem o lucro.
+            </p>
+        </div>
+        <a th:href="@{/dre}"
+           class="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm">
+            <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Voltar para a DRE
+        </a>
+    </header>
+
+    <div th:if="${success}" class="mb-6 flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300 rounded-2xl p-4 text-sm font-semibold">
+        <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0 text-emerald-500"></i>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="mb-6 flex items-center gap-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-rose-800 dark:text-rose-300 rounded-2xl p-4 text-sm font-semibold">
+        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 text-rose-500"></i>
+        <span th:text="${error}"></span>
+    </div>
+
+    <div class="mb-6 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center gap-3">
+        <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="search" id="mappingSearch" placeholder="Buscar categoria ou subcategoria..."
+                   class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none focus:border-indigo-500">
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+            As alterações valem para a DRE de <strong>todos os períodos</strong> (a DRE sempre usa o plano de contas atual).
+        </p>
+    </div>
+
+    <form th:action="@{/dre/mapeamento/salvar}" method="post" id="mappingForm">
+
+        <section th:each="category : ${tree}" class="mapping-category mb-6 bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden"
+                 th:attr="data-search=${#strings.toLowerCase(category.name + ' ' + category.code)}">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-5 py-4 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800/80">
+                <div>
+                    <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <span th:text="${category.name}">Categoria</span>
+                        <span th:unless="${category.active}" class="text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 px-2 py-0.5 rounded-md">legado</span>
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        <span th:text="${category.code}">OPERACIONAL</span> ·
+                        <span th:text="${#lists.size(category.subs)} + ' subcategorias'">0 subcategorias</span>
+                    </p>
+                </div>
+                <label class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+                    Linha padrão (lançamentos sem subcategoria)
+                    <input type="hidden" name="categoryId" th:value="${category.id}">
+                    <select name="categoryGroup" th:with="current=${category.dreGroup ?: 'NAO_CLASSIFICADO'}"
+                            class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500 max-w-xs">
+                        <optgroup th:each="entry : ${groupsBySection}" th:label="${entry.key.label}">
+                            <option th:each="g : ${entry.value}" th:value="${g.key}" th:text="${g.label}" th:selected="${g.key == current}">Linha</option>
+                        </optgroup>
+                    </select>
+                </label>
+            </div>
+
+            <div class="overflow-x-auto" th:if="${!#lists.isEmpty(category.subs)}">
+                <table class="w-full text-sm">
+                    <thead class="text-[10px] uppercase tracking-wider text-slate-500">
+                    <tr>
+                        <th class="text-left px-5 py-2.5">Subcategoria</th>
+                        <th class="text-left px-3 py-2.5">Linha da DRE</th>
+                        <th class="text-left px-3 py-2.5">Comportamento</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="sub : ${category.subs}" class="mapping-row border-t border-slate-100 dark:border-slate-800"
+                        th:attr="data-search=${#strings.toLowerCase(sub.name + ' ' + sub.code + ' ' + category.name + ' ' + (sub.groupLabel ?: ''))}">
+                        <td class="px-5 py-2">
+                            <input type="hidden" name="subId" th:value="${sub.id}">
+                            <span class="font-semibold text-slate-800 dark:text-slate-100" th:text="${sub.name}">Subcategoria</span>
+                            <span th:if="${sub.groupLabel != null and !#strings.isEmpty(sub.groupLabel)}" class="ml-2 text-[10px] font-bold uppercase tracking-wide text-slate-400" th:text="${sub.groupLabel}">grupo</span>
+                            <span th:unless="${sub.active}" class="ml-2 text-[10px] font-bold uppercase tracking-wide text-amber-600">inativa</span>
+                        </td>
+                        <td class="px-3 py-2">
+                            <select name="subGroup" th:with="current=${sub.dreGroup ?: 'NAO_CLASSIFICADO'}"
+                                    class="sub-group w-full min-w-[18rem] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500">
+                                <optgroup th:each="entry : ${groupsBySection}" th:label="${entry.key.label}">
+                                    <option th:each="g : ${entry.value}" th:value="${g.key}" th:text="${g.label}" th:selected="${g.key == current}">Linha</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td class="px-3 py-2">
+                            <select name="subBehavior"
+                                    class="sub-behavior bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500">
+                                <option value="" th:selected="${sub.costBehavior == null}">— (fora da DRE)</option>
+                                <option value="FIXA" th:selected="${sub.costBehavior == 'FIXA'}">Fixo</option>
+                                <option value="VARIAVEL" th:selected="${sub.costBehavior == 'VARIAVEL'}">Variável</option>
+                            </select>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p th:if="${#lists.isEmpty(category.subs)}" class="px-5 py-4 text-xs text-slate-500">Sem subcategorias cadastradas.</p>
+        </section>
+
+        <div data-permission="edit" class="fixed bottom-0 right-0 left-0 lg:left-72 z-30 bg-white/95 dark:bg-[#0B1120]/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
+            <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
+                Dica: <strong>Fixo</strong> = não muda com o volume de vendas (aluguel, salários). <strong>Variável</strong> = cresce com as vendas (material, comissão, impostos sobre vendas).
+            </p>
+            <button type="submit" class="ml-auto flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-sm">
+                <i data-lucide="save" class="w-4 h-4"></i> Salvar plano de contas
+            </button>
+        </div>
+    </form>
+</main>
+
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+
+<script>
+(function () {
+    // Linhas "Fora da DRE" não têm comportamento fixo/variável. O select desabilitado não é enviado,
+    // então um campo oculto mantém as listas do formulário alinhadas.
+    function applyBehavior(row, userChanged) {
+        const group = row.querySelector('.sub-group');
+        const behavior = row.querySelector('.sub-behavior');
+        if (!group || !behavior) return;
+        const outside = group.value.indexOf('FORA_') === 0;
+        let shadow = row.querySelector('input.behavior-shadow');
+        if (outside) {
+            if (userChanged) behavior.value = '';
+            behavior.disabled = true;
+            if (!shadow) {
+                shadow = document.createElement('input');
+                shadow.type = 'hidden';
+                shadow.name = 'subBehavior';
+                shadow.value = '';
+                shadow.className = 'behavior-shadow';
+                behavior.insertAdjacentElement('afterend', shadow);
+            }
+        } else {
+            behavior.disabled = false;
+            if (shadow) shadow.remove();
+            if (userChanged && behavior.value === '') behavior.value = 'FIXA';
+        }
+    }
+    document.querySelectorAll('.mapping-row').forEach(function (row) {
+        applyBehavior(row, false);
+        row.querySelector('.sub-group').addEventListener('change', function () { applyBehavior(row, true); });
+    });
+
+    // Busca por categoria ou subcategoria (linhas ocultas continuam sendo enviadas no formulário)
+    const search = document.getElementById('mappingSearch');
+    search.addEventListener('input', function () {
+        const term = search.value.trim().toLowerCase();
+        document.querySelectorAll('.mapping-category').forEach(function (section) {
+            const categoryMatch = !term || section.dataset.search.indexOf(term) !== -1;
+            let visible = 0;
+            section.querySelectorAll('.mapping-row').forEach(function (row) {
+                const match = categoryMatch || row.dataset.search.indexOf(term) !== -1;
+                row.classList.toggle('hidden', !match);
+                if (match) visible++;
+            });
+            section.classList.toggle('hidden', !categoryMatch && visible === 0);
+        });
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+})();
+</script>
+</body>
+</html>
