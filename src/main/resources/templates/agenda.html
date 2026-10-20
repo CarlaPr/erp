@@ -179,34 +179,35 @@
             <p id="listEmpty" class="p-8 text-center text-slate-500 font-medium hidden">Nenhum agendamento encontrado para os filtros selecionados.</p>
         </div>
     </div>
-    <div id="dayModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
-        <div class="agenda-day-modal bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl lg:max-w-4xl rounded-2xl shadow-2xl p-6 lg:p-7 relative my-10">
-            <button type="button" onclick="closeModal('dayModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-            <br><br>
-            <div class="flex items-center justify-between mb-4">
-                <h3 id="dayModalTitle"
-                    class="text-xl font-black text-slate-900 dark:text-white">
-                    Serviços do dia
-                </h3>
-
-                <button type="button"
-                        id="btnDayPdf"
-                        class="px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-md flex items-center gap-2">
-                    <i data-lucide="file-down" class="w-4 h-4"></i>
-                    Abrir Roteiro em PDF
-                </button>
-                <button type="button" id="btnDayWhatsApp"
-                        class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md flex items-center gap-2">
-                    <i data-lucide="message-circle" class="w-4 h-4"></i>
-                    Enviar no WhatsApp
-                </button>
-            </div>
-
-            <div id="dayModalList" class="space-y-3 max-h-[65vh] overflow-y-auto pr-1"></div>
-        </div>
+    <div id="dayModal" class="day-modal-overlay fixed inset-0 bg-slate-900/60 dark:bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center z-50 p-2 sm:p-4 overflow-hidden">
+        <section role="dialog" aria-modal="true" aria-labelledby="dayModalTitle"
+                 class="agenda-day-modal w-full max-w-4xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl relative flex flex-col overflow-hidden">
+            <header class="day-modal-header shrink-0 flex flex-col gap-3 p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800">
+                <div class="flex items-start justify-between gap-3 pr-10">
+                    <div class="min-w-0">
+                        <h3 id="dayModalTitle" class="text-lg sm:text-xl font-black text-slate-900 dark:text-white break-words">Serviços do dia</h3>
+                        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Confira os atendimentos e abra o roteiro para compartilhar.</p>
+                    </div>
+                    <button type="button" onclick="closeModal('dayModal')" aria-label="Fechar serviços do dia"
+                            class="absolute top-3 right-3 shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-white bg-slate-100 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="day-modal-actions grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button type="button" id="btnDayPdf"
+                            class="w-full min-w-0 px-3 sm:px-4 py-3 sm:py-2.5 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-md flex items-center justify-center gap-2">
+                        <i data-lucide="file-down" class="w-4 h-4 shrink-0"></i><span>Abrir Roteiro em PDF</span>
+                    </button>
+                    <button type="button" id="btnDayWhatsApp"
+                            class="w-full min-w-0 px-3 sm:px-4 py-3 sm:py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md flex items-center justify-center gap-2">
+                        <i data-lucide="message-circle" class="w-4 h-4 shrink-0"></i><span>Enviar no WhatsApp</span>
+                    </button>
+                </div>
+            </header>
+            <div id="dayModalList" class="day-modal-list flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-5 space-y-3"></div>
+        </section>
     </div>
+
     <div id="editModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-[60] overflow-y-auto py-10 px-4">
         <div class="agenda-edit-modal bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-2xl lg:max-w-5xl rounded-2xl shadow-2xl p-8 relative my-auto">
             <button type="button" onclick="closeModal('editModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
@@ -221,167 +222,167 @@
                 <select id="serviceScheduleSelect" onchange="selectServiceSchedule(this.value)" class="w-full px-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm dark:text-white"></select>
             </div>
             <fieldset id="serviceScheduleFields" class="min-w-0">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 text-xs">
-                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
-                    <span class="block text-slate-400 font-bold uppercase mb-1">Cliente</span>
-                    <span id="editInfoClient" class="font-bold text-slate-800 dark:text-white block">-</span>
-                    <span id="editInfoAddress" class="text-slate-500 dark:text-slate-400 mt-1 block leading-tight">-</span>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 text-xs">
+                    <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                        <span class="block text-slate-400 font-bold uppercase mb-1">Cliente</span>
+                        <span id="editInfoClient" class="font-bold text-slate-800 dark:text-white block">-</span>
+                        <span id="editInfoAddress" class="text-slate-500 dark:text-slate-400 mt-1 block leading-tight">-</span>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                        <span class="block text-slate-400 font-bold uppercase mb-1">Orçamento / OS</span>
+                        <span id="editInfoDocs" class="font-bold text-slate-800 dark:text-white block">-</span>
+                        <span class="block text-slate-400 font-bold uppercase mt-2 mb-1">Prazo - Entregar até</span>
+                        <div class="flex items-center gap-2">
+                            <span id="editInfoDeadline" class="font-bold text-slate-800 dark:text-white block">-</span>
+                            <button data-permission="edit" type="button" onclick="toggleDeadlineEditor()" title="Alterar prazo"
+                                    class="text-slate-400 hover:text-brand-600 dark:hover:text-cyan-400 transition-colors">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <div id="deadlineEditor" class="hidden mt-2 flex items-center gap-1.5">
+                            <input id="editDeadlineDate" type="date"
+                                   class="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs outline-none focus:border-brand-500 dark:text-white">
+                            <button data-permission="edit" type="button" onclick="saveDeadline()" title="Confirmar novo prazo"
+                                    class="p-1.5 rounded-lg bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900 hover:opacity-90 transition-opacity">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button data-permission="edit" type="button" onclick="toggleDeadlineEditor()" title="Cancelar"
+                                    class="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:opacity-90 transition-opacity">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                        <span class="block text-slate-400 font-bold uppercase mb-2">Serviços / Itens a Executar</span>
+                        <div id="editInfoServices" class="space-y-1.5 max-h-32 overflow-y-auto pr-1"></div>
+                    </div>
                 </div>
-                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
-                    <span class="block text-slate-400 font-bold uppercase mb-1">Orçamento / OS</span>
-                    <span id="editInfoDocs" class="font-bold text-slate-800 dark:text-white block">-</span>
-                    <span class="block text-slate-400 font-bold uppercase mt-2 mb-1">Prazo - Entregar até</span>
-                    <div class="flex items-center gap-2">
-                        <span id="editInfoDeadline" class="font-bold text-slate-800 dark:text-white block">-</span>
-                        <button data-permission="edit" type="button" onclick="toggleDeadlineEditor()" title="Alterar prazo"
-                                class="text-slate-400 hover:text-brand-600 dark:hover:text-cyan-400 transition-colors">
-                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+
+                <input type="hidden" id="editId">
+
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+                            Dias agendados <span class="text-slate-400 normal-case font-medium">(este serviço pode ter mais de um dia)</span>
+                        </label>
+                        <button data-permission="edit" type="button" onclick="openAddOccurrenceEditor()"
+                                class="text-xs font-bold text-brand-600 dark:text-cyan-400 hover:underline flex items-center gap-1">
+                            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Adicionar outro dia
                         </button>
                     </div>
-                    <div id="deadlineEditor" class="hidden mt-2 flex items-center gap-1.5">
-                        <input id="editDeadlineDate" type="date"
-                               class="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs outline-none focus:border-brand-500 dark:text-white">
-                        <button data-permission="edit" type="button" onclick="saveDeadline()" title="Confirmar novo prazo"
-                                class="p-1.5 rounded-lg bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900 hover:opacity-90 transition-opacity">
-                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    <div id="occurrencesList" class="flex flex-wrap gap-2 mb-2"></div>
+
+                    <div id="occurrenceEditor" class="hidden bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 mt-2">
+                        <input type="hidden" id="occEditingId">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Data</label>
+                                <input id="occDate" type="date" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Horário</label>
+                                <input id="occTime" type="time" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Equipe / Responsável</label>
+                                <input id="occTeam" type="text" placeholder="Ex: Yago, Igor" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Observação deste dia</label>
+                                <input id="occObservations" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
+                            </div>
+                        </div>
+                        <p id="occEditorHint" class="text-[11px] text-slate-400 mb-2"></p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" onclick="closeOccurrenceEditor()" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
+                            <button data-permission="edit" type="button" id="occEditorSubmitBtn" onclick="submitOccurrenceEditor()" class="px-3 py-1.5 rounded-lg bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900 text-xs font-black hover:opacity-90 transition-opacity">Adicionar à lista</button>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Data de execução (principal)</label>
+                        <input id="editDate" type="date" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Horário</label>
+                        <input id="editTime" type="time" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Status</label>
+                        <select id="editStatus" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                            <option value="AGUARDANDO_AGENDAMENTO">Aguardando Agendamento</option>
+                            <option value="AGENDADO">Agendado</option>
+                            <option value="CONFIRMADO">Confirmado</option>
+                            <option value="EM_EXECUCAO">Em Execução</option>
+                            <option value="CONCLUIDO">Concluído</option>
+                            <option value="REAGENDADO">Reagendado</option>
+                            <option value="ATRASADO">Atrasado</option>
+                            <option value="CANCELADO">Cancelado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Tempo previsto (min)</label>
+                        <input id="editDuration" type="number" min="0" step="15" placeholder="Ex: 120"
+                               class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável pela Obra</label>
+                        <input id="editResponsible" list="vendedoresList" type="text" placeholder="Hugo"
+                               class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                        <datalist id="vendedoresList">
+                            <option th:each="v : ${vendedores}" th:value="${v}"></option>
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Equipe</label>
+                        <input id="editTeam" type="text" placeholder="Ex: Yago, Igor"
+                               class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Motivo (reagendamento / cancelamento)</label>
+                    <input id="editReason" type="text" placeholder="Ex: Cliente solicitou nova data"
+                           class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+                </div>
+
+                <div class="mb-5">
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Observações</label>
+                    <textarea id="editObservations" rows="3" placeholder="Detalhes adicionais do agendamento..."
+                              class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white"></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 flex items-center gap-2">
+                        <i data-lucide="history" class="w-3.5 h-3.5"></i> Histórico
+                    </h4>
+                    <div id="editHistory" class="space-y-2 max-h-32 overflow-y-auto text-xs bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800"></div>
+                </div>
+
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <button data-permission="delete" type="button" onclick="openCancelModalFromEdit()" class="px-5 py-3 rounded-xl text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex items-center gap-2">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Cancelar Agendamento
+                    </button>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeModal('editModal')" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
+                            Voltar
                         </button>
-                        <button data-permission="edit" type="button" onclick="toggleDeadlineEditor()" title="Cancelar"
-                                class="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:opacity-90 transition-opacity">
-                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        <button data-permission="edit" type="button" onclick="submitScheduleForm()" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white font-black shadow-lg shadow-brand-500/20 transition-all text-sm">
+                            Salvar
                         </button>
                     </div>
                 </div>
-                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
-                    <span class="block text-slate-400 font-bold uppercase mb-2">Serviços / Itens a Executar</span>
-                    <div id="editInfoServices" class="space-y-1.5 max-h-32 overflow-y-auto pr-1"></div>
-                </div>
-            </div>
-
-            <input type="hidden" id="editId">
-
-            <div class="mb-4">
-                <div class="flex items-center justify-between mb-1.5">
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
-                        Dias agendados <span class="text-slate-400 normal-case font-medium">(este serviço pode ter mais de um dia)</span>
-                    </label>
-                    <button data-permission="edit" type="button" onclick="openAddOccurrenceEditor()"
-                            class="text-xs font-bold text-brand-600 dark:text-cyan-400 hover:underline flex items-center gap-1">
-                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Adicionar outro dia
-                    </button>
-                </div>
-                <div id="occurrencesList" class="flex flex-wrap gap-2 mb-2"></div>
-
-                <div id="occurrenceEditor" class="hidden bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 mt-2">
-                    <input type="hidden" id="occEditingId">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Data</label>
-                            <input id="occDate" type="date" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Horário</label>
-                            <input id="occTime" type="time" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Equipe / Responsável</label>
-                            <input id="occTeam" type="text" placeholder="Ex: Yago, Igor" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Observação deste dia</label>
-                            <input id="occObservations" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm outline-none focus:border-brand-500 dark:text-white">
-                        </div>
-                    </div>
-                    <p id="occEditorHint" class="text-[11px] text-slate-400 mb-2"></p>
-                    <div class="flex justify-end gap-2">
-                        <button type="button" onclick="closeOccurrenceEditor()" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
-                        <button data-permission="edit" type="button" id="occEditorSubmitBtn" onclick="submitOccurrenceEditor()" class="px-3 py-1.5 rounded-lg bg-brand-600 dark:bg-cyan-500 text-white dark:text-slate-900 text-xs font-black hover:opacity-90 transition-opacity">Adicionar à lista</button>
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Data de execução (principal)</label>
-                    <input id="editDate" type="date" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Horário</label>
-                    <input id="editTime" type="time" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Status</label>
-                    <select id="editStatus" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
-                        <option value="AGUARDANDO_AGENDAMENTO">Aguardando Agendamento</option>
-                        <option value="AGENDADO">Agendado</option>
-                        <option value="CONFIRMADO">Confirmado</option>
-                        <option value="EM_EXECUCAO">Em Execução</option>
-                        <option value="CONCLUIDO">Concluído</option>
-                        <option value="REAGENDADO">Reagendado</option>
-                        <option value="ATRASADO">Atrasado</option>
-                        <option value="CANCELADO">Cancelado</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Tempo previsto (min)</label>
-                    <input id="editDuration" type="number" min="0" step="15" placeholder="Ex: 120"
-                           class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável pela Obra</label>
-                    <input id="editResponsible" list="vendedoresList" type="text" placeholder="Hugo"
-                           class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
-                    <datalist id="vendedoresList">
-                        <option th:each="v : ${vendedores}" th:value="${v}"></option>
-                    </datalist>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Equipe</label>
-                    <input id="editTeam" type="text" placeholder="Ex: Yago, Igor"
-                           class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
-                </div>
-            </div>
-
-            <div class="mb-4">
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Motivo (reagendamento / cancelamento)</label>
-                <input id="editReason" type="text" placeholder="Ex: Cliente solicitou nova data"
-                       class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
-            </div>
-
-            <div class="mb-5">
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Observações</label>
-                <textarea id="editObservations" rows="3" placeholder="Detalhes adicionais do agendamento..."
-                          class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white"></textarea>
-            </div>
-
-            <div class="mb-6">
-                <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 flex items-center gap-2">
-                    <i data-lucide="history" class="w-3.5 h-3.5"></i> Histórico
-                </h4>
-                <div id="editHistory" class="space-y-2 max-h-32 overflow-y-auto text-xs bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800"></div>
-            </div>
-
-            <div class="flex flex-wrap justify-between items-center gap-3">
-                <button data-permission="delete" type="button" onclick="openCancelModalFromEdit()" class="px-5 py-3 rounded-xl text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex items-center gap-2">
-                    <i data-lucide="x-circle" class="w-4 h-4"></i> Cancelar Agendamento
-                </button>
-                <div class="flex gap-3">
-                    <button type="button" onclick="closeModal('editModal')" class="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-800 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
-                        Voltar
-                    </button>
-                    <button data-permission="edit" type="button" onclick="submitScheduleForm()" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 text-white font-black shadow-lg shadow-brand-500/20 transition-all text-sm">
-                        Salvar
-                    </button>
-                </div>
-            </div>
             </fieldset>
         </div>
     </div>
@@ -962,9 +963,11 @@
                 <div class="mb-4 p-2.5 bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-lg shadow-inner">
                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">${isVisit ? 'Visita Técnica' : 'Serviços / Itens Agendados'}</p>
                     <div class="flex flex-col gap-1.5">
-                        ${(s.serviceDetails && Array.isArray(s.serviceDetails))
-                ? s.serviceDetails.map(item => `<div class="bg-brand-50 dark:bg-cyan-900/20 border border-brand-100 dark:border-cyan-800/50 px-2.5 py-1.5 rounded-md text-[11px] font-semibold text-brand-700 dark:text-cyan-400">${item}</div>`).join('')
-                : `<span class="text-xs font-semibold text-brand-700 dark:text-cyan-400">${s.serviceType || 'Não detalhado'}</span>`
+                        ${isVisit
+                ? `<div data-visit-description class="bg-brand-50 dark:bg-cyan-900/20 border border-brand-100 dark:border-cyan-800/50 px-2.5 py-1.5 rounded-md text-[11px] font-semibold text-brand-700 dark:text-cyan-400 break-words whitespace-pre-line">Visita técnica ao cliente</div>`
+                : (s.serviceDetails && Array.isArray(s.serviceDetails))
+                    ? s.serviceDetails.map(item => `<div class="bg-brand-50 dark:bg-cyan-900/20 border border-brand-100 dark:border-cyan-800/50 px-2.5 py-1.5 rounded-md text-[11px] font-semibold text-brand-700 dark:text-cyan-400">${item}</div>`).join('')
+                    : `<span class="text-xs font-semibold text-brand-700 dark:text-cyan-400">${s.serviceType || 'Não detalhado'}</span>`
             }
                     </div>
                 </div>
@@ -972,7 +975,7 @@
                 <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 mb-4">
                     <span><b>Orçamento:</b> ${s.quoteNumber || '-'}</span>
                     <span><b>OS:</b> ${s.workOrderNumber || '-'}</span>
-                    <span><b>Observações:</b> ${s.observations || '-'}</span>
+                    ${!isVisit ? `<span><b>Observações:</b> ${s.observations || '-'}</span>` : ''}
                     <span><b>${isVisit ? 'Agendada para' : 'Prazo - Entregar até'}:</b> ${fmtBR(isVisit ? s.scheduledDate : s.deadlineDate)}</span>
                     <span><b>Responsável:</b> ${s.responsible || '-'}</span>
                     <span><b>Hora Prevista:</b> ${s.scheduledTime ? fmtTimeBR(s.scheduledTime) : '-'}</span>
@@ -998,6 +1001,11 @@
             row.querySelector('[data-client-name]').textContent = s.clientName?.trim() || 'Sem cliente';
             row.querySelector('[data-client-address]').textContent = s.clientAddress?.trim() || 'Endereço não informado';
             row.querySelector('[data-client-phone]').textContent = s.clientPhone?.trim() || 'Telefone não informado';
+            if (isVisit) {
+                const notes = s.observations?.trim();
+                row.querySelector('[data-visit-description]').textContent = 'Visita técnica ao cliente'
+                    + (notes ? ' - Observações: ' + notes : '');
+            }
             list.appendChild(row);
         });
 
@@ -1320,18 +1328,6 @@
             alert('Erro de comunicação com o servidor.');
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
     function renderOccurrencesList(occurrences) {
         const list = document.getElementById('occurrencesList');
@@ -1711,10 +1707,6 @@
     .chip-active { background: #0284c7 !important; color: #fff !important; border-color: #0284c7 !important; }
     .dark .chip-active { background: #06b6d4 !important; color: #0B1120 !important; border-color: #06b6d4 !important; }
 
-    /* =========================================================
-       AGENDA - MELHORIAS RESPONSIVAS
-       Mobile permanece compacto; desktop aproveita melhor a tela.
-       ========================================================= */
 
     .agenda-main { min-width: 0; }
     .agenda-calendar-shell { scrollbar-width: thin; }
@@ -1927,6 +1919,82 @@
         }
     }
 
+
+    .day-modal-overlay {
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    .agenda-day-modal {
+        min-width: 0;
+        isolation: isolate;
+    }
+    .day-modal-list {
+        scrollbar-gutter: stable;
+        -webkit-overflow-scrolling: touch;
+    }
+    .day-modal-list > * {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .day-modal-list .grid {
+        min-width: 0;
+    }
+    .day-modal-list button {
+        max-width: 100%;
+        white-space: normal;
+    }
+    @media (max-width: 639px) {
+        .day-modal-overlay {
+            align-items: stretch;
+            padding: max(0.5rem, env(safe-area-inset-top)) 0.5rem max(0.5rem, env(safe-area-inset-bottom));
+        }
+        .agenda-day-modal {
+            width: 100%;
+            max-width: none;
+            max-height: calc(100dvh - max(1rem, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+            border-radius: 1rem;
+        }
+        .day-modal-header {
+            padding: 0.875rem;
+            gap: 0.75rem;
+        }
+        .day-modal-header > div:first-child {
+            padding-right: 1.75rem;
+        }
+        .day-modal-actions button {
+            min-height: 44px;
+            font-size: 0.8125rem;
+        }
+        .day-modal-list {
+            padding: 0.75rem;
+        }
+        .day-modal-list > div {
+            padding: 0.875rem;
+        }
+        .day-modal-list .grid.grid-cols-2 {
+            grid-template-columns: minmax(0, 1fr);
+        }
+        .day-modal-list .flex.flex-wrap.gap-2 > button {
+            flex: 1 1 100%;
+            justify-content: center;
+            min-height: 40px;
+        }
+    }
+    @media (min-width: 640px) {
+        .agenda-day-modal {
+            max-height: calc(100dvh - 2rem);
+        }
+    }
+    @supports not (height: 100dvh) {
+        .agenda-day-modal {
+            max-height: calc(100vh - 2rem);
+        }
+        @media (max-width: 639px) {
+            .agenda-day-modal {
+                max-height: calc(100vh - 1rem);
+            }
+        }
+    }
 
 </style>
 

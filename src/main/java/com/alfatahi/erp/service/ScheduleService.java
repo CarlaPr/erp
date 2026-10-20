@@ -695,10 +695,7 @@ public class ScheduleService {
                     .map(item -> {
                         String cat = item.getCategory() != null ? item.getCategory() : "Item";
                         String prod = item.getProduct() != null ? item.getProduct() : "";
-                        String detalhe = cat + (prod.isBlank() ? "" : " (" + prod + ")");
-                        return item.getDescription() == null || item.getDescription().isBlank()
-                                ? detalhe
-                                : detalhe + " — Obs.: " + item.getDescription().trim();
+                        return cat + (prod.isBlank() ? "" : " (" + prod + ")");
                     })
                     .collect(Collectors.toList());
         }

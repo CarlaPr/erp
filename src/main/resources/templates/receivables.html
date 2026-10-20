@@ -1079,6 +1079,7 @@
     }
 </style>
 
+<script th:src="@{/js/currency-brl.js}"></script>
 <script>
     const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
@@ -1091,81 +1092,26 @@
     // CAMPOS MONETÁRIOS EM BRL
     // =========================================================
     function formatarMoedaBRL(valor) {
-        const numero = typeof valor === 'number' ? valor : parseMoedaBRL(valor);
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(Number.isFinite(numero) ? numero : 0);
+        return BRLCurrency.format(valor);
     }
 
     function parseMoedaBRL(valor) {
-        if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0;
-        if (valor === null || valor === undefined) return 0;
-
-        let texto = String(valor).trim();
-        if (!texto) return 0;
-
-        texto = texto
-            .replace(/R\$/gi, '')
-            .replace(/\s/g, '')
-            .replace(/\./g, '')
-            .replace(',', '.');
-
-        const numero = Number(texto);
-        return Number.isFinite(numero) ? numero : 0;
+        return BRLCurrency.parse(valor);
     }
 
-    // Permite digitar 1250,50 ou 1250.50 e mantém no máximo duas casas decimais.
+    // Preserva os separadores durante a digitação, inclusive o milhar em 3.600.
     function sanitizarCampoMoedaBRL(input) {
-        let valor = input.value
-            .replace(/R\$/gi, '')
-            .replace(/\s/g, '')
-            .replace(/[^0-9.,]/g, '');
-
-        const ultimaVirgula = valor.lastIndexOf(',');
-        const ultimoPonto = valor.lastIndexOf('.');
-        const posSeparador = Math.max(ultimaVirgula, ultimoPonto);
-
-        if (posSeparador >= 0) {
-            const inteiros = valor.substring(0, posSeparador).replace(/[.,]/g, '');
-            const decimais = valor.substring(posSeparador + 1).replace(/[.,]/g, '').substring(0, 2);
-            valor = inteiros + ',' + decimais;
-        } else {
-            valor = valor.replace(/[.,]/g, '');
-        }
-
-        input.value = valor;
+        BRLCurrency.sanitizeInput(input);
     }
 
     // Ao focar, remove R$ e separador de milhar para facilitar a edição.
     function prepararCampoMoedaBRL(input) {
-        const numero = parseMoedaBRL(input.value);
-        if (numero <= 0) {
-            input.value = '';
-            return;
-        }
-
-        input.value = numero.toLocaleString('pt-BR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            useGrouping: false
-        });
-        input.select();
+        BRLCurrency.prepareInput(input);
     }
 
     // Ao sair do campo, mostra a moeda completa: R$ 1.250,50.
     function formatarCampoMoedaBRL(input) {
-        const numero = parseMoedaBRL(input.value);
-        input.value = numero > 0 ? formatarMoedaBRL(numero) : '';
-    }
-
-    // Antes de enviar ao Spring, converte o texto BRL para decimal padrão (1250.00).
-    function normalizarCampoMoedaParaEnvio(input) {
-        if (!input) return;
-        const numero = parseMoedaBRL(input.value);
-        input.value = numero > 0 ? numero.toFixed(2) : '';
+        BRLCurrency.formatInput(input);
     }
 
     let clientsList = [];
@@ -1193,21 +1139,8 @@
             formatarCampoMoedaBRL(newGross);
         }
 
-        // Criação: envia totalAmount como decimal padrão para o backend.
-        const receivableForm = document.getElementById('receivableForm');
-        if (receivableForm) {
-            receivableForm.addEventListener('submit', function () {
-                normalizarCampoMoedaParaEnvio(document.getElementById('newReceivableGross'));
-            });
-        }
-
-        // Edição: mesma regra usada na criação.
-        const editForm = document.getElementById('editForm');
-        if (editForm) {
-            editForm.addEventListener('submit', function () {
-                normalizarCampoMoedaParaEnvio(document.getElementById('editTotalAmount'));
-            });
-        }
+        BRLCurrency.bindForm(document.getElementById('receivableForm'), document.getElementById('newReceivableGross'));
+        BRLCurrency.bindForm(document.getElementById('editForm'), document.getElementById('editTotalAmount'));
     });
 
     function openClientSearch(target) {
@@ -1454,7 +1387,7 @@
     function openEditModal(id, description, total, dueDate, installments, notes, client, workOrder, receivedAmount, referenceMonth, paymentStageArg){
         document.getElementById("editForm").action = "/receivables/edit/" + id;
         document.getElementById("editDescription").value = description || "";
-        document.getElementById("editTotalAmount").value = parseMoedaBRL(total) > 0 ? formatarMoedaBRL(total) : "";
+        document.getElementById("editTotalAmount").value = Number(total) > 0 ? formatarMoedaBRL(Number(total)) : "";
         document.getElementById("editDueDate").value = dueDate || "";
         document.getElementById("editReferenceMonth").value = referenceMonth || "";
         document.getElementById("editInstallments").value = installments || 1;

@@ -3,6 +3,7 @@ package com.alfatahi.erp.controller;
 import com.alfatahi.erp.entity.Quote;
 import com.alfatahi.erp.entity.Client;
 import com.alfatahi.erp.entity.QuoteItem;
+import com.alfatahi.erp.entity.QuoteItemMeasurement;
 import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.repository.QuoteRepository;
 import com.alfatahi.erp.service.CompanyImageService;
@@ -73,18 +74,20 @@ public class QuoteController {
             BigDecimal gross = BigDecimal.ZERO;
 
             for (QuoteItem item : quote.getItems()) {
-                BigDecimal qty = item.getPricingQuantity();
-                BigDecimal calcUnit = item.getCalculatedUnitPrice();
-                BigDecimal subtotal = item.getSubtotal();
-                gross = gross.add(subtotal);
-
-                Map<String, String> row = new LinkedHashMap<>();
-                row.put("category",  nvlStr(item.getCategory(), "Item"));
-                row.put("product",   nvlStr(item.getProduct(),  ""));
-                row.put("quantity",  qty.stripTrailingZeros().toPlainString());
-                row.put("unitPrice", formatBRL(calcUnit));
-                row.put("subtotal",  formatBRL(subtotal));
-                itemRows.add(row);
+                gross = gross.add(item.getSubtotal());
+                if (item.getMeasurements().isEmpty()) {
+                    itemRows.add(pdfItemRow(item, item.getPricingQuantity(), item.getCalculatedUnitPrice(),
+                            item.getSubtotal(), ""));
+                } else {
+                    for (QuoteItemMeasurement measure : item.getMeasurements()) {
+                        BigDecimal qty = nvl(measure.getQuantity(), nvl(item.getQuantity(), BigDecimal.ONE));
+                        BigDecimal pricePerM2 = nvl(measure.getUnitPrice(), nvl(item.getUnitPrice()));
+                        BigDecimal unitPrice = measure.getAreaM2().multiply(pricePerM2);
+                        String dimensions = formatDimension(measure.getWidth()) + " × "
+                                + formatDimension(measure.getHeight()) + " m";
+                        itemRows.add(pdfItemRow(item, qty, unitPrice, unitPrice.multiply(qty), dimensions));
+                    }
+                }
             }
 
             BigDecimal discountPct = nvl(quote.getDiscountPercent());
@@ -208,6 +211,22 @@ public class QuoteController {
     }
 
 
+
+    private Map<String, String> pdfItemRow(QuoteItem item, BigDecimal quantity, BigDecimal unitPrice,
+                                          BigDecimal subtotal, String dimensions) {
+        Map<String, String> row = new LinkedHashMap<>();
+        row.put("category", nvlStr(item.getCategory(), "Item"));
+        row.put("product", nvlStr(item.getProduct(), ""));
+        row.put("dimensions", dimensions);
+        row.put("quantity", quantity.stripTrailingZeros().toPlainString());
+        row.put("unitPrice", formatBRL(unitPrice));
+        row.put("subtotal", formatBRL(subtotal));
+        return row;
+    }
+
+    private String formatDimension(BigDecimal value) {
+        return nvl(value).stripTrailingZeros().toPlainString().replace('.', ',');
+    }
 
     private void registerFonts(PdfRendererBuilder builder) {
         for (int weight : new int[]{400, 500, 600, 700, 800, 900}) {
