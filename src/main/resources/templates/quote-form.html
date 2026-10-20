@@ -214,7 +214,7 @@
                                 <label class="text-xs font-bold text-slate-500 dark:text-slate-400">Altura (m)
                                     <input data-measurement-height type="number" step="0.01" min="0.01" placeholder="0,00" class="mt-1 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-900 dark:text-white outline-none text-center focus:border-brand-500 dark:focus:border-cyan-500 text-base">
                                 </label>
-                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400">Quantidade
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400">Quantidade (un.)
                                     <input data-measurement-quantity type="number" step="1" min="1" value="1" class="mt-1 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-base text-center">
                                 </label>
                                 <label class="text-xs font-bold text-slate-500 dark:text-slate-400"><span data-measurement-price-label>Preço do m² (R$)</span>
@@ -222,6 +222,7 @@
                                 </label>
                                 <div class="col-span-2 lg:col-span-4 flex flex-wrap justify-between gap-2 text-sm font-bold text-brand-700 dark:text-cyan-400 pt-2">
                                     <span>Área: <span data-measurement-area>0 m²</span></span>
+                                    <span>Valor por unidade: <span data-measurement-unit-total>R$ 0,00</span></span>
                                     <span>Subtotal: <span data-measurement-subtotal>R$ 0,00</span></span>
                                 </div>
                             </div>
@@ -261,7 +262,7 @@
                         <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm uppercase tracking-wider font-bold">
                         <tr>
                             <th class="p-5">Item / Descrição</th>
-                            <th class="p-5 text-center">Qtd</th>
+                            <th class="p-5 text-center">Qtd (un.)</th>
                             <th class="p-5 text-center">M² Un.</th>
                             <th class="p-5 text-center">M² Total</th>
                             <th class="p-5 text-right">Preço Un.</th>
@@ -1268,10 +1269,12 @@
             const measure = values[index];
             const measureArea = measure.width > 0 && measure.height > 0 ? measure.width * measure.height : 0;
             const unitItem = values.length === 1 && measure.width === 0 && measure.height === 0;
-            const measureSubtotal = (unitItem ? 1 : measureArea) * measure.quantity * measure.unitPrice;
+            const measureUnitPrice = (unitItem ? 1 : measureArea) * measure.unitPrice;
+            const measureSubtotal = measureUnitPrice * measure.quantity;
             area += measureArea * measure.quantity;
             subtotal += measureSubtotal;
             row.querySelector('[data-measurement-area]').textContent = QuoteMeasurements.formatNumber(measureArea) + ' m²';
+            row.querySelector('[data-measurement-unit-total]').textContent = formatarMoeda(measureUnitPrice);
             row.querySelector('[data-measurement-subtotal]').textContent = formatarMoeda(measureSubtotal);
             row.querySelector('[data-measurement-price-label]').textContent = unitItem ? 'Preço unitário (R$)' : 'Preço do m² (R$)';
         });
@@ -1406,12 +1409,12 @@
         }
 
         currentItems.forEach((item, idx) => {
-            let m2Unitario = QuoteMeasurements.area(item);
-            let m2Total = QuoteMeasurements.totalArea(item);
-            let precoPecaUnitaria = QuoteMeasurements.unitTotal(item);
-            let sub = QuoteMeasurements.subtotal(item);
-            const quantityText = QuoteMeasurements.hasPerMeasurementPricing(item) ? 'Por medida' : item.quantity;
-            const priceText = QuoteMeasurements.hasPerMeasurementPricing(item) ? 'Por medida' : formatarMoeda(precoPecaUnitaria);
+            const summary = QuoteMeasurements.summary(item);
+            const m2Total = summary.totalArea;
+            const sub = summary.subtotal;
+            const quantityText = summary.rows.map(line => QuoteMeasurements.formatNumber(line.quantity)).join('\n');
+            const priceText = summary.rows.map(line => formatarMoeda(line.unitPrice)).join('\n');
+            const areaText = summary.rows.map(line => line.area > 0 ? line.area.toFixed(2) + ' m²' : '—').join('\n');
             grossTotal += sub;
 
             const rowHighlight = idx === editingItemIndex
@@ -1421,10 +1424,10 @@
             tbody.innerHTML += `
         <tr class="${rowHighlight} transition-colors">
             <td class="p-4 text-slate-900 dark:text-white whitespace-pre-line"><span class="font-bold text-brand-600 dark:text-cyan-400 block mb-1">[${item.category}]</span>${item.product}</td>
-            <td class="p-4 text-center text-slate-900 dark:text-slate-300 font-bold">${quantityText}</td>
-            <td class="p-4 text-center text-slate-600 dark:text-slate-400 font-mono">${m2Unitario > 0 ? m2Unitario.toFixed(2) + ' m²' : '—'}</td>
+            <td class="p-4 text-center text-slate-900 dark:text-slate-300 font-bold whitespace-pre-line">${quantityText}</td>
+            <td class="p-4 text-center text-slate-600 dark:text-slate-400 font-mono whitespace-pre-line">${areaText}</td>
             <td class="p-4 text-center text-brand-600 dark:text-cyan-400 font-mono font-bold">${m2Total > 0 ? m2Total.toFixed(2) + ' m²' : '—'}</td>
-            <td class="p-4 text-right text-slate-600 dark:text-slate-400 font-mono">${priceText}</td>
+            <td class="p-4 text-right text-slate-600 dark:text-slate-400 font-mono whitespace-pre-line">${priceText}</td>
             <td class="p-4 text-right text-emerald-600 dark:text-emerald-400 font-bold font-mono">${formatarMoeda(sub)}</td>
             <td class="p-4 text-center">
                 <div class="flex items-center justify-center gap-1">
@@ -1447,10 +1450,9 @@
                     <button data-permission="edit" type="button" onclick="removeQuoteItem(${idx})" class="p-2 rounded-lg text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400" title="Remover item"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-3">
-                <div>Qtd: <span class="text-slate-800 dark:text-slate-200 font-bold">${quantityText}</span></div>
+            <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-3">
+                ${summary.rows.map(line => `<div class="flex justify-between gap-3"><span>Qtd: <b class="text-slate-800 dark:text-slate-200">${QuoteMeasurements.formatNumber(line.quantity)} un.</b></span><span>Preço Un.: <b class="text-slate-800 dark:text-slate-200">${formatarMoeda(line.unitPrice)}</b></span></div>`).join('')}
                 <div>M² Total: <span class="text-slate-800 dark:text-slate-200 font-bold">${m2Total > 0 ? m2Total.toFixed(2) + ' m²' : '—'}</span></div>
-                <div>Preço Un.: <span class="text-slate-800 dark:text-slate-200 font-bold">${priceText}</span></div>
             </div>
             <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-2.5 mt-3">
                 <span class="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide">Subtotal</span>

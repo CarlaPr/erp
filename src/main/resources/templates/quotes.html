@@ -1436,8 +1436,10 @@
                 if(itemsTbody) {
                     itemsTbody.innerHTML = '';
                     q.items.forEach(item => {
-                        let precoPecaUnitaria = QuoteMeasurements.unitTotal(item);
-                        let sub = QuoteMeasurements.subtotal(item);
+                        const summary = QuoteMeasurements.summary(item);
+                        const quantityText = summary.rows.map(line => QuoteMeasurements.formatNumber(line.quantity)).join('\n');
+                        const priceText = summary.rows.map(line => formatarMoeda(line.unitPrice)).join('\n');
+                        const sub = summary.subtotal;
                         calculatedGross += sub;
 
                         itemsTbody.innerHTML += `
@@ -1447,8 +1449,8 @@
                             <span class="text-sm text-slate-600 font-normal whitespace-pre-line leading-tight block mt-1 p-0">${item.product}</span>
                         </td>
                         <td class="py-2.5 px-3 text-center text-slate-500 font-mono text-xs">un</td>
-                        <td class="py-2.5 px-3 text-center font-bold text-slate-900 text-sm">${QuoteMeasurements.pricingQuantity(item)}</td>
-                        <td class="py-2.5 px-3 text-right font-mono text-slate-600 text-sm">${formatarMoeda(precoPecaUnitaria)}</td>
+                        <td class="py-2.5 px-3 text-center font-bold text-slate-900 text-sm whitespace-pre-line">${quantityText}</td>
+                        <td class="py-2.5 px-3 text-right font-mono text-slate-600 text-sm whitespace-pre-line">${priceText}</td>
                         <td class="py-2.5 px-3 text-right pr-4 font-mono font-bold text-slate-900 text-sm">${formatarMoeda(sub)}</td>
                     </tr>`;
                     });

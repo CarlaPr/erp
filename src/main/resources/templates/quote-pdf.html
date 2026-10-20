@@ -127,7 +127,6 @@
         .items-table td.col-sub-td  { padding-right: 16px; text-align: right; font-weight: 700; }
         .item-category { font-weight: 800; font-size: 12px; color: #0f172a; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.25; }
         .item-product  { font-size: 9.5px;  color: #475569; margin-top: 3px; white-space: pre-line; line-height: 1.55; font-weight: 500; }
-        .item-dimensions { font-size: 9px; color: #64748b; margin-top: 3px; }
 
         .totals-wrapper { border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 14px 14px; overflow: hidden; margin-bottom: 14px; }
         .totals-table { width: 100%; border-collapse: collapse; }
@@ -276,11 +275,10 @@
             <td class="col-desc-td">
                 <div class="item-category" th:text="${row.category}">Categoria</div>
                 <div class="item-product"  th:if="${!row.product.isEmpty()}" th:text="${row.product}"></div>
-                <div class="item-dimensions" th:if="${!row.dimensions.isEmpty()}" th:text="${row.dimensions}"></div>
             </td>
             <td style="text-align:center; color:#64748b; font-size:9.5px; font-weight:600;">un</td>
-            <td style="text-align:center; font-weight:700;" th:text="${row.quantity}">1</td>
-            <td style="text-align:right; color:#64748b; font-weight:600;" th:text="${row.unitPrice}">R$ 0,00</td>
+            <td style="text-align:center; font-weight:700; white-space:pre-line;" th:text="${row.quantity}">1</td>
+            <td style="text-align:right; color:#64748b; font-weight:600; white-space:pre-line;" th:text="${row.unitPrice}">R$ 0,00</td>
             <td class="col-sub-td" th:text="${row.subtotal}">R$ 0,00</td>
         </tr>
         </tbody>

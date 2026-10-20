@@ -75,19 +75,7 @@ public class QuoteController {
 
             for (QuoteItem item : quote.getItems()) {
                 gross = gross.add(item.getSubtotal());
-                if (item.getMeasurements().isEmpty()) {
-                    itemRows.add(pdfItemRow(item, item.getPricingQuantity(), item.getCalculatedUnitPrice(),
-                            item.getSubtotal(), ""));
-                } else {
-                    for (QuoteItemMeasurement measure : item.getMeasurements()) {
-                        BigDecimal qty = nvl(measure.getQuantity(), nvl(item.getQuantity(), BigDecimal.ONE));
-                        BigDecimal pricePerM2 = nvl(measure.getUnitPrice(), nvl(item.getUnitPrice()));
-                        BigDecimal unitPrice = measure.getAreaM2().multiply(pricePerM2);
-                        String dimensions = formatDimension(measure.getWidth()) + " × "
-                                + formatDimension(measure.getHeight()) + " m";
-                        itemRows.add(pdfItemRow(item, qty, unitPrice, unitPrice.multiply(qty), dimensions));
-                    }
-                }
+                itemRows.add(pdfItemRow(item));
             }
 
             BigDecimal discountPct = nvl(quote.getDiscountPercent());
@@ -212,20 +200,27 @@ public class QuoteController {
 
 
 
-    private Map<String, String> pdfItemRow(QuoteItem item, BigDecimal quantity, BigDecimal unitPrice,
-                                          BigDecimal subtotal, String dimensions) {
+    private Map<String, String> pdfItemRow(QuoteItem item) {
         Map<String, String> row = new LinkedHashMap<>();
         row.put("category", nvlStr(item.getCategory(), "Item"));
         row.put("product", nvlStr(item.getProduct(), ""));
-        row.put("dimensions", dimensions);
-        row.put("quantity", quantity.stripTrailingZeros().toPlainString());
-        row.put("unitPrice", formatBRL(unitPrice));
-        row.put("subtotal", formatBRL(subtotal));
+        StringJoiner quantities = new StringJoiner("\n");
+        StringJoiner unitPrices = new StringJoiner("\n");
+        if (item.getMeasurements().isEmpty()) {
+            quantities.add(item.getPricingQuantity().stripTrailingZeros().toPlainString());
+            unitPrices.add(formatBRL(item.getCalculatedUnitPrice()));
+        } else {
+            for (QuoteItemMeasurement measure : item.getMeasurements()) {
+                BigDecimal quantity = nvl(measure.getQuantity(), nvl(item.getQuantity(), BigDecimal.ONE));
+                BigDecimal pricePerM2 = nvl(measure.getUnitPrice(), nvl(item.getUnitPrice()));
+                quantities.add(quantity.stripTrailingZeros().toPlainString());
+                unitPrices.add(formatBRL(measure.getAreaM2().multiply(pricePerM2)));
+            }
+        }
+        row.put("quantity", quantities.toString());
+        row.put("unitPrice", unitPrices.toString());
+        row.put("subtotal", formatBRL(item.getSubtotal()));
         return row;
-    }
-
-    private String formatDimension(BigDecimal value) {
-        return nvl(value).stripTrailingZeros().toPlainString().replace('.', ',');
     }
 
     private void registerFonts(PdfRendererBuilder builder) {

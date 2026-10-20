@@ -26,14 +26,29 @@
             <li th:each="item : ${quote.items}" class="py-3 flex flex-col gap-1">
                 <div class="flex justify-between items-start gap-4">
                     <span class="font-medium text-slate-700 leading-tight">
-                        <span class="font-bold text-slate-900" th:text="${item.pricingQuantity + 'x'}"></span>
+                        <span th:if="${item.measurements.isEmpty()}" class="font-bold text-slate-900" th:text="${item.pricingQuantity + 'x'}"></span>
                         <span class="whitespace-pre-line" th:text="${(item.category ?: 'Item') + ' - ' + (item.product ?: '')}"></span>
                     </span>
                     <span class="font-bold text-slate-900 whitespace-nowrap"
                           th:with="
                             subtotal=${item.subtotal}"
-                          th:text="${'R$ ' + #numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}">
+                          th:text="${'R$ ' + #numbers.formatDecimal(subtotal, 1, 'POINT', 2, 'COMMA')}">
                     </span>
+                </div>
+                <div th:if="${item.measurements.isEmpty()}" class="text-xs text-slate-600 mt-1">
+                    Valor unitário:
+                    <span th:text="${'R$ ' + #numbers.formatDecimal(item.calculatedUnitPrice, 1, 'POINT', 2, 'COMMA')}"></span>
+                </div>
+                <div th:each="measure : ${item.measurements}" class="text-xs text-slate-600 mt-2 border-t border-slate-200 pt-2"
+                     th:with="quantity=${measure.quantity != null ? measure.quantity : (item.quantity != null ? item.quantity : item.pricingQuantity)},
+                              pricePerM2=${measure.unitPrice != null ? measure.unitPrice : (item.unitPrice != null ? item.unitPrice : 0)},
+                              pricePerUnit=${measure.areaM2 * pricePerM2}">
+                    <div class="flex justify-between gap-3">
+                        <strong th:text="${quantity.stripTrailingZeros().toPlainString() + ' un.'}"></strong>
+                        <span>
+                        Valor unitário: <span th:text="${'R$ ' + #numbers.formatDecimal(pricePerUnit, 1, 'POINT', 2, 'COMMA')}"></span>
+                        </span>
+                    </div>
                 </div>
             </li>
         </ul>

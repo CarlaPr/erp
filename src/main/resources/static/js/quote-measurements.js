@@ -19,9 +19,33 @@
     }
 
     function subtotal(item) {
+        return summary(item).subtotal;
+    }
+
+    function summary(item) {
+        const rows = unitRows(item);
+        return {
+            rows,
+            totalArea: rows.reduce((total, row) => total + row.totalArea, 0),
+            subtotal: rows.reduce((total, row) => total + row.subtotal, 0)
+        };
+    }
+
+    function unitRows(item) {
         const values = measurements(item);
-        return values.length ? values.reduce((total, measure) => total + Number(measure.width) * Number(measure.height) * measure.quantity * measure.unitPrice, 0)
-            : Number(item.quantity ?? 1) * Number(item.unitPrice ?? 0);
+        if (!values.length) {
+            const quantity = Number(item.quantity ?? 1);
+            const unitPrice = Number(item.unitPrice ?? 0);
+            return [{ width: 0, height: 0, area: 0, totalArea: 0, quantity, unitPrice, subtotal: quantity * unitPrice }];
+        }
+        return values.map(measure => {
+            const width = Number(measure.width);
+            const height = Number(measure.height);
+            const area = width * height;
+            const quantity = measure.quantity;
+            const unitPrice = area * measure.unitPrice;
+            return { width, height, area, totalArea: area * quantity, quantity, unitPrice, subtotal: quantity * unitPrice };
+        });
     }
 
     function hasPerMeasurementPricing(item) {
@@ -40,5 +64,5 @@
         return Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 4 });
     }
 
-    root.QuoteMeasurements = { measurements, area, totalArea, subtotal, hasPerMeasurementPricing, pricingQuantity, unitTotal, formatNumber };
+    root.QuoteMeasurements = { measurements, area, totalArea, subtotal, summary, unitRows, hasPerMeasurementPricing, pricingQuantity, unitTotal, formatNumber };
 })(typeof window !== 'undefined' ? window : globalThis);
