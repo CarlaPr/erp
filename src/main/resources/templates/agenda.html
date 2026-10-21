@@ -1003,7 +1003,7 @@
             row.querySelector('[data-client-phone]').textContent = s.clientPhone?.trim() || 'Telefone não informado';
             if (isVisit) {
                 const notes = s.observations?.trim();
-                row.querySelector('[data-visit-description]').textContent = 'Visita técnica ao cliente'
+                row.querySelector('[data-visit-description]').textContent = ''
                     + (notes ? ' - Observações: ' + notes : '');
             }
             list.appendChild(row);
