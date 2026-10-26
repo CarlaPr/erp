@@ -1,0 +1,7 @@
+package com.alfatahi.erp.dto;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public record ServiceSalesDetailDto(String name, long items, String unitsLabel, boolean showUnits,
+                                    BigDecimal amount, List<ServiceSalesEntryDto> entries) { }

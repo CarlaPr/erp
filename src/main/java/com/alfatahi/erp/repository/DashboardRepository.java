@@ -1,7 +1,10 @@
 package com.alfatahi.erp.repository;
 
+import com.alfatahi.erp.dto.ApprovedQuoteSaleDto;
 import com.alfatahi.erp.dto.DashboardMonthDto;
 import com.alfatahi.erp.dto.DashboardPaymentMethodDto;
+import com.alfatahi.erp.entity.QuoteItem;
+import com.alfatahi.erp.entity.QuoteItemMeasurement;
 import com.alfatahi.erp.service.FinancialPeriod;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -12,10 +15,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 @Repository
@@ -169,6 +175,75 @@ public class DashboardRepository {
                     revenue.getOrDefault(month, BigDecimal.ZERO), income.getOrDefault(month, BigDecimal.ZERO),
                     expenses.getOrDefault(month, BigDecimal.ZERO), closings.get(period.from()));
         }).toList();
+    }
+
+    /**
+     * Mesmo critério do faturamento (orçamento aprovado no período, com O.S. não cancelada).
+     * Parâmetros: :start e :end (fim exclusivo).
+     */
+    private static final String APPROVED_SALES_FILTER = """
+            LOWER(q.status) = 'approved'
+              AND LOWER(COALESCE(w.status, '')) NOT IN ('cancelada', 'cancelled', 'canceled')
+              AND q.date_approved >= :start AND q.date_approved < :end
+            """;
+
+    /**
+     * Orçamentos aprovados no período com o valor vendido (total da O.S., já com desconto) e seus itens.
+     * Os itens são montados como objetos transitórios para reaproveitar {@link QuoteItem#getSubtotal()}.
+     */
+    public List<ApprovedQuoteSaleDto> approvedQuoteSales(FinancialPeriod period) {
+        var params = new MapSqlParameterSource()
+                .addValue("start", period.from()).addValue("end", period.endExclusive());
+
+        Map<UUID, List<QuoteItemMeasurement>> measurements = new HashMap<>();
+        jdbc.query("""
+                SELECT m.quote_item_id, m.width, m.height, m.quantity, m.unit_price
+                FROM quote_item_measurements m
+                JOIN quote_items qi ON qi.id = m.quote_item_id
+                JOIN quotes q ON q.id = qi.quote_id
+                JOIN work_orders w ON w.quote_id = q.id
+                WHERE\s""" + APPROVED_SALES_FILTER + " ORDER BY m.quote_item_id, m.measurement_order",
+                params, (RowCallbackHandler) rs -> measurements
+                        .computeIfAbsent(rs.getObject("quote_item_id", UUID.class), id -> new ArrayList<>())
+                        .add(new QuoteItemMeasurement(rs.getBigDecimal("width"), rs.getBigDecimal("height"),
+                                rs.getBigDecimal("quantity"), rs.getBigDecimal("unit_price"))));
+
+        Map<UUID, ApprovedQuoteSaleDto> sales = new LinkedHashMap<>();
+        jdbc.query("""
+                SELECT q.id AS quote_id, q.number AS quote_number, w.number AS work_order_number,
+                       COALESCE(c.name, 'Sem cliente') AS client_name, q.date_approved,
+                       COALESCE(w.total_value, q.total_value, 0) AS sale_total,
+                       qi.id AS item_id, qi.category, qi.width, qi.height, qi.quantity, qi.unit_price
+                FROM quotes q
+                JOIN work_orders w ON w.quote_id = q.id
+                LEFT JOIN clients c ON c.id = COALESCE(q.client_id, w.client_id)
+                JOIN quote_items qi ON qi.quote_id = q.id
+                WHERE\s""" + APPROVED_SALES_FILTER + " ORDER BY q.date_approved, q.id, qi.id",
+                params, (RowCallbackHandler) rs -> {
+                    UUID quoteId = rs.getObject("quote_id", UUID.class);
+                    ApprovedQuoteSaleDto sale = sales.computeIfAbsent(quoteId, id -> {
+                        try {
+                            var approvedAt = rs.getTimestamp("date_approved");
+                            return new ApprovedQuoteSaleDto(id, rs.getString("quote_number"),
+                                    rs.getString("work_order_number"), rs.getString("client_name"),
+                                    approvedAt != null ? approvedAt.toLocalDateTime().toLocalDate() : null,
+                                    rs.getBigDecimal("sale_total"), new ArrayList<>());
+                        } catch (java.sql.SQLException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    });
+                    QuoteItem item = new QuoteItem();
+                    item.setId(rs.getObject("item_id", UUID.class));
+                    item.setCategory(rs.getString("category"));
+                    item.setWidth(rs.getBigDecimal("width"));
+                    item.setHeight(rs.getBigDecimal("height"));
+                    item.setQuantity(rs.getBigDecimal("quantity"));
+                    item.setUnitPrice(rs.getBigDecimal("unit_price"));
+                    item.setMeasurements(measurements.get(item.getId()));
+                    sale.items().add(item);
+                });
+
+        return List.copyOf(sales.values());
     }
 
     public List<DashboardPaymentMethodDto> paymentMethods(FinancialPeriod period) {
