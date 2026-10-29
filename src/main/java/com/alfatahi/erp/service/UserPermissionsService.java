@@ -38,6 +38,7 @@ public class UserPermissionsService {
             row.setView(custom == null ? defaults.canView() : custom.isCanView());
             row.setEdit(custom == null ? defaults.canEdit() : custom.isCanEdit());
             row.setDelete(custom == null ? defaults.canDelete() : custom.isCanDelete());
+            row.setManageAgendaBlocks(custom != null && custom.isCanManageAgendaBlocks());
             form.getPages().add(row);
         }
         return form;
@@ -66,6 +67,10 @@ public class UserPermissionsService {
             if ("custom".equals(row.getMode()) && !page.isWritable() && (row.isEdit() || row.isDelete())) {
                 throw new IllegalArgumentException(page.getLabel() + " permite apenas visualização.");
             }
+            if ("custom".equals(row.getMode()) && "agenda".equals(page.getKey())
+                    && row.isManageAgendaBlocks() && !row.isView()) {
+                throw new IllegalArgumentException("Ative Visualizar Agenda antes de liberar o bloqueio de dias.");
+            }
         }
         Map<String, UserPagePermission> existing = permissions.findByUserId(userId).stream()
                 .collect(Collectors.toMap(UserPagePermission::getPageKey, permission -> permission));
@@ -79,6 +84,7 @@ public class UserPermissionsService {
             permission.setCanView(row.isView());
             permission.setCanEdit(row.isEdit());
             permission.setCanDelete(row.isDelete());
+            permission.setCanManageAgendaBlocks("agenda".equals(row.getPageKey()) && row.isManageAgendaBlocks());
             saved.add(permission);
         }
         permissions.deleteAll(List.copyOf(existing.values()));

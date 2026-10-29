@@ -2,6 +2,7 @@ package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.dto.TechnicalVisitDto;
 import com.alfatahi.erp.dto.TechnicalVisitSaveRequest;
+import com.alfatahi.erp.exception.AgendaDayBlockedException;
 import com.alfatahi.erp.service.TechnicalVisitService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,8 @@ public class TechnicalVisitController {
             body.put("ok", true);
             body.put("id", dto.getId());
             return ResponseEntity.ok(body);
+        } catch (AgendaDayBlockedException e) {
+            return blocked(e);
         } catch (IllegalArgumentException | IllegalStateException e) {
             return errorBody(e.getMessage());
         } catch (Exception e) {
@@ -51,6 +54,8 @@ public class TechnicalVisitController {
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("ok", true);
             return ResponseEntity.ok(body);
+        } catch (AgendaDayBlockedException e) {
+            return blocked(e);
         } catch (IllegalArgumentException e) {
             return errorBody(e.getMessage());
         } catch (Exception e) {
@@ -77,6 +82,16 @@ public class TechnicalVisitController {
         body.put("ok", false);
         body.put("error", message);
         return ResponseEntity.badRequest().body(body);
+    }
+
+    private ResponseEntity<Map<String, Object>> blocked(AgendaDayBlockedException exception) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("ok", false);
+        body.put("blocked", true);
+        body.put("date", exception.getDate().toString());
+        body.put("reason", exception.getReason());
+        body.put("error", exception.getMessage());
+        return ResponseEntity.status(409).body(body);
     }
 
 }

@@ -2,6 +2,7 @@ package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.dto.TechnicalVisitOpeningRequest;
 import com.alfatahi.erp.dto.TechnicalVisitSaveRequest;
+import com.alfatahi.erp.exception.AgendaDayBlockedException;
 import com.alfatahi.erp.entity.Client;
 import com.alfatahi.erp.entity.TechnicalVisitPhoto;
 import com.alfatahi.erp.planocorte.entity.CategoriaServico;
@@ -174,6 +175,12 @@ public class TechnicalVisitPageController {
     }
     private ResponseEntity<Map<String, Object>> bad(Exception e) {
         Map<String, Object> body = new LinkedHashMap<>(); body.put("ok", false); body.put("error", e.getMessage());
+        if (e instanceof AgendaDayBlockedException blocked) {
+            body.put("blocked", true);
+            body.put("date", blocked.getDate().toString());
+            body.put("reason", blocked.getReason());
+            return ResponseEntity.status(409).body(body);
+        }
         return ResponseEntity.badRequest().body(body);
     }
 }

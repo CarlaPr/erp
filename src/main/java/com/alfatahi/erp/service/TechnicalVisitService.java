@@ -18,10 +18,13 @@ public class TechnicalVisitService {
 
     private final TechnicalVisitRepository visitRepo;
     private final QuoteRepository quoteRepo;
+    private final AgendaDayBlockService agendaDayBlockService;
 
-    public TechnicalVisitService(TechnicalVisitRepository visitRepo, QuoteRepository quoteRepo) {
+    public TechnicalVisitService(TechnicalVisitRepository visitRepo, QuoteRepository quoteRepo,
+                                 AgendaDayBlockService agendaDayBlockService) {
         this.visitRepo = visitRepo;
         this.quoteRepo = quoteRepo;
+        this.agendaDayBlockService = agendaDayBlockService;
     }
 
     @Transactional
@@ -35,6 +38,7 @@ public class TechnicalVisitService {
         if (req.getVisitDate() == null) {
             throw new IllegalArgumentException("Informe a data da visita técnica.");
         }
+        agendaDayBlockService.assertNotBlocked(req.getVisitDate());
 
         TechnicalVisit visit = new TechnicalVisit();
         visit.setQuote(quote);
@@ -73,6 +77,10 @@ public class TechnicalVisitService {
 
         TechnicalVisit visit = visitRepo.findById(req.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Visita técnica não encontrada: " + req.getId()));
+
+        if (!req.getVisitDate().equals(visit.getVisitDate())) {
+            agendaDayBlockService.assertNotBlocked(req.getVisitDate());
+        }
 
         visit.setVisitDate(req.getVisitDate());
         visit.setVisitTime(req.getVisitTime());

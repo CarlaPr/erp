@@ -18,6 +18,8 @@ public class UserPagePermission {
     private boolean canEdit;
     @Column(name = "can_delete", nullable = false)
     private boolean canDelete;
+    @Column(name = "can_manage_agenda_blocks", nullable = false)
+    private boolean canManageAgendaBlocks;
 
     public UUID getId() { return id; }
     public UUID getUserId() { return userId; }
@@ -30,4 +32,6 @@ public class UserPagePermission {
     public void setCanEdit(boolean canEdit) { this.canEdit = canEdit; }
     public boolean isCanDelete() { return canDelete; }
     public void setCanDelete(boolean canDelete) { this.canDelete = canDelete; }
+    public boolean isCanManageAgendaBlocks() { return canManageAgendaBlocks; }
+    public void setCanManageAgendaBlocks(boolean canManageAgendaBlocks) { this.canManageAgendaBlocks = canManageAgendaBlocks; }
 }

@@ -167,13 +167,29 @@
         try {
             const response=await fetch('/technical-visits/create', {method:'POST',headers:csrfHeaders(true),body:JSON.stringify({clientId,visitDate:$('newVisitDate').value,visitTime:$('newVisitTime').value||null,responsible:$('newVisitResponsible').value.trim(),notes:$('newVisitNotes').value,status:'AGENDADA'})});
             const data=await response.json().catch(()=>({}));
+            if(!response.ok&&data.blocked&&typeof window.showAgendaBlockedModal==='function'){
+                toggleModal('newVisitModal',false);
+                window.showAgendaBlockedModal(data);
+                return;
+            }
             if(!response.ok)throw new Error(data.error||'Não foi possível agendar a visita.');
             if(location.pathname==='/agenda')location.reload();
             else location.href='/technical-visits?visit='+data.id;
         } catch(error) { alert(error.message||'Erro de comunicação com o servidor.'); }
         finally { button.disabled=false; }
     }
-    Object.assign(window, {openClientSearchModal, closeClientSearchModal, clearClientSearchInput, filterClientOptions, selectClientFromModal, openInlineClientModal, closeInlineClientModal, setInlineClientError, clearInlineClientErrors, resetInlineClientForm, buscarCepInline, saveInlineClient, createVisit});
+    function closeAgendaBlockedModal(){ toggleModal('agendaBlockedAlertModal', false); }
+    Object.assign(window, {openClientSearchModal, closeClientSearchModal, clearClientSearchInput, filterClientOptions, selectClientFromModal, openInlineClientModal, closeInlineClientModal, setInlineClientError, clearInlineClientErrors, resetInlineClientForm, buscarCepInline, saveInlineClient, createVisit, closeAgendaBlockedModal});
+    if(typeof window.showAgendaBlockedModal!=='function'){
+        window.showAgendaBlockedModal=data=>{
+            const date=data?.date?new Date(data.date+'T00:00:00').toLocaleDateString('pt-BR'):'';
+            $('agendaBlockedDate').textContent=date;
+            $('agendaBlockedMessage').textContent=data?.error||'A agenda desta data está bloqueada para novos serviços e visitas técnicas.';
+            $('agendaBlockedReason').textContent=data?.reason?`Motivo: ${data.reason}`:'';
+            toggleModal('agendaBlockedAlertModal',true);
+            if(window.lucide)window.lucide.createIcons();
+        };
+    }
     document.addEventListener('DOMContentLoaded',()=>{
         const date=new Date();
         $('newVisitDate').value=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');

@@ -112,6 +112,12 @@ public class PageAccessService {
     public boolean hasCustomAccess(String key) { return access(key).customized(); }
     public boolean canPlanVisits() { return authorizeCurrent("POST", "/technical-visits/create"); }
     public boolean canWorkVisits() { return authorizeCurrent("POST", "/technical-visits/visit/openings"); }
+    public boolean canManageAgendaBlocks() {
+        Snapshot snapshot = current();
+        if ("GESTAO".equals(snapshot.role())) return true;
+        UserPagePermission permission = snapshot.permissions().get(PageModule.AGENDA.getKey());
+        return permission != null && permission.isCanView() && permission.isCanManageAgendaBlocks();
+    }
 
     private boolean authorizeCurrent(String method, String path) { return authorize(current(), method, path); }
 
@@ -123,6 +129,11 @@ public class PageAccessService {
     private boolean authorize(Snapshot snapshot, String method, String path) {
         PageModule page = PageModule.fromPath(path).orElse(null);
         if (page == null) return false;
+        if (path.startsWith("/agenda/day-blocks/") && "POST".equals(method)) {
+            if ("GESTAO".equals(snapshot.role())) return true;
+            UserPagePermission permission = snapshot.permissions().get(PageModule.AGENDA.getKey());
+            return permission != null && permission.isCanView() && permission.isCanManageAgendaBlocks();
+        }
         if (("GET".equals(method) || "HEAD".equals(method))
                 && path.equals("/cut-plans/catalogo/vidros-compativeis")
                 && access(PageModule.CUT_PLANS, snapshot).canView()) return true;

@@ -44,12 +44,13 @@
                         <th scope="col" class="px-4 py-4">Visualizar</th>
                         <th scope="col" class="px-4 py-4">Criar / editar</th>
                         <th scope="col" class="px-4 py-4">Excluir / cancelar</th>
+                        <th scope="col" class="px-4 py-4">Bloquear dias da agenda</th>
                         <th scope="col" class="px-4 py-4"><span class="sr-only">Revogar acesso</span></th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
                     <tr th:each="page, stat : ${permissionPages}" class="permission-row"
-                        th:attr="data-default-view=${permissionDefaults[page.key].canView},data-default-edit=${permissionDefaults[page.key].canEdit},data-default-delete=${permissionDefaults[page.key].canDelete},data-writable=${page.writable}">
+                        th:attr="data-default-view=${permissionDefaults[page.key].canView},data-default-edit=${permissionDefaults[page.key].canEdit},data-default-delete=${permissionDefaults[page.key].canDelete},data-writable=${page.writable},data-agenda-page=${page.key == 'agenda'}">
                         <td class="px-6 py-4">
                             <span class="text-sm font-bold" th:text="${page.label}"></span>
                             <span th:unless="${page.writable}" class="block text-xs text-slate-400 mt-1">Página de consulta</span>
@@ -66,6 +67,10 @@
                         <td class="px-4 py-4"><input type="checkbox" th:field="*{pages[__${stat.index}__].view}" data-permission-view th:attr="aria-label=|Visualizar ${page.label}|" class="w-5 h-5 accent-indigo-600"></td>
                         <td class="px-4 py-4"><input type="checkbox" th:field="*{pages[__${stat.index}__].edit}" data-permission-edit th:attr="aria-label=|Criar ou editar ${page.label}|" class="w-5 h-5 accent-indigo-600"></td>
                         <td class="px-4 py-4"><input type="checkbox" th:field="*{pages[__${stat.index}__].delete}" data-permission-delete th:attr="aria-label=|Excluir ou cancelar em ${page.label}|" class="w-5 h-5 accent-indigo-600"></td>
+                        <td class="px-4 py-4">
+                            <input th:if="${page.key == 'agenda'}" type="checkbox" th:field="*{pages[__${stat.index}__].manageAgendaBlocks}" data-permission-agenda-blocks aria-label="Bloquear ou liberar dias na Agenda" class="w-5 h-5 accent-indigo-600">
+                            <span th:unless="${page.key == 'agenda'}" class="text-slate-300">—</span>
+                        </td>
                         <td class="px-4 py-4"><button type="button" data-permission-revoke class="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline whitespace-nowrap" th:attr="aria-label=|Bloquear ${page.label}|">Bloquear página</button></td>
                     </tr>
                     </tbody>

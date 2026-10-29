@@ -193,7 +193,7 @@
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <div class="day-modal-actions grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <div class="day-modal-actions grid grid-cols-1 sm:grid-cols-2 gap-2" th:classappend="${canManageAgendaBlocks} ? ' lg:grid-cols-4' : ' lg:grid-cols-3'">
                     <button type="button" id="btnDayPdf"
                             class="w-full min-w-0 px-3 sm:px-4 py-3 sm:py-2.5 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-md flex items-center justify-center gap-2">
                         <i data-lucide="file-down" class="w-4 h-4 shrink-0"></i><span>Montar Roteiro em PDF</span>
@@ -206,9 +206,37 @@
                             class="w-full min-w-0 px-3 sm:px-4 py-3 sm:py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md flex items-center justify-center gap-2">
                         <i data-lucide="message-circle" class="w-4 h-4 shrink-0"></i><span>Enviar no WhatsApp</span>
                     </button>
+                    <button th:if="${canManageAgendaBlocks}" type="button" id="btnToggleDayBlock" onclick="openDayBlockActionModal()"
+                            class="w-full min-w-0 px-3 sm:px-4 py-3 sm:py-2.5 bg-rose-600 text-white text-sm font-bold rounded-xl hover:bg-rose-700 transition-colors shadow-md flex items-center justify-center gap-2">
+                        <i data-lucide="calendar-off" class="w-4 h-4 shrink-0"></i><span>Bloquear dia</span>
+                    </button>
                 </div>
             </header>
+            <div id="dayBlockedNotice" class="hidden mx-3 mt-3 sm:mx-5 sm:mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200" role="status">
+                <p class="font-black">Agenda deste dia bloqueada para novos serviços e visitas técnicas.</p>
+                <p id="dayBlockedReason" class="mt-1 text-xs"></p>
+            </div>
             <div id="dayModalList" class="day-modal-list flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-5 space-y-3"></div>
+        </section>
+    </div>
+
+    <div id="dayBlockActionModal" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm hidden items-center justify-center z-[90] p-4">
+        <section role="dialog" aria-modal="true" aria-labelledby="dayBlockActionTitle" class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-[#131C2F]">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h3 id="dayBlockActionTitle" class="text-lg font-black text-slate-900 dark:text-white">Bloquear agenda do dia</h3>
+                    <p id="dayBlockActionDate" class="mt-1 text-sm text-slate-500 dark:text-slate-400"></p>
+                </div>
+                <button type="button" onclick="toggleModal('dayBlockActionModal', false)" class="rounded-full bg-slate-100 p-2 text-slate-500 dark:bg-slate-800" aria-label="Fechar">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </button>
+            </div>
+            <label id="dayBlockReasonLabel" for="dayBlockReasonInput" class="mt-5 block text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Motivo (opcional)</label>
+            <textarea id="dayBlockReasonInput" rows="3" maxlength="500" class="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-900" placeholder="Ex.: feriado ou limite de atendimentos"></textarea>
+            <div class="mt-5 flex justify-end gap-2">
+                <button type="button" onclick="toggleModal('dayBlockActionModal', false)" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-600 dark:border-slate-700 dark:text-slate-300">Cancelar</button>
+                <button type="button" id="confirmDayBlockAction" onclick="saveDayBlockAction()" class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-black text-white hover:bg-rose-700">Bloquear dia</button>
+            </div>
         </section>
     </div>
 
@@ -666,6 +694,9 @@
 
     const TECHNICAL_VISITS_RAW = /*[[${technicalVisits}]]*/ [];
 
+    const BLOCKED_AGENDA_DAYS_RAW = /*[[${blockedAgendaDays}]]*/ [];
+    const CAN_MANAGE_AGENDA_BLOCKS = /*[[${canManageAgendaBlocks}]]*/ false;
+
 
     const IS_TECNICO = /*[[${isTecnico}]]*/ false;
 
@@ -728,6 +759,9 @@
         ...EXECUTION_SCHEDULES_RAW.flatMap(expandOccurrences),
         ...TECHNICAL_VISITS_RAW.map(normalizeVisit)
     ];
+    const BLOCKED_AGENDA_DAYS = new Map((BLOCKED_AGENDA_DAYS_RAW || []).map(block => [block.date, block]));
+    let activeDayModalDate = null;
+    let dayBlockActionDate = null;
 
     const STATUS_META = {
         AGUARDANDO_AGENDAMENTO: { label: 'Aguardando Agendamento', badge: 'bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300', dot: 'bg-slate-400' },
@@ -937,8 +971,10 @@
             }
 
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-            const items = byDate[dateStr] || [];
+            const isBlocked = BLOCKED_AGENDA_DAYS.has(dateStr);
+            const items = isBlocked ? SCHEDULES.filter(schedule => schedule.scheduledDate === dateStr) : (byDate[dateStr] || []);
             const isToday = dateStr === todayStr;
+            if (isBlocked) cell.classList.add('bg-rose-50/70', 'dark:bg-rose-500/5', 'border-rose-200', 'dark:border-rose-900/50');
 
             const numEl = document.createElement('div');
             numEl.className = 'text-xs font-bold mb-1.5 cursor-pointer select-none transition-colors ' + (isToday
@@ -950,6 +986,15 @@
 
             numEl.addEventListener('click', () => openDayModal(dateStr));
             cell.appendChild(numEl);
+
+            if (isBlocked) {
+                const blockedLabel = document.createElement('button');
+                blockedLabel.type = 'button';
+                blockedLabel.className = 'mb-2 flex w-full items-center justify-center gap-1 rounded-md border border-rose-200 bg-rose-100 px-2 py-1.5 text-[10px] font-black uppercase tracking-wide text-rose-700 hover:bg-rose-200 dark:border-rose-900 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20';
+                blockedLabel.innerHTML = '<i data-lucide="calendar-off" class="h-3 w-3"></i><span>Dia bloqueado</span>';
+                blockedLabel.onclick = () => openDayModal(dateStr);
+                cell.appendChild(blockedLabel);
+            }
 
             const maxVisible = window.innerWidth >= 1536 ? 5 : (window.innerWidth >= 1024 ? 4 : 3);
             const visible = items.slice(0, maxVisible);
@@ -977,15 +1022,24 @@
                 cell.style.cursor = 'pointer';
                 cell.addEventListener('dblclick', () => openDayModal(dateStr));
             }
+            if (isBlocked) {
+                cell.style.cursor = 'pointer';
+                cell.addEventListener('click', event => {
+                    if (!event.target.closest('button')) openDayModal(dateStr);
+                });
+            }
 
             grid.appendChild(cell);
         }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     function openDayModal(dateStr) {
 
 
-        const items = applyFilters(SCHEDULES)
+        const block = BLOCKED_AGENDA_DAYS.get(dateStr);
+        activeDayModalDate = dateStr;
+        const items = (block ? SCHEDULES : applyFilters(SCHEDULES))
             .filter(s => s.scheduledDate === dateStr)
             .slice()
             .sort((a, b) => (a.scheduledTime || '99:99:99').localeCompare(b.scheduledTime || '99:99:99'));
@@ -994,6 +1048,21 @@
         document.getElementById('btnDayPdf').onclick = () => openRouteSelection(dateStr);
         document.getElementById('btnDayWorkOrdersPdf').onclick = () => openWorkOrderPrintSelection(dateStr);
         document.getElementById('btnDayWhatsApp').onclick = () => openRoteiroWhatsApp(dateStr);
+        const blockedNotice = document.getElementById('dayBlockedNotice');
+        const blockedReason = document.getElementById('dayBlockedReason');
+        if (blockedNotice) blockedNotice.classList.toggle('hidden', !block);
+        if (blockedReason) {
+            blockedReason.textContent = block?.reason ? `Motivo: ${block.reason}` : 'Nenhum serviço ou visita técnica novo poderá ser agendado nesta data.';
+        }
+        const blockButton = document.getElementById('btnToggleDayBlock');
+        if (blockButton) {
+            blockButton.querySelector('span').textContent = block ? 'Desbloquear dia' : 'Bloquear dia';
+            blockButton.classList.toggle('bg-rose-600', !block);
+            blockButton.classList.toggle('hover:bg-rose-700', !block);
+            blockButton.classList.toggle('bg-emerald-600', !!block);
+            blockButton.classList.toggle('hover:bg-emerald-700', !!block);
+            blockButton.querySelector('i')?.setAttribute('data-lucide', block ? 'calendar-check' : 'calendar-off');
+        }
 
         const list = document.getElementById('dayModalList');
         list.innerHTML = '';
@@ -1071,7 +1140,74 @@
         });
 
         toggleModal('dayModal', true);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
+
+    function openDayBlockActionModal() {
+        if (!CAN_MANAGE_AGENDA_BLOCKS || !activeDayModalDate) return;
+        dayBlockActionDate = activeDayModalDate;
+        const block = BLOCKED_AGENDA_DAYS.get(dayBlockActionDate);
+        document.getElementById('dayBlockActionTitle').textContent = block ? 'Desbloquear agenda do dia' : 'Bloquear agenda do dia';
+        document.getElementById('dayBlockActionDate').textContent = fmtBR(dayBlockActionDate);
+        document.getElementById('dayBlockReasonLabel').classList.toggle('hidden', !!block);
+        document.getElementById('dayBlockReasonInput').classList.toggle('hidden', !!block);
+        document.getElementById('dayBlockReasonInput').value = block?.reason || '';
+        const confirm = document.getElementById('confirmDayBlockAction');
+        confirm.textContent = block ? 'Desbloquear dia' : 'Bloquear dia';
+        confirm.classList.toggle('bg-rose-600', !block);
+        confirm.classList.toggle('hover:bg-rose-700', !block);
+        confirm.classList.toggle('bg-emerald-600', !!block);
+        confirm.classList.toggle('hover:bg-emerald-700', !!block);
+        toggleModal('dayBlockActionModal', true);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    async function saveDayBlockAction() {
+        if (!CAN_MANAGE_AGENDA_BLOCKS || !dayBlockActionDate) return;
+        const date = dayBlockActionDate;
+        const wasBlocked = BLOCKED_AGENDA_DAYS.has(date);
+        const actionButton = document.getElementById('confirmDayBlockAction');
+        actionButton.disabled = true;
+        try {
+            const response = await fetch(`/agenda/day-blocks/${date}/${wasBlocked ? 'unblock' : 'block'}`, {
+                method: 'POST', headers: csrfHeaders(true),
+                body: JSON.stringify(wasBlocked ? {} : { reason: document.getElementById('dayBlockReasonInput').value })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.ok === false) {
+                if (data.blocked) showAgendaBlockedModal(data);
+                else alert(data.error || 'Não foi possível atualizar o bloqueio da agenda.');
+                return;
+            }
+            if (data.blocked) BLOCKED_AGENDA_DAYS.set(date, { date, reason: data.reason || null });
+            else BLOCKED_AGENDA_DAYS.delete(date);
+            toggleModal('dayBlockActionModal', false);
+            renderCalendar();
+            openDayModal(date);
+        } catch (error) {
+            console.error(error);
+            alert('Erro de comunicação ao atualizar o bloqueio da agenda.');
+        } finally {
+            actionButton.disabled = false;
+        }
+    }
+
+    function showAgendaBlockedModal(data = {}) {
+        const date = data.date ? fmtBR(data.date) : '';
+        const message = data.error || (date ? `A agenda de ${date} está bloqueada para novos serviços e visitas técnicas.` : 'A agenda desta data está bloqueada para novos serviços e visitas técnicas.');
+        const dateElement = document.getElementById('agendaBlockedDate');
+        const messageElement = document.getElementById('agendaBlockedMessage');
+        const reasonElement = document.getElementById('agendaBlockedReason');
+        if (!dateElement || !messageElement) { alert(message); return; }
+        dateElement.textContent = date;
+        messageElement.textContent = message;
+        reasonElement.textContent = data.reason ? `Motivo: ${data.reason}` : '';
+        toggleModal('agendaBlockedAlertModal', true);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    function closeAgendaBlockedModal() { toggleModal('agendaBlockedAlertModal', false); }
+    window.showAgendaBlockedModal = showAgendaBlockedModal;
+    window.closeAgendaBlockedModal = closeAgendaBlockedModal;
 
     function workOrdersForDay(dateStr) {
         const grouped = new Map();
@@ -1803,7 +1939,11 @@
         try {
             const res = await fetch(url, { method: 'POST', headers: csrfHeaders(true), body: JSON.stringify(payload) });
             const data = await res.json().catch(() => ({}));
-            if (!res.ok) { alert('Erro ao salvar dia de agendamento: ' + (data.error || 'erro desconhecido')); return; }
+            if (!res.ok) {
+                if (data.blocked) showAgendaBlockedModal(data);
+                else alert('Erro ao salvar dia de agendamento: ' + (data.error || 'erro desconhecido'));
+                return;
+            }
             window.location.reload();
         } catch (err) {
             console.error(err);
@@ -1853,7 +1993,8 @@
             const res = await fetch('/agenda/save-ajax', { method: 'POST', headers: csrfHeaders(true), body: JSON.stringify(payload) });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                alert('Erro ao salvar agendamento: ' + (data.error || 'erro desconhecido'));
+                if (data.blocked) showAgendaBlockedModal(data);
+                else alert('Erro ao salvar agendamento: ' + (data.error || 'erro desconhecido'));
                 return;
             }
             if (data.warning) alert(data.warning);
@@ -1933,7 +2074,8 @@
             const res = await fetch('/agenda/technical-visits/save-ajax', { method: 'POST', headers: csrfHeaders(true), body: JSON.stringify(payload) });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                alert('Erro ao salvar visita técnica: ' + (data.error || 'erro desconhecido'));
+                if (data.blocked) showAgendaBlockedModal(data);
+                else alert('Erro ao salvar visita técnica: ' + (data.error || 'erro desconhecido'));
                 return;
             }
             window.location.reload();

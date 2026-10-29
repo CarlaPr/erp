@@ -1,6 +1,7 @@
 package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.dto.PendingScheduleAlertDto;
+import com.alfatahi.erp.dto.AgendaDayBlockDto;
 import com.alfatahi.erp.dto.ScheduleDto;
 import com.alfatahi.erp.dto.ScheduleOccurrenceDto;
 import com.alfatahi.erp.dto.ScheduleOccurrenceSaveRequest;
@@ -10,7 +11,9 @@ import com.alfatahi.erp.entity.AppUser;
 import com.alfatahi.erp.repository.AppUserRepository;
 import com.alfatahi.erp.repository.ClientRepository;
 import com.alfatahi.erp.service.ScheduleService;
+import com.alfatahi.erp.service.AgendaDayBlockService;
 import com.alfatahi.erp.service.TechnicalVisitService;
+import com.alfatahi.erp.exception.AgendaDayBlockedException;
 import com.alfatahi.erp.util.SecurityUtils;
 import com.alfatahi.erp.security.PageAccessService;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
@@ -50,16 +53,18 @@ public class ScheduleController {
     private final TemplateEngine templateEngine;
     private final ClientRepository clientRepository;
     private final PageAccessService pageAccess;
+    private final AgendaDayBlockService agendaDayBlockService;
 
     public ScheduleController(ScheduleService scheduleService, TechnicalVisitService technicalVisitService,
                                AppUserRepository appUserRepo, TemplateEngine templateEngine, ClientRepository clientRepository,
-                               PageAccessService pageAccess) {
+                               PageAccessService pageAccess, AgendaDayBlockService agendaDayBlockService) {
         this.scheduleService = scheduleService;
         this.technicalVisitService = technicalVisitService;
         this.appUserRepo = appUserRepo;
         this.templateEngine = templateEngine;
         this.clientRepository = clientRepository;
         this.pageAccess = pageAccess;
+        this.agendaDayBlockService = agendaDayBlockService;
     }
 
     @GetMapping
@@ -83,6 +88,8 @@ public class ScheduleController {
         model.addAttribute("technicalVisits", technicalVisits);
         model.addAttribute("vendedores", vendedores);
         model.addAttribute("kpis", scheduleService.getKpis());
+        model.addAttribute("blockedAgendaDays", agendaDayBlockService.findAll());
+        model.addAttribute("canManageAgendaBlocks", pageAccess.canManageAgendaBlocks());
 
         return "agenda";
     }
@@ -120,12 +127,43 @@ public class ScheduleController {
             }
             return ResponseEntity.ok(body);
         } catch (Exception e) {
+            if (e instanceof AgendaDayBlockedException blocked) return blocked(blocked);
             e.printStackTrace();
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("ok", false);
             body.put("error", e.getMessage());
             return ResponseEntity.internalServerError().body(body);
         }
+    }
+
+    @PostMapping(value = "/day-blocks/{date}/block", consumes = "application/json")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> blockAgendaDay(@PathVariable LocalDate date,
+                                                                @RequestBody(required = false) Map<String, String> body) {
+        if (!pageAccess.canManageAgendaBlocks()) return forbidden();
+        try {
+            AgendaDayBlockDto block = agendaDayBlockService.block(date, body != null ? body.get("reason") : null);
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("ok", true);
+            response.put("blocked", true);
+            response.put("date", block.date().toString());
+            response.put("reason", block.reason());
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return badRequest(e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/day-blocks/{date}/unblock", consumes = "application/json")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> unblockAgendaDay(@PathVariable LocalDate date) {
+        if (!pageAccess.canManageAgendaBlocks()) return forbidden();
+        agendaDayBlockService.unblock(date);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("ok", true);
+        response.put("blocked", false);
+        response.put("date", date.toString());
+        return ResponseEntity.ok(response);
     }
 
 
@@ -147,6 +185,8 @@ public class ScheduleController {
             return badRequest("Data de prazo inválida.");
         } catch (IllegalArgumentException e) {
             return badRequest(e.getMessage());
+        } catch (AgendaDayBlockedException e) {
+            return blocked(e);
         } catch (Exception e) {
             e.printStackTrace();
             return internalError("Erro ao alterar o prazo.");
@@ -168,6 +208,8 @@ public class ScheduleController {
             return ResponseEntity.ok(resp);
         } catch (IllegalArgumentException e) {
             return badRequest(e.getMessage());
+        } catch (AgendaDayBlockedException e) {
+            return blocked(e);
         } catch (Exception e) {
             e.printStackTrace();
             return internalError("Erro ao adicionar dia de agendamento.");
@@ -348,6 +390,16 @@ public class ScheduleController {
         body.put("ok", false);
         body.put("error", message);
         return ResponseEntity.internalServerError().body(body);
+    }
+
+    private ResponseEntity<Map<String, Object>> blocked(AgendaDayBlockedException exception) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("ok", false);
+        body.put("blocked", true);
+        body.put("date", exception.getDate().toString());
+        body.put("reason", exception.getReason());
+        body.put("error", exception.getMessage());
+        return ResponseEntity.status(409).body(body);
     }
 
     private void registerFonts(PdfRendererBuilder builder) {

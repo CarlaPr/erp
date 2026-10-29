@@ -14,6 +14,7 @@ public class UserPermissionsForm {
         private boolean view;
         private boolean edit;
         private boolean delete;
+        private boolean manageAgendaBlocks;
         public String getPageKey() { return pageKey; }
         public void setPageKey(String pageKey) { this.pageKey = pageKey; }
         public String getMode() { return mode; }
@@ -24,5 +25,7 @@ public class UserPermissionsForm {
         public void setEdit(boolean edit) { this.edit = edit; }
         public boolean isDelete() { return delete; }
         public void setDelete(boolean delete) { this.delete = delete; }
+        public boolean isManageAgendaBlocks() { return manageAgendaBlocks; }
+        public void setManageAgendaBlocks(boolean manageAgendaBlocks) { this.manageAgendaBlocks = manageAgendaBlocks; }
     }
 }

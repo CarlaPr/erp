@@ -50,24 +50,29 @@ public class TechnicalVisitDataService {
     private final ClientRepository clientRepository;
     private final TechnicalVisitOpeningRepository openingRepository;
     private final TechnicalVisitPhotoRepository photoRepository;
+    private final AgendaDayBlockService agendaDayBlockService;
 
     public TechnicalVisitDataService(TechnicalVisitRepository visitRepository,
                                      ClientRepository clientRepository,
                                      TechnicalVisitOpeningRepository openingRepository,
-                                     TechnicalVisitPhotoRepository photoRepository) {
+                                     TechnicalVisitPhotoRepository photoRepository,
+                                     AgendaDayBlockService agendaDayBlockService) {
         this.visitRepository = visitRepository;
         this.clientRepository = clientRepository;
         this.openingRepository = openingRepository;
         this.photoRepository = photoRepository;
+        this.agendaDayBlockService = agendaDayBlockService;
     }
 
     public UUID createForClient(TechnicalVisitSaveRequest request) {
         if (request.getClientId() == null) throw new IllegalArgumentException("Selecione o cliente.");
+        LocalDate visitDate = request.getVisitDate() != null ? request.getVisitDate() : LocalDate.now();
+        agendaDayBlockService.assertNotBlocked(visitDate);
         Client client = clientRepository.findById(request.getClientId())
                 .orElseThrow(() -> new NoSuchElementException("Cliente não encontrado."));
         TechnicalVisit visit = new TechnicalVisit();
         visit.setClient(client);
-        visit.setVisitDate(request.getVisitDate() != null ? request.getVisitDate() : LocalDate.now());
+        visit.setVisitDate(visitDate);
         visit.setVisitTime(request.getVisitTime());
         visit.setNotes(request.getNotes());
         visit.setResponsible(request.getResponsible());
@@ -77,7 +82,10 @@ public class TechnicalVisitDataService {
 
     public void updateVisit(UUID visitId, TechnicalVisitSaveRequest request, boolean canManageStatus) {
         TechnicalVisit visit = findVisit(visitId);
-        if (request.getVisitDate() != null) visit.setVisitDate(request.getVisitDate());
+        if (request.getVisitDate() != null && !request.getVisitDate().equals(visit.getVisitDate())) {
+            agendaDayBlockService.assertNotBlocked(request.getVisitDate());
+            visit.setVisitDate(request.getVisitDate());
+        }
         visit.setVisitTime(request.getVisitTime());
         visit.setNotes(request.getNotes());
         visit.setResponsible(request.getResponsible());

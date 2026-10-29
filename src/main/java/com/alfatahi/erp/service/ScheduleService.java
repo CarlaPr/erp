@@ -34,13 +34,16 @@ public class ScheduleService {
     private final ScheduleHistoryRepository historyRepo;
     private final ScheduleOccurrenceRepository occurrenceRepo;
     private final WorkOrderRepository workOrderRepo;
+    private final AgendaDayBlockService agendaDayBlockService;
 
     public ScheduleService(ScheduleRepository scheduleRepo, ScheduleHistoryRepository historyRepo,
-                           ScheduleOccurrenceRepository occurrenceRepo, WorkOrderRepository workOrderRepo) {
+                           ScheduleOccurrenceRepository occurrenceRepo, WorkOrderRepository workOrderRepo,
+                           AgendaDayBlockService agendaDayBlockService) {
         this.scheduleRepo = scheduleRepo;
         this.historyRepo = historyRepo;
         this.occurrenceRepo = occurrenceRepo;
         this.workOrderRepo = workOrderRepo;
+        this.agendaDayBlockService = agendaDayBlockService;
     }
 
     @Transactional(readOnly = true)
@@ -179,6 +182,10 @@ public class ScheduleService {
 
         LocalDate previousDate = schedule.getScheduledDate();
 
+        if (req.getScheduledDate() != null && !req.getScheduledDate().equals(previousDate)) {
+            agendaDayBlockService.assertNotBlocked(req.getScheduledDate());
+        }
+
         if (req.getScheduledDate() != null) {
             schedule.setScheduledDate(req.getScheduledDate());
         }
@@ -271,6 +278,13 @@ public class ScheduleService {
                 if (extra.getOccurrenceDate() == null) {
                     continue;
                 }
+                boolean isExistingDate = extra.getOccurrenceId() != null
+                        && occurrenceRepo.findById(extra.getOccurrenceId())
+                        .map(occurrence -> Objects.equals(occurrence.getOccurrenceDate(), extra.getOccurrenceDate()))
+                        .orElse(false);
+                boolean alreadyScheduledForDate = occurrenceRepo
+                        .findByScheduleIdAndOccurrenceDate(schedule.getId(), extra.getOccurrenceDate()).isPresent();
+                if (!isExistingDate && !alreadyScheduledForDate) agendaDayBlockService.assertNotBlocked(extra.getOccurrenceDate());
                 extra.setScheduleId(schedule.getId());
                 if (extra.getOccurrenceId() != null) {
                     updateOccurrence(extra);
@@ -353,6 +367,7 @@ public class ScheduleService {
                 .ifPresent(o -> {
                     throw new IllegalArgumentException("Este serviço já está agendado para " + fmt(req.getOccurrenceDate()) + ".");
                 });
+        agendaDayBlockService.assertNotBlocked(req.getOccurrenceDate());
 
         ScheduleOccurrence occ = new ScheduleOccurrence();
         occ.setSchedule(schedule);
@@ -391,6 +406,7 @@ public class ScheduleService {
         LocalDate oldDate = occ.getOccurrenceDate();
 
         if (req.getOccurrenceDate() != null && !req.getOccurrenceDate().equals(oldDate)) {
+            agendaDayBlockService.assertNotBlocked(req.getOccurrenceDate());
             occurrenceRepo.findByScheduleIdAndOccurrenceDate(schedule.getId(), req.getOccurrenceDate())
                     .filter(other -> !other.getId().equals(occ.getId()))
                     .ifPresent(other -> {
