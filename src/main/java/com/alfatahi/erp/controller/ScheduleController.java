@@ -31,9 +31,11 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -263,40 +265,43 @@ public class ScheduleController {
     @GetMapping("/roteiro-pdf/{date}")
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> roteiroPdf(@PathVariable String date) {
+        LocalDate day;
         try {
-            LocalDate day;
-            try {
-                day = LocalDate.parse(date);
-            } catch (DateTimeParseException e) {
-                return ResponseEntity.badRequest().build();
-            }
+            day = LocalDate.parse(date);
+        } catch (DateTimeParseException e) {
+            return ResponseEntity.badRequest().build();
+        }
+        return renderRoteiroPdf(day, roteiroItems(day));
+    }
 
+    @PostMapping(value = "/roteiro-pdf/{date}", consumes = "application/json")
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> roteiroPdfSelecionado(@PathVariable String date,
+                                                         @RequestBody(required = false) List<String> selectionKeys) {
+        LocalDate day;
+        try {
+            day = LocalDate.parse(date);
+        } catch (DateTimeParseException e) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (selectionKeys == null || selectionKeys.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
 
+        Set<String> selected = selectionKeys.stream()
+                .filter(key -> key != null && !key.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (selected.isEmpty()) return ResponseEntity.badRequest().build();
 
-            List<ScheduleDto> schedules = scheduleService.listAllDto();
+        List<RoteiroItemView> items = roteiroItems(day).stream()
+                .filter(item -> selected.contains(item.getSelectionKey()))
+                .toList();
+        if (items.isEmpty()) return ResponseEntity.badRequest().build();
+        return renderRoteiroPdf(day, items);
+    }
 
-            List<RoteiroItemView> items = new ArrayList<>();
-            for (ScheduleDto s : schedules) {
-                if (s.getOccurrences() != null && !s.getOccurrences().isEmpty()) {
-                    for (var occ : s.getOccurrences()) {
-                        if (day.equals(occ.getOccurrenceDate())) {
-                            items.add(toRoteiroRow(s, occ));
-                        }
-                    }
-                } else if (day.equals(s.getScheduledDate())) {
-                    items.add(toRoteiroRow(s, null));
-                }
-            }
-
-            for (TechnicalVisitDto v : technicalVisitService.listAllDto()) {
-                if (day.equals(v.getVisitDate())) {
-                    items.add(toRoteiroRow(v));
-                }
-            }
-
-            items.sort(Comparator.comparing(RoteiroItemView::getSortTime,
-                    Comparator.nullsLast(Comparator.naturalOrder())));
-
+    private ResponseEntity<byte[]> renderRoteiroPdf(LocalDate day, List<RoteiroItemView> items) {
+        try {
             Context ctx = new Context(Locale.forLanguageTag("pt-BR"));
             ctx.setVariable("dataFormatada", day.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             ctx.setVariable("items", items);
@@ -314,12 +319,10 @@ public class ScheduleController {
             byte[] pdfBytes = out.toByteArray();
 
             String fileName = "Roteiro " + day.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + ".pdf";
-
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
                     .body(pdfBytes);
-
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
@@ -364,8 +367,10 @@ public class ScheduleController {
         RoteiroItemView r = new RoteiroItemView();
         r.setClientName(nvl(s.getClientName(), "Não informado"));
         r.setClientAddress(nvl(s.getClientAddress(), "-"));
+        r.setClientPhone(nvl(s.getClientPhone(), "Telefone não informado"));
         r.setQuoteNumber(nvl(s.getQuoteNumber(), "-"));
         r.setWorkOrderNumber(nvl(s.getWorkOrderNumber(), "-"));
+        r.setSelectionKey(occ != null ? "OCORRENCIA:" + occ.getId() : "SERVICO:" + s.getId());
 
         LocalTime time = occ != null ? occ.getOccurrenceTime() : s.getScheduledTime();
         r.setSortTime(time);
@@ -391,8 +396,10 @@ public class ScheduleController {
         RoteiroItemView r = new RoteiroItemView();
         r.setClientName(nvl(v.getClientName(), "Não informado"));
         r.setClientAddress(nvl(v.getClientAddress(), "-"));
+        r.setClientPhone(nvl(v.getClientPhone(), "Telefone não informado"));
         r.setQuoteNumber(nvl(v.getQuoteNumber(), "-"));
         r.setWorkOrderNumber("-");
+        r.setSelectionKey("VISITA:" + v.getId());
         r.setSortTime(v.getVisitTime());
         r.setTimeFormatted(v.getVisitTime() != null ? v.getVisitTime().toString().substring(0, 5) : "A definir");
         r.setTeamOrResponsible(nvl(v.getResponsible(), "-"));
@@ -411,8 +418,10 @@ public class ScheduleController {
     public static class RoteiroItemView {
         private String clientName;
         private String clientAddress;
+        private String clientPhone;
         private String quoteNumber;
         private String workOrderNumber;
+        private String selectionKey;
         private String timeFormatted;
         private String teamOrResponsible;
         private List<String> items;
@@ -427,11 +436,17 @@ public class ScheduleController {
         public String getClientAddress() { return clientAddress; }
         public void setClientAddress(String clientAddress) { this.clientAddress = clientAddress; }
 
+        public String getClientPhone() { return clientPhone; }
+        public void setClientPhone(String clientPhone) { this.clientPhone = clientPhone; }
+
         public String getQuoteNumber() { return quoteNumber; }
         public void setQuoteNumber(String quoteNumber) { this.quoteNumber = quoteNumber; }
 
         public String getWorkOrderNumber() { return workOrderNumber; }
         public void setWorkOrderNumber(String workOrderNumber) { this.workOrderNumber = workOrderNumber; }
+
+        public String getSelectionKey() { return selectionKey; }
+        public void setSelectionKey(String selectionKey) { this.selectionKey = selectionKey; }
 
         public String getTimeFormatted() { return timeFormatted; }
         public void setTimeFormatted(String timeFormatted) { this.timeFormatted = timeFormatted; }

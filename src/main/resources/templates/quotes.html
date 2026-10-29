@@ -156,6 +156,13 @@
                                 <i data-lucide="pencil" class="w-5 h-5"></i>
                             </a>
 
+                            <a data-permission="edit" th:if="${q.status == 'approved' && q.workOrder != null}"
+                               th:href="@{/work-orders/{id}/edit(id=${q.workOrder.id},source='quotes')}"
+                               class="text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+                               title="Editar Ordem de Serviço">
+                                <i data-lucide="clipboard-pen-line" class="w-5 h-5"></i>
+                            </a>
+
                             <button data-permission="delete" th:if="${q.status == 'pending' || q.status == 'expired'}"
                                     th:data-id="${q.id}"
                                     onclick="deleteQuote(this.getAttribute('data-id'))"
@@ -306,6 +313,13 @@
                            class="min-h-[46px]    rounded-xl   bg-blue-50 dark:bg-blue-500/10  text-blue-700 dark:text-blue-400   font-bold text-xs   flex items-center justify-center gap-2  border border-blue-100   dark:border-blue-500/20">
                             <i data-lucide="pencil" class="w-4 h-4"></i>
                             Editar
+                        </a>
+
+                        <a data-permission="edit" th:if="${q.status == 'approved' && q.workOrder != null}"
+                           th:href="@{/work-orders/{id}/edit(id=${q.workOrder.id},source='quotes')}"
+                           class="min-h-[46px] rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold text-xs flex items-center justify-center gap-2 border border-amber-100 dark:border-amber-500/20">
+                            <i data-lucide="clipboard-pen-line" class="w-4 h-4"></i>
+                            Editar O.S.
                         </a>
 
                         <button th:data-id="${q.id}"
@@ -530,14 +544,14 @@
 
             </span>
                 <div class="grid grid-cols-2 sm:flex       gap-2 sm:gap-3 receipt-toolbar-actions">
-                    <button id="btnShareWhatsAppTop" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600 text-white     px-3 sm:px-5 py-2.5  rounded-xl font-bold   flex items-center justify-center        gap-2 text-xs sm:text-sm" type="button">
+                    <button id="btnPreviewShareWhatsAppTop" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600 text-white     px-3 sm:px-5 py-2.5  rounded-xl font-bold   flex items-center justify-center        gap-2 text-xs sm:text-sm" type="button">
 
                         <i data-lucide="message-circle" class="w-4 h-4"></i>
 
                         WhatsApp
 
                     </button>
-                    <button id="btnPrintPdfTop" onclick="generateAndPrintQuotePdf()" class="bg-slate-900 text-white  px-3 sm:px-6 py-2.5  rounded-xl font-bold  flex items-center justify-center     gap-2 text-xs sm:text-sm" type="button">
+                    <button id="btnPreviewPrintPdfTop" onclick="generateAndPrintQuotePdf()" class="bg-slate-900 text-white  px-3 sm:px-6 py-2.5  rounded-xl font-bold  flex items-center justify-center     gap-2 text-xs sm:text-sm" type="button">
                         <i data-lucide="printer" class="w-4 h-4"></i>
 
                         PDF
@@ -833,12 +847,12 @@
                         Fechar Visualização
                     </button>
 
-                    <button id="btnShareWhatsAppBottom" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600  text-white  px-5 py-3  rounded-xl  font-black flex items-center  justify-center gap-2   text-sm" type="button">
+                    <button id="btnPreviewShareWhatsAppBottom" onclick="shareQuoteOnWhatsApp()" class="bg-emerald-600  text-white  px-5 py-3  rounded-xl  font-black flex items-center  justify-center gap-2   text-sm" type="button">
                         <i data-lucide="message-circle" class="w-5 h-5"></i>
                         Compartilhar WhatsApp
                     </button>
 
-                    <button id="btnPrintPdfBottom" onclick="generateAndPrintQuotePdf()" class="bg-slate-900 text-white px-5 py-3 rounded-xl font-black flex items-center justify-center gap-2    text-sm" type="button">
+                    <button id="btnPreviewPrintPdfBottom" onclick="generateAndPrintQuotePdf()" class="bg-slate-900 text-white px-5 py-3 rounded-xl font-black flex items-center justify-center gap-2    text-sm" type="button">
                         <i data-lucide="printer" class="w-5 h-5"></i>
                         Imprimir / Salvar PDF
                     </button>
@@ -846,6 +860,380 @@
             </div>
         </div>
     </div>
+
+    <div
+            id="printOptionsModal"
+            class="fixed inset-0 z-[80] hidden items-center justify-center
+           overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-md
+           transition-opacity duration-200 sm:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="printOptionsTitle"
+            aria-describedby="printOptionsSubtitle"
+    >
+        <div
+                class="relative my-auto w-full max-w-2xl overflow-hidden
+               rounded-2xl border border-slate-200 bg-white
+               shadow-2xl shadow-slate-950/20
+               dark:border-slate-700/80 dark:bg-[#111827]
+               sm:rounded-3xl"
+        >
+            <!-- Cabeçalho -->
+            <header
+                    class="relative border-b border-slate-200/80
+                   bg-slate-50/80 px-5 py-5
+                   dark:border-slate-700/80 dark:bg-[#172235]
+                   sm:px-7 sm:py-6"
+            >
+                <div class="flex items-start gap-4 pr-10">
+                    <div
+                            class="flex h-12 w-12 shrink-0 items-center
+                           justify-center rounded-2xl
+                           border border-indigo-100 bg-indigo-50
+                           text-indigo-600
+                           dark:border-indigo-400/20
+                           dark:bg-indigo-400/10 dark:text-indigo-300
+                           sm:h-14 sm:w-14"
+                    >
+                        <i data-lucide="files" class="h-6 w-6 sm:h-7 sm:w-7"></i>
+                    </div>
+
+                    <div class="min-w-0 flex-1">
+                    <span
+                            class="text-[10px] font-extrabold uppercase
+                               tracking-[0.2em] text-indigo-600
+                               dark:text-cyan-400 sm:text-[11px]"
+                    >
+                        Documentos
+                    </span>
+
+                        <h3
+                                id="printOptionsTitle"
+                                class="mt-1 text-xl font-extrabold tracking-tight
+                               text-slate-900 dark:text-white
+                               sm:text-2xl"
+                        >
+                            Imprimir documentos
+                        </h3>
+
+                        <p
+                                id="printOptionsSubtitle"
+                                class="mt-1.5 text-sm leading-relaxed
+                               text-slate-500 dark:text-slate-400"
+                        >
+                            Selecione o documento e escolha como deseja
+                            enviar ou imprimir.
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                        type="button"
+                        onclick="closeModal('printOptionsModal')"
+                        aria-label="Fechar janela"
+                        class="absolute right-4 top-4 flex h-10 w-10
+                       items-center justify-center rounded-xl
+                       text-slate-500 transition-colors
+                       hover:bg-slate-200 hover:text-slate-900
+                       focus:outline-none focus-visible:ring-2
+                       focus-visible:ring-indigo-500
+                       dark:text-slate-400 dark:hover:bg-slate-700
+                       dark:hover:text-white sm:right-5 sm:top-5"
+                >
+                    <i data-lucide="x" class="h-5 w-5"></i>
+                </button>
+            </header>
+
+            <!-- Conteúdo -->
+            <div class="space-y-4 p-4 sm:p-6">
+
+                <!-- Cartão: Orçamento -->
+                <section
+                        class="overflow-hidden rounded-2xl border
+                       border-indigo-200/80 bg-white
+                       transition-colors
+                       hover:border-indigo-300
+                       dark:border-indigo-400/20
+                       dark:bg-slate-900/40
+                       dark:hover:border-indigo-400/40"
+                >
+                    <!-- Identificação do documento -->
+                    <div class="flex items-center gap-3 px-4 py-4 sm:px-5">
+                        <div
+                                class="flex h-11 w-11 shrink-0 items-center
+                               justify-center rounded-xl
+                               bg-indigo-50 text-indigo-600
+                               dark:bg-indigo-400/10
+                               dark:text-indigo-300"
+                        >
+                            <i data-lucide="file-text" class="h-5 w-5"></i>
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <h4
+                                    class="text-sm font-bold text-slate-900
+                                   dark:text-white sm:text-base"
+                            >
+                                Orçamento
+                            </h4>
+
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Documento comercial em PDF
+                            </p>
+                        </div>
+
+                        <span
+                                class="hidden shrink-0 rounded-lg
+                               bg-indigo-50 px-2.5 py-1.5
+                               text-[10px] font-bold uppercase
+                               tracking-wider text-indigo-700
+                               dark:bg-indigo-400/10
+                               dark:text-indigo-300 sm:inline-flex"
+                        >
+                        PDF
+                    </span>
+                    </div>
+
+                    <!-- Referência -->
+                    <div
+                            class="mx-4 mb-4 flex flex-wrap items-center gap-2
+                           rounded-xl bg-slate-50 px-3 py-2.5
+                           dark:bg-slate-800/70 sm:mx-5"
+                    >
+                        <i
+                                data-lucide="hash"
+                                class="h-4 w-4 text-slate-400"
+                        ></i>
+
+                        <span class="text-xs text-slate-500 dark:text-slate-400">
+                        Referência:
+                    </span>
+
+                        <span
+                                id="printOptionsQuoteNumber"
+                                class="text-xs font-bold text-slate-800
+                               dark:text-slate-200"
+                        ></span>
+                    </div>
+
+                    <!-- Ações -->
+                    <div
+                            class="grid grid-cols-1 gap-2 border-t
+                           border-slate-100 bg-slate-50/70 p-3
+                           dark:border-slate-700/70
+                           dark:bg-slate-800/30
+                           sm:grid-cols-2 sm:gap-3 sm:p-4"
+                    >
+                        <button
+                                id="btnPrintPdfTop"
+                                type="button"
+                                onclick="generateAndPrintQuotePdf()"
+                                class="inline-flex min-h-12 items-center
+                               justify-center gap-2 rounded-xl
+                               bg-indigo-600 px-4 py-3
+                               text-sm font-bold text-white
+                               shadow-sm shadow-indigo-600/20
+                               transition-all duration-200
+                               hover:bg-indigo-700 hover:shadow-md
+                               active:scale-[0.98]
+                               focus:outline-none focus-visible:ring-2
+                               focus-visible:ring-indigo-500
+                               focus-visible:ring-offset-2
+                               dark:focus-visible:ring-offset-slate-900"
+                        >
+                            <i data-lucide="printer" class="h-4 w-4 shrink-0"></i>
+                            <span>Imprimir orçamento</span>
+                        </button>
+
+                        <button
+                                id="btnShareWhatsAppTop"
+                                type="button"
+                                onclick="shareQuoteOnWhatsApp()"
+                                class="inline-flex min-h-12 items-center
+                               justify-center gap-2 rounded-xl
+                               border border-emerald-200 bg-white
+                               px-4 py-3 text-sm font-bold
+                               text-emerald-700 transition-all duration-200
+                               hover:border-emerald-300 hover:bg-emerald-50
+                               active:scale-[0.98]
+                               focus:outline-none focus-visible:ring-2
+                               focus-visible:ring-emerald-500
+                               dark:border-emerald-500/25
+                               dark:bg-emerald-500/10
+                               dark:text-emerald-400
+                               dark:hover:bg-emerald-500/15"
+                        >
+                            <i
+                                    data-lucide="message-circle"
+                                    class="h-4 w-4 shrink-0"
+                            ></i>
+                            <span>Enviar pelo WhatsApp</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Cartão: Ordem de serviço -->
+                <section
+                        id="workOrderPrintCard"
+                        class="hidden overflow-hidden rounded-2xl
+                       border border-amber-200/80 bg-white
+                       transition-colors
+                       hover:border-amber-300
+                       dark:border-amber-400/20
+                       dark:bg-slate-900/40
+                       dark:hover:border-amber-400/40"
+                >
+                    <!-- Identificação do documento -->
+                    <div class="flex items-center gap-3 px-4 py-4 sm:px-5">
+                        <div
+                                class="flex h-11 w-11 shrink-0 items-center
+                               justify-center rounded-xl
+                               bg-amber-50 text-amber-600
+                               dark:bg-amber-400/10
+                               dark:text-amber-300"
+                        >
+                            <i data-lucide="clipboard-list" class="h-5 w-5"></i>
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <h4
+                                    class="text-sm font-bold text-slate-900
+                                   dark:text-white sm:text-base"
+                            >
+                                Ordem de serviço
+                            </h4>
+
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Documento para execução do serviço
+                            </p>
+                        </div>
+
+                        <span
+                                class="hidden shrink-0 rounded-lg
+                               bg-amber-50 px-2.5 py-1.5
+                               text-[10px] font-bold uppercase
+                               tracking-wider text-amber-700
+                               dark:bg-amber-400/10
+                               dark:text-amber-300 sm:inline-flex"
+                        >
+                        O.S.
+                    </span>
+                    </div>
+
+                    <!-- Referência -->
+                    <div
+                            class="mx-4 mb-4 flex flex-wrap items-center gap-2
+                           rounded-xl bg-slate-50 px-3 py-2.5
+                           dark:bg-slate-800/70 sm:mx-5"
+                    >
+                        <i
+                                data-lucide="hash"
+                                class="h-4 w-4 text-slate-400"
+                        ></i>
+
+                        <span class="text-xs text-slate-500 dark:text-slate-400">
+                        Referência:
+                    </span>
+
+                        <span
+                                id="printOptionsWorkOrderNumber"
+                                class="text-xs font-bold text-slate-800
+                               dark:text-slate-200"
+                        ></span>
+                    </div>
+
+                    <!-- Ações -->
+                    <div
+                            class="grid grid-cols-1 gap-2 border-t
+                           border-slate-100 bg-slate-50/70 p-3
+                           dark:border-slate-700/70
+                           dark:bg-slate-800/30
+                           sm:grid-cols-2 sm:gap-3 sm:p-4"
+                    >
+                        <button
+                                id="btnPrintWorkOrderPdf"
+                                type="button"
+                                onclick="printWorkOrderPdf()"
+                                class="inline-flex min-h-12 items-center
+                               justify-center gap-2 rounded-xl
+                               bg-amber-500 px-4 py-3
+                               text-sm font-bold text-white
+                               shadow-sm shadow-amber-600/20
+                               transition-all duration-200
+                               hover:bg-amber-600 hover:shadow-md
+                               active:scale-[0.98]
+                               focus:outline-none focus-visible:ring-2
+                               focus-visible:ring-amber-500
+                               focus-visible:ring-offset-2
+                               dark:bg-amber-400 dark:text-slate-950
+                               dark:hover:bg-amber-300
+                               dark:focus-visible:ring-offset-slate-900"
+                        >
+                            <i data-lucide="printer" class="h-4 w-4 shrink-0"></i>
+                            <span>Imprimir ordem de serviço</span>
+                        </button>
+
+                        <button
+                                id="btnShareWorkOrderWhatsApp"
+                                type="button"
+                                onclick="shareWorkOrderOnWhatsApp()"
+                                class="inline-flex min-h-12 items-center
+                               justify-center gap-2 rounded-xl
+                               border border-emerald-200 bg-white
+                               px-4 py-3 text-sm font-bold
+                               text-emerald-700 transition-all duration-200
+                               hover:border-emerald-300 hover:bg-emerald-50
+                               active:scale-[0.98]
+                               focus:outline-none focus-visible:ring-2
+                               focus-visible:ring-emerald-500
+                               dark:border-emerald-500/25
+                               dark:bg-emerald-500/10
+                               dark:text-emerald-400
+                               dark:hover:bg-emerald-500/15"
+                        >
+                            <i
+                                    data-lucide="message-circle"
+                                    class="h-4 w-4 shrink-0"
+                            ></i>
+                            <span>Enviar O.S. pelo WhatsApp</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Rodapé -->
+            <footer
+                    class="flex items-center gap-2 border-t
+                   border-slate-200/80 px-5 py-3.5
+                   dark:border-slate-700/80 sm:px-7"
+            >
+                <i
+                        data-lucide="shield-check"
+                        class="h-4 w-4 shrink-0 text-slate-400"
+                ></i>
+
+                <p class="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                    Escolha uma opção para gerar ou compartilhar seu documento.
+                </p>
+
+                <button
+                        type="button"
+                        onclick="closeModal('printOptionsModal')"
+                        class="ml-auto shrink-0 rounded-lg px-3 py-2
+                       text-xs font-bold text-slate-600
+                       transition-colors hover:bg-slate-100
+                       hover:text-slate-900
+                       focus:outline-none focus-visible:ring-2
+                       focus-visible:ring-indigo-500
+                       dark:text-slate-300 dark:hover:bg-slate-800
+                       dark:hover:text-white"
+                >
+                    Fechar
+                </button>
+            </footer>
+        </div>
+    </div>
+
 
     <div id="approvalConfirmModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 text-center animate-in fade-in zoom-in-95 duration-200">
@@ -999,6 +1387,8 @@
     let currentActiveNumberForPdf = "000";
     let currentActiveClientPhoneForPdf = "";
     let currentActiveQuoteIdForPdf = null;
+    let currentActiveWorkOrderIdForPdf = null;
+    let currentActiveWorkOrderNumberForPdf = null;
 
     function toggleModal(id, show) {
         const m = document.getElementById(id);
@@ -1238,7 +1628,8 @@
             return;
         }
 
-        const buttons = [document.getElementById('btnPrintPdfTop'), document.getElementById('btnPrintPdfBottom')].filter(Boolean);
+        const buttons = [document.getElementById('btnPrintPdfTop'), document.getElementById('btnPrintPdfBottom'),
+            document.getElementById('btnPreviewPrintPdfTop'), document.getElementById('btnPreviewPrintPdfBottom')].filter(Boolean);
         const originalHtmlMap = new Map();
         setPdfButtonsLoading(buttons, true, '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Gerando PDF...', originalHtmlMap);
 
@@ -1293,8 +1684,102 @@
         setTimeout(() => URL.revokeObjectURL(url), 5000);
     }
 
+    async function ensureActiveWorkOrder() {
+        if (currentActiveWorkOrderIdForPdf) return;
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+        const headers = { 'Accept': 'application/json' };
+        if (csrfToken) headers[csrfHeader] = csrfToken;
+        const response = await fetch(`/work-orders/recover/${encodeURIComponent(currentActiveQuoteIdForPdf)}`, {
+            method: 'POST', credentials: 'same-origin', headers
+        });
+        if (!response.ok) throw new Error(await response.text() || 'Não foi possível recuperar a ordem de serviço aprovada.');
+        const order = await response.json();
+        currentActiveWorkOrderIdForPdf = order.id;
+        currentActiveWorkOrderNumberForPdf = order.number;
+    }
+
+    async function generateWorkOrderPdfBlob() {
+        await ensureActiveWorkOrder();
+        const response = await fetch(`/work-orders/pdf/${encodeURIComponent(currentActiveWorkOrderIdForPdf)}`, {
+            credentials: 'same-origin'
+        });
+        if (!response.ok) throw new Error((await response.text()) || 'Não foi possível gerar o PDF da ordem de serviço.');
+        const blob = await response.blob();
+        if (!blob || blob.size < 5 || await blob.slice(0, 5).text() !== '%PDF-') {
+            throw new Error('O servidor não retornou um PDF válido da ordem de serviço.');
+        }
+        return blob;
+    }
+
+    function buildWorkOrderFileName() {
+        const osNumber = currentActiveWorkOrderNumberForPdf || currentActiveNumberForPdf.replace('ORC-', 'OS-');
+        return `${osNumber} - ${currentActiveNumberForPdf} - ${currentActiveClientForPdf}`
+            .replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim() + '.pdf';
+    }
+
+    async function printWorkOrderPdf() {
+        const button = document.getElementById('btnPrintWorkOrderPdf');
+        if (button) { button.disabled = true; button.dataset.originalHtml = button.innerHTML; button.textContent = 'Gerando PDF...'; }
+        const newTab = window.open('about:blank', '_blank');
+        if (newTab) newTab.document.write('<h2 style="font-family:sans-serif;text-align:center;margin-top:50px;color:#333">Gerando a ordem de serviço...</h2>');
+        try {
+            const blob = await generateWorkOrderPdfBlob();
+            if (newTab) newTab.location.href = URL.createObjectURL(blob);
+            else downloadBlobFile(blob, buildWorkOrderFileName());
+        } catch (error) {
+            if (newTab) newTab.close();
+            alert(error.message || 'Não foi possível gerar a ordem de serviço.');
+        } finally {
+            if (button) { button.disabled = false; button.innerHTML = button.dataset.originalHtml || 'Imprimir ordem de serviço'; }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    }
+
+    async function shareWorkOrderOnWhatsApp() {
+        const button = document.getElementById('btnShareWorkOrderWhatsApp');
+        const originalHtml = button ? button.innerHTML : '';
+        if (button) { button.disabled = true; button.textContent = 'Gerando PDF...'; }
+        let canShareFile = false;
+        try {
+            canShareFile = typeof navigator.share === 'function' && typeof navigator.canShare === 'function'
+                && navigator.canShare({ files: [new File([''], 'ordem.pdf', { type: 'application/pdf' })] });
+        } catch (error) { canShareFile = false; }
+        let waWindow = null;
+        if (!canShareFile) {
+            waWindow = window.open('about:blank', '_blank');
+            if (waWindow) waWindow.document.write('<h2 style="font-family:sans-serif;text-align:center;margin-top:50px;color:#333">Preparando o PDF da ordem de serviço...</h2>');
+        }
+        try {
+            const blob = await generateWorkOrderPdfBlob();
+            const fileName = buildWorkOrderFileName();
+            const file = new File([blob], fileName, { type: 'application/pdf' });
+            const message = `Ordem de Serviço ${currentActiveWorkOrderNumberForPdf} - ${currentActiveClientForPdf}.`;
+            if (canShareFile) {
+                await navigator.share({ files: [file], title: fileName, text: message });
+            } else {
+                downloadBlobFile(blob, fileName);
+                let phone = (currentActiveClientPhoneForPdf || '').replace(/\D/g, '');
+                if (phone.length === 10 || phone.length === 11) phone = '55' + phone;
+                const shareText = encodeURIComponent(`${message}\n\n(O PDF foi baixado. Anexe o arquivo "${fileName}" nesta conversa.)`);
+                const url = phone.length >= 12
+                    ? `https://api.whatsapp.com/send?phone=${phone}&text=${shareText}`
+                    : `https://api.whatsapp.com/send?text=${shareText}`;
+                if (waWindow) waWindow.location.href = url;
+                else window.open(url, '_blank');
+            }
+        } catch (error) {
+            if (waWindow) waWindow.close();
+            if (error?.name !== 'AbortError') alert(error.message || 'Não foi possível compartilhar a ordem de serviço.');
+        } finally {
+            if (button) { button.disabled = false; button.innerHTML = originalHtml; }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    }
+
     async function shareQuoteOnWhatsApp() {
-        const buttons = [document.getElementById('btnShareWhatsAppTop'), document.getElementById('btnShareWhatsAppBottom')].filter(Boolean);
+        const buttons = [document.getElementById('btnShareWhatsAppTop'), document.getElementById('btnShareWhatsAppBottom'),
+            document.getElementById('btnPreviewShareWhatsAppTop'), document.getElementById('btnPreviewShareWhatsAppBottom')].filter(Boolean);
         const originalHtml = buttons.map(b => b.innerHTML);
         buttons.forEach(b => {
             b.disabled = true;
@@ -1375,6 +1860,14 @@
                 currentActiveNumberForPdf     = q.number || 'ORC-0000';
                 currentActiveClientForPdf     = q.client ? q.client.name : 'Consumidor Final';
                 currentActiveClientPhoneForPdf = q.client && q.client.phone ? q.client.phone : '';
+                currentActiveWorkOrderIdForPdf = q.workOrder ? q.workOrder.id : null;
+                currentActiveWorkOrderNumberForPdf = q.workOrder ? q.workOrder.number : currentActiveNumberForPdf.replace('ORC-', 'OS-');
+                document.getElementById('printOptionsQuoteNumber').innerText = currentActiveNumberForPdf;
+                document.getElementById('printOptionsWorkOrderNumber').innerText = `${currentActiveWorkOrderNumberForPdf} · ${currentActiveNumberForPdf}`;
+                document.getElementById('workOrderPrintCard').classList.toggle('hidden', q.status !== 'approved');
+                document.getElementById('printOptionsSubtitle').innerText = q.status === 'approved'
+                    ? `Orçamento ${currentActiveNumberForPdf} aprovado. Escolha o documento para imprimir ou compartilhar.`
+                    : 'Escolha uma ação para o orçamento.';
 
 
                 const setSafeText = (id, text) => {
@@ -1541,7 +2034,12 @@
                     }
                 }
 
-                toggleModal('receiptModal', true);
+                if (q.status === 'approved') {
+                    toggleModal('printOptionsModal', true);
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                } else {
+                    toggleModal('receiptModal', true);
+                }
             })
             .catch(err => console.error("Erro ao carregar recibo:", err));
     }

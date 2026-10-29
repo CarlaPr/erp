@@ -30,16 +30,26 @@ public class WorkOrderItem {
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice = BigDecimal.ZERO;
 
-    /**
-     * Preenchido quando este item de custo foi gerado automaticamente a
-     * partir do rateio de uma Conta a Pagar (ver {@link ExpenseAllocation}).
-     * Itens lançados manualmente pelo usuário permanecem com este campo nulo.
-     */
     @Column(name = "source_expense_allocation_id")
     private UUID sourceExpenseAllocationId;
 
+    @Column(name = "quote_item_id")
+    private UUID quoteItemId;
+
+    @Column(name = "technical_measurements", columnDefinition = "TEXT")
+    private String technicalMeasurements;
+
+    @Column(name = "technical_notes", columnDefinition = "TEXT")
+    private String technicalNotes;
+
     public UUID getSourceExpenseAllocationId() { return sourceExpenseAllocationId; }
     public void setSourceExpenseAllocationId(UUID sourceExpenseAllocationId) { this.sourceExpenseAllocationId = sourceExpenseAllocationId; }
+    public UUID getQuoteItemId() { return quoteItemId; }
+    public void setQuoteItemId(UUID quoteItemId) { this.quoteItemId = quoteItemId; }
+    public String getTechnicalMeasurements() { return technicalMeasurements; }
+    public void setTechnicalMeasurements(String technicalMeasurements) { this.technicalMeasurements = technicalMeasurements; }
+    public String getTechnicalNotes() { return technicalNotes; }
+    public void setTechnicalNotes(String technicalNotes) { this.technicalNotes = technicalNotes; }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }

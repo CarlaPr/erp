@@ -180,9 +180,13 @@
                         </div>
 
                         <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                            <a data-permission="edit" th:href="@{/work-orders/{id}/edit(id=${wo.id},source='work-orders')}"
+                               class="p-2 hover:bg-amber-100 dark:hover:bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-lg transition-colors" title="Editar Ordem de Serviço">
+                                <i data-lucide="clipboard-pen-line" class="w-5 h-5"></i>
+                            </a>
                             <button data-permission="edit" type="button" th:data-id="${wo.id}" onclick="editOs(this.getAttribute('data-id'))"
-                                    class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar">
-                                <i data-lucide="edit" class="w-5 h-5"></i>
+                                    class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Editar custos e valores da O.S.">
+                                <i data-lucide="dollar-sign" class="w-5 h-5"></i>
                             </button>
                             <button data-permission="delete" type="button" th:data-id="${wo.id}" onclick="openDeleteOsModal(this.getAttribute('data-id'))"
                                     class="p-2 hover:bg-rose-100 dark:hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg transition-colors" title="Excluir Definitivamente">
@@ -364,10 +368,10 @@
                             <i data-lucide="package-check" class="w-5 h-5 text-emerald-600 dark:text-emerald-500"></i> Itens Vendidos (Origem do Orçamento)
                         </h4>
                         <div class="bg-white dark:bg-[#1A2533] rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-x-auto shadow-sm">
-                            <table class="w-full text-left text-sm min-w-[420px]">
+                            <table class="w-full text-left text-sm min-w-[540px]">
                                 <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                                 <tr>
-                                    <th class="p-4 w-1/2">Produto Vendido</th>
+                                    <th class="p-4 w-1/3">Serviço / Produto</th>
                                     <th class="p-4 w-24 text-center">Qtd</th>
                                     <th class="p-4 w-32 text-right">Preço Venda</th>
                                 </tr>
@@ -465,6 +469,12 @@
     let osIdToDelete     = null;
     let originalTotalValue = 0;
     let originalNotes = "";
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, character => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[character]);
+    }
 
     function formatBRL(valor) {
         if (valor === null || valor === undefined || isNaN(valor)) return "0,00";
@@ -619,7 +629,6 @@
         document.getElementById('osDeadlineDate').value = '';
         document.getElementById('osInstallDate').value  = '';
         document.getElementById('osTotalValue').value = '0.00';
-
         soldItems = [];
         materialItems = [];
         operationalItems = [];
@@ -674,7 +683,6 @@
                     if (res.ok) {
                         const qData = await res.json();
                         clientSelect.value = qData.client ? qData.client.id : '';
-
                         totalInput.value = formatBRL(qData.totalValue);
 
                         soldItems = [];
@@ -688,7 +696,12 @@
                                     description: `${qi.category || 'Item'} - ${qi.product || ''}`,
                                     quantity,
                                     totalValue: valorTotal,
-                                    unitPrice
+                                    unitPrice,
+                                    technicalMeasurements: Array.isArray(qi.measurements) && qi.measurements.length
+                                        ? qi.measurements.map(m => `${m.width} m × ${m.height} m${Number(m.quantity) > 1 ? ` (${m.quantity} un.)` : ''}`).join('\n')
+                                        : (Number(qi.width) > 0 && Number(qi.height) > 0 ? `${qi.width} m × ${qi.height} m` : ''),
+                                    technicalNotes: '',
+                                    quoteItemId: qi.id || null
                                 });
                             });
                         }
@@ -728,7 +741,6 @@
             document.getElementById('osStatus').value     = data.status || 'Pendente';
             document.getElementById('osQuote').value      = data.quoteId || '';
             document.getElementById('osClient').value     = data.client ? data.client.id : '';
-
             document.getElementById('osDeadlineDate').value = data.deadlineDate || '';
             document.getElementById('osInstallDate').value  = data.installDate || '';
             originalTotalValue = data.totalValue || 0;
@@ -754,12 +766,16 @@
                             description: parts[1] || '',
                             value: i.unitCost || 0
                         });
-                    } else if (parseFloat(i.unitPrice) > 0 && parseFloat(i.unitCost) === 0 && (!i.description || !i.description.includes(' ||| '))) {
+                    } else if (i.quoteItemId || ((data.quoteId || parseFloat(i.unitPrice) > 0)
+                            && parseFloat(i.unitCost) === 0 && (!i.description || !i.description.includes(' ||| ')))) {
                         soldItems.push({
                             id: i.id,
+                            quoteItemId: i.quoteItemId || null,
                             description: i.description,
                             quantity:    i.quantity,
-                            totalValue:  i.quantity * i.unitPrice
+                            totalValue:  i.quantity * i.unitPrice,
+                            technicalMeasurements: i.technicalMeasurements || '',
+                            technicalNotes: i.technicalNotes || ''
                         });
                     } else {
                         materialItems.push({
@@ -775,7 +791,7 @@
             }
 
             renderAllUI();
-            document.getElementById('modalTitle').innerText = `OS: ${data.number}`;
+            document.getElementById('modalTitle').innerText = `Custos e valores da O.S. ${data.number}`;
 
             const modal = document.getElementById('osModal');
             modal.classList.remove('hidden');
@@ -826,7 +842,7 @@
             soldItems.forEach((item, idx) => {
                 soldTbody.innerHTML += `
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                <td class="p-4 text-slate-900 dark:text-slate-300 font-bold text-sm border-l-4 border-emerald-500 pl-4">${item.description}</td>
+                <td class="p-4 text-slate-900 dark:text-slate-300 font-bold text-sm border-l-4 border-emerald-500 pl-4">${escapeHtml(item.description)}</td>
                 <td class="p-4 text-center">
                     <input type="number" min="1" value="${item.quantity}" onchange="soldItems[${idx}].quantity = parseFloat(this.value)||1; soldItems[${idx}].totalValue = soldItems[${idx}].quantity * soldItems[${idx}].unitPrice; renderAllUI();" class="w-20 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-center font-mono outline-none">
                 </td>
@@ -973,7 +989,10 @@
                 description: si.description,
                 quantity: si.quantity,
                 unitCost: 0,
-                unitPrice: si.totalValue / (si.quantity || 1)
+                unitPrice: si.totalValue / (si.quantity || 1),
+                quoteItemId: si.quoteItemId || null,
+                technicalMeasurements: si.technicalMeasurements || '',
+                technicalNotes: si.technicalNotes || ''
             });
         });
 

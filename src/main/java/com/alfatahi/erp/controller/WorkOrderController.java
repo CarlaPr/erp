@@ -1,13 +1,17 @@
 package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.dto.WorkOrderPaymentStatusDto;
+import com.alfatahi.erp.dto.WorkOrderTechnicalEditRequest;
 import com.alfatahi.erp.entity.*;
 import com.alfatahi.erp.repository.*;
 import com.alfatahi.erp.service.*;
 import java.util.HashMap;
 import java.util.Map;
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,6 +34,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/work-orders")
 public class WorkOrderController {
 
+    private static final Logger log = LoggerFactory.getLogger(WorkOrderController.class);
+
     private final WorkOrderService workOrderService;
     private final ClientService clientService;
     private final ServiceCategoryRepository categoryRepository;
@@ -40,12 +46,14 @@ public class WorkOrderController {
     private final AccountsReceivableRepository receivableRepo;
     private final AccountsPayableRepository payableRepo;
     private final QuoteService quoteService;
+    private final WorkOrderPdfService workOrderPdfService;
 
     public WorkOrderController(WorkOrderService workOrderService, ClientService clientService,
                                ServiceCategoryRepository categoryRepository, ProfileRepository profileRepository,
                                QuoteRepository quoteRepository, WorkOrderRepository workOrderRepo,
                                ClientRepository clientRepository, AccountsReceivableRepository receivableRepo,
-                               AccountsPayableRepository payableRepo, QuoteService quoteService) {
+                               AccountsPayableRepository payableRepo, QuoteService quoteService,
+                               WorkOrderPdfService workOrderPdfService) {
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
@@ -56,6 +64,7 @@ public class WorkOrderController {
         this.receivableRepo = receivableRepo;
         this.payableRepo = payableRepo;
         this.quoteService = quoteService;
+        this.workOrderPdfService = workOrderPdfService;
     }
 
     @GetMapping
@@ -168,6 +177,121 @@ public class WorkOrderController {
     public ResponseEntity<?> recover(@PathVariable UUID quoteId) {
         WorkOrder order = quoteService.recoverApprovedWorkOrder(quoteId);
         return ResponseEntity.ok(Map.of("id", order.getId(), "number", order.getNumber()));
+    }
+
+    @GetMapping("/{id}/edit")
+    @Transactional(readOnly = true)
+    public String editTechnicalDetails(@PathVariable UUID id,
+                                       @RequestParam(defaultValue = "work-orders") String source,
+                                       Model model) {
+        WorkOrder order = workOrderRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Ordem de serviço não encontrada."));
+        Hibernate.initialize(order.getItems());
+        if (order.getClient() != null) Hibernate.initialize(order.getClient());
+        if (order.getQuote() != null) Hibernate.initialize(order.getQuote());
+
+        List<WorkOrderItem> serviceItems = order.getItems().stream()
+                .filter(item -> item.getQuoteItemId() != null
+                        || ((item.getUnitCost() == null || item.getUnitCost().signum() == 0)
+                        && item.getDescription() != null && !item.getDescription().startsWith("[OP] ")))
+                .toList();
+        model.addAttribute("workOrder", order);
+        model.addAttribute("serviceItems", serviceItems);
+        model.addAttribute("conditionsObservations", order.getConditionsObservations() != null
+                ? order.getConditionsObservations() : WorkOrder.DEFAULT_CONDITIONS_OBSERVATIONS);
+        model.addAttribute("warrantyTerms", order.getWarrantyTerms() != null
+                ? order.getWarrantyTerms() : WorkOrder.DEFAULT_WARRANTY_TERMS);
+        model.addAttribute("returnPath", "quotes".equalsIgnoreCase(source) ? "/quotes?status=approved" : "/work-orders");
+        model.addAttribute("currentPage", "work-orders");
+        return "work-order-edit";
+    }
+
+    @PostMapping(value = "/{id}/technical-details", consumes = "application/json")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<?> saveTechnicalDetails(@PathVariable UUID id,
+                                                   @RequestBody WorkOrderTechnicalEditRequest request) {
+        WorkOrder order = workOrderRepo.findById(id).orElse(null);
+        if (order == null) return ResponseEntity.notFound().build();
+
+        Map<UUID, WorkOrderItem> itemsById = order.getItems().stream()
+                .filter(item -> item.getId() != null)
+                .collect(Collectors.toMap(WorkOrderItem::getId, item -> item));
+        if (request.items() != null && request.items().stream()
+                .anyMatch(item -> item.id() == null || !itemsById.containsKey(item.id()))) {
+            return ResponseEntity.badRequest().body("A lista contém um serviço que não pertence a esta O.S.");
+        }
+
+        order.setInstallationAddress(request.installationAddress());
+        order.setSiteContact(request.siteContact());
+        order.setSitePhone(request.sitePhone());
+        order.setTechnicianName(request.technicianName());
+        order.setAccessInstructions(request.accessInstructions());
+        order.setInstallationNotes(request.installationNotes());
+        order.setConditionsObservations(request.conditionsObservations());
+        order.setWarrantyTerms(request.warrantyTerms());
+        if (request.showMeasurements() != null) order.setShowMeasurements(request.showMeasurements());
+        if (request.items() != null) {
+            for (WorkOrderTechnicalEditRequest.ServiceItem edited : request.items()) {
+                WorkOrderItem item = itemsById.get(edited.id());
+                item.setTechnicalMeasurements(edited.technicalMeasurements());
+                item.setTechnicalNotes(edited.technicalNotes());
+            }
+        }
+        workOrderRepo.save(order);
+        return ResponseEntity.ok(Map.of("id", order.getId(), "number", order.getNumber()));
+    }
+
+    @GetMapping("/pdf/{id}")
+    public ResponseEntity<byte[]> pdf(@PathVariable UUID id) {
+        try {
+            WorkOrderPdfService.Pdf pdf = workOrderPdfService.render(id);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"" + pdf.fileName().replace("\"", "'") + "\"")
+                    .body(pdf.bytes());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409)
+                    .header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
+                    .body(e.getMessage().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            log.error("Erro ao gerar PDF da ordem de serviço {}", id, e);
+            String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            return ResponseEntity.internalServerError()
+                    .header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
+                    .body(("Erro ao gerar PDF da ordem de serviço: " + message)
+                            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+    }
+
+    @PostMapping(value = "/pdf/batch", consumes = "application/json")
+    public ResponseEntity<byte[]> pdfBatch(@RequestBody List<UUID> ids) {
+        try {
+            WorkOrderPdfService.Pdf pdf = workOrderPdfService.renderBatch(ids);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"" + pdf.fileName() + "\"")
+                    .body(pdf.bytes());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
+                    .body(e.getMessage().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409)
+                    .header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
+                    .body(e.getMessage().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            log.error("Erro ao gerar PDF das ordens de serviço selecionadas", e);
+            String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            return ResponseEntity.internalServerError()
+                    .header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
+                    .body(("Erro ao gerar PDFs das ordens de serviço: " + message)
+                            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
     }
 
     @ExceptionHandler(IllegalStateException.class)

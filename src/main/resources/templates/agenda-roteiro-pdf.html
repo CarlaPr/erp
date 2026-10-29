@@ -94,10 +94,13 @@
     <div class="grid">
         <div class="grid-row">
             <div class="grid-cell"><span class="label">Endereço:</span> <span th:text="${item.clientAddress}">-</span></div>
-            <div class="grid-cell"><span class="label">Orçamento:</span> <span th:text="${item.quoteNumber}">-</span></div>
+            <div class="grid-cell"><span class="label">Telefone:</span> <span th:text="${item.clientPhone}">Telefone não informado</span></div>
         </div>
         <div class="grid-row">
+            <div class="grid-cell"><span class="label">Orçamento:</span> <span th:text="${item.quoteNumber}">-</span></div>
             <div class="grid-cell"><span class="label">Horário Agendado:</span> <span th:text="${item.timeFormatted}">A definir</span></div>
+        </div>
+        <div class="grid-row">
             <div class="grid-cell"><span class="label">Equipe/Resp.:</span> <span th:text="${item.teamOrResponsible}">-</span></div>
         </div>
     </div>

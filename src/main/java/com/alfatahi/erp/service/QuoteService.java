@@ -10,7 +10,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -72,6 +74,7 @@ public class QuoteService {
                 existing.setQuote(quote);
                 osRepo.saveAndFlush(existing);
             }
+            applySiteDefaults(existing, quote.getClient());
             quote.setWorkOrder(existing);
             if (!alreadyApproved) {
                 quote.setStatus("approved");
@@ -95,6 +98,7 @@ public class QuoteService {
                 : "OS-NOVO";
         os.setNumber(osNumber);
         os.setClient(quote.getClient());
+        applySiteDefaults(os, quote.getClient());
         os.setTitle("Venda: " + quote.getNumber());
 
         String description = "Gerado via Orçamento";
@@ -139,8 +143,18 @@ public class QuoteService {
 
         os.setClient(quote.getClient());
 
+        Map<String, List<String>> previousNotes = new HashMap<>();
+        for (WorkOrderItem previous : os.getItems()) {
+            previousNotes.computeIfAbsent(previous.getDescription(), key -> new ArrayList<>())
+                    .add(previous.getTechnicalNotes());
+        }
         os.getItems().clear();
-        os.getItems().addAll(buildWorkOrderItems(quote, os));
+        List<WorkOrderItem> refreshedItems = buildWorkOrderItems(quote, os);
+        for (WorkOrderItem item : refreshedItems) {
+            List<String> notes = previousNotes.get(item.getDescription());
+            if (notes != null && !notes.isEmpty()) item.setTechnicalNotes(notes.remove(0));
+        }
+        os.getItems().addAll(refreshedItems);
 
         BigDecimal finalTotal = (quote.getTotalValue() != null && quote.getTotalValue().compareTo(BigDecimal.ZERO) > 0)
                 ? quote.getTotalValue()
@@ -189,10 +203,45 @@ public class QuoteService {
             osItem.setQuantity(qi.getPricingQuantity());
             osItem.setUnitPrice(qi.getCalculatedUnitPrice());
             osItem.setUnitCost(BigDecimal.ZERO);
+            osItem.setQuoteItemId(qi.getId());
+            osItem.setTechnicalMeasurements(formatMeasurements(qi));
             osItem.setWorkOrder(os);
             items.add(osItem);
         }
         return items;
+    }
+
+    private void applySiteDefaults(WorkOrder order, Client client) {
+        if (client == null) return;
+        String address = client.getAddress() != null ? client.getAddress().trim() : "";
+        String city = client.getCity() != null ? client.getCity().trim() : "";
+        if (order.getInstallationAddress() == null || order.getInstallationAddress().isBlank()) {
+            order.setInstallationAddress(address + (!address.isEmpty() && !city.isEmpty() ? " - " : "") + city);
+        }
+        if (order.getSiteContact() == null || order.getSiteContact().isBlank()) order.setSiteContact(client.getName());
+        if (order.getSitePhone() == null || order.getSitePhone().isBlank()) order.setSitePhone(client.getPhone());
+    }
+
+    private String formatMeasurements(QuoteItem item) {
+        List<String> rows = new ArrayList<>();
+        if (item.getMeasurements() != null && !item.getMeasurements().isEmpty()) {
+            for (QuoteItemMeasurement measurement : item.getMeasurements()) {
+                if (measurement.getWidth() == null || measurement.getHeight() == null) continue;
+                String row = decimal(measurement.getWidth()) + " m × " + decimal(measurement.getHeight()) + " m";
+                if (measurement.getQuantity() != null && measurement.getQuantity().compareTo(BigDecimal.ONE) != 0) {
+                    row += " (" + decimal(measurement.getQuantity()) + " un.)";
+                }
+                rows.add(row);
+            }
+        } else if (item.getWidth() != null && item.getHeight() != null
+                && item.getWidth().signum() > 0 && item.getHeight().signum() > 0) {
+            rows.add(decimal(item.getWidth()) + " m × " + decimal(item.getHeight()) + " m");
+        }
+        return rows.isEmpty() ? null : String.join("\n", rows);
+    }
+
+    private String decimal(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString().replace('.', ',');
     }
 
     @Transactional

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(title='Editar Ordem de Serviço - Grupo Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+<div th:replace="~{fragments/layout :: pending-schedule-alert}"></div>
+
+<main class="min-w-0 flex-1 lg:ml-72 px-4 sm:px-6 lg:px-8 pb-10 pt-20 lg:pt-8 w-full min-h-screen">
+    <div class="max-w-5xl mx-auto">
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-7 border-b border-slate-200 dark:border-slate-800 pb-5">
+            <div>
+                <p class="text-xs font-black uppercase tracking-widest text-brand-600 dark:text-cyan-400">Edição técnica</p>
+                <h1 class="text-3xl font-black text-slate-900 dark:text-white mt-1">Ordem de Serviço <span th:text="${workOrder.number}">OS-0000</span></h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <span th:text="${workOrder.client != null ? workOrder.client.name : 'Cliente avulso'}">Cliente</span>
+                    <span th:if="${workOrder.quote != null}"> · Orçamento <span th:text="${workOrder.quote.number}">ORC-0000</span></span>
+                </p>
+            </div>
+            <a th:href="${returnPath}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
+            </a>
+        </header>
+
+        <form id="workOrderEditForm" class="space-y-6" th:data-order-id="${workOrder.id}" th:data-return-path="${returnPath}">
+            <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 sm:p-7 shadow-sm">
+                <div class="mb-5">
+                    <h2 class="text-lg font-black text-slate-900 dark:text-white">Local e equipe</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!--                    <div class="md:col-span-2">-->
+                    <!--                        <label for="installationAddress" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Endereço da instalação</label>-->
+                    <!--                        <textarea id="installationAddress" rows="2" th:text="${workOrder.installationAddress}" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500"></textarea>-->
+                    <!--                    </div>-->
+                    <div>
+                        <label for="siteContact" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Contato no local</label>
+                        <input id="siteContact" type="text" th:value="${workOrder.siteContact}" placeholder="Nome de quem irá receber o técnico" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500" />
+                    </div>
+                    <!--                    <div>-->
+                    <!--                        <label for="sitePhone" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Telefone no local</label>-->
+                    <!--                        <input id="sitePhone" type="text" th:value="${workOrder.sitePhone}" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500" />-->
+                    <!--                    </div>-->
+                    <div>
+                        <label for="technicianName" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Técnico responsável</label>
+                        <input id="technicianName" type="text" th:value="${workOrder.technicianName}" placeholder="Anderson, Igor ou Hugo" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500" />
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="accessInstructions" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Condições do local (opcional)</label>
+                        <textarea id="accessInstructions" rows="3" th:text="${workOrder.accessInstructions}" placeholder="Ex.: parede desnivelada, elevador pequeno, acesso por escadas, necessidade de autorização na portaria..." class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="installationNotes" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Orientações gerais da instalação (opcional)</label>
+                        <textarea id="installationNotes" rows="4" th:text="${workOrder.installationNotes}" placeholder="Descreva a sequência de instalação, os cuidados necessários, a preparação do ambiente e qualquer orientação importante para concluir o serviço com segurança e bom acabamento." class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="conditionsObservations" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Condições e Observações</label>
+                        <textarea id="conditionsObservations" rows="9" th:text="${conditionsObservations}" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="warrantyTerms" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Termos de Garantia</label>
+                        <textarea id="warrantyTerms" rows="9" th:text="${warrantyTerms}" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 sm:p-7 shadow-sm">
+                <div class="mb-5">
+                    <h2 class="text-lg font-black text-slate-900 dark:text-white">Serviços contratados</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Revise as medidas e registre instruções específicas para cada serviço.</p>
+                </div>
+
+                <label class="flex items-center gap-3 self-end min-h-[50px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 font-bold text-sm text-slate-800 dark:text-slate-200">
+                    <input id="showMeasurements" type="checkbox" th:checked="${workOrder.showMeasurements}" class="w-5 h-5 accent-cyan-600" /> Mostrar medidas no PDF do técnico
+                </label>
+
+                <div th:if="${#lists.isEmpty(serviceItems)}" class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-6 text-sm text-slate-500">
+                    Esta O.S. não possui serviços detalhados vinculados.
+                </div>
+                <article th:each="item,iter : ${serviceItems}" th:data-service-item="${item.id}" class="mb-4 last:mb-0 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4">
+                        <h3 class="font-black text-slate-900 dark:text-white"><span th:text="${iter.count + '. '}"></span><span th:text="${item.description}">Serviço</span></h3>
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400" th:text="${'Quantidade: ' + item.quantity}">Quantidade: 1</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Medidas do Item (Opcional)</label>
+                            <textarea data-field="measurements" rows="3" th:text="${item.technicalMeasurements}" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500" placeholder="Largura × altura"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Observações para o técnico</label>
+                            <textarea data-field="notes" rows="3" th:text="${item.technicalNotes}" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500" placeholder="Ex.: kit rose, puxador preto, furar pedra e cuidados durante a montagem."></textarea>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <div id="saveError" class="hidden rounded-xl border border-rose-300 bg-rose-50 dark:bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-700 dark:text-rose-300" role="alert"></div>
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                <a th:href="${returnPath}" class="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold">Cancelar</a>
+                <button data-permission="edit" id="saveWorkOrderEdit" type="submit" class="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white dark:bg-cyan-500 dark:text-slate-950 font-black shadow-md">
+                    <i data-lucide="save" class="w-4 h-4"></i> Salvar ordem de serviço
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script>
+    const editForm = document.getElementById('workOrderEditForm');
+    editForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = document.getElementById('saveWorkOrderEdit');
+        const errorBox = document.getElementById('saveError');
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+        const items = [...document.querySelectorAll('[data-service-item]')].map(card => ({
+            id: card.dataset.serviceItem,
+            technicalMeasurements: card.querySelector('[data-field="measurements"]').value,
+            technicalNotes: card.querySelector('[data-field="notes"]').value
+        }));
+        const payload = {
+            installationAddress: document.getElementById('installationAddress')?.value || '',
+            siteContact: document.getElementById('siteContact').value,
+            sitePhone: document.getElementById('sitePhone')?.value || '',
+            technicianName: document.getElementById('technicianName').value,
+            accessInstructions: document.getElementById('accessInstructions').value,
+            installationNotes: document.getElementById('installationNotes').value,
+            conditionsObservations: document.getElementById('conditionsObservations').value,
+            warrantyTerms: document.getElementById('warrantyTerms').value,
+            showMeasurements: document.getElementById('showMeasurements').checked,
+            items
+        };
+        const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+        if (csrfToken) headers[csrfHeader] = csrfToken;
+        button.disabled = true;
+        errorBox.classList.add('hidden');
+        try {
+            const response = await fetch(`/work-orders/${encodeURIComponent(editForm.dataset.orderId)}/technical-details`, {
+                method: 'POST', credentials: 'same-origin', headers, body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(await response.text() || 'Não foi possível salvar a ordem de serviço.');
+            window.location.assign(editForm.dataset.returnPath);
+        } catch (error) {
+            errorBox.textContent = error.message || 'Erro ao salvar a ordem de serviço.';
+            errorBox.classList.remove('hidden');
+            button.disabled = false;
+        }
+    });
+</script>
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>
