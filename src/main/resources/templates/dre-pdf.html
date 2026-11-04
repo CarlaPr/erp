@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${'DRE - ' + focusLabel}">Demonstração do Resultado</title>
+    <style th:inline="text">
+        @page {
+            size: A4 [[${annual ? 'landscape' : 'portrait'}]];
+            margin: 12mm 12mm 19mm 12mm;
+            @bottom-left { content: element(dre-footer); vertical-align: top; padding-top: 3mm; }
+            @bottom-right { content: "Página " counter(page) " de " counter(pages); font-family: 'Inter', Arial, sans-serif; font-size: 8px; color: #64748b; vertical-align: top; padding-top: 4mm; }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: #1e293b; background: #fff; font: 10px/1.45 'Inter', Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { vertical-align: top; }
+        #dre-footer { position: running(dre-footer); border-top: 1px solid #e2e8f0; padding-top: 5px; color: #64748b; font-size: 8px; }
+        .header { page-break-inside: avoid; page-break-after: avoid; padding-bottom: 14px; border-bottom: 3px solid #0f172a; }
+        .header-table { table-layout: fixed; }
+        .logo-cell { width: 24%; vertical-align: middle; padding-right: 14px; }
+        .logo { max-width: 120px; max-height: 65px; }
+        .company-cell { width: 49%; vertical-align: middle; padding-right: 14px; }
+        .company-name { font-size: 14px; line-height: 1.2; font-weight: 800; text-transform: uppercase; color: #0f172a; }
+        .company-detail { margin-top: 4px; font-size: 9px; color: #475569; word-wrap: break-word; }
+        .badge-cell { width: 27%; vertical-align: middle; text-align: right; }
+        .badge { padding: 12px; border-radius: 9px; background: #0f172a; color: #fff; text-align: center; }
+        .badge-title { font-size: 22px; font-weight: 800; }
+        .badge-label { margin-top: 3px; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        h1 { margin: 18px 0 4px; color: #0f172a; font-size: 18px; font-weight: 800; }
+        .period { margin-bottom: 12px; font-size: 10px; color: #475569; }
+        .period strong { color: #0f172a; }
+        h2 { margin: 18px 0 7px; font-size: 12px; color: #0f172a; page-break-after: avoid; }
+        .report-table { table-layout: fixed; -fs-table-paginate: paginate; font-size: 9px; }
+        .report-table thead { display: table-header-group; }
+        .report-table tr { page-break-inside: avoid; }
+        .report-table th, .report-table td { padding: 6px 7px; border-bottom: 1px solid #e2e8f0; }
+        .report-table thead th { background: #0f172a; color: #fff; font-weight: 700; text-align: right; }
+        .report-table thead th:first-child { text-align: left; }
+        .report-table .description { width: 46%; }
+        .report-table .month { width: 17%; }
+        .report-table .percent { width: 10%; }
+        .annual .report-table { font-size: 9.5px; }
+        .annual .description { width: 30%; }
+        .annual .month { width: 8.5%; }
+        .annual .total { width: 11%; }
+        .annual .percent { width: 8%; }
+        .num { text-align: right; white-space: nowrap; }
+        .label { text-align: left; font-weight: 500; word-wrap: break-word; }
+        .hint { display: block; margin-top: 3px; color: #64748b; font-size: 8px; font-weight: 400; }
+        .SUBTOTAL { background: #f1f5f9; font-weight: 700; }
+        .RESULT { background: #e8f0f6; color: #0f172a; font-weight: 800; border-top: 1px solid #94a3b8; }
+        .SECTION { background: #e2e8f0; color: #334155; font-weight: 800; }
+        .SUBTOTAL .label, .RESULT .label, .SECTION .label { font-weight: 700; }
+        .MEMO { color: #64748b; }
+        .detail { background: #fafbfd; color: #475569; }
+        .detail .label { padding-left: 18px; font-size: 8.5px; font-weight: 400; }
+        .table-block + .table-block { page-break-before: always; }
+        .indicator-section { page-break-inside: avoid; }
+        .notice { margin-top: 12px; padding: 9px 11px; background: #fff8e8; border-left: 3px solid #b45309; color: #78350f; font-size: 9px; page-break-inside: avoid; }
+        .indicators { table-layout: fixed; font-size: 9px; }
+        .indicators tr { page-break-inside: avoid; }
+        .indicators th, .indicators td { padding: 7px 9px; border-bottom: 1px solid #e2e8f0; }
+        .indicators th { width: 38%; text-align: left; background: #f8fafc; }
+        .indicators .value { width: 23%; text-align: right; font-weight: 700; }
+        .indicators .note { color: #64748b; }
+        .notes { font-size: 9px; color: #475569; }
+        .notes p { margin: 5px 0; }
+    </style>
+</head>
+<body th:class="${annual} ? 'annual' : 'monthly'">
+<div id="dre-footer">
+    <strong th:text="${companyName}">Empresa</strong>
+    <span th:text="${' | DRE - ' + focusLabel + ' | Emitido em ' + generatedDate}"></span>
+</div>
+
+<header class="header">
+    <table class="header-table">
+        <tr>
+            <td class="logo-cell"><img th:if="${logoBase64 != null}" th:src="${logoBase64}" class="logo" alt="Logo da empresa" /></td>
+            <td class="company-cell">
+                <div class="company-name" th:text="${companyName}">Grupo Glass</div>
+                <div class="company-detail" th:if="${!#strings.isEmpty(companyDocument)}" th:text="${'CNPJ/CPF: ' + companyDocument}"></div>
+                <div class="company-detail" th:if="${!#strings.isEmpty(companyAddress)}" th:text="${companyAddress}"></div>
+                <div class="company-detail" th:if="${!#strings.isEmpty(companyPhone)}" th:text="${companyPhone}"></div>
+                <div class="company-detail" th:if="${!#strings.isEmpty(companyEmail)}" th:text="${companyEmail}"></div>
+            </td>
+            <td class="badge-cell"><div class="badge"><div class="badge-title">DRE</div><div class="badge-label">Relatório gerencial</div></div></td>
+        </tr>
+    </table>
+</header>
+
+<h1 th:text="${'Demonstração do Resultado - ' + focusLabel}">Demonstração do Resultado</h1>
+<div class="period">Competência: <strong th:text="${period}"></strong>. Valores em R$. Todos os detalhes estão expandidos.</div>
+
+<section th:each="table : ${tables}" class="table-block">
+    <h2 th:if="${annual}" th:text="${table.title + ' - ' + focusLabel}">Meses do ano</h2>
+    <table class="report-table">
+        <colgroup>
+            <col class="description" />
+            <col th:each="month : ${table.months}" class="month" />
+            <col th:if="${showVariation}" class="percent" />
+            <col th:if="${showTotal}" class="total" />
+            <col class="percent" />
+        </colgroup>
+        <thead><tr>
+            <th>Descrição</th>
+            <th th:each="month : ${table.months}" th:text="${month}">Mês</th>
+            <th th:if="${showVariation}">Var. %</th>
+            <th th:if="${showTotal}">Total anual</th>
+            <th>AV %</th>
+        </tr></thead>
+        <tbody>
+        <th:block th:each="line : ${table.lines}">
+            <tr th:class="${line.kind}">
+                <th class="label"><span th:text="${line.label}"></span><span class="hint" th:if="${!#strings.isEmpty(line.hint)}" th:text="${line.hint}"></span></th>
+                <td th:each="value : ${line.values}" class="num" th:text="${line.kind == 'SECTION' ? '' : value}">0,00</td>
+                <td th:if="${showVariation}" class="num" th:text="${line.kind == 'SECTION' ? '' : line.variation}"></td>
+                <td th:if="${showTotal}" class="num" th:text="${line.kind == 'SECTION' ? '' : line.total}"></td>
+                <td class="num" th:text="${line.kind == 'SECTION' ? '' : line.av}"></td>
+            </tr>
+            <tr th:each="detail : ${line.details}" class="detail">
+                <th class="label" th:text="${detail.label}">Categoria / Subcategoria</th>
+                <td th:each="value : ${detail.values}" class="num" th:text="${value}">0,00</td>
+                <td th:if="${showVariation}"></td>
+                <td th:if="${showTotal}" class="num" th:text="${detail.total}"></td>
+                <td></td>
+            </tr>
+        </th:block>
+        </tbody>
+    </table>
+</section>
+
+<div th:if="${unclassifiedCount > 0}" class="notice">
+    <strong>Atenção à classificação:</strong>
+    <span th:text="${unclassifiedCount + ' lançamento(s) sem classificação, somando R$ ' + unclassifiedTotal + '.'}"></span>
+    Os valores já compõem a linha Não classificado. Revise as categorias e subcategorias em Contas a Pagar.
+</div>
+
+<section class="indicator-section">
+<h2>Indicadores do período selecionado - valores em R$</h2>
+<table class="indicators">
+    <tbody><tr th:each="indicator : ${indicators}">
+        <th th:text="${indicator.label}"></th><td class="value" th:text="${indicator.value}"></td><td class="note" th:text="${indicator.note}"></td>
+    </tr></tbody>
+</table>
+</section>
+
+<h2>Critérios da demonstração</h2>
+<div class="notes">
+    <p>Competência financeira do dia 6 ao dia 5 do mês seguinte. Na visão mensal, o mês anterior é apresentado para comparação. Na visão anual, os meses são divididos em dois quadros para preservar a leitura; a coluna Total anual e a AV % consideram o ano completo.</p>
+    <p>Receita bruta: ordens de serviço não canceladas de orçamentos aprovados, pela competência da aprovação. Custos e despesas: contas a pagar não canceladas pelo valor total, pagas ou a pagar, conforme o plano de contas da DRE.</p>
+    <p>Descontos concedidos e taxas de cartão são considerados na competência do recebimento. A AV % expressa o percentual sobre a receita bruta; a Var. % compara o mês selecionado com o anterior. Um traço na variação indica ausência de base de comparação.</p>
+    <p>Investimentos, amortização do principal de dívidas, reservas e retiradas não alteram o lucro e são demonstrados após o resultado líquido. Juros são despesas financeiras. Perdas são informativas, pois a reposição de material já está refletida nos custos.</p>
+    <p>Provisões trabalhistas e seus pagamentos não devem ser lançados em duplicidade. Sem depreciação lançada, o resultado operacional coincide com o EBITDA.</p>
+</div>
+</body>
+</html>

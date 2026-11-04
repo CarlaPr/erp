@@ -4,8 +4,15 @@ import com.alfatahi.erp.dto.DreEntry;
 import com.alfatahi.erp.dto.DreReport;
 import com.alfatahi.erp.service.DreGroup;
 import com.alfatahi.erp.service.DreService;
+import com.alfatahi.erp.service.DrePdfService;
 import com.alfatahi.erp.service.FinancialPeriod;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,11 +42,14 @@ import java.util.UUID;
 public class DreController {
 
     private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
+    private static final Logger log = LoggerFactory.getLogger(DreController.class);
 
     private final DreService dreService;
+    private final DrePdfService drePdfService;
 
-    public DreController(DreService dreService) {
+    public DreController(DreService dreService, DrePdfService drePdfService) {
         this.dreService = dreService;
+        this.drePdfService = drePdfService;
     }
 
     @GetMapping
@@ -69,6 +79,27 @@ public class DreController {
         model.addAttribute("rangeTo", rangeTo.toString());
         model.addAttribute("monthKeys", report.months().stream().map(YearMonth::toString).toList());
         return "dre";
+    }
+
+    @GetMapping("/pdf")
+    public ResponseEntity<byte[]> pdf(@RequestParam(required = false, defaultValue = "month") String view,
+                                      @RequestParam(required = false) String month,
+                                      @RequestParam(required = false) Integer ano) {
+        try {
+            Selection selection = select(view, month, ano);
+            DreReport report = selection.yearly() ? dreService.year(selection.year()) : dreService.month(selection.reference());
+            DrePdfService.Pdf pdf = drePdfService.render(report);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
+                            .filename(pdf.fileName(), StandardCharsets.UTF_8).build().toString())
+                    .body(pdf.bytes());
+        } catch (Exception e) {
+            log.error("Erro ao gerar PDF da DRE", e);
+            return ResponseEntity.internalServerError()
+                    .contentType(new MediaType("text", "plain", StandardCharsets.UTF_8))
+                    .body("Não foi possível gerar o PDF da DRE. Tente novamente.".getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     @GetMapping("/export")
