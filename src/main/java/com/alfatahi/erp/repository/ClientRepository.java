@@ -1,6 +1,8 @@
 package com.alfatahi.erp.repository;
 
 import com.alfatahi.erp.entity.Client;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +14,8 @@ import java.util.List;
 public interface ClientRepository extends JpaRepository<Client, UUID> {
     List<Client> findByIsActiveTrueOrderByNameAsc();
 
+    Page<Client> findByIsActiveTrue(Pageable pageable);
+
     @Query("SELECT c FROM Client c WHERE c.isActive = true OR c.isActive IS NULL ORDER BY LOWER(c.name)")
     List<Client> findSelectableClients();
 
@@ -20,4 +24,10 @@ public interface ClientRepository extends JpaRepository<Client, UUID> {
             "LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
             "LOWER(c.document) LIKE LOWER(CONCAT('%', :search, '%')))")
     List<Client> searchClients(@Param("search") String search);
+
+    @Query("SELECT c FROM Client c WHERE c.isActive = true AND (" +
+            "LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(c.document) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Client> searchClients(@Param("search") String search, Pageable pageable);
 }
