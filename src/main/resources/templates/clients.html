@@ -91,6 +91,7 @@
                 <div class="relative flex-1 min-w-0"><i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none"></i><input id="clientSearch" type="search" name="search" th:value="${search}" placeholder="Nome, e-mail ou CPF/CNPJ..." class="clients-control w-full pl-12 pr-4 text-base sm:text-sm" autocomplete="off" aria-controls="clientResults" aria-describedby="clientSearchStatus"></div>
                 <div class="flex gap-2"><button type="submit" class="clients-btn flex-1 sm:flex-none px-5 bg-slate-800 hover:bg-slate-950 text-white dark:bg-slate-600 dark:hover:bg-slate-500"><i data-lucide="search" class="w-4 h-4"></i> Pesquisar</button><a id="clearClientSearch" th:href="@{/clients}" th:classappend="${#strings.isEmpty(search)} ? ' hidden'" class="clients-btn flex-1 sm:flex-none px-4 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700">Limpar</a></div>
             </form>
+            <p id="clientSearchStatus" class="mt-2 text-xs text-slate-500 dark:text-slate-400" role="status" aria-live="polite" aria-atomic="true"></p>
         </section>
 
         <div id="clientResults" th:fragment="clientResults" class="space-y-5 sm:space-y-6" aria-busy="false"

@@ -6,7 +6,7 @@
     const status = document.getElementById('clientSearchStatus');
     const clear = document.getElementById('clearClientSearch');
     let results = document.getElementById('clientResults');
-    if (!form || !input || !results) return;
+    if (!form || !input || !status || !clear || !results) return;
 
     let timer;
     let activeRequest;
