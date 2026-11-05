@@ -21,6 +21,7 @@ public class TechnicalVisitDto {
     private LocalTime visitTime;
     private String notes;
     private String responsible;
+    private String technician;
     private String status;
     private long openingCount;
     private long photoCount;
@@ -59,6 +60,9 @@ public class TechnicalVisitDto {
 
     public String getResponsible() { return responsible; }
     public void setResponsible(String responsible) { this.responsible = responsible; }
+
+    public String getTechnician() { return technician; }
+    public void setTechnician(String technician) { this.technician = technician; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

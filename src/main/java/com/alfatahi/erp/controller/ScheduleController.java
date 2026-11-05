@@ -430,6 +430,8 @@ public class ScheduleController {
 
         String occTeam = occ != null ? occ.getTeam() : null;
         String occResponsible = occ != null ? occ.getResponsible() : null;
+        r.setResponsible(nvl(occResponsible, nvl(s.getResponsible(), "-")));
+        r.setTeam(nvl(occTeam, nvl(s.getTeam(), "-")));
         String team = (occTeam != null && !occTeam.isBlank()) ? occTeam
                 : (occResponsible != null && !occResponsible.isBlank()) ? occResponsible
                 : (s.getTeam() != null && !s.getTeam().isBlank() ? s.getTeam() : s.getResponsible());
@@ -455,6 +457,8 @@ public class ScheduleController {
         r.setSortTime(v.getVisitTime());
         r.setTimeFormatted(v.getVisitTime() != null ? v.getVisitTime().toString().substring(0, 5) : "A definir");
         r.setTeamOrResponsible(nvl(v.getResponsible(), "-"));
+        r.setResponsible(nvl(v.getResponsible(), "-"));
+        r.setTechnician(nvl(v.getTechnician(), "-"));
         r.setItems(List.of("Visita técnica ao cliente"));
         r.setObservations(v.getNotes());
         r.setVisit(true);
@@ -476,6 +480,9 @@ public class ScheduleController {
         private String selectionKey;
         private String timeFormatted;
         private String teamOrResponsible;
+        private String responsible;
+        private String team;
+        private String technician;
         private List<String> items;
         private String observations;
         private boolean visit;
@@ -505,6 +512,15 @@ public class ScheduleController {
 
         public String getTeamOrResponsible() { return teamOrResponsible; }
         public void setTeamOrResponsible(String teamOrResponsible) { this.teamOrResponsible = teamOrResponsible; }
+
+        public String getResponsible() { return responsible; }
+        public void setResponsible(String responsible) { this.responsible = responsible; }
+
+        public String getTeam() { return team; }
+        public void setTeam(String team) { this.team = team; }
+
+        public String getTechnician() { return technician; }
+        public void setTechnician(String technician) { this.technician = technician; }
 
         public List<String> getItems() { return items; }
         public void setItems(List<String> items) { this.items = items; }
@@ -570,8 +586,13 @@ public class ScheduleController {
                     .append("\n").append(item.getTypeLabel()).append(" · ").append(item.getTimeFormatted())
                     .append("\nEndereço: ").append(item.getClientAddress())
                     .append("\nOrçamento: ").append(item.getQuoteNumber())
-                    .append("\nResponsável/equipe: ").append(item.getTeamOrResponsible())
-                    .append("\n*Serviços:*");
+                    .append(item.isVisit() ? "\nResponsável pela visita: " : "\nResponsável/equipe: ")
+                    .append(item.getTeamOrResponsible());
+
+            if (item.isVisit()) {
+                message.append("\nTécnico responsável: ").append(item.getTechnician());
+            }
+            message.append("\n*Serviços:*");
 
             for (String service : item.getItems()) {
                 String servicoLimpo = service;

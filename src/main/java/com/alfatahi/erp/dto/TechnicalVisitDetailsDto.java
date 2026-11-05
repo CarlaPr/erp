@@ -14,7 +14,8 @@ import java.util.UUID;
 public record TechnicalVisitDetailsDto(
         UUID id, UUID clientId, String clientName, String clientAddress,
         UUID quoteId, String quoteNumber, LocalDate visitDate, LocalTime visitTime,
-        String notes, String status, LocalDate completedDate, List<OpeningDto> openings, List<PhotoDto> photos) {
+        String notes, String responsible, String technician, String status, LocalDate completedDate,
+        List<OpeningDto> openings, List<PhotoDto> photos) {
 
     public record OpeningDto(
             UUID id, CategoriaServico serviceCategory, String name, BigDecimal widthMm, BigDecimal heightMm,

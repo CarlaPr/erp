@@ -101,7 +101,9 @@
             <div class="grid-cell"><span class="label">Horário Agendado:</span> <span th:text="${item.timeFormatted}">A definir</span></div>
         </div>
         <div class="grid-row">
-            <div class="grid-cell"><span class="label">Equipe/Resp.:</span> <span th:text="${item.teamOrResponsible}">-</span></div>
+            <div class="grid-cell"><span class="label">Responsável:</span> <span th:text="${item.responsible}">-</span></div>
+            <div class="grid-cell" th:unless="${item.visit}"><span class="label">Equipe:</span> <span th:text="${item.team}">-</span></div>
+            <div class="grid-cell" th:if="${item.visit}"><span class="label">Técnico responsável:</span> <span th:text="${item.technician}">-</span></div>
         </div>
     </div>
 

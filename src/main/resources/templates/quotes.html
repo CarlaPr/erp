@@ -1313,7 +1313,7 @@
     </div>
 
     <div id="scheduleVisitModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
-        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
+        <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-8 relative my-auto animate-in fade-in zoom-in-95 duration-200">
             <button type="button" onclick="closeModal('scheduleVisitModal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-full transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
@@ -1341,6 +1341,11 @@
             <div class="mb-4">
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável pela visita</label>
                 <input id="scheduleVisitResponsible" type="text" maxlength="120" placeholder="Nome de quem fará a visita"
+                       class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+            </div>
+            <div class="mb-4">
+                <label for="scheduleVisitTechnician" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Técnico responsável</label>
+                <input id="scheduleVisitTechnician" type="text" maxlength="120" placeholder="Nome do técnico responsável"
                        class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
             </div>
             <div class="mb-6">
@@ -2105,6 +2110,7 @@
         document.getElementById('scheduleVisitTime').value = '';
         document.getElementById('scheduleVisitNotes').value = '';
         document.getElementById('scheduleVisitResponsible').value = '';
+        document.getElementById('scheduleVisitTechnician').value = '';
         toggleModal('scheduleVisitModal', true);
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
@@ -2121,7 +2127,8 @@
             visitDate: visitDate,
             visitTime: document.getElementById('scheduleVisitTime').value ? (document.getElementById('scheduleVisitTime').value + ':00') : null,
             notes: document.getElementById('scheduleVisitNotes').value,
-            responsible: document.getElementById('scheduleVisitResponsible').value.trim()
+            responsible: document.getElementById('scheduleVisitResponsible').value.trim(),
+            technician: document.getElementById('scheduleVisitTechnician').value.trim()
         };
 
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;

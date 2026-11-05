@@ -76,6 +76,7 @@ public class TechnicalVisitDataService {
         visit.setVisitTime(request.getVisitTime());
         visit.setNotes(request.getNotes());
         visit.setResponsible(request.getResponsible());
+        visit.setTechnician(request.getTechnician());
         applyStatus(visit, "AGENDADA");
         return visitRepository.saveAndFlush(visit).getId();
     }
@@ -89,6 +90,7 @@ public class TechnicalVisitDataService {
         visit.setVisitTime(request.getVisitTime());
         visit.setNotes(request.getNotes());
         visit.setResponsible(request.getResponsible());
+        visit.setTechnician(request.getTechnician());
         if (canManageStatus) applyStatus(visit, request.getStatus());
         visitRepository.save(visit);
     }
@@ -261,7 +263,8 @@ public class TechnicalVisitDataService {
                 client != null ? client.getName() : "Cliente não informado", address,
                 visit.getQuote() != null ? visit.getQuote().getId() : null,
                 visit.getQuote() != null ? visit.getQuote().getNumber() : null,
-                visit.getVisitDate(), visit.getVisitTime(), visit.getNotes(), visit.getStatus(), visit.getCompletedDate(), openings, photos);
+                visit.getVisitDate(), visit.getVisitTime(), visit.getNotes(), visit.getResponsible(), visit.getTechnician(),
+                visit.getStatus(), visit.getCompletedDate(), openings, photos);
     }
 
     private ProcessedPhoto processPhoto(MultipartFile file) throws IOException {

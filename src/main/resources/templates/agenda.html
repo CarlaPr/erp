@@ -513,15 +513,11 @@
             </h3>
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Edite a data, o horário ou exclua a visita agendada.</p>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-1 gap-3 mb-4 text-xs">
                 <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
                     <span class="block text-slate-400 font-bold uppercase mb-1">Cliente</span>
                     <span id="visitInfoClient" class="font-bold text-slate-800 dark:text-white block">-</span>
                     <span id="visitInfoAddress" class="text-slate-500 dark:text-slate-400 mt-1 block leading-tight">-</span>
-                </div>
-                <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
-                    <span class="block text-slate-400 font-bold uppercase mb-1">Orçamento</span>
-                    <span id="visitInfoQuote" class="font-bold text-slate-800 dark:text-white block">-</span>
                 </div>
             </div>
 
@@ -544,8 +540,13 @@
                           class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white"></textarea>
             </div>
             <div class="mb-4">
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável</label>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Responsável pela visita</label>
                 <input id="visitResponsible" type="text" maxlength="120" placeholder="Carla, Jessica, Tatiane"
+                       class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
+            </div>
+            <div class="mb-4">
+                <label for="visitTechnician" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Técnico responsável</label>
+                <input id="visitTechnician" type="text" maxlength="120" placeholder="Hugo, Igor, Anderson"
                        class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none focus:border-brand-500 dark:text-white">
             </div>
 
@@ -724,6 +725,7 @@
             serviceDetails: ['Visita técnica ao cliente'],
             daysRemaining: null,
             responsible: v.responsible || null,
+            technician: v.technician || null,
             team: null,
             observations: v.notes,
             rescheduleReason: null
@@ -1105,11 +1107,11 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 mb-4">
-                    <span><b>Orçamento:</b> ${s.quoteNumber || '-'}</span>
-                    <span><b>OS:</b> ${s.workOrderNumber || '-'}</span>
                     ${!isVisit ? `<span><b>Observações:</b> ${s.observations || '-'}</span>` : ''}
                     <span><b>${isVisit ? 'Agendada para' : 'Prazo - Entregar até'}:</b> ${fmtBR(isVisit ? s.scheduledDate : s.deadlineDate)}</span>
-                    <span><b>Responsável:</b> ${s.responsible || '-'}</span>
+                    <span class="min-w-0 break-words"><b>${isVisit ? 'Responsável pela visita' : 'Responsável'}:</b> <span data-responsible></span></span>
+                    ${!isVisit ? '<span class="min-w-0 break-words"><b>Equipe:</b> <span data-team></span></span>' : ''}
+                    ${isVisit ? '<span class="min-w-0 break-words"><b>Técnico responsável:</b> <span data-technician></span></span>' : ''}
                     <span><b>Hora Prevista:</b> ${s.scheduledTime ? fmtTimeBR(s.scheduledTime) : '-'}</span>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -1131,7 +1133,10 @@
             row.querySelector('[data-client-name]').textContent = s.clientName?.trim() || 'Sem cliente';
             row.querySelector('[data-client-address]').textContent = s.clientAddress?.trim() || 'Endereço não informado';
             row.querySelector('[data-client-phone]').textContent = s.clientPhone?.trim() || 'Telefone não informado';
+            row.querySelector('[data-responsible]').textContent = s.responsible?.trim() || '-';
+            if (!isVisit) row.querySelector('[data-team]').textContent = s.team?.trim() || '-';
             if (isVisit) {
+                row.querySelector('[data-technician]').textContent = s.technician?.trim() || '-';
                 const notes = s.observations?.trim();
                 row.querySelector('[data-visit-description]').textContent = ''
                     + (notes ? ' - Observações: ' + notes : '');
@@ -1693,7 +1698,7 @@
     }
 
     let currentEditSchedule = null;
-    let pendingOccurrences = []; // dias adicionais ainda não persistidos (ver seção mais abaixo)
+    let pendingOccurrences = [];
 
     let serviceScheduleRequest = 0;
     function openServiceSchedulePicker() {
@@ -2039,13 +2044,13 @@
 
             document.getElementById('visitInfoClient').textContent = v.clientName || '-';
             document.getElementById('visitInfoAddress').textContent = v.clientAddress || 'Endereço não informado';
-            document.getElementById('visitInfoQuote').textContent = v.quoteNumber || '-';
 
             document.getElementById('visitId').value = v.id;
             document.getElementById('visitDate').value = v.visitDate || '';
             document.getElementById('visitTime').value = v.visitTime ? v.visitTime.substring(0, 5) : '';
             document.getElementById('visitNotes').value = v.notes || '';
             document.getElementById('visitResponsible').value = v.responsible || '';
+            document.getElementById('visitTechnician').value = v.technician || '';
 
             closeModal('dayModal');
             toggleModal('visitModal', true);
@@ -2062,7 +2067,8 @@
             visitDate: document.getElementById('visitDate').value || null,
             visitTime: document.getElementById('visitTime').value ? (document.getElementById('visitTime').value + ':00') : null,
             notes: document.getElementById('visitNotes').value,
-            responsible: document.getElementById('visitResponsible').value.trim()
+            responsible: document.getElementById('visitResponsible').value.trim(),
+            technician: document.getElementById('visitTechnician').value.trim()
         };
 
         if (!payload.visitDate) {

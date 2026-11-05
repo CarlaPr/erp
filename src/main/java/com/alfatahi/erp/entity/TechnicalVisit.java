@@ -38,6 +38,9 @@ public class TechnicalVisit {
     @Column(name = "responsible", length = 120)
     private String responsible;
 
+    @Column(name = "technician", length = 120)
+    private String technician;
+
     @Column(nullable = false, length = 20)
     private String status = "AGENDADA";
 
@@ -75,6 +78,9 @@ public class TechnicalVisit {
 
     public String getResponsible() { return responsible; }
     public void setResponsible(String responsible) { this.responsible = responsible; }
+
+    public String getTechnician() { return technician; }
+    public void setTechnician(String technician) { this.technician = technician; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
