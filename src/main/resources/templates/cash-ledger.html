@@ -51,23 +51,27 @@
 
     </header>
 
+    <div th:if="${error}" role="alert" class="mb-6 rounded-2xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm font-semibold text-rose-800 dark:text-rose-300" th:text="${error}"></div>
+
     <form th:action="@{/cash-ledger}"
           method="GET"
           class="bg-white dark:bg-[#131C2F] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm mb-6">
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-4 items-end">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto] gap-4 items-end">
 
 
 
             <div class="min-w-0">
 
-                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                <label for="cash-ledger-from" class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                     De
                 </label>
 
                 <input
                         type="date"
+                        id="cash-ledger-from"
                         name="from"
+                        required
                         th:value="${from}"
                         class="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 sm:px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/10 text-sm font-semibold transition-all"
                 />
@@ -76,13 +80,15 @@
 
             <div class="min-w-0">
 
-                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                <label for="cash-ledger-to" class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                     Até
                 </label>
 
                 <input
                         type="date"
+                        id="cash-ledger-to"
                         name="to"
+                        required
                         th:value="${to}"
                         class="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 sm:px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/10 text-sm font-semibold transition-all"
                 />
@@ -99,7 +105,15 @@
 
             </button>
 
+            <button type="submit" th:formaction="@{/cash-ledger/pdf}"
+                    class="w-full lg:w-auto bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-brand-500 dark:hover:border-cyan-500 text-slate-700 dark:text-slate-200 font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-sm">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                Baixar PDF
+            </button>
+
         </div>
+
+        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">Selecione as datas e clique em Baixar PDF para obter o relatório completo do período.</p>
 
     </form>
 
@@ -773,6 +787,18 @@
 
 
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
+
+<script>
+    const cashLedgerFrom = document.getElementById('cash-ledger-from');
+    const cashLedgerTo = document.getElementById('cash-ledger-to');
+    function validateCashLedgerPeriod() {
+        cashLedgerTo.setCustomValidity(cashLedgerFrom.value && cashLedgerTo.value && cashLedgerFrom.value > cashLedgerTo.value
+            ? 'A data final deve ser posterior ou igual à data inicial.' : '');
+    }
+    cashLedgerFrom.addEventListener('input', validateCashLedgerPeriod);
+    cashLedgerTo.addEventListener('input', validateCashLedgerPeriod);
+    validateCashLedgerPeriod();
+</script>
 
 
 <style>

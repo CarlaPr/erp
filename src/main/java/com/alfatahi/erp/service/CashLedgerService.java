@@ -1,6 +1,7 @@
 package com.alfatahi.erp.service;
 
 import com.alfatahi.erp.dto.CashLedgerEntryDto;
+import com.alfatahi.erp.dto.CashLedgerReport;
 import com.alfatahi.erp.entity.FinancialMovement;
 import com.alfatahi.erp.repository.FinancialMovementRepository;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,33 @@ public class CashLedgerService {
     }
 
     public record BalanceSummary(BigDecimal total, BigDecimal bank, BigDecimal cash) { }
+
+    @Transactional(readOnly = true)
+    public CashLedgerReport buildReport(LocalDate from, LocalDate to) {
+        if (from == null || to == null || from.isAfter(to)) {
+            throw new IllegalArgumentException("Informe um período válido: a data inicial deve ser anterior ou igual à data final.");
+        }
+        BalanceSummary opening = getOpeningBalances(from);
+        List<CashLedgerEntryDto> entries = buildLedger(from, to, opening.total());
+        BigDecimal totalEntradas = BigDecimal.ZERO;
+        BigDecimal totalSaidas = BigDecimal.ZERO;
+        BigDecimal totalTaxas = BigDecimal.ZERO;
+        BigDecimal bank = opening.bank();
+        BigDecimal cash = opening.cash();
+        for (CashLedgerEntryDto entry : entries) {
+            totalEntradas = totalEntradas.add(entry.getEntrada());
+            totalSaidas = totalSaidas.add(entry.getSaida());
+            if (entry.isFinancialExpense()) totalTaxas = totalTaxas.add(entry.getSaida());
+            BigDecimal net = entry.getEntrada().subtract(entry.getSaida());
+            if (entry.getBalanceLocation() == CashLedgerEntryDto.BalanceLocation.DINHEIRO) {
+                cash = cash.add(net);
+            } else {
+                bank = bank.add(net);
+            }
+        }
+        BalanceSummary closing = new BalanceSummary(bank.add(cash), bank, cash);
+        return new CashLedgerReport(from, to, entries, opening, closing, totalEntradas, totalSaidas, totalTaxas);
+    }
 
     @Transactional(readOnly = true)
     public List<CashLedgerEntryDto> buildLedger(LocalDate from, LocalDate to,

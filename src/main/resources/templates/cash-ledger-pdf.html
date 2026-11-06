@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Fluxo de Caixa</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 12mm 12mm 19mm 12mm;
+            @bottom-left { content: element(cash-footer); vertical-align: top; padding-top: 3mm; }
+            @bottom-right { content: "Página " counter(page) " de " counter(pages); font-family: 'Inter', Arial, sans-serif; font-size: 8px; color: #64748b; vertical-align: top; padding-top: 4mm; }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: #1e293b; background: #fff; font: 10px/1.45 'Inter', Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        td, th { vertical-align: top; }
+        #cash-footer { position: running(cash-footer); width: 88%; border-top: 1px solid #e2e8f0; padding-top: 5px; color: #64748b; font-size: 8px; }
+        .header { page-break-inside: avoid; page-break-after: avoid; padding-bottom: 14px; border-bottom: 3px solid #0f172a; }
+        .logo-cell { width: 24%; vertical-align: middle; padding-right: 14px; }
+        .logo { max-width: 120px; max-height: 65px; }
+        .company-cell { width: 49%; vertical-align: middle; padding-right: 14px; }
+        .company-name { font-size: 14px; line-height: 1.2; font-weight: 800; text-transform: uppercase; color: #0f172a; }
+        .company-detail { margin-top: 4px; font-size: 9px; color: #475569; word-wrap: break-word; }
+        .badge-cell { width: 27%; vertical-align: middle; text-align: right; }
+        .badge { padding: 12px; border-radius: 9px; background: #0f172a; color: #fff; text-align: center; }
+        .badge-title { font-size: 20px; font-weight: 800; }
+        .badge-label { margin-top: 3px; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        h1 { margin: 18px 0 4px; color: #0f172a; font-size: 18px; font-weight: 800; }
+        .period { margin-bottom: 12px; font-size: 10px; color: #475569; }
+        .period strong { color: #0f172a; }
+        h2 { margin: 16px 0 7px; font-size: 12px; color: #0f172a; page-break-after: avoid; }
+        .summary { margin-bottom: 12px; page-break-inside: avoid; }
+        .summary td { width: 25%; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; }
+        .summary-label { color: #64748b; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+        .summary-value { margin-top: 4px; font-size: 16px; font-weight: 800; color: #0f172a; }
+        .incoming { color: #047857; }
+        .outgoing, .negative { color: #be123c; }
+        .ledger { -fs-table-paginate: paginate; font-size: 9px; }
+        .ledger thead { display: table-header-group; }
+        .ledger tr { page-break-inside: avoid; }
+        .ledger th, .ledger td { padding: 6px; border-bottom: 1px solid #e2e8f0; word-wrap: break-word; }
+        .ledger thead th { background: #0f172a; color: #fff; font-weight: 700; text-align: left; }
+        .ledger .num { text-align: right; white-space: nowrap; }
+        .ledger .opening { background: #f1f5f9; font-weight: 700; }
+        .ledger .total { background: #e8f0f6; font-weight: 800; border-top: 1px solid #94a3b8; }
+        .ledger .fee { background: #fff8e8; }
+        .note { margin-top: 3px; color: #64748b; font-size: 8px; white-space: pre-line; }
+        .empty { padding: 20px !important; text-align: center; color: #64748b; }
+        .balances { margin-top: 16px; page-break-inside: avoid; }
+        .balances th, .balances td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; }
+        .balances th { text-align: left; background: #f8fafc; }
+        .balances .num { text-align: right; white-space: nowrap; }
+        .criteria { margin-top: 12px; color: #475569; font-size: 9px; page-break-inside: avoid; }
+        .criteria p { margin: 5px 0; }
+    </style>
+</head>
+<body>
+<div id="cash-footer">
+    <strong th:text="${companyName}">Empresa</strong>
+    <span th:text="${' | Fluxo de Caixa | ' + period + ' | Emitido em ' + generatedDate}"></span>
+</div>
+
+<header class="header">
+    <table>
+        <tr>
+            <td class="logo-cell"><img th:if="${logoBase64 != null}" th:src="${logoBase64}" class="logo" alt="Logo da empresa" /></td>
+            <td class="company-cell">
+                <div class="company-name" th:text="${companyName}">Grupo Glass</div>
+                <div class="company-detail" th:if="${!#strings.isEmpty(companyDocument)}" th:text="${'CNPJ/CPF: ' + companyDocument}"></div>
+                <div class="company-detail" th:if="${!#strings.isEmpty(companyAddress)}" th:text="${companyAddress}"></div>
+                <div class="company-detail" th:if="${!#strings.isEmpty(companyPhone)}" th:text="${companyPhone}"></div>
+                <div class="company-detail" th:if="${!#strings.isEmpty(companyEmail)}" th:text="${companyEmail}"></div>
+            </td>
+            <td class="badge-cell"><div class="badge"><div class="badge-title">FLUXO DE CAIXA</div><div class="badge-label">Relatório financeiro</div></div></td>
+        </tr>
+    </table>
+</header>
+
+<h1>Fluxo de Caixa</h1>
+<div class="period">Período: <strong th:text="${period}"></strong> (inclusive). Valores em R$. Movimentações em ordem cronológica.</div>
+
+<table class="summary">
+    <tr>
+        <td><div class="summary-label">Saldo de abertura</div><div class="summary-value" th:text="${'R$ ' + openingBalance}"></div></td>
+        <td><div class="summary-label">Entradas do período</div><div class="summary-value incoming" th:text="${'R$ ' + totalEntradas}"></div></td>
+        <td><div class="summary-label">Saídas do período</div><div class="summary-value outgoing" th:text="${'R$ ' + totalSaidas}"></div></td>
+        <td><div class="summary-label">Saldo final</div><div class="summary-value" th:classappend="${negativeBalance} ? 'negative'" th:text="${'R$ ' + saldoFinal}"></div></td>
+    </tr>
+</table>
+
+<h2>Extrato de movimentações</h2>
+<table class="ledger">
+    <colgroup>
+        <col style="width: 8%" /><col style="width: 6%" /><col style="width: 14%" /><col style="width: 23%" />
+        <col style="width: 6%" /><col style="width: 9%" /><col style="width: 6%" />
+        <col style="width: 9%" /><col style="width: 9%" /><col style="width: 10%" />
+    </colgroup>
+    <thead><tr>
+        <th>Data</th><th>Tipo</th><th>Parte</th><th>Descrição</th><th>OS</th><th>Forma pgto.</th><th>Conta</th>
+        <th class="num">Entrada</th><th class="num">Saída</th><th class="num">Saldo</th>
+    </tr></thead>
+    <tbody>
+        <tr class="opening">
+            <td th:text="${from}"></td><td colspan="6">Saldo de abertura</td><td class="num">-</td><td class="num">-</td><td class="num" th:text="${openingBalance}"></td>
+        </tr>
+        <tr th:each="line : ${lines}" th:classappend="${line.financialExpense} ? 'fee'">
+            <td th:text="${line.date}"></td><td th:text="${line.type}"></td><td th:text="${line.party}"></td>
+            <td><span th:text="${line.description}"></span><div class="note" th:if="${!#strings.isEmpty(line.notes)}" th:text="${line.notes}"></div></td>
+            <td th:text="${line.workOrderNumber}"></td><td th:text="${line.paymentMethod}"></td><td th:text="${line.account}"></td>
+            <td class="num incoming" th:text="${line.entrada}"></td><td class="num outgoing" th:text="${line.saida}"></td>
+            <td class="num" th:classappend="${line.negativeBalance} ? 'negative'" th:text="${line.saldo}"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(lines)}"><td colspan="10" class="empty">Nenhuma movimentação no período selecionado.</td></tr>
+        <tr class="total">
+            <td th:text="${to}"></td><td colspan="6">Totais do período / saldo final</td>
+            <td class="num incoming" th:text="${totalEntradas}"></td><td class="num outgoing" th:text="${totalSaidas}"></td>
+            <td class="num" th:classappend="${negativeBalance} ? 'negative'" th:text="${saldoFinal}"></td>
+        </tr>
+    </tbody>
+</table>
+
+<section class="balances">
+    <h2>Composição dos saldos - valores em R$</h2>
+    <table>
+        <thead><tr><th>Conta</th><th class="num">Saldo de abertura</th><th class="num">Saldo ao final do período</th></tr></thead>
+        <tbody>
+            <tr><td>Banco (PIX, cartão, boleto e transferência)</td><td class="num" th:text="${openingBankBalance}"></td><td class="num" th:text="${saldoBanco}"></td></tr>
+            <tr><td>Dinheiro</td><td class="num" th:text="${openingCashBalance}"></td><td class="num" th:text="${saldoDinheiro}"></td></tr>
+            <tr><th>Total</th><th class="num" th:text="${openingBalance}"></th><th class="num" th:text="${saldoFinal}"></th></tr>
+        </tbody>
+    </table>
+</section>
+
+<div class="criteria">
+    <p><strong>Taxas e despesas financeiras do período:</strong> <span th:text="${'R$ ' + totalTaxas}"></span>. Este valor já está incluído nas saídas.</p>
+    <p>Regime de caixa: considera os recebimentos e pagamentos efetivamente registrados nas datas informadas, incluindo pagamentos parciais. Contas canceladas não compõem o relatório.</p>
+    <p>O saldo de abertura considera os movimentos anteriores à data inicial. O saldo após cada movimento e o saldo final incluem esse valor de abertura.</p>
+</div>
+</body>
+</html>
