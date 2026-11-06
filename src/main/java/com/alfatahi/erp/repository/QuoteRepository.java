@@ -1,7 +1,10 @@
 package com.alfatahi.erp.repository;
 
+import com.alfatahi.erp.dto.QuoteListItem;
 import com.alfatahi.erp.entity.Quote;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -17,6 +20,78 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface QuoteRepository extends JpaRepository<Quote, UUID> {
+
+    @Query(value = """
+            SELECT new com.alfatahi.erp.dto.QuoteListItem(
+                q.id, q.number, q.status, q.dateCreated, c.name, w.id, w.number, q.publicToken,
+                CASE WHEN q.clientSignature IS NOT NULL AND q.clientSignature <> '' THEN true ELSE false END
+            )
+            FROM Quote q
+            LEFT JOIN q.client c
+            LEFT JOIN q.workOrder w
+            WHERE (:status = '' OR q.status = :status)
+              AND (:number = '' OR LOWER(q.number) LIKE LOWER(CONCAT('%', :number, '%')))
+              AND (:name = '' OR LOWER(COALESCE(c.name, '')) LIKE LOWER(CONCAT('%', :name, '%')))
+              AND (:allDates = true OR (q.dateCreated >= :fromDate AND q.dateCreated < :toDate))
+            ORDER BY q.dateCreated DESC NULLS LAST, q.number DESC
+            """,
+            countQuery = """
+            SELECT COUNT(q) FROM Quote q
+            LEFT JOIN q.client c
+            WHERE (:status = '' OR q.status = :status)
+              AND (:number = '' OR LOWER(q.number) LIKE LOWER(CONCAT('%', :number, '%')))
+              AND (:name = '' OR LOWER(COALESCE(c.name, '')) LIKE LOWER(CONCAT('%', :name, '%')))
+              AND (:allDates = true OR (q.dateCreated >= :fromDate AND q.dateCreated < :toDate))
+            """)
+    Page<QuoteListItem> findPageByCreatedDate(@Param("status") String status,
+                                              @Param("number") String number,
+                                              @Param("name") String name,
+                                              @Param("allDates") boolean allDates,
+                                              @Param("fromDate") LocalDateTime fromDate,
+                                              @Param("toDate") LocalDateTime toDate,
+                                              Pageable pageable);
+
+    @Query(value = """
+            SELECT new com.alfatahi.erp.dto.QuoteListItem(
+                q.id, q.number, q.status, q.dateCreated, c.name, w.id, w.number, q.publicToken,
+                CASE WHEN q.clientSignature IS NOT NULL AND q.clientSignature <> '' THEN true ELSE false END
+            )
+            FROM Quote q
+            LEFT JOIN q.client c
+            LEFT JOIN q.workOrder w
+            WHERE (:status = '' OR q.status = :status)
+              AND (:number = '' OR LOWER(q.number) LIKE LOWER(CONCAT('%', :number, '%')))
+              AND (:name = '' OR LOWER(COALESCE(c.name, '')) LIKE LOWER(CONCAT('%', :name, '%')))
+              AND (:allDates = true OR (q.dateApproved >= :fromDate AND q.dateApproved < :toDate))
+            ORDER BY q.dateApproved DESC NULLS LAST, q.dateCreated DESC NULLS LAST, q.number DESC
+            """,
+            countQuery = """
+            SELECT COUNT(q) FROM Quote q
+            LEFT JOIN q.client c
+            WHERE (:status = '' OR q.status = :status)
+              AND (:number = '' OR LOWER(q.number) LIKE LOWER(CONCAT('%', :number, '%')))
+              AND (:name = '' OR LOWER(COALESCE(c.name, '')) LIKE LOWER(CONCAT('%', :name, '%')))
+              AND (:allDates = true OR (q.dateApproved >= :fromDate AND q.dateApproved < :toDate))
+            """)
+    Page<QuoteListItem> findPageByApprovedDate(@Param("status") String status,
+                                               @Param("number") String number,
+                                               @Param("name") String name,
+                                               @Param("allDates") boolean allDates,
+                                               @Param("fromDate") LocalDateTime fromDate,
+                                               @Param("toDate") LocalDateTime toDate,
+                                               Pageable pageable);
+
+    @Query(value = """
+            SELECT month_reference FROM (
+                SELECT TO_CHAR(date_created - INTERVAL '5 days', 'YYYY-MM') AS month_reference
+                FROM quotes WHERE date_created IS NOT NULL
+                UNION
+                SELECT TO_CHAR(date_approved - INTERVAL '5 days', 'YYYY-MM') AS month_reference
+                FROM quotes WHERE date_approved IS NOT NULL
+            ) quote_months
+            ORDER BY month_reference DESC
+            """, nativeQuery = true)
+    List<String> findAvailableMonthReferences();
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT q FROM Quote q WHERE q.id = :id")

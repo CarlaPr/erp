@@ -26,6 +26,9 @@
 
             <div class="order-2 grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
                 <button type="button"
+                        data-status-filter=""
+                        data-selected-classes="bg-brand-600 text-white border-brand-600 dark:bg-slate-700 dark:border-slate-700"
+                        data-unselected-classes="bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                         onclick="setQuoteStatusFilter('')"
                         class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap text-center"
                         th:classappend="${selectedFilterStatus == null or #strings.isEmpty(selectedFilterStatus)} ? 'bg-brand-600 text-white border-brand-600 dark:bg-slate-700 dark:border-slate-700' : 'bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'">
@@ -33,6 +36,9 @@
                 </button>
 
                 <button type="button"
+                        data-status-filter="pending"
+                        data-selected-classes="bg-amber-500 text-white border-amber-500 dark:bg-slate-700 dark:border-slate-700 dark:text-white"
+                        data-unselected-classes="bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                         onclick="setQuoteStatusFilter('pending')"
                         class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap text-center"
                         th:classappend="${selectedFilterStatus == 'pending'} ? 'bg-amber-500 text-white border-amber-500 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'">
@@ -40,6 +46,9 @@
                 </button>
 
                 <button type="button"
+                        data-status-filter="approved"
+                        data-selected-classes="bg-emerald-600 text-white border-emerald-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white"
+                        data-unselected-classes="bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                         onclick="setQuoteStatusFilter('approved')"
                         class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap text-center"
                         th:classappend="${selectedFilterStatus == 'approved'} ? 'bg-emerald-600 text-white border-emerald-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'">
@@ -47,6 +56,9 @@
                 </button>
 
                 <button type="button"
+                        data-status-filter="expired"
+                        data-selected-classes="bg-slate-600 text-white border-slate-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white"
+                        data-unselected-classes="bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                         onclick="setQuoteStatusFilter('expired')"
                         class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap text-center"
                         th:classappend="${selectedFilterStatus == 'expired'} ? 'bg-slate-600 text-white border-slate-600 dark:bg-slate-700 dark:border-slate-700 dark:text-white' : 'bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'">
@@ -56,22 +68,23 @@
         </div>
     </div>
 
-    <form id="quoteFilterForm" method="GET" action="/quotes" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-2xl grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 mb-6 lg:mb-8 shadow-sm">
+    <form id="quoteFilterForm" method="GET" action="/quotes" onsubmit="event.preventDefault(); performSearch();" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-2xl grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 mb-6 lg:mb-8 shadow-sm">
         <input id="quoteStatusFilter" type="hidden" name="status" th:value="${selectedFilterStatus}" th:disabled="${selectedFilterStatus == null or #strings.isEmpty(selectedFilterStatus)}">
+        <input type="hidden" name="page" id="pageNumber" th:value="${quotes.number}">
         <div>
             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Mês de referência (6 a 5)</label>
-            <select name="month" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors">
-                <option value="all" th:selected="${selectedMonth == 'all'}">Ver Todos os Meses</option>
+            <select name="month" onchange="debouncedSearch()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors">
+                <option value="all" th:selected="${selectedMonth == 'all' or selectedMonth == null}">Ver Todos os Meses</option>
                 <option th:each="m : ${availableMonths}" th:value="${m.value}" th:selected="${selectedMonth == m.value}" th:text="${m.label}"></option>
             </select>
         </div>
         <div>
             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">N° do Orçamento</label>
-            <input type="text" name="number" th:value="${selectedNumber}" placeholder="Ex: ORC-05" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors"/>
+            <input type="text" name="number" th:value="${selectedNumber}" oninput="debouncedSearch()" placeholder="Ex: ORC-05" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors"/>
         </div>
         <div>
             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nome do Cliente</label>
-            <input type="text" name="name" th:value="${selectedName}" placeholder="Buscar cliente..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors"/>
+            <input type="text" name="name" th:value="${selectedName}" oninput="debouncedSearch()" placeholder="Buscar cliente..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-brand-500 dark:focus:border-cyan-500 outline-none transition-colors"/>
         </div>
         <div class="flex items-end gap-2">
             <button type="submit" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold py-3 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2"><i data-lucide="search" class="w-5 h-5"></i>Filtrar Painel</button>
@@ -79,7 +92,8 @@
         </div>
     </form>
 
-    <div class="hidden md:block  bg-white dark:bg-[#131C2F]  rounded-2xl  border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
+    <div id="quote-results" th:fragment="quoteResults" th:attr="data-current-page=${quotes.number}">
+    <div id="desktop-table-container" class="hidden md:block  bg-white dark:bg-[#131C2F]  rounded-2xl  border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -107,7 +121,7 @@
 
                     <td class="px-5 py-5">
                         <div class="font-bold     text-slate-900 dark:text-white     text-base"
-                             th:text="${q.client != null ? q.client.name : 'Consumidor Final'}">
+                             th:text="${q.clientName != null ? q.clientName : 'Consumidor Final'}">
                             Cliente
                         </div>
                     </td>
@@ -127,13 +141,13 @@
                     </td>
 
                     <td class="px-5 py-5 text-center">
-                            <span th:if="${q.workOrder != null}"
+                            <span th:if="${q.workOrderId != null}"
                                   class="inline-flex items-center     px-3 py-1.5    bg-slate-100 dark:bg-slate-900    border border-slate-200 dark:border-slate-700   text-brand-600 dark:text-cyan-400    font-mono text-sm font-bold rounded-lg"
-                                  th:text="${q.workOrder.number}">
+                                  th:text="${q.workOrderNumber}">
                                 OS
                             </span>
 
-                        <span th:if="${q.workOrder == null}"
+                        <span th:if="${q.workOrderId == null}"
                               class="text-slate-400 font-bold text-sm">
                                 —
                             </span>
@@ -156,8 +170,8 @@
                                 <i data-lucide="pencil" class="w-5 h-5"></i>
                             </a>
 
-                            <a data-permission="edit" th:if="${q.status == 'approved' && q.workOrder != null}"
-                               th:href="@{/work-orders/{id}/edit(id=${q.workOrder.id},source='quotes')}"
+                            <a data-permission="edit" th:if="${q.status == 'approved' && q.workOrderId != null}"
+                               th:href="@{/work-orders/{id}/edit(id=${q.workOrderId},source='quotes')}"
                                class="text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
                                title="Editar Ordem de Serviço">
                                 <i data-lucide="clipboard-pen-line" class="w-5 h-5"></i>
@@ -179,7 +193,7 @@
                             </button>
 
                             <button data-permission="visit-plan" th:data-id="${q.id}"
-                                    th:data-client="${q.client != null ? q.client.name : ''}"
+                                    th:data-client="${q.clientName != null ? q.clientName : ''}"
                                     onclick="openScheduleVisitModal(
                                             this.getAttribute('data-id'),
                                             this.getAttribute('data-client')
@@ -192,17 +206,17 @@
                             <button th:if="${q.status == 'pending' || q.status == 'negotiation' || q.status == 'approved'}"
                                     th:data-id="${q.id}"
                                     th:data-token="${q.publicToken}"
-                                    th:data-signed="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}"
+                                    th:data-signed="${q.clientSigned}"
                                     onclick="handleSignatureLinkClick(this)"
-                                    th:classappend="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                                    th:classappend="${q.clientSigned}
                                             ? 'text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'
                                             : 'text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10'"
                                     class="p-2 rounded-lg transition-colors"
-                                    th:title="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                                    th:title="${q.clientSigned}
                                             ? 'Assinado pelo cliente - clique para ver opções'
                                             : 'Copiar Link de Assinatura para WhatsApp'">
 
-                                <i th:data-lucide="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                                <i th:data-lucide="${q.clientSigned}
                                         ? 'file-check'
                                         : 'link'"
                                    class="w-5 h-5"></i>
@@ -211,7 +225,7 @@
                     </td>
                 </tr>
 
-                <tr th:if="${#lists.isEmpty(quotes)}">
+                <tr th:if="${quotes.empty}">
                     <td colspan="5"
                         class="p-12 text-center">
                         <div class="flex flex-col items-center">
@@ -230,7 +244,7 @@
         </div>
     </div>
 
-    <div class="md:hidden space-y-3">
+    <div id="mobile-list-container" class="md:hidden space-y-3">
         <div th:each="q : ${quotes}" class="bg-white dark:bg-[#131C2F]  rounded-2xl border border-slate-200 dark:border-slate-700/50  shadow-sm overflow-hidden">
             <div class="px-4 py-4  border-b border-slate-100 dark:border-slate-700/50">
                 <div class="flex items-start justify-between gap-3">
@@ -269,8 +283,8 @@
                     <p class="text-[10px] font-black uppercase       tracking-widest    text-slate-400 dark:text-slate-500 mb-1">
                         Cliente
                     </p>
-                    <p class="font-bold text-base   text-slate-900 dark:text-white     break-words"
-                       th:text="${q.client != null ? q.client.name : 'Consumidor Final'}">
+                            <p class="font-bold text-base   text-slate-900 dark:text-white     break-words"
+                       th:text="${q.clientName != null ? q.clientName : 'Consumidor Final'}">
                         Cliente
                     </p>
                 </div>
@@ -283,12 +297,12 @@
                         </span>
                     </div>
 
-                    <span th:if="${q.workOrder != null}" class="font-mono font-bold    text-brand-600 dark:text-cyan-400 text-sm"
-                          th:text="${q.workOrder.number}">
+                    <span th:if="${q.workOrderId != null}" class="font-mono font-bold    text-brand-600 dark:text-cyan-400 text-sm"
+                          th:text="${q.workOrderNumber}">
                         OS-000
                     </span>
 
-                    <span th:if="${q.workOrder == null}" class="font-bold text-slate-400 text-sm">
+                    <span th:if="${q.workOrderId == null}" class="font-bold text-slate-400 text-sm">
                         Ainda não vinculada
                     </span>
                 </div>
@@ -315,8 +329,8 @@
                             Editar
                         </a>
 
-                        <a data-permission="edit" th:if="${q.status == 'approved' && q.workOrder != null}"
-                           th:href="@{/work-orders/{id}/edit(id=${q.workOrder.id},source='quotes')}"
+                        <a data-permission="edit" th:if="${q.status == 'approved' && q.workOrderId != null}"
+                           th:href="@{/work-orders/{id}/edit(id=${q.workOrderId},source='quotes')}"
                            class="min-h-[46px] rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold text-xs flex items-center justify-center gap-2 border border-amber-100 dark:border-amber-500/20">
                             <i data-lucide="clipboard-pen-line" class="w-4 h-4"></i>
                             Editar O.S.
@@ -330,7 +344,7 @@
                         </button>
 
                         <button data-permission="visit-plan" th:data-id="${q.id}"
-                                th:data-client="${q.client != null ? q.client.name : ''}"
+                                th:data-client="${q.clientName != null ? q.clientName : ''}"
                                 onclick="openScheduleVisitModal(
                                     this.getAttribute('data-id'),
                                     this.getAttribute('data-client')
@@ -343,17 +357,17 @@
                         <button th:if="${q.status == 'pending' || q.status == 'negotiation' || q.status == 'approved'}"
                                 th:data-id="${q.id}"
                                 th:data-token="${q.publicToken}"
-                                th:data-signed="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}"
+                                th:data-signed="${q.clientSigned}"
                                 onclick="handleSignatureLinkClick(this)"
-                                th:classappend="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                                th:classappend="${q.clientSigned}
                                     ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20'
                                     : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-100 dark:border-amber-500/20'"
                                 class="min-h-[46px]   rounded-xl  font-bold text-xs  flex items-center justify-center gap-2 border">
-                            <i th:data-lucide="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                            <i th:data-lucide="${q.clientSigned}
                                 ? 'file-check'
                                 : 'link'"
                                class="w-4 h-4"></i>
-                            <span th:text="${q.clientSignature != null and !#strings.isEmpty(q.clientSignature)}
+                            <span th:text="${q.clientSigned}
                                 ? 'Assinatura'
                                 : 'Enviar Assinatura'">
                                 Assinatura
@@ -373,7 +387,7 @@
             </div>
         </div>
 
-        <div th:if="${#lists.isEmpty(quotes)}"
+        <div th:if="${quotes.empty}"
              class="bg-white dark:bg-[#131C2F] rounded-2xl  border border-slate-200 dark:border-slate-700/50 p-10 text-center">
             <div class="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto mb-4">
                 <i data-lucide="file-search" class="w-7 h-7"></i>
@@ -382,6 +396,26 @@
             <p class="text-slate-500 font-medium">Nenhum orçamento encontrado com estes filtros.
             </p>
         </div>
+    </div>
+    <div id="pagination-container" class="mt-4">
+        <div th:if="${quotes.totalPages > 1}" class="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-[#131C2F] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm gap-4">
+            <span class="text-sm text-slate-500 dark:text-slate-400">
+                Página <span class="font-bold text-slate-900 dark:text-white" th:text="${quotes.number + 1}">1</span>
+                de <span class="font-bold text-slate-900 dark:text-white" th:text="${quotes.totalPages}">10</span>
+                (<span th:text="${quotes.totalElements}">0</span> orçamentos)
+            </span>
+            <div class="flex gap-2">
+                <button type="button" th:disabled="${quotes.first}" th:onclick="'goToPage(' + ${quotes.number - 1} + ')'"
+                        class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <i data-lucide="chevron-left" class="w-4 h-4 inline-block align-middle mr-1"></i> Anterior
+                </button>
+                <button type="button" th:disabled="${quotes.last}" th:onclick="'goToPage(' + ${quotes.number + 1} + ')'"
+                        class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    Próxima <i data-lucide="chevron-right" class="w-4 h-4 inline-block align-middle ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
     </div>
 
     <div id="deleteQuoteModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 overflow-y-auto">
@@ -1399,6 +1433,64 @@
 
 <script th:src="@{/js/quote-measurements.js}"></script>
 <script>
+    let quoteSearchTimeout;
+    let quoteSearchRequestId = 0;
+    let quoteSearchController = null;
+
+    function debouncedSearch() {
+        clearTimeout(quoteSearchTimeout);
+        quoteSearchTimeout = setTimeout(() => {
+            document.getElementById('pageNumber').value = 0;
+            performSearch();
+        }, 400);
+    }
+
+    function performSearch() {
+        const form = document.getElementById('quoteFilterForm');
+        if (!form) return;
+
+        const url = new URL(form.action, window.location.origin);
+        const params = new URLSearchParams(new FormData(form));
+        const requestId = ++quoteSearchRequestId;
+
+        if (quoteSearchController) quoteSearchController.abort();
+        quoteSearchController = new AbortController();
+
+        window.history.replaceState({}, '', `${url.pathname}?${params.toString()}`);
+
+        fetch(`${url.pathname}?${params.toString()}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            signal: quoteSearchController.signal
+        })
+            .then(response => {
+                if (!response.ok) throw new Error(`Falha ao buscar orçamentos (${response.status}).`);
+                return response.text();
+            })
+            .then(html => {
+                if (requestId !== quoteSearchRequestId) return;
+                const documentResult = new DOMParser().parseFromString(html, 'text/html');
+                const results = document.getElementById('quote-results');
+                const newResults = documentResult.getElementById('quote-results');
+                if (!results || !newResults) return;
+
+                results.innerHTML = newResults.innerHTML;
+                const currentPage = newResults.dataset.currentPage || '0';
+                results.dataset.currentPage = currentPage;
+                document.getElementById('pageNumber').value = currentPage;
+
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            })
+            .catch(error => {
+                if (error.name !== 'AbortError') console.error('Erro ao atualizar a tabela de orçamentos:', error);
+            });
+    }
+
+    function goToPage(page) {
+        document.getElementById('pageNumber').value = page;
+        performSearch();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     let currentActiveClientForPdf = "Consumidor Final";
     let currentActiveNumberForPdf = "000";
     let currentActiveClientPhoneForPdf = "";
@@ -2172,7 +2264,14 @@
         const normalizedStatus = (status || '').trim();
         statusInput.value = normalizedStatus;
         statusInput.disabled = normalizedStatus === '';
-        form.submit();
+        document.querySelectorAll('[data-status-filter]').forEach(button => {
+            const selectedClasses = button.dataset.selectedClasses.split(/\s+/);
+            const unselectedClasses = button.dataset.unselectedClasses.split(/\s+/);
+            button.classList.remove(...selectedClasses, ...unselectedClasses);
+            button.classList.add(...(button.dataset.statusFilter === normalizedStatus ? selectedClasses : unselectedClasses));
+        });
+        document.getElementById('pageNumber').value = 0;
+        performSearch();
     }
 
     function clearQuoteFilters() {

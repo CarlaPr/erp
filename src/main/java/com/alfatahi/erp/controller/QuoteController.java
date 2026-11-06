@@ -1,5 +1,6 @@
 package com.alfatahi.erp.controller;
 
+import com.alfatahi.erp.dto.QuoteListItem;
 import com.alfatahi.erp.entity.Quote;
 import com.alfatahi.erp.entity.Client;
 import com.alfatahi.erp.entity.QuoteItem;
@@ -13,6 +14,8 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -37,6 +40,7 @@ import java.util.*;
 public class QuoteController {
 
     private static final Logger log = LoggerFactory.getLogger(QuoteController.class);
+    private static final int QUOTES_PER_PAGE = 30;
 
     private final QuoteRepository quoteRepo;
     private final ClientRepository clientRepo;
@@ -254,69 +258,76 @@ public class QuoteController {
             @RequestParam(required = false) String month,
             @RequestParam(required = false) String number,
             @RequestParam(required = false) String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
             Model model) {
 
-
-        List<Quote> todosOrcamentos = quoteRepo.findAll();
-
-        final boolean ordenarPorAprovacao = "approved".equals(status);
-
-        todosOrcamentos.sort((q1, q2) -> {
-            if (ordenarPorAprovacao) {
-                LocalDateTime aprov1 = q1.getDateApproved();
-                LocalDateTime aprov2 = q2.getDateApproved();
-                if (aprov1 == null && aprov2 == null) return 0;
-                if (aprov1 == null) return 1;
-                if (aprov2 == null) return -1;
-                return aprov2.compareTo(aprov1);
-            }
-            if (q1.getDateCreated() == null || q2.getDateCreated() == null) return 0;
-            int dataCompare = q2.getDateCreated().compareTo(q1.getDateCreated());
-            if (dataCompare != 0) return dataCompare;
-            if (q1.getNumber() == null) return 1;
-            if (q2.getNumber() == null) return -1;
-            return q2.getNumber().compareTo(q1.getNumber());
-        });
+        month = month == null || month.isBlank() ? "all" : month;
+        status = normalizeFilter(status);
+        number = normalizeFilter(number);
+        name = normalizeFilter(name);
 
         FinancialPeriod period = FinancialPeriod.select(month, false, null, null);
+        if (period.reference() != null) month = period.monthValue();
         period.addTo(model);
-        month = period.reference() == null ? "all" : period.monthValue();
-        List<Quote> filteredList = todosOrcamentos.stream().filter(q -> {
-            if (status != null && !status.isEmpty() && !q.getStatus().equals(status)) return false;
-            if (number != null && !number.isEmpty() && !q.getNumber().toLowerCase().contains(number.toLowerCase())) return false;
-            if (name != null && !name.isEmpty() && q.getClient() != null && !q.getClient().getName().toLowerCase().contains(name.toLowerCase())) return false;
+        boolean allDates = period.from() == null && period.to() == null;
+        LocalDateTime fromDate = allDates ? LocalDateTime.of(2000, 1, 1, 0, 0)
+                : period.from().atStartOfDay();
+        LocalDateTime toDate = allDates ? LocalDateTime.of(2100, 1, 1, 0, 0)
+                : period.endExclusive().atStartOfDay();
+        boolean ordenarPorAprovacao = "approved".equals(status);
 
-            if (!period.contains(ordenarPorAprovacao ? q.getDateApproved() : q.getDateCreated())) return false;
-            return true;
-        }).collect(java.util.stream.Collectors.toList());
-
-        List<Map<String, String>> disponiveis = new ArrayList<>();
-
-        java.util.SortedSet<java.time.YearMonth> references = new java.util.TreeSet<>(java.util.Comparator.reverseOrder());
-        references.add(FinancialPeriod.referenceFor(FinancialPeriod.today()));
-        if (period.reference() != null) references.add(period.reference());
-        for (Quote quote : todosOrcamentos) {
-            if (quote.getDateCreated() != null) references.add(FinancialPeriod.referenceFor(quote.getDateCreated().toLocalDate()));
-            if (quote.getDateApproved() != null) references.add(FinancialPeriod.referenceFor(quote.getDateApproved().toLocalDate()));
-        }
-        for (java.time.YearMonth reference : references) {
-            disponiveis.add(Map.of("value", reference.toString(), "label", FinancialPeriod.monthly(reference).label()));
+        int pageIndex = Math.max(0, page);
+        Page<QuoteListItem> quotePage = loadQuotePage(status, number, name, allDates, fromDate, toDate,
+                ordenarPorAprovacao, pageIndex);
+        if (quotePage.getTotalPages() > 0 && pageIndex >= quotePage.getTotalPages()) {
+            pageIndex = quotePage.getTotalPages() - 1;
+            quotePage = loadQuotePage(status, number, name, allDates, fromDate, toDate,
+                    ordenarPorAprovacao, pageIndex);
         }
 
-        List<com.alfatahi.erp.entity.Profile> profiles = profileRepo.findAll();
+        if (!"XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            List<Map<String, String>> availableMonths = new ArrayList<>();
+            SortedSet<java.time.YearMonth> references = new TreeSet<>(Comparator.reverseOrder());
+            references.add(FinancialPeriod.referenceFor(FinancialPeriod.today()));
+            if (period.reference() != null) references.add(period.reference());
+            for (String value : quoteRepo.findAvailableMonthReferences()) {
+                try {
+                    references.add(java.time.YearMonth.parse(value));
+                } catch (java.time.DateTimeException ignored) {
+                    // Ignora referências inválidas sem afetar a listagem.
+                }
+            }
+            for (java.time.YearMonth reference : references) {
+                availableMonths.add(Map.of("value", reference.toString(),
+                        "label", FinancialPeriod.monthly(reference).label()));
+            }
+            model.addAttribute("availableMonths", availableMonths);
+        }
 
         model.addAttribute("quote", new Quote());
         model.addAttribute("currentPage", "quotes");
-        model.addAttribute("quotes", filteredList);
-        model.addAttribute("clients", clientRepo.findAll());
-        model.addAttribute("profiles", profiles);
-        model.addAttribute("availableMonths", disponiveis);
+        model.addAttribute("quotes", quotePage);
         model.addAttribute("selectedMonth", month);
         model.addAttribute("selectedNumber", number);
         model.addAttribute("selectedName", name);
         model.addAttribute("selectedFilterStatus", status);
 
-        return "quotes";
+        return "XMLHttpRequest".equalsIgnoreCase(requestedWith) ? "quotes :: quoteResults" : "quotes";
+    }
+
+    private Page<QuoteListItem> loadQuotePage(String status, String number, String name,
+                                              boolean allDates,
+                                              LocalDateTime fromDate, LocalDateTime toDate,
+                                              boolean ordenarPorAprovacao, int page) {
+        PageRequest pageable = PageRequest.of(page, QUOTES_PER_PAGE);
+        return ordenarPorAprovacao
+                ? quoteRepo.findPageByApprovedDate(status, number, name, allDates, fromDate, toDate, pageable)
+                : quoteRepo.findPageByCreatedDate(status, number, name, allDates, fromDate, toDate, pageable);
+    }
+
+    private String normalizeFilter(String value) {
+        return value == null ? "" : value.trim();
     }
 
     @GetMapping("/new")
