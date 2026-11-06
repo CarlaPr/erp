@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Resultado Financeiro e Rentabilidade - Grupo Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+<div th:replace="~{fragments/layout :: pending-schedule-alert}"></div>
+<main id="financial-result" th:attr="data-context-path=@{/},data-history-base=@{/reports/financial-result/orders/}"
+      class="lg:ml-72 w-full min-w-0 px-3 sm:px-6 lg:px-8 pb-10 pt-20 lg:pt-8">
+    <link rel="stylesheet" th:href="@{/css/financial-result.css}" />
+    <header class="fr-page-header">
+        <p class="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Relatórios</p>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2">Resultado Financeiro e Rentabilidade</h1>
+        <nav class="fr-section-nav" aria-label="Seções do relatório">
+            <a class="fr-pill" href="#cash">1. Caixa</a><a class="fr-pill" href="#profitability">2. Rentabilidade</a>
+            <a class="fr-pill" href="#ledger">3. Extrato</a><a class="fr-pill" href="#cross-period">4. Entre meses</a>
+            <a class="fr-pill" href="#operating">5. Competência</a>
+        </nav>
+    </header>
+
+    <div class="fr-context-bar" aria-label="Período aplicado ao relatório">
+        <div class="fr-period-label"><i data-lucide="calendar-days" aria-hidden="true"></i><div><span class="fr-eyebrow">Período selecionado</span><strong><span th:replace="~{fragments/financial-result :: date(${filter.from})}"></span> <span class="fr-muted">a</span> <span th:replace="~{fragments/financial-result :: date(${filter.to})}"></span></strong></div></div>
+        <div class="flex flex-wrap items-center gap-3"><span class="fr-scope-badge" th:text="${filter.filtered() ? 'Recorte com filtros aplicados' : 'Visão geral do período'}"></span>
+            <button type="submit" form="result-filters" th:formaction="@{/reports/financial-result/pdf}" formtarget="_blank" class="fr-button"><i data-lucide="file-down" aria-hidden="true"></i> Gerar PDF completo</button>
+        </div>
+    </div>
+
+    <details id="filter-panel" class="fr-panel fr-filter-panel">
+        <summary class="fr-filter-summary"><span class="fr-filter-title"><i data-lucide="sliders-horizontal" aria-hidden="true"></i><span>Filtros do relatório<small>Período, OS, categorias e situações</small></span></span><span class="fr-filter-action">Ajustar filtros <i data-lucide="chevron-down" aria-hidden="true"></i></span></summary>
+    <form id="result-filters" method="get" th:action="@{/reports/financial-result}" class="fr-filter-form">
+        <div class="fr-filter-group"><h2 class="fr-filter-heading">Quando analisar</h2><div class="fr-filter-grid">
+            <label class="fr-field">Período
+                <select id="period-mode"><option value="month" th:selected="${periodMode == 'month'}">Mês financeiro (dia 6 ao dia 5)</option><option value="custom" th:selected="${periodMode == 'custom'}">Período personalizado</option></select>
+            </label>
+            <label class="fr-field" id="month-field">Mês e ano
+                <input id="result-month" type="month" name="month" th:value="${month}" required th:disabled="${periodMode != 'month'}" />
+            </label>
+            <label class="fr-field" id="from-field">Data inicial
+                <input id="result-from" type="date" name="from" th:value="${filter.from}" required th:disabled="${periodMode != 'custom'}" />
+            </label>
+            <label class="fr-field" id="to-field">Data final
+                <input id="result-to" type="date" name="to" th:value="${filter.to}" required th:disabled="${periodMode != 'custom'}" />
+            </label>
+        </div></div>
+        <div class="fr-filter-group"><h2 class="fr-filter-heading">O que consultar</h2><div class="fr-filter-grid">
+            <label class="fr-field">Categoria financeira
+                <select name="category"><option value="">Todas as categorias</option><option th:each="c : ${categories}" th:value="${c.value}" th:text="${c.label}" th:selected="${filter.category == c.value}"></option></select>
+            </label>
+            <label class="fr-field">Ordem de serviço
+                <select name="workOrderId"><option value="">Todas, incluindo movimentos sem OS</option><option th:each="o : ${orders}" th:value="${o.value}" th:text="${o.label}" th:selected="${filter.workOrderId != null and filter.workOrderId.toString() == o.value}"></option></select>
+            </label>
+            <label class="fr-field">Tipo de movimento
+                <select name="type"><option value="">Entradas e saídas</option><option value="ENTRADA" th:selected="${filter.type == 'ENTRADA'}">Entradas</option><option value="SAIDA" th:selected="${filter.type == 'SAIDA'}">Saídas</option></select>
+            </label>
+            <label class="fr-field">Situação das contas a receber
+                <select name="receiptStatus"><option value="">Todas</option><option value="pending" th:selected="${filter.receiptStatus == 'pending'}">Pendente</option><option value="partial" th:selected="${filter.receiptStatus == 'partial'}">Parcial</option><option value="received" th:selected="${filter.receiptStatus == 'received'}">Recebida</option></select>
+            </label>
+            <label class="fr-field">Situação das contas a pagar
+                <select name="paymentStatus"><option value="">Todas</option><option value="pending" th:selected="${filter.paymentStatus == 'pending'}">Pendente</option><option value="partial" th:selected="${filter.paymentStatus == 'partial'}">Parcial</option><option value="paid" th:selected="${filter.paymentStatus == 'paid'}">Paga</option></select>
+            </label>
+            <label class="fr-field">Ordenação do extrato
+                <select name="sort"><option value="date" th:selected="${filter.sort == 'date'}">Data crescente</option><option value="date_desc" th:selected="${filter.sort == 'date_desc'}">Data decrescente</option><option value="amount_desc" th:selected="${filter.sort == 'amount_desc'}">Maior valor</option><option value="description" th:selected="${filter.sort == 'description'}">Descrição</option></select>
+            </label>
+        </div></div>
+            <div class="fr-filter-buttons">
+                <button type="submit" class="fr-button">Aplicar filtros</button>
+                <a th:href="@{/reports/financial-result}" class="fr-button fr-secondary">Limpar filtros</a>
+            </div>
+        <p class="fr-muted mt-4 text-xs">Datas inclusivas. Tipo e situação filtram o caixa/extrato. Categoria e situação também selecionam as OS, mantendo seus totais completos. Contas pendentes não geram caixa. O resultado por competência aplica somente o período.</p>
+    </form>
+    </details>
+
+    <div class="fr-reading-guide">
+        <div><strong>Caixa é o dinheiro movimentado.</strong><span>Entradas e saídas efetivas nas datas selecionadas.</span></div>
+        <div><strong>Lucro é o resultado do serviço.</strong><span>Venda e custos totais da OS, mesmo em meses diferentes.</span></div>
+    </div>
+    <div class="fr-color-legend" aria-label="Legenda das cores"><span><i class="fr-dot fr-dot-positive"></i>Entradas e resultados positivos</span><span><i class="fr-dot fr-dot-negative"></i>Saídas e prejuízos</span><span><i class="fr-dot fr-dot-pending"></i>Valores pendentes</span><span><i class="fr-dot fr-dot-neutral"></i>Custos e informações auxiliares</span></div>
+
+    <section id="cash" class="fr-section">
+        <p class="fr-eyebrow">Movimentação efetiva · período selecionado</p>
+        <h2 class="fr-heading">1. Resumo financeiro do caixa</h2>
+        <div class="fr-cash-kpis">
+            <article class="fr-panel fr-kpi-card fr-kpi-opening"><p class="fr-kpi-label">Saldo inicial</p><p class="fr-kpi"><span th:replace="~{fragments/financial-result :: money(${report.cash.opening})}"></span></p><p class="fr-kpi-note">Antes do período</p></article>
+            <article class="fr-panel fr-kpi-card fr-kpi-incoming"><p class="fr-kpi-label">Entradas recebidas</p><p class="fr-kpi fr-positive"><span th:replace="~{fragments/financial-result :: money(${report.cash.incoming})}"></span></p><p class="fr-kpi-note">Dinheiro que entrou</p></article>
+            <article class="fr-panel fr-kpi-card fr-kpi-outgoing"><p class="fr-kpi-label">Saídas pagas</p><p class="fr-kpi fr-negative"><span th:replace="~{fragments/financial-result :: money(${report.cash.outgoing})}"></span></p><p class="fr-kpi-note">Dinheiro que saiu</p></article>
+            <article class="fr-panel fr-kpi-card fr-kpi-net"><p class="fr-kpi-label">Resultado de caixa</p><p class="fr-kpi" th:classappend="${report.cash.net().signum() > 0} ? 'fr-positive'"><span th:replace="~{fragments/financial-result :: money(${report.cash.net()})}"></span></p><p class="fr-kpi-note">Entradas - saídas · não representa lucro</p></article>
+            <article class="fr-panel fr-kpi-card fr-kpi-closing"><p class="fr-kpi-label">Saldo final</p><p class="fr-kpi" th:classappend="${report.cash.closing().signum() > 0} ? 'fr-positive'"><span th:replace="~{fragments/financial-result :: money(${report.cash.closing()})}"></span></p><p class="fr-kpi-note">Saldo inicial + resultado de caixa</p></article>
+        </div>
+        <details class="fr-panel p-4 mt-3">
+            <summary class="font-bold cursor-pointer">Comparação com o período anterior</summary>
+            <p class="fr-muted text-xs mt-3"><span th:replace="~{fragments/financial-result :: date(${filter.previous().from})}"></span> a <span th:replace="~{fragments/financial-result :: date(${filter.previous().to})}"></span>. Mesmo recorte de filtros.</p>
+            <div th:if="${report.previous.count > 0}" class="fr-table-wrap mt-3">
+                <table class="fr-table fr-responsive-table fr-comparison-table"><thead><tr><th>Indicador</th><th>Anterior</th><th>Atual</th><th>Diferença</th></tr></thead><tbody>
+                <tr><th class="fr-card-heading">Entradas</th><td data-label="Anterior" th:insert="~{fragments/financial-result :: money(${report.previous.incoming})}"></td><td data-label="Atual" th:insert="~{fragments/financial-result :: money(${report.cash.incoming})}"></td><td data-label="Diferença" th:insert="~{fragments/financial-result :: money(${report.cash.incoming.subtract(report.previous.incoming)})}"></td></tr>
+                <tr><th class="fr-card-heading">Saídas</th><td data-label="Anterior" th:insert="~{fragments/financial-result :: money(${report.previous.outgoing})}"></td><td data-label="Atual" th:insert="~{fragments/financial-result :: money(${report.cash.outgoing})}"></td><td data-label="Diferença" th:insert="~{fragments/financial-result :: money(${report.cash.outgoing.subtract(report.previous.outgoing)})}"></td></tr>
+                <tr><th class="fr-card-heading">Resultado de caixa</th><td data-label="Anterior" th:insert="~{fragments/financial-result :: money(${report.previous.net()})}"></td><td data-label="Atual" th:insert="~{fragments/financial-result :: money(${report.cash.net()})}"></td><td data-label="Diferença" th:insert="~{fragments/financial-result :: money(${report.cash.net().subtract(report.previous.net())})}"></td></tr>
+                </tbody></table>
+            </div>
+            <p th:if="${report.previous.count == 0}" class="fr-muted mt-3">Não há movimentos no período anterior para comparação.</p>
+        </details>
+    </section>
+
+    <section id="profitability" class="fr-section">
+        <p class="fr-eyebrow">Serviço completo · venda, custos e rentabilidade</p>
+        <h2 class="fr-heading">2. Rentabilidade por ordem de serviço</h2>
+        <div class="fr-term-guide"><p><strong>Lucro bruto previsto</strong><span>Valor da venda menos todos os custos diretos do serviço.</span></p><p><strong>Margem</strong><span>Percentual da venda que sobra após esses custos.</span></p><p><strong>Caixa no período</strong><span>Recebimentos menos pagamentos da OS nas datas selecionadas.</span></p></div>
+        <div class="fr-panel fr-table-wrap fr-scroll-table">
+            <table class="fr-table fr-wide fr-responsive-table fr-orders-table"><thead><tr class="fr-column-groups"><th colspan="2" scope="colgroup">Identificação</th><th colspan="4" scope="colgroup">Rentabilidade do serviço</th><th colspan="3" scope="colgroup">Caixa e pendências</th></tr><tr><th>OS / cliente</th><th>Venda</th><th>Valor vendido</th><th>Custos diretos</th><th>Lucro bruto previsto</th><th>Margem</th><th>Caixa no período</th><th>A receber</th><th>A pagar (custos)</th></tr></thead>
+                <tbody><th:block th:each="o : ${report.orders}">
+                    <tr>
+                        <td class="fr-card-heading"><button type="button" class="fr-link font-bold" data-order-toggle th:attr="aria-controls=${'order-' + o.id},aria-expanded='false'" th:text="${o.number}"></button><div class="fr-muted text-xs" th:text="${o.client}"></div><span class="fr-pill" th:text="${o.statusLabel()}"></span><small class="fr-detail-hint">Abrir detalhes do serviço</small></td>
+                        <td data-label="Data da venda" class="fr-auxiliary" th:insert="~{fragments/financial-result :: date(${o.saleDate})}"></td>
+                        <td data-label="Valor vendido" class="fr-money" th:insert="~{fragments/financial-result :: money(${o.sale})}"></td>
+                        <td data-label="Custos diretos" class="fr-money fr-cost" th:insert="~{fragments/financial-result :: money(${o.totalCosts})}"></td>
+                        <td data-label="Lucro bruto previsto" class="fr-money fr-main-figure" th:classappend="${o.profit != null and o.profit.signum() > 0} ? 'fr-positive'" th:insert="~{fragments/financial-result :: money(${o.profit})}"></td>
+                        <td data-label="Margem bruta" class="fr-margin" th:text="${o.margin == null ? '-' : #numbers.formatDecimal(o.margin,1,'POINT',2,'COMMA') + '%'}"></td>
+                        <td data-label="Caixa no período" class="fr-money fr-main-figure fr-cash-value" th:classappend="${o.cashResult.signum() > 0} ? 'fr-positive'" th:insert="~{fragments/financial-result :: money(${o.cashResult})}"></td>
+                        <td data-label="A receber" class="fr-money fr-pending-value" th:classappend="${o.pendingReceipt()} ? 'fr-pending'" th:insert="~{fragments/financial-result :: money(${o.receivable})}"></td>
+                        <td data-label="A pagar (custos)" class="fr-money fr-pending-value" th:classappend="${o.pendingPayment()} ? 'fr-pending'" th:insert="~{fragments/financial-result :: money(${o.payable})}"></td>
+                    </tr>
+                    <tr class="fr-order-detail-row" th:id="${'order-' + o.id}" hidden><td colspan="9" class="fr-detail">
+                        <div class="flex flex-wrap justify-between gap-3 mb-4"><div><h3 class="font-black" th:text="${o.number + ' - ' + o.client}"></h3><p th:text="${o.description}"></p><p class="fr-muted text-xs">Data de conclusão: não registrada no sistema.</p></div><a class="fr-link" th:href="@{/work-orders/{id}/edit(id=${o.id})}">Abrir OS</a></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="fr-detail-group"><h4>Recebimentos e pendências</h4><dl class="fr-metrics"><dt>Total recebido (líquido)</dt><dd class="fr-positive" th:insert="~{fragments/financial-result :: money(${o.received})}"></dd><dt>Recebido no período</dt><dd class="fr-positive" th:insert="~{fragments/financial-result :: money(${o.receivedPeriod})}"></dd><dt>Recebido antes do período</dt><dd th:insert="~{fragments/financial-result :: money(${o.receivedBefore})}"></dd><dt>A receber (baixas brutas/descontos)</dt><dd class="fr-pending-text" th:insert="~{fragments/financial-result :: money(${o.receivable})}"></dd></dl></div>
+                            <div class="fr-detail-group"><h4>Composição dos custos</h4><dl class="fr-metrics"><dt>Materiais</dt><dd th:insert="~{fragments/financial-result :: money(${o.materials})}"></dd><dt>Mão de obra / instalação</dt><dd th:insert="~{fragments/financial-result :: money(${o.labor})}"></dd><dt>Outros custos diretos</dt><dd th:insert="~{fragments/financial-result :: money(${o.otherCosts})}"></dd><dt>Custo total do serviço</dt><dd th:insert="~{fragments/financial-result :: money(${o.totalCosts})}"></dd></dl></div>
+                            <div class="fr-detail-group"><h4>Pagamentos e compromissos</h4><dl class="fr-metrics"><dt>Total pago vinculado à OS</dt><dd class="fr-negative" th:insert="~{fragments/financial-result :: money(${o.paid})}"></dd><dt>Pago no período</dt><dd class="fr-negative" th:insert="~{fragments/financial-result :: money(${o.paidPeriod})}"></dd><dt>Pago antes do período</dt><dd th:insert="~{fragments/financial-result :: money(${o.paidBefore})}"></dd><dt>Custos a pagar</dt><dd class="fr-pending-text" th:insert="~{fragments/financial-result :: money(${o.payable})}"></dd></dl></div>
+                        </div>
+                        <div th:if="${!#lists.isEmpty(o.warnings)}" class="fr-callout mt-4"><p th:each="warning : ${o.warnings}" th:text="${warning}"></p></div>
+                        <p class="fr-muted text-xs mt-3">Custos manuais sem conta vinculada são estimativas de rentabilidade e não comprovam pagamentos nem obrigações a pagar. Tributos, taxas financeiras e amortizações vinculados podem compor o caixa da OS sem integrar seus custos diretos.</p>
+                        <button type="button" class="fr-button fr-secondary mt-4" data-load-history th:attr="data-order-id=${o.id}">Carregar todas as movimentações da OS</button>
+                        <div class="fr-history mt-3" aria-live="polite"></div>
+                    </td></tr>
+                </th:block><tr th:if="${#lists.isEmpty(report.orders)}"><td colspan="9" class="fr-empty">Nenhuma OS encontrada para o período e os filtros selecionados.</td></tr></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="ledger" class="fr-section">
+        <p class="fr-eyebrow">Movimentos realizados · um registro por lançamento</p>
+        <h2 class="fr-heading">3. Extrato detalhado de entradas e saídas</h2>
+        <div class="fr-panel fr-table-wrap fr-scroll-table"><table class="fr-table fr-wide fr-responsive-table fr-ledger-table"><thead><tr class="fr-column-groups"><th colspan="5" scope="colgroup">Identificação do lançamento</th><th colspan="3" scope="colgroup">Movimentação de caixa</th><th colspan="2" scope="colgroup">Pagamento e conferência</th></tr><tr><th>Data</th><th>Descrição / origem</th><th>Categoria</th><th>OS</th><th>Cliente / fornecedor</th><th>Tipo</th><th>Entrada</th><th>Saída</th><th>Forma pgto.</th><th>Conciliação</th></tr></thead>
+            <tbody><tr th:each="m : ${report.movements}">
+                <td data-label="Data" class="fr-auxiliary" th:insert="~{fragments/financial-result :: date(${m.date})}"></td><td class="fr-card-heading fr-ledger-description"><a class="fr-link" th:href="@{${m.sourceUrl}}" th:text="${m.description}"></a><small th:if="${m.allocated}" class="block fr-muted">Pagamento rateado</small></td>
+                <td data-label="Categoria" th:text="${m.category}"></td><td data-label="Ordem de serviço"><a th:each="o : ${m.orders}" class="fr-link block" th:href="@{/work-orders/{id}/edit(id=${o.value})}" th:text="${o.label}"></a><span th:if="${#lists.isEmpty(m.orders)}">Sem OS</span></td>
+                <td data-label="Cliente / fornecedor" class="fr-party" th:text="${m.party}"></td><td data-label="Tipo" class="fr-movement-type" th:text="${m.type == 'ENTRADA' ? 'Entrada' : 'Saída'}" th:classappend="${m.type == 'ENTRADA' ? 'fr-positive' : 'fr-negative'}"></td>
+                <td data-label="Entrada" class="fr-money fr-positive fr-main-figure" th:insert="~{fragments/financial-result :: money(${m.incoming})}"></td><td data-label="Saída" class="fr-money fr-negative fr-main-figure" th:insert="~{fragments/financial-result :: money(${m.outgoing})}"></td>
+                <td data-label="Forma de pagamento" th:text="${m.paymentMethod ?: 'Não informada'}"></td><td data-label="Conciliação" class="fr-muted" th:text="${m.reconciliation()}"></td>
+            </tr><tr th:if="${#lists.isEmpty(report.movements)}"><td colspan="10" class="fr-empty">Nenhuma movimentação efetiva no período e recorte selecionados.</td></tr></tbody>
+            <tfoot><tr><th colspan="6" class="fr-card-heading">Totais do período</th><td data-label="Total de entradas" class="fr-money fr-positive" th:insert="~{fragments/financial-result :: money(${report.cash.incoming})}"></td><td data-label="Total de saídas" class="fr-money fr-negative" th:insert="~{fragments/financial-result :: money(${report.cash.outgoing})}"></td><td colspan="2" class="fr-footer-spacer"></td></tr></tfoot>
+        </table></div>
+    </section>
+
+    <section id="cross-period" class="fr-section">
+        <p class="fr-eyebrow">Origem do dinheiro · valores a receber e a pagar</p>
+        <h2 class="fr-heading">4. Serviços entre diferentes meses e compromissos pendentes</h2>
+        <div class="fr-cross-kpis">
+            <article class="fr-panel fr-kpi-card fr-kpi-incoming"><p class="fr-kpi-label">Recebido de vendas anteriores</p><p class="fr-kpi fr-positive" th:insert="~{fragments/financial-result :: money(${report.crossPeriod.receiptsOldSales})}"></p></article>
+            <article class="fr-panel fr-kpi-card fr-kpi-pending"><p class="fr-kpi-label">A receber das vendas do período</p><p class="fr-kpi fr-pending-text" th:insert="~{fragments/financial-result :: money(${report.crossPeriod.receivablesNewSales})}"></p></article>
+            <article class="fr-panel fr-kpi-card fr-kpi-outgoing"><p class="fr-kpi-label">Custos pagos de OS de períodos anteriores</p><p class="fr-kpi fr-negative" th:insert="~{fragments/financial-result :: money(${report.crossPeriod.paymentsOldSales})}"></p></article>
+            <article class="fr-panel fr-kpi-card fr-kpi-pending"><p class="fr-kpi-label">Custos pendentes das OS listadas em andamento</p><p class="fr-kpi fr-pending-text" th:insert="~{fragments/financial-result :: money(${report.crossPeriod.pendingCostsInProgress})}"></p></article>
+        </div>
+        <div class="fr-panel fr-table-wrap fr-scroll-table"><table class="fr-table fr-wide fr-responsive-table fr-cross-table"><thead><tr><th>OS / cliente / situação</th><th>Venda</th><th>Valor vendido</th><th>Recebido total</th><th>A receber</th><th>Custo total</th><th>Pago total</th><th>Custos a pagar</th><th>Lucro previsto</th><th>Último movimento</th></tr></thead>
+            <tbody><tr th:each="o : ${report.crossPeriod.orders}">
+                <td class="fr-card-heading"><a class="fr-link font-bold" th:href="@{/work-orders/{id}/edit(id=${o.id})}" th:text="${o.number}"></a><div th:text="${o.client}"></div><small class="block fr-muted" th:each="s : ${o.situations}" th:text="${s}"></small></td>
+                <td data-label="Data da venda" class="fr-auxiliary" th:insert="~{fragments/financial-result :: date(${o.saleDate})}"></td><td data-label="Valor vendido" class="fr-money" th:insert="~{fragments/financial-result :: money(${o.sale})}"></td><td data-label="Recebido total" class="fr-money fr-positive" th:insert="~{fragments/financial-result :: money(${o.received})}"></td><td data-label="A receber" class="fr-money fr-pending-value" th:classappend="${o.pendingReceipt()} ? 'fr-pending'" th:insert="~{fragments/financial-result :: money(${o.receivable})}"></td><td data-label="Custo total" class="fr-money fr-cost" th:insert="~{fragments/financial-result :: money(${o.totalCosts})}"></td><td data-label="Pago total" class="fr-money fr-negative" th:insert="~{fragments/financial-result :: money(${o.paid})}"></td><td data-label="Custos a pagar" class="fr-money fr-pending-value" th:classappend="${o.pendingPayment()} ? 'fr-pending'" th:insert="~{fragments/financial-result :: money(${o.payable})}"></td><td data-label="Lucro bruto previsto" class="fr-money fr-main-figure" th:classappend="${o.profit != null and o.profit.signum() > 0} ? 'fr-positive'" th:insert="~{fragments/financial-result :: money(${o.profit})}"></td><td data-label="Último movimento" class="fr-auxiliary" th:insert="~{fragments/financial-result :: date(${o.lastMovement})}"></td>
+            </tr><tr th:if="${#lists.isEmpty(report.crossPeriod.orders)}"><td colspan="10" class="fr-empty">Nenhum serviço entre meses ou com pendências neste recorte.</td></tr></tbody>
+        </table></div>
+    </section>
+
+    <section id="operating" class="fr-section">
+        <p class="fr-eyebrow">Competência · resultado da empresa</p>
+        <h2 class="fr-heading">5. Resultado por competência</h2>
+        <div class="fr-panel fr-table-wrap fr-scroll-table fr-operating-wrap"><table class="fr-table fr-operating-table"><thead><tr><th>Composição do resultado</th><th class="fr-money">Valor</th></tr></thead><tbody>
+            <tr th:each="line : ${report.operating}" th:classappend="${line.result ? 'fr-result' : (line.outside ? 'fr-muted' : '')}"><th th:text="${line.label}"></th><td class="fr-money" th:insert="~{fragments/financial-result :: money(${line.amount})}"></td></tr>
+        </tbody></table></div>
+    </section>
+
+</main>
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+<script th:src="@{/js/financial-result.js}" defer></script>
+</body>
+</html>

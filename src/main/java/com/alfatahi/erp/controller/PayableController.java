@@ -67,6 +67,7 @@ public class PayableController {
     @Transactional(readOnly = true)
     @GetMapping
     public String index(
+            @RequestParam(required = false) UUID entryId,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String category,
@@ -100,6 +101,7 @@ public class PayableController {
             String q = search.toLowerCase();
             list = list.stream().filter(p -> p.getDescription().toLowerCase().contains(q) || (p.getSupplier() != null && p.getSupplier().getName().toLowerCase().contains(q)) || (p.getDocumentNumber() != null && p.getDocumentNumber().toLowerCase().contains(q))).collect(Collectors.toList());
         }
+        if (entryId != null) list = list.stream().filter(p -> entryId.equals(p.getId())).toList();
         if (status != null && !status.isBlank()) list = list.stream().filter(p -> status.equals(p.getStatus())).collect(Collectors.toList());
         list = payableCategoryService.filterByCategory(list, category);
         if (subcategory != null && !subcategory.isBlank()) list = list.stream().filter(p -> subcategory.equalsIgnoreCase(p.getSubcategory())).collect(Collectors.toList());

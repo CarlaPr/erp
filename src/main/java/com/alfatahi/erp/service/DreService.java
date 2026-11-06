@@ -380,16 +380,20 @@ public class DreService {
 
     private record SubInfo(String name, String group, String behavior) { }
 
-    private record Resolved(DreGroup group, String category, String subcategory, String label, String behavior) { }
+    public record Resolved(DreGroup group, String category, String subcategory, String label, String behavior) { }
 
-    private static final class Catalog {
+    public static final class Catalog {
         private final Map<String, CatInfo> categories = new LinkedHashMap<>();
         private final Map<String, SubInfo> subcategories = new LinkedHashMap<>();
 
-        Resolved resolve(PayableRow p) {
-            String cat = normalize(p.category());
-            String sub = p.subcategory() == null ? "" : p.subcategory().strip().toLowerCase(Locale.ROOT);
-            if (p.financialExpense()) {
+        public Resolved resolve(PayableRow p) {
+            return resolve(p.category(), p.subcategory(), p.financialExpense(), p.expenseType());
+        }
+
+        public Resolved resolve(String category, String subcategory, boolean financialExpense, String expenseType) {
+            String cat = normalize(category);
+            String sub = subcategory == null ? "" : subcategory.strip().toLowerCase(Locale.ROOT);
+            if (financialExpense) {
                 return new Resolved(DreGroup.DESP_FIN_CARTAO, cat, sub, "Taxas de cartão (lançamentos legados)", "VARIAVEL");
             }
             CatInfo c = categories.get(cat);
@@ -405,7 +409,7 @@ public class DreService {
             } else {
                 group = DreGroup.NAO_CLASSIFICADO;
             }
-            return new Resolved(group, cat, sub, catName + " › " + subName, behavior(s, p.expenseType()));
+            return new Resolved(group, cat, sub, catName + " › " + subName, behavior(s, expenseType));
         }
 
         private static String behavior(SubInfo s, String expenseType) {
@@ -414,7 +418,7 @@ public class DreService {
         }
     }
 
-    private Catalog loadCatalog() {
+    public Catalog loadCatalog() {
         Catalog catalog = new Catalog();
         for (ExpenseCategory c : categoryRepository.findAllByOrderByDisplayOrderAsc()) {
             catalog.categories.put(normalize(c.getCode()), new CatInfo(c.getCode(), c.getName(), c.getDreGroup()));

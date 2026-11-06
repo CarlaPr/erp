@@ -24,6 +24,7 @@ public enum PageModule {
     CASH_LEDGER("cash-ledger", "Livro Caixa", false, Set.of(), "/cash-ledger"),
     FINANCIAL_CLOSING("financial-closing", "Fechamento Mensal", true, Set.of(), "/financial-closing"),
     DRE("dre", "DRE Gerencial e Plano de Contas da DRE", true, Set.of(), "/dre"),
+    FINANCIAL_RESULT("financial-result", "Resultado Financeiro e Rentabilidade", false, Set.of(), "/reports/financial-result"),
     SUPPLIERS("suppliers", "Fornecedores", true, Set.of(), "/suppliers");
 
     private final String key;

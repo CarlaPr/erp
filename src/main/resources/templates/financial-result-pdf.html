@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 17mm 12mm 17mm;
+            @bottom-left { content: element(report-footer); vertical-align: top; padding-top: 3mm; }
+            @bottom-right { content: "Página " counter(page) " de " counter(pages); font-family: 'Inter', Arial, sans-serif; font-size: 8px; color: #64748b; vertical-align: top; padding-top: 4mm; }
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', Arial, sans-serif; font-size: 8.5px; line-height: 1.38; color: #1e293b; }
+        #report-footer { position: running(report-footer); border-top: 1px solid #cbd5e1; padding-top: 5px; color: #64748b; font-size: 8px; }
+        .header { border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px; }
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { border: 0; padding: 0; vertical-align: middle; }
+        .logo-cell { width: 82px; padding-right: 14px !important; }
+        .logo { display: block; max-width: 72px; max-height: 52px; }
+        .company-name { font-size: 15px; line-height: 1.2; color: #0f172a; font-weight: 800; }
+        .company-detail { color: #64748b; font-size: 8px; margin-top: 2px; }
+        .badge-cell { text-align: right; width: 180px; }
+        .badge { display: inline-block; background: #0f172a; border-radius: 5px; color: #fff; padding: 9px 13px; text-align: center; }
+        .badge-title { font-size: 11px; font-weight: 800; letter-spacing: .5px; }
+        .badge-label { font-size: 7.5px; color: #cbd5e1; margin-top: 3px; }
+        h1 { margin: 0 0 3px; font-size: 17px; color: #0f172a; }
+        h2 { margin: 15px 0 6px; font-size: 12px; color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }
+        h3 { margin: 10px 0 5px; font-size: 9.5px; color: #334155; }
+        h4 { margin: 8px 0 4px; font-size: 8.5px; color: #334155; }
+        .period { color: #475569; margin-bottom: 8px; }
+        .scope { color: #64748b; font-size: 8px; margin-bottom: 10px; }
+        .summary-grid { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 5px; margin: 2px -5px 9px; }
+        .summary-grid td { width: 20%; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 7px 8px; vertical-align: top; }
+        .kpi-label { display: block; color: #64748b; font-size: 7.5px; }
+        .kpi-value { display: block; color: #0f172a; font-weight: 800; font-size: 11px; margin-top: 2px; }
+        table.data { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 5px 0 11px; }
+        .data th, .data td { padding: 4px 5px; border-bottom: 1px solid #e2e8f0; vertical-align: top; overflow-wrap: break-word; }
+        .data thead { display: table-header-group; }
+        .data thead th { color: #fff; background: #0f172a; text-align: left; font-weight: 700; }
+        .data tbody tr { page-break-inside: avoid; }
+        .data .num { text-align: right; white-space: nowrap; }
+        .data .muted { color: #64748b; }
+        .data .total-row { background: #f1f5f9; font-weight: 800; }
+        .empty { padding: 8px; background: #f8fafc; color: #64748b; }
+        .note { margin: 6px 0; color: #64748b; font-size: 7.5px; }
+        .callout { background: #fff8e8; border-left: 3px solid #b45309; color: #78350f; padding: 6px 8px; margin: 5px 0; page-break-inside: avoid; }
+        .profitability-table th:first-child { width: 37%; }
+        .profitability-table th:nth-child(2) { width: 8%; }
+        .profitability-table th:nth-child(n+3) { width: 7%; }
+        .profitability-table tbody tr { page-break-inside: auto; }
+        .profitability-table .order-extra { page-break-inside: avoid; }
+        .order-client { font-weight: 800; color: #0f172a; font-size: 9px; }
+        .order-number { color: #475569; font-size: 7.5px; font-weight: 700; }
+        .order-description { margin-top: 3px; color: #64748b; font-size: 7px; font-weight: 400; }
+        .cost-list { margin-top: 6px; padding-top: 5px; border-top: 1px solid #cbd5e1; }
+        .cost-list-title { display: block; color: #334155; font-size: 7px; margin-bottom: 3px; }
+        .cost-item { padding: 3px 4px; margin-top: 3px; background: #f8fafc; border-left: 2px solid #64748b; color: #334155; font-size: 7px; }
+        .cost-item-title { font-weight: 700; }
+        .cost-item-meta { margin-top: 2px; color: #64748b; }
+        .cost-item-values { margin-top: 2px; color: #0f172a; }
+        .order-extra td { background: #f8fafc; padding: 6px 8px; }
+        .detail-groups { width: 100%; border-collapse: collapse; }
+        .detail-groups td { width: 33.333%; border: 0; padding: 2px 8px 2px 0; vertical-align: top; }
+        .detail-groups strong { display: block; color: #334155; font-size: 7.5px; margin-bottom: 2px; }
+        .detail-groups span { display: block; color: #475569; font-size: 7px; }
+        .order-extra .callout { margin-top: 4px; }
+        .cross-kpis { width: 100%; border-collapse: separate; border-spacing: 5px; table-layout: fixed; }
+        .cross-kpis td { padding: 7px; background: #f1f5f9; border: 1px solid #e2e8f0; vertical-align: top; }
+        .cross-kpis strong { display: block; font-size: 7px; color: #64748b; }
+        .cross-kpis span { display: block; font-size: 10px; font-weight: 800; margin-top: 3px; }
+        .criteria { color: #475569; font-size: 7.5px; }
+        .criteria p { margin: 4px 0; }
+    </style>
+</head>
+<body>
+<div id="report-footer"><strong th:text="${data.companyName}">Empresa</strong><span th:text="${' | Resultado Financeiro e Rentabilidade | Emitido em ' + data.generatedDate}"></span></div>
+
+<header class="header">
+    <table class="header-table"><tr>
+        <td class="logo-cell"><img th:if="${data.logoBase64 != null and !#strings.isEmpty(data.logoBase64)}" th:src="${data.logoBase64}" class="logo" alt="Logo da empresa" /></td>
+        <td>
+            <div class="company-name" th:text="${data.companyName}">Grupo Glass</div>
+            <div class="company-detail" th:if="${!#strings.isEmpty(data.companyDocument)}" th:text="${'CNPJ/CPF: ' + data.companyDocument}"></div>
+            <div class="company-detail" th:if="${!#strings.isEmpty(data.companyAddress)}" th:text="${data.companyAddress}"></div>
+            <div class="company-detail" th:if="${!#strings.isEmpty(data.companyPhone)}" th:text="${data.companyPhone}"></div>
+            <div class="company-detail" th:if="${!#strings.isEmpty(data.companyEmail)}" th:text="${data.companyEmail}"></div>
+        </td>
+        <td class="badge-cell"><div class="badge"><div class="badge-title">RESULTADO FINANCEIRO</div><div class="badge-label">Caixa e rentabilidade por O.S.</div></div></td>
+    </tr></table>
+</header>
+
+<h1>Resultado Financeiro e Rentabilidade</h1>
+<div class="period">Período: <strong th:text="${data.period}"></strong>. Valores em reais (R$).</div>
+<div class="scope" th:text="${data.filterSummary}"></div>
+
+<h2>1. Resumo financeiro do caixa</h2>
+<table class="summary-grid"><tr>
+    <td><span class="kpi-label">Saldo inicial</span><span class="kpi-value" th:text="${data.cashOpening}"></span></td>
+    <td><span class="kpi-label">Entradas recebidas</span><span class="kpi-value" th:text="${data.cashIncoming}"></span></td>
+    <td><span class="kpi-label">Saídas pagas</span><span class="kpi-value" th:text="${data.cashOutgoing}"></span></td>
+    <td><span class="kpi-label">Resultado de caixa</span><span class="kpi-value" th:text="${data.cashNet}"></span></td>
+    <td><span class="kpi-label">Saldo final</span><span class="kpi-value" th:text="${data.cashClosing}"></span></td>
+</tr></table>
+<p class="note" th:text="${data.cashCount + ' movimentação(ões) considerada(s). O resultado de caixa é entradas menos saídas e não representa lucro.'}"></p>
+<h3>Comparação com o período anterior: <span th:text="${data.previousPeriod}"></span></h3>
+<table class="data"><thead><tr><th>Indicador</th><th class="num">Anterior</th><th class="num">Atual</th><th class="num">Diferença</th></tr></thead><tbody>
+    <tr th:each="row : ${data.comparisons}"><th th:text="${row.label}"></th><td class="num" th:text="${row.previous}"></td><td class="num" th:text="${row.current}"></td><td class="num" th:text="${row.difference}"></td></tr>
+    <tr th:if="${data.previousCount == '0'}"><td colspan="4" class="empty">Não há movimentos no período anterior para comparação.</td></tr>
+</tbody></table>
+
+<h2>2. Rentabilidade por ordem de serviço</h2>
+<p class="note">Lucro bruto previsto = venda menos custos diretos cadastrados. Estimativas manuais são informativas e não comprovam pagamento nem obrigação financeira. Margem e lucro não são calculados quando os custos da O.S. não são confiáveis.</p>
+<table class="data profitability-table"><thead><tr><th>O.S. / cliente / custos cadastrados</th><th>Data da venda</th><th class="num">Venda</th><th class="num">Custo total</th><th class="num">Lucro previsto</th><th class="num">Margem</th><th class="num">Caixa período</th><th class="num">A receber</th><th class="num">A pagar</th></tr></thead><tbody>
+    <th:block th:each="o : ${data.orders}">
+        <tr>
+            <th>
+                <span class="order-number" th:text="${o.number + ' · ' + o.status}"></span><br/>
+                <span class="order-client" th:text="${o.client}"></span>
+                <div class="order-description" th:text="${o.description}"></div>
+                <div th:if="${!#lists.isEmpty(o.costs)}" class="cost-list">
+                    <strong class="cost-list-title">Custos desta O.S.</strong>
+                    <div th:each="cost : ${o.costs}" class="cost-item">
+                        <div><span class="cost-item-title" th:text="${cost.description}"></span><span class="muted" th:text="${' · ' + cost.category}"></span></div>
+                        <div class="cost-item-values" th:text="${'Valor: R$ ' + cost.amount + ' · Pago: R$ ' + cost.paid + ' · Pendente: R$ ' + cost.pending}"></div>
+                        <div class="cost-item-meta" th:text="${'Vencimento: ' + cost.dueDate + ' · Pagamento: ' + cost.paymentDate + ' · Situação: ' + cost.status + ' · Integra custo direto: ' + cost.included + ' · ' + cost.source + (#strings.isEmpty(cost.note) ? '' : ' · ' + cost.note)}"></div>
+                    </div>
+                </div>
+            </th>
+            <td th:text="${o.saleDate}"></td><td class="num" th:text="${o.sale}"></td><td class="num" th:text="${o.totalCosts}"></td><td class="num" th:text="${o.profit}"></td><td class="num" th:text="${o.margin}"></td><td class="num" th:text="${o.cashResult}"></td><td class="num" th:text="${o.receivable}"></td><td class="num" th:text="${o.payable}"></td>
+        </tr>
+        <tr class="order-extra"><td colspan="9">
+            <table class="detail-groups"><tr>
+                <td><strong>Recebimentos e pendências</strong><span th:text="${'Total recebido líquido: R$ ' + o.received}"></span><span th:text="${'Recebido no período: R$ ' + o.receivedPeriod}"></span><span th:text="${'Recebido antes do período: R$ ' + o.receivedBefore}"></span><span th:text="${'A receber: R$ ' + o.receivable}"></span></td>
+                <td><strong>Composição dos custos diretos</strong><span th:text="${'Materiais: R$ ' + o.materials}"></span><span th:text="${'Mão de obra / instalação: R$ ' + o.labor}"></span><span th:text="${'Outros custos: R$ ' + o.otherCosts}"></span><span th:text="${'Custo total: R$ ' + o.totalCosts}"></span></td>
+                <td><strong>Pagamentos e período</strong><span th:text="${'Total pago: R$ ' + o.paid}"></span><span th:text="${'Pago no período: R$ ' + o.paidPeriod}"></span><span th:text="${'Pago antes do período: R$ ' + o.paidBefore}"></span><span th:text="${'Custos diretos pagos no período: R$ ' + o.directPaidPeriod + ' · Custos a pagar: R$ ' + o.payable}"></span><span th:text="${'Último movimento: ' + o.lastMovement}"></span></td>
+            </tr></table>
+            <p class="note" th:if="${!#lists.isEmpty(o.situations)}" th:text="${'Situações: ' + #strings.listJoin(o.situations, '; ')}"></p>
+            <div th:if="${!#lists.isEmpty(o.warnings)}" class="callout"><strong>Alertas desta O.S.</strong><ul><li th:each="warning : ${o.warnings}" th:text="${warning}"></li></ul></div>
+        </td></tr>
+    </th:block>
+    <tr th:if="${#lists.isEmpty(data.orders)}"><td colspan="9" class="empty">Nenhuma O.S. encontrada para o período e filtros selecionados.</td></tr>
+</tbody></table>
+
+<h2>3. Extrato detalhado de entradas e saídas</h2>
+<table class="data"><thead><tr><th>Data</th><th>Descrição / origem</th><th>Categoria</th><th>O.S.</th><th>Cliente / fornecedor</th><th>Tipo</th><th class="num">Entrada</th><th class="num">Saída</th><th>Forma de pagamento</th><th>Conciliação</th></tr></thead><tbody>
+    <tr th:each="m : ${data.movements}"><td th:text="${m.date}"></td><td><span th:text="${m.description}"></span><br/><span class="muted" th:if="${m.allocation == 'Pagamento rateado'}" th:text="${m.allocation}"></span></td><td th:text="${m.category}"></td><td th:text="${m.orders}"></td><td th:text="${m.party}"></td><td th:text="${m.type}"></td><td class="num" th:text="${m.incoming}"></td><td class="num" th:text="${m.outgoing}"></td><td th:text="${m.paymentMethod}"></td><td th:text="${m.reconciliation}"></td></tr>
+    <tr th:if="${#lists.isEmpty(data.movements)}"><td colspan="10" class="empty">Nenhuma movimentação efetiva no período e recorte selecionados.</td></tr>
+    <tr class="total-row"><th colspan="6">Totais do período</th><td class="num" th:text="${data.cashIncoming}"></td><td class="num" th:text="${data.cashOutgoing}"></td><td colspan="2"></td></tr>
+</tbody></table>
+
+<h2>4. Serviços entre diferentes meses e compromissos pendentes</h2>
+<table class="cross-kpis"><tr>
+    <td><strong>Recebido de vendas anteriores</strong><span th:text="${data.oldSaleReceipts}"></span></td>
+    <td><strong>A receber das vendas do período</strong><span th:text="${data.currentSaleReceivables}"></span></td>
+    <td><strong>Custos pagos de O.S. de períodos anteriores</strong><span th:text="${data.oldSalePayments}"></span></td>
+    <td><strong>Custos pendentes das O.S. em andamento</strong><span th:text="${data.pendingCostsInProgress}"></span></td>
+</tr></table>
+<table class="data"><thead><tr><th>O.S. / cliente / situação</th><th>Data da venda</th><th class="num">Valor vendido</th><th class="num">Recebido total</th><th class="num">A receber</th><th class="num">Custo total</th><th class="num">Pago total</th><th class="num">Custos a pagar</th><th class="num">Lucro previsto</th><th>Último movimento</th></tr></thead><tbody>
+    <tr th:each="o : ${data.crossOrders}"><th><span th:text="${o.number}"></span><br/><span class="muted" th:text="${o.client}"></span><br/><span class="muted" th:text="${#lists.isEmpty(o.situations) ? 'Sem situação adicional' : #strings.listJoin(o.situations, '; ')}"></span></th><td th:text="${o.saleDate}"></td><td class="num" th:text="${o.sale}"></td><td class="num" th:text="${o.received}"></td><td class="num" th:text="${o.receivable}"></td><td class="num" th:text="${o.totalCosts}"></td><td class="num" th:text="${o.paid}"></td><td class="num" th:text="${o.payable}"></td><td class="num" th:text="${o.profit}"></td><td th:text="${o.lastMovement}"></td></tr>
+    <tr th:if="${#lists.isEmpty(data.crossOrders)}"><td colspan="10" class="empty">Nenhum serviço entre meses ou com pendências neste recorte.</td></tr>
+</tbody></table>
+
+<h2>5. Resultado por competência</h2>
+<table class="data"><thead><tr><th>Composição do resultado</th><th class="num">Valor (R$)</th></tr></thead><tbody>
+    <tr th:each="line : ${data.operating}" th:classappend="${line.result ? 'total-row' : ''}"><th th:text="${line.label}"></th><td class="num" th:text="${line.amount}"></td></tr>
+</tbody></table>
+</body>
+</html>

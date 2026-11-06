@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<body>
+<span th:fragment="money(value)" th:classappend="${value != null and value.signum() < 0} ? 'fr-negative'"
+      th:text="${value == null ? 'Revisar dados' : 'R$ ' + #numbers.formatDecimal(value, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+<span th:fragment="date(value)" th:text="${value == null ? 'Não registrado' : #temporals.format(value, 'dd/MM/yyyy')}"></span>
+</body>
+</html>

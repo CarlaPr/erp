@@ -77,6 +77,7 @@ public class ReceivableController {
     @Transactional(readOnly = true)
     @GetMapping
     public String index(
+            @RequestParam(required = false) UUID entryId,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) UUID clientId,
@@ -118,6 +119,7 @@ public class ReceivableController {
                             || (r.getWorkOrder() != null && r.getWorkOrder().getNumber().toLowerCase().contains(q))
             ).collect(Collectors.toList());
         }
+        if (entryId != null) list = list.stream().filter(r -> entryId.equals(r.getId())).toList();
         if (status != null && !status.isBlank()) {
             list = list.stream().filter(r -> status.equals(r.getStatus())).collect(Collectors.toList());
         }
