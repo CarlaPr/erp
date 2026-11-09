@@ -100,7 +100,7 @@
     function whatsappUrl(quote) {
         let phone = String(quote.client?.phone || '').replace(/\D/g, '');
         if (phone.length === 10 || phone.length === 11) phone = '55' + phone;
-        const params = new URLSearchParams({ text: `Olá! Segue o orçamento ${quote.number || ''}${quote.client?.name ? ' - ' + quote.client.name : ''}.` });
+        const params = new URLSearchParams({ text: `Segue o orçamento ${quote.number || ''}${quote.client?.name ? ' - ' + quote.client.name : ''}.` });
         if (phone.length >= 12 && phone.length <= 15) params.set('phone', phone);
         return `https://api.whatsapp.com/send?${params}`;
     }

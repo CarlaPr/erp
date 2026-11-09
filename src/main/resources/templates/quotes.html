@@ -1921,7 +1921,7 @@
             const pdfBlob = await generateReceiptPdfBlob();
             const fileName = buildQuoteShareFileName();
             const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-            const textoCompartilhamento = `Olá! Segue o Orçamento ${currentActiveNumberForPdf} - ${currentActiveClientForPdf}`;
+            const textoCompartilhamento = `Segue o Orçamento ${currentActiveNumberForPdf} - ${currentActiveClientForPdf}`;
 
             if (isMobileShareSupported) {
                 await navigator.share({

@@ -100,7 +100,7 @@
     function whatsappUrl(receipt) {
         let phone = String(receipt.client?.phone || '').replace(/\D/g, '');
         if (phone.length === 10 || phone.length === 11) phone = '55' + phone;
-        const params = new URLSearchParams({ text: `Olá! Segue o recibo ${receipt.number || ''}${receipt.client?.name ? ' - ' + receipt.client.name : ''}.` });
+        const params = new URLSearchParams({ text: `Segue o recibo ${receipt.number || ''}${receipt.client?.name ? ' - ' + receipt.client.name : ''}.` });
         if (phone.length >= 12 && phone.length <= 15) params.set('phone', phone);
         return `https://api.whatsapp.com/send?${params}`;
     }
