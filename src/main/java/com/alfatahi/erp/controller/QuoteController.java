@@ -10,6 +10,7 @@ import com.alfatahi.erp.repository.QuoteRepository;
 import com.alfatahi.erp.service.CompanyImageService;
 import com.alfatahi.erp.service.FinancialPeriod;
 import com.alfatahi.erp.service.QuoteService;
+import com.alfatahi.erp.service.QuotePaymentSummary;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/quotes")
@@ -92,14 +94,9 @@ public class QuoteController {
                 net = gross.subtract(discAmt);
             }
 
-            String pm = nvlStr(quote.getPaymentMethod(), "");
-            boolean showInstall = (pm.contains("Crédito") || pm.contains("Link de Pagamento"))
-                    && quote.getInstallments() != null && quote.getInstallments() > 1;
-            String installText = "";
-            if (showInstall) {
-                BigDecimal val = net.divide(new BigDecimal(quote.getInstallments()), 2, RoundingMode.HALF_UP);
-                installText = "Em até " + quote.getInstallments() + "x de " + formatBRL(val);
-            }
+            QuotePaymentSummary.Summary paymentSummary = QuotePaymentSummary.from(quote, net);
+            boolean showInstall = !paymentSummary.installmentsText().isBlank();
+            String installText = paymentSummary.installmentsText();
 
             String companyName    = quote.getProfile() != null ? nvlStr(quote.getProfile().getCompanyName(), "") : "";
             String companyDoc     = quote.getProfile() != null ? nvlStr(quote.getProfile().getDocument(), "--") : "--";
@@ -164,6 +161,7 @@ public class QuoteController {
             ctx.setVariable("net",               formatBRL(net));
             ctx.setVariable("showInstallments",  showInstall);
             ctx.setVariable("installmentsText",  installText);
+            ctx.setVariable("paymentRows",       paymentSummary.pdfLines());
             ctx.setVariable("paymentMethod",     nvlStr(quote.getPaymentMethod(), "Não informado"));
             ctx.setVariable("warranty",          nvlStr(quote.getWarranty(), ""));
             ctx.setVariable("observations",      nvlStr(quote.getObservations(), ""));
@@ -420,6 +418,11 @@ public class QuoteController {
         }
         quote.setTotalValue(quoteService.computeFinalTotal(quote));
 
+        String paymentBreakdownError = normalizePaymentBreakdown(quote);
+        if (paymentBreakdownError != null) {
+            return ResponseEntity.badRequest().body(paymentBreakdownError);
+        }
+
         if (quote.getId() != null) {
             Quote existing = quoteRepo.findById(quote.getId()).orElseThrow();
             existing.setClient(quote.getClient());
@@ -429,6 +432,7 @@ public class QuoteController {
             }
             existing.setPaymentMethod(quote.getPaymentMethod());
             existing.setInstallments(quote.getInstallments());
+            existing.setPaymentBreakdown(quote.getPaymentBreakdown());
             existing.setObservations(quote.getObservations());
             existing.setWarranty(quote.getWarranty());
             existing.setTotalValue(quote.getTotalValue());
@@ -480,6 +484,43 @@ public class QuoteController {
         }
         quoteRepo.save(quote);
         return ResponseEntity.ok().build();
+    }
+
+    private String normalizePaymentBreakdown(Quote quote) {
+        List<String> methods = quote.getPaymentMethod() == null ? List.of()
+                : Arrays.stream(quote.getPaymentMethod().split(","))
+                .map(String::trim)
+                .filter(method -> !method.isEmpty() && !"Não Informado".equalsIgnoreCase(method))
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<String, BigDecimal> supplied = quote.getPaymentBreakdown() != null
+                ? quote.getPaymentBreakdown() : Map.of();
+        Map<String, BigDecimal> normalized = new LinkedHashMap<>();
+        BigDecimal total = quote.getTotalValue() != null ? quote.getTotalValue().setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+
+        if (methods.size() == 1) {
+            normalized.put(methods.get(0), total);
+        } else if (methods.size() > 1) {
+            BigDecimal sum = BigDecimal.ZERO;
+            for (String method : methods) {
+                BigDecimal amount = supplied.get(method);
+                if (amount == null) {
+                    return "Informe um valor maior que zero para cada forma de pagamento selecionada.";
+                }
+                amount = amount.setScale(2, RoundingMode.HALF_UP);
+                if (amount.signum() <= 0) {
+                    return "Informe um valor maior que zero para cada forma de pagamento selecionada.";
+                }
+                normalized.put(method, amount);
+                sum = sum.add(amount);
+            }
+            if (sum.compareTo(total) != 0) {
+                return "A soma dos valores por forma de pagamento deve ser igual ao valor total do orçamento (" + formatBRL(total) + ").";
+            }
+        }
+        quote.setPaymentBreakdown(normalized);
+        return null;
     }
 
     @PostMapping("/approve/{id}")

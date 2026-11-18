@@ -2,11 +2,13 @@ package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.entity.Quote;
 import com.alfatahi.erp.repository.QuoteRepository;
+import com.alfatahi.erp.service.QuotePaymentSummary;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
 import java.util.Map;
 
 @Controller
@@ -27,6 +29,10 @@ public class PublicQuoteController {
 
         quote.getItems().forEach(item -> org.hibernate.Hibernate.initialize(item.getMeasurements()));
         model.addAttribute("quote", quote);
+        BigDecimal total = quote.getTotalValue() != null ? quote.getTotalValue() : BigDecimal.ZERO;
+        QuotePaymentSummary.Summary paymentSummary = QuotePaymentSummary.from(quote, total);
+        model.addAttribute("paymentRows", paymentSummary.lines());
+        model.addAttribute("installmentsText", paymentSummary.installmentsText());
         return "public-quote";
     }
 

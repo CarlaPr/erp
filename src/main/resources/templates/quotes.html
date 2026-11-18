@@ -788,10 +788,12 @@
                     </span>
                     </div>
 
+                    <div id="recPaymentBreakdownRows"></div>
+
                     <div id="recFinalRow" class="flex justify-between items-center   px-5 py-2.5 bg-slate-800 receipt-total-row" style="display:none;">
                     <span class="text-xs font-bold   text-slate-400 uppercase tracking-widest font-mono">
 
-                        Parcelado em:
+                        Parcelamento do cartão:
 
                     </span>
 
@@ -819,6 +821,20 @@
                     </div>
                     <div id="recPaymentMethods" class="text-sm font-bold   text-slate-800    p-4 bg-white receipt-section-body">
                         --
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm receipt-section">
+                    <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 receipt-section-heading">
+                        <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Dados Bancários para Pagamento</h5>
+                    </div>
+                    <div class="text-sm text-slate-800 p-4 bg-white receipt-section-body">
+                        <strong>Banco:</strong> 542 — CloudWalk<br/>
+                        <strong>Instituição:</strong> CloudWalk Instituição de Pagamento Ltda.<br/>
+                        <strong>Agência:</strong> 0001<br/>
+                        <strong>Conta Corrente:</strong> 21197925-6<br/>
+                        <strong>Titular:</strong> TAHI GLASS LTDA.<br/>
+                        <strong>PIX CNPJ:</strong> 46.942.469/0001-05
                     </div>
                 </div>
 
@@ -1968,6 +1984,74 @@
         }
     }
 
+    function renderReceiptPaymentSummary(quote, total) {
+        const rows = document.getElementById('recPaymentBreakdownRows');
+        const installmentRow = document.getElementById('recFinalRow');
+        const installmentValue = document.getElementById('recFinalInstallments');
+        if (!rows || !installmentRow || !installmentValue) return;
+
+        rows.replaceChildren();
+        const methods = String(quote.paymentMethod || '').split(',').map(method => method.trim())
+            .filter(method => method && method.toLowerCase() !== 'não informado');
+        const values = quote.paymentBreakdown && typeof quote.paymentBreakdown === 'object'
+            ? quote.paymentBreakdown : {};
+        const amountFor = method => {
+            const value = values[method];
+            if (value !== undefined && value !== null && Number(value) > 0) return Number(value);
+            return methods.length === 1 ? Number(total) || 0 : 0;
+        };
+
+        const cashPixRows = [];
+        const otherRows = [];
+        const cardMethods = [];
+        let cardTotal = 0;
+        methods.forEach(method => {
+            const amount = amountFor(method);
+            if (amount <= 0) return;
+            if (method === 'PIX' || method === 'Dinheiro') {
+                cashPixRows.push({ label: `Valor via ${method}`, amount });
+            } else if (method === 'Crédito' || method === 'Link de Pagamento') {
+                cardMethods.push(method);
+                cardTotal += amount;
+            } else {
+                otherRows.push({ label: method, amount });
+            }
+        });
+
+        const previewRows = [...cashPixRows, ...otherRows];
+        if (cardTotal > 0) {
+            const installments = Number(quote.installments) > 0 ? Number(quote.installments) : 1;
+            const split = installments > 1;
+            const cardLabel = cardMethods.length > 1
+                ? (split ? 'Valor Parcelado no Cartão / Link' : 'Valor no Cartão / Link')
+                : cardMethods[0] === 'Link de Pagamento'
+                    ? (split ? 'Valor Parcelado no Link de Pagamento' : 'Valor no Link de Pagamento')
+                    : (split ? 'Valor Parcelado no Cartão de Crédito' : 'Valor no Cartão de Crédito');
+            previewRows.push({ label: cardLabel, amount: cardTotal });
+
+            const perInstallment = Math.round((cardTotal / installments + Number.EPSILON) * 100) / 100;
+            installmentValue.textContent = `Em ${installments} ${installments === 1 ? 'vez' : 'vezes'} de ${formatarMoeda(perInstallment)}`;
+            installmentRow.style.setProperty('display', 'flex', 'important');
+        } else {
+            installmentValue.textContent = '';
+            installmentRow.style.setProperty('display', 'none', 'important');
+        }
+
+        previewRows.forEach(line => {
+            const row = document.createElement('div');
+            row.className = 'flex justify-between items-center gap-3 px-5 py-2.5 bg-slate-50 receipt-total-row';
+            row.style.borderTop = '1px solid #e2e8f0';
+            const label = document.createElement('span');
+            label.className = 'text-xs font-bold text-slate-500 uppercase tracking-widest font-mono';
+            label.textContent = line.label;
+            const amount = document.createElement('span');
+            amount.className = 'text-sm font-bold text-slate-800 font-mono';
+            amount.textContent = formatarMoeda(line.amount);
+            row.append(label, amount);
+            rows.appendChild(row);
+        });
+    }
+
     function viewReceipt(id) {
         fetch(`/quotes/view-data/${id}`)
             .then(res => res.json())
@@ -2090,19 +2174,7 @@
 
                 setSafeText('recPaymentMethods', q.paymentMethod || 'Não informado');
 
-                const recFinalRow = document.getElementById('recFinalRow');
-                if (recFinalRow) {
-                    if ((q.paymentMethod || '').includes('Crédito') || (q.paymentMethod || '').includes('Link de Pagamento')) {
-                        if (q.installments > 1) {
-                            recFinalRow.style.setProperty('display', 'flex', 'important');
-                            setSafeText('recFinalInstallments', `Em até ${q.installments}x de ${formatarMoeda(net / q.installments)}`);
-                        } else {
-                            recFinalRow.style.setProperty('display', 'none', 'important');
-                        }
-                    } else {
-                        recFinalRow.style.setProperty('display', 'none', 'important');
-                    }
-                }
+                renderReceiptPaymentSummary(q, net);
 
                 if (q.profile) {
                     setSafeText('pdfCompanyName', q.profile.companyName || '');

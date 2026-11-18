@@ -85,14 +85,21 @@
             <div th:if="${quote.deliveryDate != null}" class="mt-2"><strong>Data de entrega / instalação: </strong><span th:text="${#temporals.format(quote.deliveryDate, 'dd/MM/yyyy')}"></span></div>
         </div>
 
-        <div th:if="${quote.paymentMethod != null && !quote.paymentMethod.isEmpty()}" class="mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm bg-blue-50/70 p-4 rounded-xl border border-blue-200 gap-3 shadow-sm">
+        <div th:if="${quote.paymentMethod != null && !quote.paymentMethod.isEmpty()}" class="mt-4 text-sm bg-blue-50/70 p-4 rounded-xl border border-blue-200 shadow-sm">
             <div class="flex flex-col">
                 <span class="font-bold text-blue-800 uppercase tracking-wider text-[11px] mb-1">Formas de Pagamento Aceitas</span>
                 <span class="text-sm text-blue-900 font-black" th:text="${quote.paymentMethod}"></span>
             </div>
-            <div th:if="${quote.installments != null && quote.installments > 1}" class="bg-white px-4 py-2 rounded-lg border border-blue-100 shadow-sm text-center shrink-0">
-                <span class="block text-[10px] uppercase font-bold text-slate-500 mb-0.5">Opção de Parcelamento</span>
-                <span class="font-black text-emerald-600 text-base" th:text="${'Até ' + quote.installments + 'x de R$ ' + #numbers.formatDecimal(quote.totalValue / quote.installments, 1, 'COMMA', 2, 'POINT')}"></span>
+            <div th:if="${!paymentRows.isEmpty()}" class="mt-3 pt-3 border-t border-blue-200">
+                <span class="block text-[10px] uppercase font-bold text-slate-500 mb-2">Valores previstos por forma</span>
+                <div th:each="line : ${paymentRows}" class="flex justify-between gap-4 py-1">
+                    <span class="font-semibold text-slate-700" th:text="${line.method}">PIX</span>
+                    <span class="font-black text-blue-900" th:text="${line.amount}">R$ 0,00</span>
+                </div>
+                <div th:if="${!installmentsText.isEmpty()}" class="mt-2 bg-white px-3 py-2 rounded-lg border border-blue-100 text-center">
+                    <span class="block text-[10px] uppercase font-bold text-slate-500 mb-0.5">Parcelamento do cartão</span>
+                    <span class="font-black text-emerald-600 text-base" th:text="${installmentsText}"></span>
+                </div>
             </div>
         </div>
     </div>

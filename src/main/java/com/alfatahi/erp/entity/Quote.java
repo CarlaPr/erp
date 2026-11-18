@@ -2,12 +2,15 @@ package com.alfatahi.erp.entity;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.alfatahi.erp.entity.converter.PaymentBreakdownConverter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 @Entity
 @Table(name = "quotes")
@@ -49,6 +52,10 @@ public class Quote {
     private String paymentMethod;
 
     private Integer installments = 1;
+
+    @Convert(converter = PaymentBreakdownConverter.class)
+    @Column(name = "payment_breakdown", columnDefinition = "text")
+    private Map<String, BigDecimal> paymentBreakdown = new LinkedHashMap<>();
 
     @Column(name = "payment_plan", length = 20)
     private String paymentPlan = "SPLIT_50_50";
@@ -135,6 +142,11 @@ public class Quote {
 
     public Integer getInstallments() { return installments; }
     public void setInstallments(Integer installments) { this.installments = installments; }
+
+    public Map<String, BigDecimal> getPaymentBreakdown() { return paymentBreakdown; }
+    public void setPaymentBreakdown(Map<String, BigDecimal> paymentBreakdown) {
+        this.paymentBreakdown = paymentBreakdown != null ? new LinkedHashMap<>(paymentBreakdown) : new LinkedHashMap<>();
+    }
 
     public LocalDateTime getDateCreated() { return dateCreated; }
     public void setDateCreated(LocalDateTime dateCreated) { this.dateCreated = dateCreated; }

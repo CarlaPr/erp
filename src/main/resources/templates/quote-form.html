@@ -134,7 +134,19 @@
 
                     <div class="sm:col-span-2 lg:col-span-4" id="installmentsContainer">
                         <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2.5 text-sm">Parcelas</label>
-                        <input type="number" id="quoteInstallments" min="1" value="1" oninput="if(this.value < 1) this.value = 1;" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base text-center" />
+                        <input type="number" id="quoteInstallments" min="1" value="1" oninput="if(this.value < 1) this.value = 1; renderPaymentPreview();" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base text-center" />
+                    </div>
+
+                    <div id="paymentBreakdownContainer" class="hidden sm:col-span-2 lg:col-span-12 rounded-xl border border-blue-200 dark:border-blue-500/30 bg-blue-50/60 dark:bg-blue-500/5 p-4">
+                        <div class="mb-3">
+                            <p class="text-sm font-black text-slate-800 dark:text-slate-100">Divisão prevista do pagamento</p>
+                            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">Informe quanto será pago em cada forma selecionada. A soma deve ser igual ao valor total do orçamento.</p>
+                        </div>
+                        <div id="paymentBreakdownFields" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                        <div class="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 border-t border-blue-200 dark:border-blue-500/20 pt-3 text-sm">
+                            <span class="font-bold text-slate-600 dark:text-slate-300">Total informado: <strong id="paymentAllocationTotal">R$ 0,00</strong></span>
+                            <span id="paymentAllocationStatus" class="font-bold text-amber-700 dark:text-amber-300">Aguardando valores</span>
+                        </div>
                     </div>
 
                 </div>
@@ -284,6 +296,13 @@
                         <div class="flex items-center justify-between gap-4">
                             <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-black">VALOR FINAL</span>
                             <span class="text-2xl font-mono font-black text-emerald-600 dark:text-emerald-400" id="liveQuoteTotal">R$ 0,00</span>
+                        </div>
+                        <div id="livePaymentPreview" class="hidden mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-left space-y-1.5">
+                            <div id="livePaymentPreviewRows" class="space-y-1.5"></div>
+                            <div id="livePaymentInstallmentRow" class="hidden flex justify-between gap-4 pt-1.5 border-t border-slate-200 dark:border-slate-700 text-sm">
+                                <span class="font-bold text-slate-500 dark:text-slate-400">Parcelamento do cartão</span>
+                                <span id="livePaymentInstallmentText" class="font-black text-emerald-600 dark:text-emerald-400 text-right"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -569,6 +588,7 @@
     let inlineClientEditingId = null;
     let inlineClientVersion = 0;
     let inlineClientSaving = false;
+    let paymentAmounts = {};
 
     // Validade padrão sugerida (dias corridos a partir da emissão). Só é aplicada automaticamente enquanto
     // o usuário não tiver informado/alterado a data manualmente.
@@ -618,6 +638,7 @@
             deliveryDate: document.getElementById('quoteDeliveryDate').value,
             payment: document.getElementById('quotePayment')?.value || '',
             installments: document.getElementById('quoteInstallments')?.value || '',
+            paymentBreakdown: paymentAmounts,
             paymentPlan: document.getElementById('quotePaymentPlan')?.value || '',
             discount: document.getElementById('quoteDiscount')?.value || '',
             observations: document.getElementById('quoteObs')?.value || '',
@@ -668,6 +689,7 @@
         if (draft.deliveryDate !== undefined) document.getElementById('quoteDeliveryDate').value = draft.deliveryDate;
         if (draft.payment) document.getElementById('quotePayment').value = draft.payment;
         if (draft.installments) { const el = document.getElementById('quoteInstallments'); if (el) el.value = draft.installments; }
+        paymentAmounts = draft.paymentBreakdown && typeof draft.paymentBreakdown === 'object' ? draft.paymentBreakdown : {};
         if (draft.paymentPlan) { const el = document.getElementById('quotePaymentPlan'); if (el) el.value = draft.paymentPlan; }
         if (draft.discount) { const el = document.getElementById('quoteDiscount'); if (el) el.value = draft.discount; }
         if (draft.observations) document.getElementById('quoteObs').value = draft.deliveryBusinessDays === undefined
@@ -1181,7 +1203,155 @@
 
         planContainer.style.display = isPlannable ? 'block' : 'none';
 
+        renderPaymentBreakdown();
+
         renderQuoteItems();
+    }
+
+    function selectedPaymentMethods() {
+        const payment = document.getElementById('quotePayment')?.value || '';
+        return payment.split(',').map(method => method.trim())
+            .filter(method => method && method !== 'Não Informado');
+    }
+
+    function renderPaymentBreakdown(total) {
+        const container = document.getElementById('paymentBreakdownContainer');
+        const fields = document.getElementById('paymentBreakdownFields');
+        if (!container || !fields) return;
+
+        const methods = selectedPaymentMethods();
+        if (methods.length < 2) {
+            container.classList.add('hidden');
+            fields.innerHTML = '';
+            updatePaymentAllocationStatus(total);
+            return;
+        }
+
+        container.classList.remove('hidden');
+        fields.innerHTML = methods.map((method, index) => {
+            const amount = paymentAmounts[method];
+            const value = amount !== undefined && amount !== null && Number(amount) > 0 ? formatarMoeda(Number(amount)) : '';
+            const id = `paymentAmount${index}`;
+            return `
+                <label for="${id}" class="block">
+                    <span class="block text-xs font-bold text-slate-600 dark:text-slate-300">${method}</span>
+                    <input id="${id}" type="text" inputmode="decimal" data-payment-method="${method}" value="${value}"
+                           onfocus="prepararCampoMoedaBRL(this)" oninput="sanitizarCampoMoedaBRL(this); updatePaymentAmount(this)"
+                           onblur="formatarCampoMoedaBRL(this)"
+                           placeholder="R$ 0,00"
+                           class="mt-1 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-right">
+                </label>`;
+        }).join('');
+        updatePaymentAllocationStatus(total);
+    }
+
+    function updatePaymentAmount(input) {
+        const method = input.dataset.paymentMethod;
+        paymentAmounts[method] = parseMoedaBRL(input.value);
+        updatePaymentAllocationStatus();
+        renderPaymentPreview();
+        saveQuoteDraft();
+    }
+
+    function paymentAllocationTotal() {
+        return selectedPaymentMethods().reduce((sum, method) => sum + (Number(paymentAmounts[method]) || 0), 0);
+    }
+
+    function updatePaymentAllocationStatus(total) {
+        const totalEl = document.getElementById('paymentAllocationTotal');
+        const statusEl = document.getElementById('paymentAllocationStatus');
+        if (!totalEl || !statusEl) return;
+
+        const allocated = paymentAllocationTotal();
+        const target = total === undefined ? currentQuoteNetTotal() : Number(total);
+        totalEl.textContent = formatarMoeda(allocated);
+        const methods = selectedPaymentMethods();
+        const complete = methods.length > 1 && methods.every(method => Number(paymentAmounts[method]) > 0);
+        const matches = complete && Math.round(allocated * 100) === Math.round(target * 100);
+        if (matches) {
+            statusEl.textContent = 'Divisão confere com o valor total';
+        } else if (!complete) {
+            statusEl.textContent = 'Informe um valor para cada forma';
+        } else {
+            const difference = target - allocated;
+            statusEl.textContent = difference > 0
+                ? `Falta distribuir ${formatarMoeda(difference)}`
+                : `Valor excedido em ${formatarMoeda(Math.abs(difference))}`;
+        }
+        statusEl.className = `font-bold ${matches ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`;
+    }
+
+    function currentQuoteNetTotal() {
+        const gross = currentItems.reduce((sum, item) => sum + QuoteMeasurements.subtotal(item), 0);
+        const discount = parseFloat(document.getElementById('quoteDiscount')?.value) || 0;
+        return gross * (1 - discount / 100);
+    }
+
+    function renderPaymentPreview(total) {
+        const container = document.getElementById('livePaymentPreview');
+        const rows = document.getElementById('livePaymentPreviewRows');
+        const installmentRow = document.getElementById('livePaymentInstallmentRow');
+        const installmentText = document.getElementById('livePaymentInstallmentText');
+        if (!container || !rows || !installmentRow || !installmentText) return;
+
+        const methods = selectedPaymentMethods();
+        const target = total === undefined ? currentQuoteNetTotal() : Number(total);
+        const amountFor = method => methods.length === 1
+            ? target
+            : (Number(paymentAmounts[method]) || 0);
+        const cashPixRows = [];
+        const otherRows = [];
+        const cardMethods = [];
+        let cardTotal = 0;
+
+        methods.forEach(method => {
+            const amount = amountFor(method);
+            if (amount <= 0) return;
+            if (method === 'PIX' || method === 'Dinheiro') {
+                cashPixRows.push({ label: `Valor via ${method}`, amount });
+            } else if (method === 'Crédito' || method === 'Link de Pagamento') {
+                cardMethods.push(method);
+                cardTotal += amount;
+            } else {
+                otherRows.push({ label: method, amount });
+            }
+        });
+
+        const previewRows = [...cashPixRows, ...otherRows];
+        if (cardTotal > 0) {
+            const installments = parseInt(document.getElementById('quoteInstallments')?.value) || 1;
+            const cardLabel = cardMethods.length > 1
+                ? (installments > 1 ? 'Valor Parcelado no Cartão / Link' : 'Valor no Cartão / Link')
+                : cardMethods[0] === 'Link de Pagamento'
+                    ? (installments > 1 ? 'Valor Parcelado no Link de Pagamento' : 'Valor no Link de Pagamento')
+                    : (installments > 1 ? 'Valor Parcelado no Cartão de Crédito' : 'Valor no Cartão de Crédito');
+            previewRows.push({ label: cardLabel, amount: cardTotal });
+
+            const perInstallment = Math.round((cardTotal / installments + Number.EPSILON) * 100) / 100;
+            installmentText.textContent = `Em ${installments} ${installments === 1 ? 'vez' : 'vezes'} de ${formatarMoeda(perInstallment)}`;
+            installmentRow.classList.remove('hidden');
+            installmentRow.classList.add('flex');
+        } else {
+            installmentText.textContent = '';
+            installmentRow.classList.add('hidden');
+            installmentRow.classList.remove('flex');
+        }
+
+        rows.replaceChildren();
+        previewRows.forEach(line => {
+            const row = document.createElement('div');
+            row.className = 'flex justify-between gap-4 text-sm';
+            const label = document.createElement('span');
+            label.className = 'font-bold text-slate-500 dark:text-slate-400';
+            label.textContent = line.label;
+            const amount = document.createElement('span');
+            amount.className = 'font-black text-slate-800 dark:text-slate-200 text-right';
+            amount.textContent = formatarMoeda(line.amount);
+            row.append(label, amount);
+            rows.appendChild(row);
+        });
+
+        container.classList.toggle('hidden', previewRows.length === 0 && installmentRow.classList.contains('hidden'));
     }
 
 
@@ -1487,6 +1657,8 @@
 
         const totalEl = document.getElementById('liveQuoteTotal');
         if(totalEl) totalEl.innerText = formatarMoeda(netTotal);
+        renderPaymentBreakdown(netTotal);
+        renderPaymentPreview(netTotal);
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -1864,6 +2036,35 @@
 
         const instInput = document.getElementById('quoteInstallments');
         const installmentsValue = instInput && instInput.offsetParent !== null ? (parseInt(instInput.value) || 1) : 1;
+        const selectedMethods = selectedPaymentMethods();
+        const paymentBreakdown = {};
+        if (selectedMethods.length > 1) {
+            let allocated = 0;
+            for (const method of selectedMethods) {
+                const input = Array.from(document.querySelectorAll('[data-payment-method]'))
+                    .find(field => field.dataset.paymentMethod === method);
+                if (!input || !input.value.trim()) {
+                    alert(`Informe o valor que será pago via ${method}.`);
+                    input?.focus();
+                    return;
+                }
+                const amount = parseMoedaBRL(input.value);
+                if (amount <= 0) {
+                    alert(`O valor informado para ${method} deve ser maior que zero.`);
+                    input.focus();
+                    return;
+                }
+                paymentBreakdown[method] = amount.toFixed(2);
+                allocated += amount;
+            }
+            if (Math.round(allocated * 100) !== Math.round(finalNetValue * 100)) {
+                alert(`A soma das formas de pagamento (${formatarMoeda(allocated)}) deve ser igual ao valor total do orçamento (${formatarMoeda(finalNetValue)}).`);
+                document.getElementById('paymentBreakdownContainer')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+        } else if (selectedMethods.length === 1) {
+            paymentBreakdown[selectedMethods[0]] = finalNetValue.toFixed(2);
+        }
 
         const deliveryDaysInput = document.getElementById('quoteDeliveryBusinessDays');
         if (!deliveryDaysInput.reportValidity()) return;
@@ -1880,6 +2081,7 @@
             deliveryDate: deliveryDateInput.value || null,
             paymentMethod: document.getElementById('quotePayment').value,
             installments: installmentsValue,
+            paymentBreakdown,
             paymentPlan: (document.getElementById('quotePaymentPlan')?.offsetParent !== null
                 ? document.getElementById('quotePaymentPlan').value
                 : 'SPLIT_50_50'),
@@ -1919,7 +2121,10 @@
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     return;
                 }
-                if (!response.ok) throw new Error(`Status: ${response.status}`);
+                if (!response.ok) {
+                    const message = await response.text();
+                    throw new Error(message || `Status: ${response.status}`);
+                }
                 discardQuoteDraft();
                 window.location.href = '/quotes';
             })
@@ -2005,6 +2210,7 @@
 
                 const pm = q.paymentMethod || 'PIX';
                 document.getElementById('quotePayment').value = pm;
+                paymentAmounts = q.paymentBreakdown && typeof q.paymentBreakdown === 'object' ? q.paymentBreakdown : {};
                 document.querySelectorAll('.pay-method-cb').forEach(cb => {
                     cb.checked = pm.includes(cb.value);
                 });
