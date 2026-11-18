@@ -499,9 +499,7 @@ public class QuoteController {
         Map<String, BigDecimal> normalized = new LinkedHashMap<>();
         BigDecimal total = quote.getTotalValue() != null ? quote.getTotalValue().setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
 
-        if (methods.size() == 1) {
-            normalized.put(methods.get(0), total);
-        } else if (methods.size() > 1) {
+        if (methods.size() > 1 && !supplied.isEmpty()) {
             BigDecimal sum = BigDecimal.ZERO;
             for (String method : methods) {
                 BigDecimal amount = supplied.get(method);

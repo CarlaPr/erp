@@ -137,6 +137,16 @@
                         <input type="number" id="quoteInstallments" min="1" value="1" oninput="if(this.value < 1) this.value = 1; renderPaymentPreview();" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base text-center" />
                     </div>
 
+                    <div id="paymentSplitOption" class="hidden sm:col-span-2 lg:col-span-12 rounded-xl border border-blue-200 dark:border-blue-500/30 bg-blue-50/60 dark:bg-blue-500/5 px-4 py-3">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" id="quotePaymentSplitEnabled" onchange="togglePaymentSplit(this.checked)" class="mt-0.5 w-4 h-4 rounded text-brand-600">
+                            <span>
+                                <span class="block text-sm font-black text-slate-800 dark:text-slate-100">Informar divisão do pagamento</span>
+                                <span class="block mt-1 text-xs text-slate-600 dark:text-slate-400">Marque para indicar quanto será pago em cada forma selecionada.</span>
+                            </span>
+                        </label>
+                    </div>
+
                     <div id="paymentBreakdownContainer" class="hidden sm:col-span-2 lg:col-span-12 rounded-xl border border-blue-200 dark:border-blue-500/30 bg-blue-50/60 dark:bg-blue-500/5 p-4">
                         <div class="mb-3">
                             <p class="text-sm font-black text-slate-800 dark:text-slate-100">Divisão prevista do pagamento</p>
@@ -589,6 +599,7 @@
     let inlineClientVersion = 0;
     let inlineClientSaving = false;
     let paymentAmounts = {};
+    let paymentSplitEnabled = false;
 
     // Validade padrão sugerida (dias corridos a partir da emissão). Só é aplicada automaticamente enquanto
     // o usuário não tiver informado/alterado a data manualmente.
@@ -639,6 +650,7 @@
             payment: document.getElementById('quotePayment')?.value || '',
             installments: document.getElementById('quoteInstallments')?.value || '',
             paymentBreakdown: paymentAmounts,
+            paymentSplitEnabled,
             paymentPlan: document.getElementById('quotePaymentPlan')?.value || '',
             discount: document.getElementById('quoteDiscount')?.value || '',
             observations: document.getElementById('quoteObs')?.value || '',
@@ -690,6 +702,9 @@
         if (draft.payment) document.getElementById('quotePayment').value = draft.payment;
         if (draft.installments) { const el = document.getElementById('quoteInstallments'); if (el) el.value = draft.installments; }
         paymentAmounts = draft.paymentBreakdown && typeof draft.paymentBreakdown === 'object' ? draft.paymentBreakdown : {};
+        paymentSplitEnabled = draft.paymentSplitEnabled === undefined
+            ? hasCompletePaymentSplit(selectedPaymentMethods(), paymentAmounts)
+            : draft.paymentSplitEnabled === true;
         if (draft.paymentPlan) { const el = document.getElementById('quotePaymentPlan'); if (el) el.value = draft.paymentPlan; }
         if (draft.discount) { const el = document.getElementById('quoteDiscount'); if (el) el.value = draft.discount; }
         if (draft.observations) document.getElementById('quoteObs').value = draft.deliveryBusinessDays === undefined
@@ -1208,19 +1223,46 @@
         renderQuoteItems();
     }
 
+    function togglePaymentSplit(enabled) {
+        paymentSplitEnabled = Boolean(enabled) && selectedPaymentMethods().length > 1;
+        const toggle = document.getElementById('quotePaymentSplitEnabled');
+        if (toggle) toggle.checked = paymentSplitEnabled;
+        renderPaymentBreakdown();
+        renderQuoteItems();
+        saveQuoteDraft();
+    }
+
     function selectedPaymentMethods() {
         const payment = document.getElementById('quotePayment')?.value || '';
         return payment.split(',').map(method => method.trim())
             .filter(method => method && method !== 'Não Informado');
     }
 
+    function hasCompletePaymentSplit(methods, amounts = paymentAmounts) {
+        return methods.length > 1 && methods.every(method => Number(amounts[method]) > 0);
+    }
+
     function renderPaymentBreakdown(total) {
         const container = document.getElementById('paymentBreakdownContainer');
         const fields = document.getElementById('paymentBreakdownFields');
-        if (!container || !fields) return;
+        const option = document.getElementById('paymentSplitOption');
+        const toggle = document.getElementById('quotePaymentSplitEnabled');
+        if (!container || !fields || !option || !toggle) return;
 
         const methods = selectedPaymentMethods();
         if (methods.length < 2) {
+            option.classList.add('hidden');
+            container.classList.add('hidden');
+            fields.innerHTML = '';
+            paymentSplitEnabled = false;
+            toggle.checked = false;
+            updatePaymentAllocationStatus(total);
+            return;
+        }
+
+        option.classList.remove('hidden');
+        toggle.checked = paymentSplitEnabled;
+        if (!paymentSplitEnabled) {
             container.classList.add('hidden');
             fields.innerHTML = '';
             updatePaymentAllocationStatus(total);
@@ -1296,36 +1338,41 @@
 
         const methods = selectedPaymentMethods();
         const target = total === undefined ? currentQuoteNetTotal() : Number(total);
-        const amountFor = method => methods.length === 1
-            ? target
-            : (Number(paymentAmounts[method]) || 0);
+        const splitActive = paymentSplitEnabled && methods.length > 1;
+        const amountFor = method => splitActive ? (Number(paymentAmounts[method]) || 0) : 0;
         const cashPixRows = [];
         const otherRows = [];
         const cardMethods = [];
         let cardTotal = 0;
 
-        methods.forEach(method => {
-            const amount = amountFor(method);
-            if (amount <= 0) return;
-            if (method === 'PIX' || method === 'Dinheiro') {
-                cashPixRows.push({ label: `Valor via ${method}`, amount });
-            } else if (method === 'Crédito' || method === 'Link de Pagamento') {
-                cardMethods.push(method);
-                cardTotal += amount;
-            } else {
-                otherRows.push({ label: method, amount });
-            }
-        });
+        if (splitActive) {
+            methods.forEach(method => {
+                const amount = amountFor(method);
+                if (amount <= 0) return;
+                if (method === 'PIX' || method === 'Dinheiro') {
+                    cashPixRows.push({ label: `Valor via ${method}`, amount });
+                } else if (method === 'Crédito' || method === 'Link de Pagamento') {
+                    cardMethods.push(method);
+                    cardTotal += amount;
+                } else {
+                    otherRows.push({ label: method, amount });
+                }
+            });
+        } else if (methods.some(method => method === 'Crédito' || method === 'Link de Pagamento')) {
+            cardTotal = target;
+        }
 
         const previewRows = [...cashPixRows, ...otherRows];
         if (cardTotal > 0) {
             const installments = parseInt(document.getElementById('quoteInstallments')?.value) || 1;
-            const cardLabel = cardMethods.length > 1
-                ? (installments > 1 ? 'Valor Parcelado no Cartão / Link' : 'Valor no Cartão / Link')
-                : cardMethods[0] === 'Link de Pagamento'
-                    ? (installments > 1 ? 'Valor Parcelado no Link de Pagamento' : 'Valor no Link de Pagamento')
-                    : (installments > 1 ? 'Valor Parcelado no Cartão de Crédito' : 'Valor no Cartão de Crédito');
-            previewRows.push({ label: cardLabel, amount: cardTotal });
+            if (splitActive) {
+                const cardLabel = cardMethods.length > 1
+                    ? (installments > 1 ? 'Valor Parcelado no Cartão / Link' : 'Valor no Cartão / Link')
+                    : cardMethods[0] === 'Link de Pagamento'
+                        ? (installments > 1 ? 'Valor Parcelado no Link de Pagamento' : 'Valor no Link de Pagamento')
+                        : (installments > 1 ? 'Valor Parcelado no Cartão de Crédito' : 'Valor no Cartão de Crédito');
+                previewRows.push({ label: cardLabel, amount: cardTotal });
+            }
 
             const perInstallment = Math.round((cardTotal / installments + Number.EPSILON) * 100) / 100;
             installmentText.textContent = `Em ${installments} ${installments === 1 ? 'vez' : 'vezes'} de ${formatarMoeda(perInstallment)}`;
@@ -2038,7 +2085,7 @@
         const installmentsValue = instInput && instInput.offsetParent !== null ? (parseInt(instInput.value) || 1) : 1;
         const selectedMethods = selectedPaymentMethods();
         const paymentBreakdown = {};
-        if (selectedMethods.length > 1) {
+        if (paymentSplitEnabled && selectedMethods.length > 1) {
             let allocated = 0;
             for (const method of selectedMethods) {
                 const input = Array.from(document.querySelectorAll('[data-payment-method]'))
@@ -2062,8 +2109,6 @@
                 document.getElementById('paymentBreakdownContainer')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
-        } else if (selectedMethods.length === 1) {
-            paymentBreakdown[selectedMethods[0]] = finalNetValue.toFixed(2);
         }
 
         const deliveryDaysInput = document.getElementById('quoteDeliveryBusinessDays');
@@ -2211,6 +2256,7 @@
                 const pm = q.paymentMethod || 'PIX';
                 document.getElementById('quotePayment').value = pm;
                 paymentAmounts = q.paymentBreakdown && typeof q.paymentBreakdown === 'object' ? q.paymentBreakdown : {};
+                paymentSplitEnabled = hasCompletePaymentSplit(selectedPaymentMethods(), paymentAmounts);
                 document.querySelectorAll('.pay-method-cb').forEach(cb => {
                     cb.checked = pm.includes(cb.value);
                 });

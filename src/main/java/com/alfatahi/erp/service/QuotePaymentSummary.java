@@ -26,9 +26,8 @@ public final class QuotePaymentSummary {
         if (quote.getPaymentBreakdown() != null) values.putAll(quote.getPaymentBreakdown());
 
         List<String> methods = selectedMethods(quote.getPaymentMethod());
-        if (values.isEmpty() && methods.size() == 1 && total != null) {
-            values.put(methods.get(0), total);
-        }
+        boolean splitEnabled = methods.size() > 1 && values.size() == methods.size()
+                && methods.stream().allMatch(method -> values.get(method) != null && values.get(method).signum() > 0);
 
         List<PaymentLine> lines = new ArrayList<>();
         List<PaymentLine> pdfLines = new ArrayList<>();
@@ -36,24 +35,26 @@ public final class QuotePaymentSummary {
         List<PaymentLine> otherLines = new ArrayList<>();
         BigDecimal cardTotal = BigDecimal.ZERO;
         List<String> cardMethods = new ArrayList<>();
-        for (String method : methods) {
-            BigDecimal amount = values.get(method);
-            if (amount == null || amount.signum() <= 0) continue;
-            lines.add(new PaymentLine(method, formatBRL(amount)));
-            if (isCashOrPix(method)) {
-                cashPixLines.add(new PaymentLine("Valor via " + method, formatBRL(amount)));
-            } else if (isCreditMethod(method)) {
-                cardMethods.add(method);
-                cardTotal = cardTotal.add(amount);
-            } else {
-                otherLines.add(new PaymentLine(method, formatBRL(amount)));
+        if (splitEnabled) {
+            for (String method : methods) {
+                BigDecimal amount = values.get(method);
+                lines.add(new PaymentLine(method, formatBRL(amount)));
+                if (isCashOrPix(method)) {
+                    cashPixLines.add(new PaymentLine("Valor via " + method, formatBRL(amount)));
+                } else if (isCreditMethod(method)) {
+                    cardMethods.add(method);
+                    cardTotal = cardTotal.add(amount);
+                } else {
+                    otherLines.add(new PaymentLine(method, formatBRL(amount)));
+                }
             }
-        }
-
-        pdfLines.addAll(cashPixLines);
-        pdfLines.addAll(otherLines);
-        if (cardTotal.signum() > 0) {
-            pdfLines.add(new PaymentLine(cardLabel(cardMethods, quote.getInstallments()), formatBRL(cardTotal)));
+            pdfLines.addAll(cashPixLines);
+            pdfLines.addAll(otherLines);
+            if (cardTotal.signum() > 0) {
+                pdfLines.add(new PaymentLine(cardLabel(cardMethods, quote.getInstallments()), formatBRL(cardTotal)));
+            }
+        } else if (methods.stream().anyMatch(QuotePaymentSummary::isCreditMethod)) {
+            cardTotal = total != null ? total : BigDecimal.ZERO;
         }
 
         String installmentsText = "";

@@ -1995,39 +1995,41 @@
             .filter(method => method && method.toLowerCase() !== 'não informado');
         const values = quote.paymentBreakdown && typeof quote.paymentBreakdown === 'object'
             ? quote.paymentBreakdown : {};
-        const amountFor = method => {
-            const value = values[method];
-            if (value !== undefined && value !== null && Number(value) > 0) return Number(value);
-            return methods.length === 1 ? Number(total) || 0 : 0;
-        };
+        const splitActive = methods.length > 1 && methods.every(method => Number(values[method]) > 0);
 
         const cashPixRows = [];
         const otherRows = [];
         const cardMethods = [];
         let cardTotal = 0;
-        methods.forEach(method => {
-            const amount = amountFor(method);
-            if (amount <= 0) return;
-            if (method === 'PIX' || method === 'Dinheiro') {
-                cashPixRows.push({ label: `Valor via ${method}`, amount });
-            } else if (method === 'Crédito' || method === 'Link de Pagamento') {
-                cardMethods.push(method);
-                cardTotal += amount;
-            } else {
-                otherRows.push({ label: method, amount });
-            }
-        });
+        if (splitActive) {
+            methods.forEach(method => {
+                const amount = Number(values[method]);
+                if (amount <= 0) return;
+                if (method === 'PIX' || method === 'Dinheiro') {
+                    cashPixRows.push({ label: `Valor via ${method}`, amount });
+                } else if (method === 'Crédito' || method === 'Link de Pagamento') {
+                    cardMethods.push(method);
+                    cardTotal += amount;
+                } else {
+                    otherRows.push({ label: method, amount });
+                }
+            });
+        } else if (methods.some(method => method === 'Crédito' || method === 'Link de Pagamento')) {
+            cardTotal = Number(total) || 0;
+        }
 
         const previewRows = [...cashPixRows, ...otherRows];
         if (cardTotal > 0) {
             const installments = Number(quote.installments) > 0 ? Number(quote.installments) : 1;
-            const split = installments > 1;
-            const cardLabel = cardMethods.length > 1
-                ? (split ? 'Valor Parcelado no Cartão / Link' : 'Valor no Cartão / Link')
-                : cardMethods[0] === 'Link de Pagamento'
-                    ? (split ? 'Valor Parcelado no Link de Pagamento' : 'Valor no Link de Pagamento')
-                    : (split ? 'Valor Parcelado no Cartão de Crédito' : 'Valor no Cartão de Crédito');
-            previewRows.push({ label: cardLabel, amount: cardTotal });
+            if (splitActive) {
+                const split = installments > 1;
+                const cardLabel = cardMethods.length > 1
+                    ? (split ? 'Valor Parcelado no Cartão / Link' : 'Valor no Cartão / Link')
+                    : cardMethods[0] === 'Link de Pagamento'
+                        ? (split ? 'Valor Parcelado no Link de Pagamento' : 'Valor no Link de Pagamento')
+                        : (split ? 'Valor Parcelado no Cartão de Crédito' : 'Valor no Cartão de Crédito');
+                previewRows.push({ label: cardLabel, amount: cardTotal });
+            }
 
             const perInstallment = Math.round((cardTotal / installments + Number.EPSILON) * 100) / 100;
             installmentValue.textContent = `Em ${installments} ${installments === 1 ? 'vez' : 'vezes'} de ${formatarMoeda(perInstallment)}`;
