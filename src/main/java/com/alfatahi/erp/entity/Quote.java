@@ -57,6 +57,43 @@ public class Quote {
     @Column(name = "payment_breakdown", columnDefinition = "text")
     private Map<String, BigDecimal> paymentBreakdown = new LinkedHashMap<>();
 
+    @Convert(converter = PaymentBreakdownConverter.class)
+    @Column(name = "payment_composition", columnDefinition = "text")
+    private Map<String, BigDecimal> paymentComposition = new LinkedHashMap<>();
+
+    @Column(name = "cash_discount_type", length = 12)
+    private String cashDiscountType = "PERCENT";
+    @Column(name = "cash_discount_value", precision = 12, scale = 6)
+    private BigDecimal cashDiscountValue = BigDecimal.ZERO;
+    @Column(name = "pix_discount_type", length = 12)
+    private String pixDiscountType = "PERCENT";
+    @Column(name = "pix_discount_value", precision = 12, scale = 6)
+    private BigDecimal pixDiscountValue = BigDecimal.ZERO;
+    @Column(name = "credit_installments")
+    private Integer creditInstallments = 0;
+    @Column(name = "credit_with_interest")
+    private Boolean creditWithInterest = false;
+    @Column(name = "credit_monthly_interest_rate", precision = 8, scale = 4)
+    private BigDecimal creditMonthlyInterestRate;
+    @Column(name = "boleto_enabled")
+    private Boolean boletoEnabled = false;
+    @Column(name = "boleto_value", precision = 12, scale = 2)
+    private BigDecimal boletoValue;
+    @Column(name = "boleto_installments")
+    private Integer boletoInstallments = 0;
+    @Column(name = "boleto_first_due_date")
+    private LocalDate boletoFirstDueDate;
+    @Column(name = "boleto_interval_days")
+    private Integer boletoIntervalDays;
+    @Column(name = "approved_sale_total", precision = 12, scale = 2)
+    private BigDecimal approvedSaleTotal;
+    @Column(name = "agreed_credit_installments")
+    private Integer agreedCreditInstallments;
+    @Column(name = "agreed_credit_with_interest")
+    private Boolean agreedCreditWithInterest;
+    @Column(name = "agreed_credit_monthly_interest_rate", precision = 8, scale = 4)
+    private BigDecimal agreedCreditMonthlyInterestRate;
+
     @Column(name = "payment_plan", length = 20)
     private String paymentPlan = "SPLIT_50_50";
 
@@ -147,6 +184,43 @@ public class Quote {
     public void setPaymentBreakdown(Map<String, BigDecimal> paymentBreakdown) {
         this.paymentBreakdown = paymentBreakdown != null ? new LinkedHashMap<>(paymentBreakdown) : new LinkedHashMap<>();
     }
+
+    public Map<String, BigDecimal> getPaymentComposition() { return paymentComposition; }
+    public void setPaymentComposition(Map<String, BigDecimal> paymentComposition) {
+        this.paymentComposition = paymentComposition != null ? new LinkedHashMap<>(paymentComposition) : new LinkedHashMap<>();
+    }
+    public String getCashDiscountType() { return cashDiscountType != null ? cashDiscountType : "PERCENT"; }
+    public void setCashDiscountType(String cashDiscountType) { this.cashDiscountType = cashDiscountType; }
+    public BigDecimal getCashDiscountValue() { return cashDiscountValue != null ? cashDiscountValue : BigDecimal.ZERO; }
+    public void setCashDiscountValue(BigDecimal cashDiscountValue) { this.cashDiscountValue = cashDiscountValue; }
+    public String getPixDiscountType() { return pixDiscountType != null ? pixDiscountType : "PERCENT"; }
+    public void setPixDiscountType(String pixDiscountType) { this.pixDiscountType = pixDiscountType; }
+    public BigDecimal getPixDiscountValue() { return pixDiscountValue != null ? pixDiscountValue : BigDecimal.ZERO; }
+    public void setPixDiscountValue(BigDecimal pixDiscountValue) { this.pixDiscountValue = pixDiscountValue; }
+    public Integer getCreditInstallments() { return creditInstallments != null ? creditInstallments : 0; }
+    public void setCreditInstallments(Integer creditInstallments) { this.creditInstallments = creditInstallments; }
+    public Boolean getCreditWithInterest() { return Boolean.TRUE.equals(creditWithInterest); }
+    public void setCreditWithInterest(Boolean creditWithInterest) { this.creditWithInterest = creditWithInterest; }
+    public BigDecimal getCreditMonthlyInterestRate() { return creditMonthlyInterestRate; }
+    public void setCreditMonthlyInterestRate(BigDecimal creditMonthlyInterestRate) { this.creditMonthlyInterestRate = creditMonthlyInterestRate; }
+    public Boolean getBoletoEnabled() { return Boolean.TRUE.equals(boletoEnabled); }
+    public void setBoletoEnabled(Boolean boletoEnabled) { this.boletoEnabled = boletoEnabled; }
+    public BigDecimal getBoletoValue() { return boletoValue; }
+    public void setBoletoValue(BigDecimal boletoValue) { this.boletoValue = boletoValue; }
+    public Integer getBoletoInstallments() { return boletoInstallments != null ? boletoInstallments : 0; }
+    public void setBoletoInstallments(Integer boletoInstallments) { this.boletoInstallments = boletoInstallments; }
+    public LocalDate getBoletoFirstDueDate() { return boletoFirstDueDate; }
+    public void setBoletoFirstDueDate(LocalDate boletoFirstDueDate) { this.boletoFirstDueDate = boletoFirstDueDate; }
+    public Integer getBoletoIntervalDays() { return boletoIntervalDays; }
+    public void setBoletoIntervalDays(Integer boletoIntervalDays) { this.boletoIntervalDays = boletoIntervalDays; }
+    public BigDecimal getApprovedSaleTotal() { return approvedSaleTotal; }
+    public void setApprovedSaleTotal(BigDecimal approvedSaleTotal) { this.approvedSaleTotal = approvedSaleTotal; }
+    public Integer getAgreedCreditInstallments() { return agreedCreditInstallments; }
+    public void setAgreedCreditInstallments(Integer agreedCreditInstallments) { this.agreedCreditInstallments = agreedCreditInstallments; }
+    public Boolean getAgreedCreditWithInterest() { return Boolean.TRUE.equals(agreedCreditWithInterest); }
+    public void setAgreedCreditWithInterest(Boolean agreedCreditWithInterest) { this.agreedCreditWithInterest = agreedCreditWithInterest; }
+    public BigDecimal getAgreedCreditMonthlyInterestRate() { return agreedCreditMonthlyInterestRate; }
+    public void setAgreedCreditMonthlyInterestRate(BigDecimal agreedCreditMonthlyInterestRate) { this.agreedCreditMonthlyInterestRate = agreedCreditMonthlyInterestRate; }
 
     public LocalDateTime getDateCreated() { return dateCreated; }
     public void setDateCreated(LocalDateTime dateCreated) { this.dateCreated = dateCreated; }

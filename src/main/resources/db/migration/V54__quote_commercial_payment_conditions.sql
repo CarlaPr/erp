@@ -1,0 +1,18 @@
+ALTER TABLE quotes
+    ADD COLUMN IF NOT EXISTS payment_composition TEXT,
+    ADD COLUMN IF NOT EXISTS cash_discount_type VARCHAR(12) NOT NULL DEFAULT 'PERCENT',
+    ADD COLUMN IF NOT EXISTS cash_discount_value NUMERIC(12,6) NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS pix_discount_type VARCHAR(12) NOT NULL DEFAULT 'PERCENT',
+    ADD COLUMN IF NOT EXISTS pix_discount_value NUMERIC(12,6) NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS credit_installments INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS credit_with_interest BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS credit_monthly_interest_rate NUMERIC(8,4),
+    ADD COLUMN IF NOT EXISTS boleto_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS boleto_value NUMERIC(12,2),
+    ADD COLUMN IF NOT EXISTS boleto_installments INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS boleto_first_due_date DATE,
+    ADD COLUMN IF NOT EXISTS boleto_interval_days INTEGER,
+    ADD COLUMN IF NOT EXISTS approved_sale_total NUMERIC(12,2),
+    ADD COLUMN IF NOT EXISTS agreed_credit_installments INTEGER,
+    ADD COLUMN IF NOT EXISTS agreed_credit_with_interest BOOLEAN,
+    ADD COLUMN IF NOT EXISTS agreed_credit_monthly_interest_rate NUMERIC(8,4);

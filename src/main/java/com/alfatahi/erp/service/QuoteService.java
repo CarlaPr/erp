@@ -25,18 +25,31 @@ public class QuoteService {
     private final ScheduleService scheduleService;
     private final TechnicalVisitService technicalVisitService;
     private final WorkOrderService workOrderService;
+    private final QuoteCommercialConditionsService commercialConditionsService;
 
     public QuoteService(QuoteRepository quoteRepo, WorkOrderRepository osRepo, ScheduleService scheduleService,
-                         TechnicalVisitService technicalVisitService, WorkOrderService workOrderService) {
+                         TechnicalVisitService technicalVisitService, WorkOrderService workOrderService,
+                         QuoteCommercialConditionsService commercialConditionsService) {
         this.quoteRepo = quoteRepo;
         this.osRepo = osRepo;
         this.scheduleService = scheduleService;
         this.technicalVisitService = technicalVisitService;
         this.workOrderService = workOrderService;
+        this.commercialConditionsService = commercialConditionsService;
     }
 
     @Transactional
     public void approveQuote(UUID quoteId) {
+        approveQuote(quoteId, Map.of());
+    }
+
+    @Transactional
+    public void approveQuote(UUID quoteId, Map<String, BigDecimal> paymentComposition) {
+        approveQuote(quoteId, paymentComposition, null);
+    }
+
+    @Transactional
+    public void approveQuote(UUID quoteId, Map<String, BigDecimal> paymentComposition, Integer agreedCreditInstallments) {
         Quote quote = quoteRepo.findByIdForUpdate(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException("Orçamento não encontrado"));
 
@@ -46,7 +59,79 @@ public class QuoteService {
                     "Orçamento não pode ser aprovado no status atual: " + quote.getStatus());
         }
 
+        if (!"approved".equals(quote.getStatus()) && paymentComposition != null && !paymentComposition.isEmpty()) {
+            commercialConditions(quote);
+            Map<String, BigDecimal> normalizedPayments = new java.util.LinkedHashMap<>();
+            paymentComposition.forEach((method, amount) -> {
+                if (method == null || amount == null) throw new IllegalArgumentException("Informe uma forma e um valor de pagamento válidos.");
+                normalizedPayments.put(method, amount.setScale(2, RoundingMode.HALF_UP));
+            });
+            boolean cardSelected = normalizedPayments.keySet().stream().anyMatch(QuoteService::isCreditPaymentMethod);
+            if (cardSelected && (agreedCreditInstallments == null || agreedCreditInstallments < 1 || agreedCreditInstallments > 10)) {
+                throw new IllegalArgumentException("Informe a quantidade de parcelas do cartão entre 1 e 10.");
+            }
+            BigDecimal due = resolveApprovedSaleTotal(quote, normalizedPayments);
+            quote.setPaymentComposition(normalizedPayments);
+            quote.setApprovedSaleTotal(due);
+            quote.setAgreedCreditInstallments(cardSelected ? agreedCreditInstallments : null);
+            quote.setAgreedCreditWithInterest(quote.getCreditWithInterest());
+            quote.setAgreedCreditMonthlyInterestRate(quote.getCreditMonthlyInterestRate());
+        }
+
         ensureApprovedWorkOrder(quote);
+    }
+
+    private static boolean isCreditPaymentMethod(String method) {
+        return "Crédito".equalsIgnoreCase(method) || "Credito".equalsIgnoreCase(method)
+                || "Link de Pagamento".equalsIgnoreCase(method);
+    }
+
+    public QuoteCommercialConditionsService.Calculation commercialConditions(Quote quote) {
+        normalizeLegacyCreditTerms(quote);
+        commercialConditionsService.applyAndValidate(quote);
+        return commercialConditionsService.calculate(quote);
+    }
+
+    private void normalizeLegacyCreditTerms(Quote quote) {
+        if (quote == null || quote.getCreditMonthlyInterestRate() != null || quote.getCreditInstallments() != 0
+                || quote.getInstallments() == null || quote.getInstallments() < 1 || quote.getInstallments() > 10) return;
+        String methods = quote.getPaymentMethod() == null ? "" : quote.getPaymentMethod().toLowerCase(java.util.Locale.ROOT);
+        if (methods.contains("crédito") || methods.contains("credito") || methods.contains("link de pagamento")) {
+            quote.setCreditInstallments(quote.getInstallments());
+        }
+    }
+
+    public BigDecimal resolveApprovedSaleTotal(Quote quote, Map<String, BigDecimal> payments) {
+        if (payments == null || payments.isEmpty()) return computeFinalTotal(quote);
+        List<String> available = quote.getPaymentMethod() == null ? List.of()
+                : java.util.Arrays.stream(quote.getPaymentMethod().split(","))
+                .map(String::trim).filter(value -> !value.isEmpty()).toList();
+        BigDecimal sum = BigDecimal.ZERO;
+        for (Map.Entry<String, BigDecimal> payment : payments.entrySet()) {
+            if (payment.getKey() == null || payment.getValue() == null || payment.getValue().signum() <= 0) {
+                throw new IllegalArgumentException("Informe um valor maior que zero para cada forma selecionada.");
+            }
+            if (!available.isEmpty() && !available.contains(payment.getKey())) {
+                throw new IllegalArgumentException("A forma " + payment.getKey() + " não está habilitada neste orçamento.");
+            }
+            sum = sum.add(payment.getValue().setScale(2, RoundingMode.HALF_UP));
+        }
+        sum = sum.setScale(2, RoundingMode.HALF_UP);
+
+        QuoteCommercialConditionsService.Calculation conditions = commercialConditionsService.calculate(quote);
+        BigDecimal expected = conditions.baseSaleTotal();
+        if (payments.size() == 1) {
+            String method = payments.keySet().iterator().next();
+            if ("Dinheiro".equalsIgnoreCase(method)) expected = conditions.cashFinalTotal();
+            else if ("PIX".equalsIgnoreCase(method)) expected = conditions.pixFinalTotal();
+            else if ("Boleto".equalsIgnoreCase(method) || "Boleto Bancário".equalsIgnoreCase(method)) {
+                if (conditions.boletoEnabled()) expected = conditions.boletoTotal();
+            }
+        }
+        if (sum.compareTo(expected) != 0) {
+            throw new IllegalArgumentException("A soma das formas de pagamento deve ser " + expected.setScale(2, RoundingMode.HALF_UP) + ".");
+        }
+        return expected;
     }
 
     @Transactional
@@ -57,6 +142,21 @@ public class QuoteService {
             throw new IllegalStateException("Somente orçamentos aprovados podem ter a O.S. recuperada.");
         }
         return ensureApprovedWorkOrder(quote);
+    }
+
+    @Transactional
+    public void reopenAfterWorkOrderDeletion(Quote quote) {
+        if (quote == null) return;
+
+        quote.setWorkOrder(null);
+        quote.setStatus("pending");
+        quote.setDateApproved(null);
+        quote.setApprovedSaleTotal(null);
+        quote.setPaymentComposition(Map.of());
+        quote.setAgreedCreditInstallments(null);
+        quote.setAgreedCreditWithInterest(null);
+        quote.setAgreedCreditMonthlyInterestRate(null);
+        quoteRepo.saveAndFlush(quote);
     }
 
     private WorkOrder ensureApprovedWorkOrder(Quote quote) {
@@ -77,6 +177,14 @@ public class QuoteService {
             applySiteDefaults(existing, quote.getClient());
             quote.setWorkOrder(existing);
             if (!alreadyApproved) {
+                BigDecimal oldTotal = existing.getTotalValue() != null ? existing.getTotalValue() : BigDecimal.ZERO;
+                BigDecimal saleTotal = quote.getApprovedSaleTotal() != null ? quote.getApprovedSaleTotal() : computeFinalTotal(quote);
+                existing.setTotalValue(saleTotal);
+                osRepo.saveAndFlush(existing);
+                if (oldTotal.compareTo(saleTotal) != 0) {
+                    workOrderService.redistributeReceivablesIfTotalChanged(existing, oldTotal,
+                            "Valor ajustado conforme forma de pagamento do orçamento " + quote.getNumber() + ".");
+                }
                 quote.setStatus("approved");
                 quote.setDateApproved(LocalDateTime.now());
                 quoteRepo.saveAndFlush(quote);
@@ -111,7 +219,8 @@ public class QuoteService {
         os.setCreatedAt(approvalDate);
 
         BigDecimal finalTotal = computeFinalTotal(quote);
-        os.setTotalValue(alreadyApproved && quote.getTotalValue() != null ? quote.getTotalValue() : finalTotal);
+        os.setTotalValue(alreadyApproved && quote.getTotalValue() != null ? quote.getTotalValue()
+                : (quote.getApprovedSaleTotal() != null ? quote.getApprovedSaleTotal() : finalTotal));
 
         os.setDeadlineDate(DeliveryDeadline.fromApproval(approvalDate));
 
@@ -173,23 +282,7 @@ public class QuoteService {
     }
 
     public BigDecimal computeFinalTotal(Quote quote) {
-        BigDecimal subtotal = BigDecimal.ZERO;
-        if (quote.getItems() != null && !quote.getItems().isEmpty()) {
-            for (QuoteItem item : quote.getItems()) {
-                subtotal = subtotal.add(item.getSubtotal());
-            }
-        }
-
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        if (quote.getDiscountPercent() != null
-                && quote.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
-            discountAmount = subtotal.multiply(quote.getDiscountPercent())
-                    .divide(new BigDecimal("100"));
-        }
-
-        BigDecimal finalTotal = subtotal.subtract(discountAmount);
-        if (finalTotal.compareTo(BigDecimal.ZERO) < 0) finalTotal = BigDecimal.ZERO;
-        return finalTotal.setScale(2, RoundingMode.HALF_UP);
+        return commercialConditionsService.calculate(quote).baseSaleTotal();
     }
 
     private List<WorkOrderItem> buildWorkOrderItems(Quote quote, WorkOrder os) {

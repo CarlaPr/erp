@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head>
@@ -144,12 +145,25 @@
         .totals-table .payment-label { font-size: 8.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 1px; border-top: 1px solid #e2e8f0; }
         .totals-table .payment-val { text-align: right; font-size: 12px; font-weight: 800; color: #0f172a; border-top: 1px solid #e2e8f0; }
 
-        .section-box { border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
+        .section-box { border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 12px; overflow: hidden; background: #ffffff; }
         .section-box table { width: 100%; border-collapse: collapse; }
         .section-header-cell { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 7px 14px; }
         .section-header-cell img { width: 12px; height: 12px; vertical-align: middle; margin-right: 6px; position: relative; top: -1px; }
         .section-header-text { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; vertical-align: middle; }
         .section-body-cell { background: #ffffff; padding: 13px 14px; font-size: 10px; color: #334155; font-weight: 500; white-space: pre-line; line-height: 1.6; }
+
+        /* Condições de pagamento: bloco visual próprio, alinhado à identidade do orçamento. */
+        .payment-conditions-box { border: 1px solid #dbe3ed; border-radius: 14px; margin-bottom: 12px; overflow: hidden; background: #ffffff; page-break-inside: avoid; }
+        .payment-conditions-head { background: #0f172a; padding: 11px 15px; border-bottom: 3px solid #334155; }
+        .payment-conditions-kicker { display: block; color: #94a3b8; font-size: 7.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 3px; }
+        .payment-conditions-title { color: #ffffff; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.3px; }
+        .payment-conditions-table { width: 100%; border-collapse: collapse; }
+        .payment-conditions-row td { padding: 10px 14px; border-bottom: 1px solid #edf1f5; vertical-align: top; }
+        .payment-conditions-row:last-child td { border-bottom: 0; }
+        .payment-conditions-method { width: 28%; color: #0f172a; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
+        .payment-conditions-description { color: #475569; font-size: 9.5px; font-weight: 500; line-height: 1.55; white-space: pre-line; }
+        .payment-conditions-method-label { display: inline-block; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 7px; }
+        .payment-conditions-row:nth-child(even) td { background: #fbfcfe; }
 
         .sig-section { border-top: 2px dashed #cbd5e1; padding-top: 26px; margin-top: 18px; page-break-inside: avoid; }
         .sig-table { width: 100%; border-collapse: collapse; }
@@ -295,23 +309,39 @@
         </tr>
         <tr th:if="${hasDiscount}" style="background:#fff1f2;">
             <td class="discount-label">Desconto:</td>
-            <td class="discount-val" th:text="${discountPct + '%'}">0%</td>
+            <td class="discount-val" th:text="${discountPct}">0,00%</td>
         </tr>
         <tr class="total-bg">
             <td class="total-label-cell">Valor Total do Orçamento</td>
             <td class="total-val-cell" th:text="${net}">R$ 0,00</td>
         </tr>
-        <tr th:each="line : ${paymentRows}">
-            <td class="payment-label" th:text="${line.method}">PIX</td>
-            <td class="payment-val" th:text="${line.amount}">R$ 0,00</td>
+        <tr th:if="${hasAgreedPayments}" style="background:#0f172a;">
+            <td colspan="2" style="padding:9px 16px 3px; border-top:1px solid #334155; color:#cbd5e1; font-size:9.5px; font-weight:800; text-transform:uppercase; ;">FORMA DE PAGAMENTO DEFINIDA</td>
         </tr>
-        <tr th:if="${showInstallments}" class="install-bg">
-            <td class="install-label">Parcelamento do cartão:</td>
-            <td class="install-val" th:text="${installmentsText}">10x</td>
+        <tr th:each="payment : ${agreedPaymentRows}" style="background:#0f172a;">
+            <td style="padding:5px 16px; border-top:1px solid #1e293b; color:#cbd5e1; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px;" th:text="${payment.method}">PIX</td>
+            <td style="padding:5px 16px; border-top:1px solid #1e293b; text-align:right; color:#ffffff; font-size:10px; font-weight:800;" th:text="${payment.description}">R$ 0,00</td>
         </tr>
     </table>
 </div>
 
+
+<div class="payment-conditions-box avoid-break" th:if="${hasConditions}">
+    <div class="payment-conditions-head">
+        <span class="payment-conditions-kicker">Informações comerciais</span>
+        <span class="payment-conditions-title">Condições de pagamento</span>
+    </div>
+    <table class="payment-conditions-table">
+        <tbody>
+        <tr class="payment-conditions-row" th:each="condition : ${conditionRows}">
+            <td class="payment-conditions-method">
+                <span class="payment-conditions-method-label" th:text="${condition.method}">PIX</span>
+            </td>
+            <td class="payment-conditions-description" th:text="${condition.description}">Condição comercial</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 
 <div class="section-box avoid-break" th:if="${deliveryBusinessDays != null || deliveryDateFormatted != null || approvalDateFormatted != null}">
     <table>
@@ -328,24 +358,13 @@
     </table>
 </div>
 
-<div class="section-box avoid-break">
-    <table>
-        <tr>
-            <td class="section-header-cell">
-                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7bNHAAAABmJLR0QA/wD/AP+gvaeTAAACyUlEQVR4nO3bPWhTURQH8P95LzRCEVEQERV0qQhVcBSkS0NTi4hLUhwKBYs0rZNScBLFqdBBKDZYFYWCokmlk/bDQtBBcBJtqaCDooIuRWsdWvPecdDAey83noLJ6ws9v+1+hZM/N/eGRwIopZRSSimllAobSROS6UwCLqdB1AJgN4DG2pdVU98BfCDmWTDdmRzPvvrX5IoBdXT2NzmucwOglqqXGB0MptsrxYbzhYmr30wTjAG1pftbiN0JAFtrWl50zFtOrP3xw+FPwYGygNpTmf0MPMfGCadkbgV0pJAbWfZ2WsFZDB7FxgsHAJobCEPBTt8OSqYzCTBmwqspchx2nebp8dE3pY5YYEJnhYUrzBhYLcbHKh1m9aL1VM8O24ldJKY+w7BNZHcDuFDq8AfEMN5YzBiYzmeHq1jnupm9d/MrgP5kOtMARk/ZBEISnoCCZ9BO04uuFuNj1SwyCqxi7HKFoX2+eYHBzaYV9f6xMjFd6X9t8TbKbjHlpwEJNCCBBiTQgATBL4pGyVSGa11IVOkOEmhAAg1IoAEJNCDBmm6xqVxWfLhfj9ZyO+sOEmhAAg1IoAEJNCCBBiTQgAQakEADEmhAAg1IoAEJNCCBBiTQgAQakEADEgQDWjJNOp7q3RVCLaFKpk5vqzD0w9sIBvTetOIX0aX/Lylq4l3mfvrsbfmfSRNPgulQ2RpGT1u6dzXG1pVHuZEv1SsyfH92TrwL4EHTOIGf+tseic6+A7bLrwHYNawx0oitxGT+2myp7fuIPbk/skDArfDLioyCNxzAcIu5mxrPAZgLraToWHRd90ywsyyg6bGhn5YTOwZgPpSyomERjJMz49ffBgeMZ827hRdLe5qO3rVtZzsBh7GGfwXVsQJAJ6by2ZemQfGNd6TOHnTgdANoBbAXgV+B1qFlAB8JeAa2HgTPHKWUUkoppZRS6+83DSavm2t7op8AAAAASUVORK5CYII=" alt=""/><span class="section-header-text">Formas de Pagamento Aceitas</span>
-            </td>
-        </tr>
-        <tr>
-            <td class="section-body-cell" th:text="${paymentMethod}">--</td>
-        </tr>
-    </table>
-</div>
+
 
 <div class="section-box avoid-break">
     <table style="width:100%; border-collapse:collapse;">
         <tr>
             <td class="section-header-cell">
-                <span class="section-header-text">Dados Bancários para Pagamento</span>
+                <span class="section-header-text">Dados Bancários</span>
             </td>
         </tr>
         <tr>

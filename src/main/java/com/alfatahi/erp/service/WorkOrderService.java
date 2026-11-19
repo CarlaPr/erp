@@ -60,12 +60,8 @@ public class WorkOrderService {
             workOrder.setTotalValue(calculateTotalValueFromItems(workOrder));
         }
 
-        // A agenda é a origem das datas; salvar a O.S. não altera o prazo nem o agendamento.
         scheduleService.applyAgendaDates(workOrder);
 
-        // O número é único em banco (ver migração V31); em caso de colisão rara (duas O.S.
-        // novas salvas quase ao mesmo tempo), a gravação falha com DataIntegrityViolationException
-        // em vez de silenciosamente duplicar o número — ver tratamento em WorkOrderController.
         WorkOrder saved = workOrderRepository.saveAndFlush(workOrder);
         if ("cancelled".equals(saved.getStatus()) || "canceled".equals(saved.getStatus())) {
             scheduleService.onWorkOrderCancelled(saved.getId());
@@ -94,24 +90,10 @@ public class WorkOrderService {
         }
     }
 
-    /**
-     * A exclusão de uma O.S. é sempre permitida, mesmo quando vinculada a um orçamento
-     * aprovado: o vínculo é desfeito junto com a exclusão (ver WorkOrderController#delete)
-     * e, como o orçamento continua com status "approved" sem nenhuma O.S. associada, ele
-     * volta a aparecer em "Orçamentos aprovados sem O.S." para que uma nova O.S. seja
-     * gerada — sem risco de duplicidade, já que quote_id é único em work_orders.
-     */
     public void validateDeletion(WorkOrder workOrder) {
-        // Sem restrições adicionais no momento; método mantido como ponto único de
-        // extensão para futuras regras de validação antes da exclusão.
+
     }
 
-    /**
-     * Quando o valor total da O.S. muda (edição direta da O.S. ou sincronização a partir
-     * de um orçamento aprovado editado), redistribui proporcionalmente o valor entre as
-     * contas a receber ainda ativas (não canceladas) vinculadas a ela, preservando o
-     * número de parcelas/estágios já lançados.
-     */
     @Transactional
     public void redistributeReceivablesIfTotalChanged(WorkOrder workOrder, BigDecimal oldTotal, String changeReasonMsg) {
         if (workOrder == null || workOrder.getId() == null) return;

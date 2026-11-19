@@ -97,12 +97,6 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
     @Query("SELECT q FROM Quote q WHERE q.id = :id")
     Optional<Quote> findByIdForUpdate(@Param("id") UUID id);
 
-    @EntityGraph(attributePaths = "client")
-    @Query("SELECT q FROM Quote q WHERE q.status = 'approved' " +
-            "AND NOT EXISTS (SELECT w.id FROM WorkOrder w WHERE w.quote = q) " +
-            "ORDER BY q.dateApproved DESC, q.dateCreated DESC")
-    List<Quote> findApprovedWithoutWorkOrder();
-
     /**
      * Marca como "expired" os orçamentos pendentes cuja data de validade já passou. A validade é
      * inclusiva: um orçamento válido até 10/05 continua válido durante todo o dia 10/05 e só

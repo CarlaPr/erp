@@ -1,6 +1,8 @@
 package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.dto.QuoteListItem;
+import com.alfatahi.erp.dto.QuotePaymentConfirmation;
+import com.alfatahi.erp.dto.QuoteConditionsPreviewDto;
 import com.alfatahi.erp.entity.Quote;
 import com.alfatahi.erp.entity.Client;
 import com.alfatahi.erp.entity.QuoteItem;
@@ -10,7 +12,7 @@ import com.alfatahi.erp.repository.QuoteRepository;
 import com.alfatahi.erp.service.CompanyImageService;
 import com.alfatahi.erp.service.FinancialPeriod;
 import com.alfatahi.erp.service.QuoteService;
-import com.alfatahi.erp.service.QuotePaymentSummary;
+import com.alfatahi.erp.service.QuoteCommercialConditionsService;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -87,16 +89,19 @@ public class QuoteController {
             BigDecimal discountPct = nvl(quote.getDiscountPercent());
             boolean hasDiscount    = discountPct.compareTo(BigDecimal.ZERO) > 0;
             BigDecimal net;
-            if (quote.getTotalValue() != null && quote.getTotalValue().compareTo(BigDecimal.ZERO) > 0) {
+            if (quote.getApprovedSaleTotal() != null && quote.getApprovedSaleTotal().compareTo(BigDecimal.ZERO) > 0) {
+                net = quote.getApprovedSaleTotal();
+            } else if (quote.getTotalValue() != null && quote.getTotalValue().compareTo(BigDecimal.ZERO) > 0) {
                 net = quote.getTotalValue();
             } else {
                 BigDecimal discAmt = gross.multiply(discountPct).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
                 net = gross.subtract(discAmt);
             }
 
-            QuotePaymentSummary.Summary paymentSummary = QuotePaymentSummary.from(quote, net);
-            boolean showInstall = !paymentSummary.installmentsText().isBlank();
-            String installText = paymentSummary.installmentsText();
+            QuoteCommercialConditionsService.Calculation commercial = quoteService.commercialConditions(quote);
+            List<Map<String, String>> conditionRows = "approved".equals(quote.getStatus())
+                    ? List.of() : commercialConditionRows(quote, commercial);
+            List<Map<String, String>> agreedPaymentRows = agreedPaymentRows(quote, commercial);
 
             String companyName    = quote.getProfile() != null ? nvlStr(quote.getProfile().getCompanyName(), "") : "";
             String companyDoc     = quote.getProfile() != null ? nvlStr(quote.getProfile().getDocument(), "--") : "--";
@@ -157,11 +162,12 @@ public class QuoteController {
             ctx.setVariable("itemRows",          itemRows);
             ctx.setVariable("hasDiscount",       hasDiscount);
             ctx.setVariable("gross",             formatBRL(gross));
-            ctx.setVariable("discountPct",       discountPct.stripTrailingZeros().toPlainString());
+            ctx.setVariable("discountPct",       formatPercent(discountPct));
             ctx.setVariable("net",               formatBRL(net));
-            ctx.setVariable("showInstallments",  showInstall);
-            ctx.setVariable("installmentsText",  installText);
-            ctx.setVariable("paymentRows",       paymentSummary.pdfLines());
+            ctx.setVariable("conditionRows",     conditionRows);
+            ctx.setVariable("hasConditions",     !conditionRows.isEmpty());
+            ctx.setVariable("agreedPaymentRows", agreedPaymentRows);
+            ctx.setVariable("hasAgreedPayments", !agreedPaymentRows.isEmpty());
             ctx.setVariable("paymentMethod",     nvlStr(quote.getPaymentMethod(), "Não informado"));
             ctx.setVariable("warranty",          nvlStr(quote.getWarranty(), ""));
             ctx.setVariable("observations",      nvlStr(quote.getObservations(), ""));
@@ -233,6 +239,94 @@ public class QuoteController {
                         PdfRendererBuilder.FontStyle.NORMAL, true);
             }
         }
+    }
+
+    private List<Map<String, String>> commercialConditionRows(Quote quote,
+            com.alfatahi.erp.service.QuoteCommercialConditionsService.Calculation calculation) {
+        List<Map<String, String>> rows = new ArrayList<>();
+        String methods = quote.getPaymentMethod() == null ? "" : quote.getPaymentMethod().toLowerCase(Locale.ROOT);
+        if (methods.contains("dinheiro")) {
+            rows.add(conditionRow("DINHEIRO", "" + formatBRL(calculation.originalTotal())
+                    + " · Desconto: " + formatPercent(calculation.cashDiscountPercent()) + " · Final: " + formatBRL(calculation.cashFinalTotal())));
+        }
+        if (methods.contains("pix")) {
+            rows.add(conditionRow("PIX", "" + formatBRL(calculation.originalTotal())
+                    + " · Desconto: " + formatPercent(calculation.pixDiscountPercent()) + " · Final: " + formatBRL(calculation.pixFinalTotal())));
+        }
+        if (methods.contains("crédito") || methods.contains("credito") || methods.contains("link de pagamento")) {
+            String description = "Original: " + formatBRL(calculation.originalTotal());
+            if (calculation.creditInstallments() == 0) {
+                description += " · Parcelamento não definido";
+            } else if (calculation.creditWithInterest()) {
+                description += " · " + installmentText(calculation.creditInstallments(), calculation.creditInstallmentAmount(), calculation.creditLastInstallmentAmount())
+                        + " com juros (" + formatPercent(calculation.monthlyInterestRate()) + " a.m.) · Total: " + formatBRL(calculation.creditTotal());
+            } else {
+                description += " · " + installmentText(calculation.creditInstallments(), calculation.creditInstallmentAmount(), calculation.creditLastInstallmentAmount())
+                        + " sem juros · Total: " + formatBRL(calculation.creditTotal());
+            }
+            rows.add(conditionRow("CARTÃO DE CRÉDITO", description));
+        }
+        if (calculation.boletoEnabled() && (methods.contains("boleto") || quote.getBoletoEnabled())) {
+            String description = "Valor: " + formatBRL(calculation.boletoTotal());
+            if (calculation.boletoInstallments() > 0) description += " · " + calculation.boletoInstallments() + " parcelas";
+            if (calculation.boletoFirstDueDate() != null) description += " · 1º vencimento: " + calculation.boletoFirstDueDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            if (calculation.boletoIntervalDays() != null) description += " · Intervalo: " + calculation.boletoIntervalDays() + " dias";
+            rows.add(conditionRow("BOLETO", description));
+        }
+        return rows;
+    }
+
+    private List<Map<String, String>> agreedPaymentRows(Quote quote,
+            com.alfatahi.erp.service.QuoteCommercialConditionsService.Calculation calculation) {
+        List<Map<String, String>> rows = new ArrayList<>();
+        if (quote.getPaymentComposition() == null) return rows;
+        quote.getPaymentComposition().forEach((method, settlementAmount) -> {
+            String description = formatBRL(settlementAmount);
+            int installments = quote.getAgreedCreditInstallments() != null
+                    ? quote.getAgreedCreditInstallments() : 0;
+            boolean withInterest = quote.getAgreedCreditInstallments() != null
+                    && quote.getAgreedCreditWithInterest();
+            BigDecimal monthlyRate = quote.getAgreedCreditMonthlyInterestRate() != null
+                    ? quote.getAgreedCreditMonthlyInterestRate() : calculation.monthlyInterestRate();
+            if (("Crédito".equalsIgnoreCase(method) || "Credito".equalsIgnoreCase(method) || "Link de Pagamento".equalsIgnoreCase(method))
+                    && installments > 0) {
+                BigDecimal charged = settlementAmount;
+                if (withInterest) {
+                    BigDecimal factor = BigDecimal.ONE.add(monthlyRate
+                                    .divide(new BigDecimal("100"), 12, RoundingMode.HALF_UP))
+                            .pow(installments);
+                    charged = settlementAmount.multiply(factor).setScale(2, RoundingMode.HALF_UP);
+                }
+                BigDecimal installment = charged.divide(BigDecimal.valueOf(installments), 2, RoundingMode.HALF_UP);
+                BigDecimal lastInstallment = charged.subtract(installment.multiply(BigDecimal.valueOf(installments - 1L)))
+                        .setScale(2, RoundingMode.HALF_UP);
+                description += " · " + installmentText(installments, installment, lastInstallment)
+                        + (withInterest ? " com juros · total cobrado: " + formatBRL(charged) : " sem juros");
+            }
+            rows.add(conditionRow(method.toUpperCase(Locale.ROOT), description));
+        });
+        return rows;
+    }
+
+    private Map<String, String> conditionRow(String method, String description) {
+        Map<String, String> row = new LinkedHashMap<>();
+        row.put("method", method);
+        row.put("description", description);
+        return row;
+    }
+
+    private String installmentText(int count, BigDecimal regularAmount, BigDecimal lastAmount) {
+        if (count > 1 && regularAmount.compareTo(lastAmount) != 0) {
+            return (count - 1) + "x de " + formatBRL(regularAmount) + " + última de " + formatBRL(lastAmount);
+        }
+        return count + "x de " + formatBRL(regularAmount);
+    }
+
+    private String formatPercent(BigDecimal value) {
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("pt-BR"));
+        formatter.setMinimumFractionDigits(2);
+        formatter.setMaximumFractionDigits(2);
+        return formatter.format(nvl(value).setScale(2, RoundingMode.HALF_UP)) + "%";
     }
     private BigDecimal nvl(BigDecimal v) { return v != null ? v : BigDecimal.ZERO; }
     private BigDecimal nvl(BigDecimal v, BigDecimal def) { return v != null ? v : def; }
@@ -371,6 +465,18 @@ public class QuoteController {
         return ResponseEntity.ok(quote);
     }
 
+    @PostMapping(value = "/conditions-preview", consumes = "application/json")
+    @ResponseBody
+    public ResponseEntity<?> previewConditions(@RequestBody Quote quote) {
+        try {
+            var calculation = quoteService.commercialConditions(quote);
+            return ResponseEntity.ok(new QuoteConditionsPreviewDto(calculation,
+                    commercialConditionRows(quote, calculation), agreedPaymentRows(quote, calculation)));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
+
     private LocalDate resolveValidUntil(LocalDate informed, LocalDateTime issuedAt, LocalDate current) {
         if (informed != null) return informed;
         if (current != null) return current;
@@ -416,13 +522,14 @@ public class QuoteController {
                 }
             }
         }
-        quote.setTotalValue(quoteService.computeFinalTotal(quote));
-
-        String paymentBreakdownError = normalizePaymentBreakdown(quote);
-        if (paymentBreakdownError != null) {
-            return ResponseEntity.badRequest().body(paymentBreakdownError);
+        try {
+            quoteService.commercialConditions(quote);
+            quote.setTotalValue(quoteService.computeFinalTotal(quote));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
         }
 
+        quote.setPaymentBreakdown(Map.of());
         if (quote.getId() != null) {
             Quote existing = quoteRepo.findById(quote.getId()).orElseThrow();
             existing.setClient(quote.getClient());
@@ -437,6 +544,18 @@ public class QuoteController {
             existing.setWarranty(quote.getWarranty());
             existing.setTotalValue(quote.getTotalValue());
             existing.setDiscountPercent(quote.getDiscountPercent());
+            existing.setCashDiscountType(quote.getCashDiscountType());
+            existing.setCashDiscountValue(quote.getCashDiscountValue());
+            existing.setPixDiscountType(quote.getPixDiscountType());
+            existing.setPixDiscountValue(quote.getPixDiscountValue());
+            existing.setCreditInstallments(quote.getCreditInstallments());
+            existing.setCreditWithInterest(quote.getCreditWithInterest());
+            existing.setCreditMonthlyInterestRate(quote.getCreditMonthlyInterestRate());
+            existing.setBoletoEnabled(quote.getBoletoEnabled());
+            existing.setBoletoValue(quote.getBoletoValue());
+            existing.setBoletoInstallments(quote.getBoletoInstallments());
+            existing.setBoletoFirstDueDate(quote.getBoletoFirstDueDate());
+            existing.setBoletoIntervalDays(quote.getBoletoIntervalDays());
             existing.setValidUntil(resolveValidUntil(quote.getValidUntil(), existing.getDateCreated(), existing.getValidUntil()));
             existing.setDeliveryBusinessDays(quote.getDeliveryBusinessDays());
             existing.setDeliveryDate(quote.getDeliveryDate());
@@ -486,47 +605,17 @@ public class QuoteController {
         return ResponseEntity.ok().build();
     }
 
-    private String normalizePaymentBreakdown(Quote quote) {
-        List<String> methods = quote.getPaymentMethod() == null ? List.of()
-                : Arrays.stream(quote.getPaymentMethod().split(","))
-                .map(String::trim)
-                .filter(method -> !method.isEmpty() && !"Não Informado".equalsIgnoreCase(method))
-                .distinct()
-                .collect(Collectors.toList());
-
-        Map<String, BigDecimal> supplied = quote.getPaymentBreakdown() != null
-                ? quote.getPaymentBreakdown() : Map.of();
-        Map<String, BigDecimal> normalized = new LinkedHashMap<>();
-        BigDecimal total = quote.getTotalValue() != null ? quote.getTotalValue().setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
-
-        if (methods.size() > 1 && !supplied.isEmpty()) {
-            BigDecimal sum = BigDecimal.ZERO;
-            for (String method : methods) {
-                BigDecimal amount = supplied.get(method);
-                if (amount == null) {
-                    return "Informe um valor maior que zero para cada forma de pagamento selecionada.";
-                }
-                amount = amount.setScale(2, RoundingMode.HALF_UP);
-                if (amount.signum() <= 0) {
-                    return "Informe um valor maior que zero para cada forma de pagamento selecionada.";
-                }
-                normalized.put(method, amount);
-                sum = sum.add(amount);
-            }
-            if (sum.compareTo(total) != 0) {
-                return "A soma dos valores por forma de pagamento deve ser igual ao valor total do orçamento (" + formatBRL(total) + ").";
-            }
-        }
-        quote.setPaymentBreakdown(normalized);
-        return null;
-    }
-
     @PostMapping("/approve/{id}")
     @ResponseBody
-    public ResponseEntity<?> approve(@PathVariable UUID id) {
+    public ResponseEntity<?> approve(@PathVariable UUID id,
+                                     @RequestBody(required = false) QuotePaymentConfirmation confirmation) {
         try {
-            quoteService.approveQuote(id);
+            quoteService.approveQuote(id,
+                    confirmation != null ? confirmation.payments() : Map.of(),
+                    confirmation != null ? confirmation.creditInstallments() : null);
             return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (IllegalStateException e) {
             return ResponseEntity.status(409).body(e.getMessage());
         } catch (Exception e) {

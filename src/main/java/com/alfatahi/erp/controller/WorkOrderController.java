@@ -76,8 +76,10 @@ public class WorkOrderController {
         String statusFilter = normalizeStatusFilter(status);
         model.addAttribute("selectedStatus", statusFilter);
         model.addAttribute("periodStatusFilter", statusFilter);
-        List<WorkOrder> orders = workOrderRepo.findAllWithItemsOrderByCreatedAtDesc().stream()
-                .filter(wo -> belongsToListing(wo, period))
+        List<WorkOrder> periodOrders = period.from() != null && period.to() != null
+                ? workOrderRepo.findListingByPeriod(period.from().atStartOfDay(), period.endExclusive().atStartOfDay())
+                : workOrderRepo.findAllWithItemsOrderByCreatedAtDesc();
+        List<WorkOrder> orders = periodOrders.stream()
                 .filter(wo -> matchesStatusFilter(wo, statusFilter)).toList();
 
         Profile profile = profileRepository.findAll().stream().findFirst().orElseGet(() -> {
@@ -114,7 +116,6 @@ public class WorkOrderController {
         }
 
         model.addAttribute("orders", orders);
-        model.addAttribute("approvedWithoutWorkOrder", quoteRepository.findApprovedWithoutWorkOrder());
         model.addAttribute("paymentStatusByOrder", buildPaymentStatusMap(orders));
 
 
@@ -154,12 +155,6 @@ public class WorkOrderController {
 
     private static boolean isInProgress(WorkOrder order) {
         return !isCompleted(order) && !isCancelled(order);
-    }
-
-    private static boolean belongsToListing(WorkOrder order, FinancialPeriod period) {
-        if (period.contains(order.getCreatedAt())) return true;
-        return isInProgress(order) && period.from() != null && order.getCreatedAt() != null
-                && order.getCreatedAt().toLocalDate().isBefore(period.from());
     }
 
     private static boolean matchesStatusFilter(WorkOrder order, String filter) {
@@ -318,7 +313,7 @@ public class WorkOrderController {
                 throw new IllegalStateException("Este orçamento já possui a O.S. " + linkedOrder.getNumber() + ". Edite a ordem existente.");
             }
             if (workOrder.getId() == null && "approved".equals(linkedQuote.getStatus())) {
-                throw new IllegalStateException("Use Recuperar O.S. na lista de orçamentos aprovados sem O.S. para preservar os dados da aprovação.");
+                throw new IllegalStateException("Este orçamento já foi aprovado. Recupere a O.S. pela visualização do orçamento.");
             }
         }
 
@@ -442,12 +437,9 @@ public class WorkOrderController {
         WorkOrder wo = workOrderService.findById(id);
 
         if (wo != null) {
-            // Valida antes de remover vínculos ou registros financeiros.
             workOrderService.validateDeletion(wo);
             if (wo.getQuote() != null) {
-                Quote q = wo.getQuote();
-                q.setWorkOrder(null);
-                quoteRepository.saveAndFlush(q);
+                quoteService.reopenAfterWorkOrderDeletion(wo.getQuote());
             }
 
             List<AccountsReceivable> receivables = receivableRepo.findAll().stream()
@@ -493,10 +485,7 @@ public class WorkOrderController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Calcula, para cada O.S. da lista, um resumo do status de pagamento (contas a
-     * receber vinculadas), para exibição individual no card de cada O.S.
-     */
+
     private Map<UUID, WorkOrderPaymentStatusDto> buildPaymentStatusMap(List<WorkOrder> orders) {
         if (orders == null || orders.isEmpty()) return Collections.emptyMap();
 

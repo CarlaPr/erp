@@ -27,6 +27,10 @@ spring:
     repair-on-validate: true
     baseline-version: "1"
 
+quote:
+  payment:
+    credit-monthly-rate: ${QUOTE_CREDIT_MONTHLY_RATE:2.5}
+
 server:
   tomcat:
     threads:

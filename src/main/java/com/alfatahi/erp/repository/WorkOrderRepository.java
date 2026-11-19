@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +28,16 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, UUID> {
 
     @Query("SELECT DISTINCT w FROM WorkOrder w LEFT JOIN FETCH w.items ORDER BY w.createdAt DESC")
     List<WorkOrder> findAllWithItemsOrderByCreatedAtDesc();
+
+    @Query("""
+            SELECT DISTINCT w FROM WorkOrder w LEFT JOIN FETCH w.items
+            WHERE (w.createdAt >= :from AND w.createdAt < :to)
+               OR (w.createdAt < :from AND LOWER(TRIM(COALESCE(w.status, ''))) NOT IN
+                   ('completed', 'delivered', 'done', 'concluida', 'concluída', 'cancelled', 'canceled'))
+            ORDER BY w.createdAt DESC
+            """)
+    List<WorkOrder> findListingByPeriod(@Param("from") LocalDateTime from,
+                                        @Param("to") LocalDateTime to);
 
     @Transactional(readOnly = true)
     @Query("""

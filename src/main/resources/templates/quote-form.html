@@ -127,36 +127,9 @@
                         </div>
                     </div>
 
-                    <div class="sm:col-span-2 lg:col-span-4" id="discountContainer">
-                        <label class="block font-bold mb-2.5 text-sm text-emerald-600 dark:text-emerald-400">Desconto Opcional (%)</label>
+                    <div class="hidden sm:col-span-2 lg:col-span-4" id="discountContainer">
+                        <label class="block font-bold mb-2.5 text-sm text-emerald-600 dark:text-emerald-400">Desconto geral legado (%)</label>
                         <input type="number" id="quoteDiscount" step="0.01" min="0" max="100" value="0" oninput="renderQuoteItems()" class="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-300 dark:border-emerald-700/50 rounded-xl px-4 py-3 text-emerald-900 dark:text-emerald-300 outline-none focus:border-emerald-500 transition-colors text-base text-center font-bold" />
-                    </div>
-
-                    <div class="sm:col-span-2 lg:col-span-4" id="installmentsContainer">
-                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-2.5 text-sm">Parcelas</label>
-                        <input type="number" id="quoteInstallments" min="1" value="1" oninput="if(this.value < 1) this.value = 1; renderPaymentPreview();" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-base text-center" />
-                    </div>
-
-                    <div id="paymentSplitOption" class="hidden sm:col-span-2 lg:col-span-12 rounded-xl border border-blue-200 dark:border-blue-500/30 bg-blue-50/60 dark:bg-blue-500/5 px-4 py-3">
-                        <label class="flex items-start gap-3 cursor-pointer">
-                            <input type="checkbox" id="quotePaymentSplitEnabled" onchange="togglePaymentSplit(this.checked)" class="mt-0.5 w-4 h-4 rounded text-brand-600">
-                            <span>
-                                <span class="block text-sm font-black text-slate-800 dark:text-slate-100">Informar divisão do pagamento</span>
-                                <span class="block mt-1 text-xs text-slate-600 dark:text-slate-400">Marque para indicar quanto será pago em cada forma selecionada.</span>
-                            </span>
-                        </label>
-                    </div>
-
-                    <div id="paymentBreakdownContainer" class="hidden sm:col-span-2 lg:col-span-12 rounded-xl border border-blue-200 dark:border-blue-500/30 bg-blue-50/60 dark:bg-blue-500/5 p-4">
-                        <div class="mb-3">
-                            <p class="text-sm font-black text-slate-800 dark:text-slate-100">Divisão prevista do pagamento</p>
-                            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">Informe quanto será pago em cada forma selecionada. A soma deve ser igual ao valor total do orçamento.</p>
-                        </div>
-                        <div id="paymentBreakdownFields" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-                        <div class="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 border-t border-blue-200 dark:border-blue-500/20 pt-3 text-sm">
-                            <span class="font-bold text-slate-600 dark:text-slate-300">Total informado: <strong id="paymentAllocationTotal">R$ 0,00</strong></span>
-                            <span id="paymentAllocationStatus" class="font-bold text-amber-700 dark:text-amber-300">Aguardando valores</span>
-                        </div>
                     </div>
 
                 </div>
@@ -307,15 +280,70 @@
                             <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-black">VALOR FINAL</span>
                             <span class="text-2xl font-mono font-black text-emerald-600 dark:text-emerald-400" id="liveQuoteTotal">R$ 0,00</span>
                         </div>
-                        <div id="livePaymentPreview" class="hidden mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-left space-y-1.5">
-                            <div id="livePaymentPreviewRows" class="space-y-1.5"></div>
-                            <div id="livePaymentInstallmentRow" class="hidden flex justify-between gap-4 pt-1.5 border-t border-slate-200 dark:border-slate-700 text-sm">
-                                <span class="font-bold text-slate-500 dark:text-slate-400">Parcelamento do cartão</span>
-                                <span id="livePaymentInstallmentText" class="font-black text-emerald-600 dark:text-emerald-400 text-right"></span>
-                            </div>
-                        </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5 sm:p-7 mb-5 lg:mb-6">
+                <h3 class="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i data-lucide="wallet-cards" class="w-4 h-4"></i> Condições Comerciais e Formas de Pagamento
+                </h3>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <section class="rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50/40 dark:bg-emerald-500/5 p-4 sm:p-5">
+                        <div class="flex items-center justify-between gap-3 mb-4"><h4 class="font-black text-emerald-800 dark:text-emerald-300">Dinheiro</h4><span id="cashFinalTotal" class="text-lg font-black text-emerald-700 dark:text-emerald-300">R$ 0,00</span></div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Original: <strong id="cashOriginalTotal">R$ 0,00</strong></p>
+                        <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+                            <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Tipo de desconto
+                                <select id="cashDiscountType" onchange="changeCommercialDiscountType('cash')" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm"><option value="PERCENT">Percentual (%)</option><option value="AMOUNT">Valor (R$)</option></select>
+                            </label>
+                            <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Desconto
+                                <input id="cashDiscountValue" type="number" min="0" step="0.000001" value="0" oninput="refreshCommercialConditions()" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-right">
+                            </label>
+                        </div>
+                        <div class="mt-3 flex flex-wrap justify-between gap-2 text-xs text-slate-600 dark:text-slate-300"><span>Desconto: <strong id="cashDiscountSummary">0,00% (R$ 0,00)</strong></span><span class="font-bold">Valor final: <strong id="cashFinalSummary">R$ 0,00</strong></span></div>
+                    </section>
+
+                    <section class="rounded-xl border border-cyan-200 dark:border-cyan-500/20 bg-cyan-50/40 dark:bg-cyan-500/5 p-4 sm:p-5">
+                        <div class="flex items-center justify-between gap-3 mb-4"><h4 class="font-black text-cyan-800 dark:text-cyan-300">PIX</h4><span id="pixFinalTotal" class="text-lg font-black text-cyan-700 dark:text-cyan-300">R$ 0,00</span></div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Original: <strong id="pixOriginalTotal">R$ 0,00</strong></p>
+                        <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+                            <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Tipo de desconto
+                                <select id="pixDiscountType" onchange="changeCommercialDiscountType('pix')" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm"><option value="PERCENT">Percentual (%)</option><option value="AMOUNT">Valor (R$)</option></select>
+                            </label>
+                            <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Desconto
+                                <input id="pixDiscountValue" type="number" min="0" step="0.000001" value="0" oninput="refreshCommercialConditions()" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-right">
+                            </label>
+                        </div>
+                        <div class="mt-3 flex flex-wrap justify-between gap-2 text-xs text-slate-600 dark:text-slate-300"><span>Desconto: <strong id="pixDiscountSummary">0,00% (R$ 0,00)</strong></span><span class="font-bold">Valor final: <strong id="pixFinalSummary">R$ 0,00</strong></span></div>
+                    </section>
+
+                    <section class="rounded-xl border border-blue-200 dark:border-blue-500/20 bg-blue-50/40 dark:bg-blue-500/5 p-4 sm:p-5">
+                        <div class="flex items-center justify-between gap-3 mb-4"><h4 class="font-black text-blue-800 dark:text-blue-300">Cartão de crédito</h4><span id="creditTotal" class="text-lg font-black text-blue-700 dark:text-blue-300">R$ 0,00</span></div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Valor original: <strong id="creditOriginalTotal">R$ 0,00</strong></p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Parcelas
+                                <select id="creditInstallments" onchange="refreshCommercialConditions()" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm"><option value="0">Não definido</option><option th:each="i : ${#numbers.sequence(1,10)}" th:value="${i}" th:text="${i} + 'x'"></option></select>
+                            </label>
+                            <label class="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 sm:pt-6"><input id="creditWithInterest" type="checkbox" onchange="refreshCommercialConditions()" class="w-4 h-4 rounded text-brand-600"> Aplicar juros compostos</label>
+                        </div>
+                        <div class="mt-3 flex flex-wrap justify-between gap-2 text-xs text-slate-600 dark:text-slate-300"><span>Taxa: <strong id="creditRate">Calculando…</strong></span><span>Parcelas: <strong id="creditInstallmentAmount">—</strong></span><span>Total do cliente: <strong id="creditTotalSummary">R$ 0,00</strong></span></div>
+                        <input id="creditMonthlyInterestRate" type="hidden">
+                    </section>
+
+                    <section class="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/40 dark:bg-amber-500/5 p-4 sm:p-5">
+                        <div class="flex items-center justify-between gap-3"><h4 class="font-black text-amber-800 dark:text-amber-300">Boleto</h4><label class="flex items-center gap-2 text-xs font-bold"><input id="boletoEnabled" type="checkbox" onchange="toggleBoletoFields(); refreshCommercialConditions()" class="w-4 h-4 rounded text-brand-600"> Habilitar modalidade</label></div>
+                        <div id="boletoFields" class="hidden mt-4 space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Valor (vazio = valor original)<input id="boletoValue" type="number" min="0" step="0.01" oninput="refreshCommercialConditions()" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-right"></label>
+                                <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Parcelas<select id="boletoInstallments" onchange="refreshCommercialConditions()" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm"><option value="0">Não definido</option><option th:each="i : ${#numbers.sequence(1,10)}" th:value="${i}" th:text="${i} + 'x'"></option></select></label>
+                                <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Primeiro vencimento<input id="boletoFirstDueDate" type="date" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm"></label>
+                                <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Intervalo entre parcelas (dias)<input id="boletoIntervalDays" type="number" min="1" step="1" placeholder="30" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm"></label>
+                            </div>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">Valor disponível: <strong id="boletoTotalSummary">R$ 0,00</strong></p>
+                        </div>
+                    </section>
+                </div>
+                <div id="commercialConditionsError" class="hidden mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"></div>
             </div>
 
             <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5 sm:p-7 mb-5 lg:mb-6">
@@ -598,8 +626,9 @@
     let inlineClientEditingId = null;
     let inlineClientVersion = 0;
     let inlineClientSaving = false;
-    let paymentAmounts = {};
-    let paymentSplitEnabled = false;
+    let commercialPreviewTimer = null;
+    let commercialPreviewVersion = 0;
+    let latestCommercialCalculation = null;
 
     // Validade padrão sugerida (dias corridos a partir da emissão). Só é aplicada automaticamente enquanto
     // o usuário não tiver informado/alterado a data manualmente.
@@ -648,11 +677,20 @@
             deliveryBusinessDays: document.getElementById('quoteDeliveryBusinessDays').value,
             deliveryDate: document.getElementById('quoteDeliveryDate').value,
             payment: document.getElementById('quotePayment')?.value || '',
-            installments: document.getElementById('quoteInstallments')?.value || '',
-            paymentBreakdown: paymentAmounts,
-            paymentSplitEnabled,
             paymentPlan: document.getElementById('quotePaymentPlan')?.value || '',
             discount: document.getElementById('quoteDiscount')?.value || '',
+            cashDiscountType: document.getElementById('cashDiscountType')?.value || 'PERCENT',
+            cashDiscountValue: document.getElementById('cashDiscountValue')?.value || '0',
+            pixDiscountType: document.getElementById('pixDiscountType')?.value || 'PERCENT',
+            pixDiscountValue: document.getElementById('pixDiscountValue')?.value || '0',
+            creditInstallments: document.getElementById('creditInstallments')?.value || '0',
+            creditWithInterest: document.getElementById('creditWithInterest')?.checked || false,
+            creditMonthlyInterestRate: document.getElementById('creditMonthlyInterestRate')?.value || '',
+            boletoEnabled: document.getElementById('boletoEnabled')?.checked || false,
+            boletoValue: document.getElementById('boletoValue')?.value || '',
+            boletoInstallments: document.getElementById('boletoInstallments')?.value || '0',
+            boletoFirstDueDate: document.getElementById('boletoFirstDueDate')?.value || '',
+            boletoIntervalDays: document.getElementById('boletoIntervalDays')?.value || '',
             observations: document.getElementById('quoteObs')?.value || '',
             warranty: document.getElementById('quoteWarranty')?.value || '',
             items: currentItems
@@ -699,14 +737,26 @@
         }
         if (draft.deliveryBusinessDays !== undefined) document.getElementById('quoteDeliveryBusinessDays').value = draft.deliveryBusinessDays;
         if (draft.deliveryDate !== undefined) document.getElementById('quoteDeliveryDate').value = draft.deliveryDate;
-        if (draft.payment) document.getElementById('quotePayment').value = draft.payment;
-        if (draft.installments) { const el = document.getElementById('quoteInstallments'); if (el) el.value = draft.installments; }
-        paymentAmounts = draft.paymentBreakdown && typeof draft.paymentBreakdown === 'object' ? draft.paymentBreakdown : {};
-        paymentSplitEnabled = draft.paymentSplitEnabled === undefined
-            ? hasCompletePaymentSplit(selectedPaymentMethods(), paymentAmounts)
-            : draft.paymentSplitEnabled === true;
+        if (draft.payment) {
+            document.getElementById('quotePayment').value = draft.payment;
+            document.querySelectorAll('.pay-method-cb').forEach(cb => cb.checked = draft.payment.split(',').map(method => method.trim()).includes(cb.value));
+        }
         if (draft.paymentPlan) { const el = document.getElementById('quotePaymentPlan'); if (el) el.value = draft.paymentPlan; }
         if (draft.discount) { const el = document.getElementById('quoteDiscount'); if (el) el.value = draft.discount; }
+        if (Number(draft.discount) > 0) document.getElementById('discountContainer')?.classList.remove('hidden');
+        if (draft.cashDiscountType) document.getElementById('cashDiscountType').value = draft.cashDiscountType;
+        if (draft.cashDiscountValue !== undefined) document.getElementById('cashDiscountValue').value = draft.cashDiscountValue;
+        if (draft.pixDiscountType) document.getElementById('pixDiscountType').value = draft.pixDiscountType;
+        if (draft.pixDiscountValue !== undefined) document.getElementById('pixDiscountValue').value = draft.pixDiscountValue;
+        if (draft.creditInstallments !== undefined) document.getElementById('creditInstallments').value = draft.creditInstallments;
+        document.getElementById('creditWithInterest').checked = draft.creditWithInterest === true;
+        if (draft.creditMonthlyInterestRate !== undefined) document.getElementById('creditMonthlyInterestRate').value = draft.creditMonthlyInterestRate;
+        document.getElementById('boletoEnabled').checked = draft.boletoEnabled === true;
+        if (draft.boletoValue !== undefined) document.getElementById('boletoValue').value = draft.boletoValue;
+        if (draft.boletoInstallments !== undefined) document.getElementById('boletoInstallments').value = draft.boletoInstallments;
+        if (draft.boletoFirstDueDate) document.getElementById('boletoFirstDueDate').value = draft.boletoFirstDueDate;
+        if (draft.boletoIntervalDays) document.getElementById('boletoIntervalDays').value = draft.boletoIntervalDays;
+        toggleBoletoFields(false);
         if (draft.observations) document.getElementById('quoteObs').value = draft.deliveryBusinessDays === undefined
             ? observationsWithoutLegacyDeliveryTerm(draft.observations) : draft.observations;
         if (draft.warranty) document.getElementById('quoteWarranty').value = draft.warranty;
@@ -1201,204 +1251,127 @@
         const cbs = document.querySelectorAll('.pay-method-cb:checked');
         const selected = Array.from(cbs).map(cb => cb.value);
         document.getElementById('quotePayment').value = selected.length > 0 ? selected.join(', ') : 'Não Informado';
+        document.getElementById('boletoEnabled').checked = selected.includes('Boleto Bancário');
+        toggleBoletoFields(false);
         togglePaymentOptions();
         closeModal('paymentMethodsModal');
     }
 
     function togglePaymentOptions() {
         const payment = document.getElementById('quotePayment').value || '';
-        const instContainer  = document.getElementById('installmentsContainer');
         const planContainer  = document.getElementById('paymentPlanContainer');
-
-        const isCredito = payment.includes('Crédito') || payment.includes('Link de Pagamento');
         const isPlannable = payment.includes('PIX') || payment.includes('Dinheiro');
-
-        instContainer.style.display = isCredito ? 'block' : 'none';
-        if (!isCredito) document.getElementById('quoteInstallments').value = 1;
 
         planContainer.style.display = isPlannable ? 'block' : 'none';
 
-        renderPaymentBreakdown();
-
         renderQuoteItems();
     }
 
-    function togglePaymentSplit(enabled) {
-        paymentSplitEnabled = Boolean(enabled) && selectedPaymentMethods().length > 1;
-        const toggle = document.getElementById('quotePaymentSplitEnabled');
-        if (toggle) toggle.checked = paymentSplitEnabled;
-        renderPaymentBreakdown();
-        renderQuoteItems();
-        saveQuoteDraft();
+    function toggleBoletoFields(syncMethod = true) {
+        const enabled = document.getElementById('boletoEnabled')?.checked === true;
+        document.getElementById('boletoFields')?.classList.toggle('hidden', !enabled);
+        if (!syncMethod) return;
+        const boletoMethod = Array.from(document.querySelectorAll('.pay-method-cb')).find(cb => cb.value === 'Boleto Bancário');
+        if (boletoMethod) boletoMethod.checked = enabled;
+        const methods = Array.from(document.querySelectorAll('.pay-method-cb:checked')).map(cb => cb.value);
+        const paymentInput = document.getElementById('quotePayment');
+        if (paymentInput) paymentInput.value = methods.length ? methods.join(', ') : 'Não Informado';
+        if (paymentInput) togglePaymentOptions();
     }
 
-    function selectedPaymentMethods() {
-        const payment = document.getElementById('quotePayment')?.value || '';
-        return payment.split(',').map(method => method.trim())
-            .filter(method => method && method !== 'Não Informado');
+    function commercialConditionsPayload() {
+        const numberOrNull = (id) => {
+            const value = document.getElementById(id)?.value;
+            return value === '' || value == null ? null : Number(value);
+        };
+        return {
+            discountPercent: Number(document.getElementById('quoteDiscount')?.value || 0),
+            cashDiscountType: document.getElementById('cashDiscountType')?.value || 'PERCENT',
+            cashDiscountValue: Number(document.getElementById('cashDiscountValue')?.value || 0),
+            pixDiscountType: document.getElementById('pixDiscountType')?.value || 'PERCENT',
+            pixDiscountValue: Number(document.getElementById('pixDiscountValue')?.value || 0),
+            creditInstallments: Number(document.getElementById('creditInstallments')?.value || 0),
+            creditWithInterest: document.getElementById('creditWithInterest')?.checked === true,
+            creditMonthlyInterestRate: numberOrNull('creditMonthlyInterestRate'),
+            boletoEnabled: document.getElementById('boletoEnabled')?.checked === true,
+            boletoValue: numberOrNull('boletoValue'),
+            boletoInstallments: Number(document.getElementById('boletoInstallments')?.value || 0),
+            boletoFirstDueDate: document.getElementById('boletoFirstDueDate')?.value || null,
+            boletoIntervalDays: numberOrNull('boletoIntervalDays'),
+            items: currentItems.map(item => ({
+                width: item.width, height: item.height, quantity: item.quantity, unitPrice: item.unitPrice,
+                measurements: item.measurements || []
+            }))
+        };
     }
 
-    function hasCompletePaymentSplit(methods, amounts = paymentAmounts) {
-        return methods.length > 1 && methods.every(method => Number(amounts[method]) > 0);
+    function renderCommercialConditions(calculation) {
+        if (!calculation) return;
+        latestCommercialCalculation = calculation;
+        const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+        const money = value => formatarMoeda(Number(value || 0));
+        const percent = value => `${Number(value || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
+        set('cashOriginalTotal', money(calculation.originalTotal));
+        set('cashDiscountSummary', `${percent(calculation.cashDiscountPercent)} (${money(calculation.cashDiscountAmount)})`);
+        set('cashFinalTotal', money(calculation.cashFinalTotal));
+        set('cashFinalSummary', money(calculation.cashFinalTotal));
+        set('pixOriginalTotal', money(calculation.originalTotal));
+        set('pixDiscountSummary', `${percent(calculation.pixDiscountPercent)} (${money(calculation.pixDiscountAmount)})`);
+        set('pixFinalTotal', money(calculation.pixFinalTotal));
+        set('pixFinalSummary', money(calculation.pixFinalTotal));
+        set('creditOriginalTotal', money(calculation.originalTotal));
+        set('creditRate', `${percent(calculation.monthlyInterestRate)} a.m.`);
+        const storedRate = document.getElementById('creditMonthlyInterestRate');
+        if (storedRate) storedRate.value = calculation.monthlyInterestRate;
+        set('creditTotal', money(calculation.creditTotal));
+        set('creditTotalSummary', money(calculation.creditTotal));
+        set('creditInstallmentAmount', Number(calculation.creditInstallments) > 0
+            ? `${Number(calculation.creditInstallments) > 1 && Number(calculation.creditLastInstallmentAmount) !== Number(calculation.creditInstallmentAmount)
+                ? `${calculation.creditInstallments - 1}x de ${money(calculation.creditInstallmentAmount)} + última de ${money(calculation.creditLastInstallmentAmount)}`
+                : `${calculation.creditInstallments}x de ${money(calculation.creditInstallmentAmount)}`} ${calculation.creditWithInterest ? 'com juros' : 'sem juros'}`
+            : 'Parcelamento não definido');
+        set('boletoTotalSummary', money(calculation.boletoTotal));
+        const total = document.getElementById('liveQuoteTotal');
+        if (total) total.textContent = money(calculation.baseSaleTotal);
+        const error = document.getElementById('commercialConditionsError');
+        error?.classList.add('hidden');
     }
 
-    function renderPaymentBreakdown(total) {
-        const container = document.getElementById('paymentBreakdownContainer');
-        const fields = document.getElementById('paymentBreakdownFields');
-        const option = document.getElementById('paymentSplitOption');
-        const toggle = document.getElementById('quotePaymentSplitEnabled');
-        if (!container || !fields || !option || !toggle) return;
-
-        const methods = selectedPaymentMethods();
-        if (methods.length < 2) {
-            option.classList.add('hidden');
-            container.classList.add('hidden');
-            fields.innerHTML = '';
-            paymentSplitEnabled = false;
-            toggle.checked = false;
-            updatePaymentAllocationStatus(total);
-            return;
+    function changeCommercialDiscountType(modality) {
+        const type = document.getElementById(`${modality}DiscountType`);
+        const value = document.getElementById(`${modality}DiscountValue`);
+        const calculation = latestCommercialCalculation;
+        if (type && value && calculation) {
+            const percentValue = modality === 'cash' ? calculation.cashDiscountPercent : calculation.pixDiscountPercent;
+            const amountValue = modality === 'cash' ? calculation.cashDiscountAmount : calculation.pixDiscountAmount;
+            value.value = type.value === 'AMOUNT' ? Number(amountValue || 0).toFixed(2) : Number(percentValue || 0).toFixed(4);
         }
-
-        option.classList.remove('hidden');
-        toggle.checked = paymentSplitEnabled;
-        if (!paymentSplitEnabled) {
-            container.classList.add('hidden');
-            fields.innerHTML = '';
-            updatePaymentAllocationStatus(total);
-            return;
-        }
-
-        container.classList.remove('hidden');
-        fields.innerHTML = methods.map((method, index) => {
-            const amount = paymentAmounts[method];
-            const value = amount !== undefined && amount !== null && Number(amount) > 0 ? formatarMoeda(Number(amount)) : '';
-            const id = `paymentAmount${index}`;
-            return `
-                <label for="${id}" class="block">
-                    <span class="block text-xs font-bold text-slate-600 dark:text-slate-300">${method}</span>
-                    <input id="${id}" type="text" inputmode="decimal" data-payment-method="${method}" value="${value}"
-                           onfocus="prepararCampoMoedaBRL(this)" oninput="sanitizarCampoMoedaBRL(this); updatePaymentAmount(this)"
-                           onblur="formatarCampoMoedaBRL(this)"
-                           placeholder="R$ 0,00"
-                           class="mt-1 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 text-right">
-                </label>`;
-        }).join('');
-        updatePaymentAllocationStatus(total);
+        refreshCommercialConditions();
     }
 
-    function updatePaymentAmount(input) {
-        const method = input.dataset.paymentMethod;
-        paymentAmounts[method] = parseMoedaBRL(input.value);
-        updatePaymentAllocationStatus();
-        renderPaymentPreview();
-        saveQuoteDraft();
-    }
-
-    function paymentAllocationTotal() {
-        return selectedPaymentMethods().reduce((sum, method) => sum + (Number(paymentAmounts[method]) || 0), 0);
-    }
-
-    function updatePaymentAllocationStatus(total) {
-        const totalEl = document.getElementById('paymentAllocationTotal');
-        const statusEl = document.getElementById('paymentAllocationStatus');
-        if (!totalEl || !statusEl) return;
-
-        const allocated = paymentAllocationTotal();
-        const target = total === undefined ? currentQuoteNetTotal() : Number(total);
-        totalEl.textContent = formatarMoeda(allocated);
-        const methods = selectedPaymentMethods();
-        const complete = methods.length > 1 && methods.every(method => Number(paymentAmounts[method]) > 0);
-        const matches = complete && Math.round(allocated * 100) === Math.round(target * 100);
-        if (matches) {
-            statusEl.textContent = 'Divisão confere com o valor total';
-        } else if (!complete) {
-            statusEl.textContent = 'Informe um valor para cada forma';
-        } else {
-            const difference = target - allocated;
-            statusEl.textContent = difference > 0
-                ? `Falta distribuir ${formatarMoeda(difference)}`
-                : `Valor excedido em ${formatarMoeda(Math.abs(difference))}`;
-        }
-        statusEl.className = `font-bold ${matches ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`;
-    }
-
-    function currentQuoteNetTotal() {
-        const gross = currentItems.reduce((sum, item) => sum + QuoteMeasurements.subtotal(item), 0);
-        const discount = parseFloat(document.getElementById('quoteDiscount')?.value) || 0;
-        return gross * (1 - discount / 100);
-    }
-
-    function renderPaymentPreview(total) {
-        const container = document.getElementById('livePaymentPreview');
-        const rows = document.getElementById('livePaymentPreviewRows');
-        const installmentRow = document.getElementById('livePaymentInstallmentRow');
-        const installmentText = document.getElementById('livePaymentInstallmentText');
-        if (!container || !rows || !installmentRow || !installmentText) return;
-
-        const methods = selectedPaymentMethods();
-        const target = total === undefined ? currentQuoteNetTotal() : Number(total);
-        const splitActive = paymentSplitEnabled && methods.length > 1;
-        const amountFor = method => splitActive ? (Number(paymentAmounts[method]) || 0) : 0;
-        const cashPixRows = [];
-        const otherRows = [];
-        const cardMethods = [];
-        let cardTotal = 0;
-
-        if (splitActive) {
-            methods.forEach(method => {
-                const amount = amountFor(method);
-                if (amount <= 0) return;
-                if (method === 'PIX' || method === 'Dinheiro') {
-                    cashPixRows.push({ label: `Valor via ${method}`, amount });
-                } else if (method === 'Crédito' || method === 'Link de Pagamento') {
-                    cardMethods.push(method);
-                    cardTotal += amount;
-                } else {
-                    otherRows.push({ label: method, amount });
-                }
-            });
-        } else if (methods.some(method => method === 'Crédito' || method === 'Link de Pagamento')) {
-            cardTotal = target;
-        }
-
-        const previewRows = [...cashPixRows, ...otherRows];
-        if (cardTotal > 0) {
-            const installments = parseInt(document.getElementById('quoteInstallments')?.value) || 1;
-            if (splitActive) {
-                const cardLabel = cardMethods.length > 1
-                    ? (installments > 1 ? 'Valor Parcelado no Cartão / Link' : 'Valor no Cartão / Link')
-                    : cardMethods[0] === 'Link de Pagamento'
-                        ? (installments > 1 ? 'Valor Parcelado no Link de Pagamento' : 'Valor no Link de Pagamento')
-                        : (installments > 1 ? 'Valor Parcelado no Cartão de Crédito' : 'Valor no Cartão de Crédito');
-                previewRows.push({ label: cardLabel, amount: cardTotal });
+    function refreshCommercialConditions() {
+        clearTimeout(commercialPreviewTimer);
+        commercialPreviewTimer = setTimeout(async () => {
+            const version = ++commercialPreviewVersion;
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+            try {
+                const response = await fetch('/quotes/conditions-preview', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', ...(csrfToken ? {[csrfHeader]: csrfToken} : {})},
+                    body: JSON.stringify(commercialConditionsPayload())
+                });
+                if (!response.ok) throw new Error(await response.text());
+                const calculation = await response.json();
+                if (version !== commercialPreviewVersion) return;
+                renderCommercialConditions(calculation.calculation);
+                saveQuoteDraft();
+            } catch (error) {
+                if (version !== commercialPreviewVersion) return;
+                const errorEl = document.getElementById('commercialConditionsError');
+                if (errorEl) { errorEl.textContent = error.message || 'Não foi possível calcular as condições comerciais.'; errorEl.classList.remove('hidden'); }
             }
-
-            const perInstallment = Math.round((cardTotal / installments + Number.EPSILON) * 100) / 100;
-            installmentText.textContent = `Em ${installments} ${installments === 1 ? 'vez' : 'vezes'} de ${formatarMoeda(perInstallment)}`;
-            installmentRow.classList.remove('hidden');
-            installmentRow.classList.add('flex');
-        } else {
-            installmentText.textContent = '';
-            installmentRow.classList.add('hidden');
-            installmentRow.classList.remove('flex');
-        }
-
-        rows.replaceChildren();
-        previewRows.forEach(line => {
-            const row = document.createElement('div');
-            row.className = 'flex justify-between gap-4 text-sm';
-            const label = document.createElement('span');
-            label.className = 'font-bold text-slate-500 dark:text-slate-400';
-            label.textContent = line.label;
-            const amount = document.createElement('span');
-            amount.className = 'font-black text-slate-800 dark:text-slate-200 text-right';
-            amount.textContent = formatarMoeda(line.amount);
-            row.append(label, amount);
-            rows.appendChild(row);
-        });
-
-        container.classList.toggle('hidden', previewRows.length === 0 && installmentRow.classList.contains('hidden'));
+        }, 180);
     }
 
 
@@ -1704,12 +1677,11 @@
 
         const totalEl = document.getElementById('liveQuoteTotal');
         if(totalEl) totalEl.innerText = formatarMoeda(netTotal);
-        renderPaymentBreakdown(netTotal);
-        renderPaymentPreview(netTotal);
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
         saveQuoteDraft();
+        refreshCommercialConditions();
     }
 
     const predefinedServicesMap = {
@@ -2081,36 +2053,6 @@
         let discountAmount = calculatedGrossTotal * (discountPct / 100);
         let finalNetValue = calculatedGrossTotal - discountAmount;
 
-        const instInput = document.getElementById('quoteInstallments');
-        const installmentsValue = instInput && instInput.offsetParent !== null ? (parseInt(instInput.value) || 1) : 1;
-        const selectedMethods = selectedPaymentMethods();
-        const paymentBreakdown = {};
-        if (paymentSplitEnabled && selectedMethods.length > 1) {
-            let allocated = 0;
-            for (const method of selectedMethods) {
-                const input = Array.from(document.querySelectorAll('[data-payment-method]'))
-                    .find(field => field.dataset.paymentMethod === method);
-                if (!input || !input.value.trim()) {
-                    alert(`Informe o valor que será pago via ${method}.`);
-                    input?.focus();
-                    return;
-                }
-                const amount = parseMoedaBRL(input.value);
-                if (amount <= 0) {
-                    alert(`O valor informado para ${method} deve ser maior que zero.`);
-                    input.focus();
-                    return;
-                }
-                paymentBreakdown[method] = amount.toFixed(2);
-                allocated += amount;
-            }
-            if (Math.round(allocated * 100) !== Math.round(finalNetValue * 100)) {
-                alert(`A soma das formas de pagamento (${formatarMoeda(allocated)}) deve ser igual ao valor total do orçamento (${formatarMoeda(finalNetValue)}).`);
-                document.getElementById('paymentBreakdownContainer')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return;
-            }
-        }
-
         const deliveryDaysInput = document.getElementById('quoteDeliveryBusinessDays');
         if (!deliveryDaysInput.reportValidity()) return;
         const deliveryDateInput = document.getElementById('quoteDeliveryDate');
@@ -2125,12 +2067,23 @@
             deliveryBusinessDays: Number(deliveryDaysInput.value),
             deliveryDate: deliveryDateInput.value || null,
             paymentMethod: document.getElementById('quotePayment').value,
-            installments: installmentsValue,
-            paymentBreakdown,
+            installments: Number(document.getElementById('creditInstallments').value || 0),
             paymentPlan: (document.getElementById('quotePaymentPlan')?.offsetParent !== null
                 ? document.getElementById('quotePaymentPlan').value
                 : 'SPLIT_50_50'),
             discountPercent: discountPct,
+            cashDiscountType: document.getElementById('cashDiscountType').value,
+            cashDiscountValue: Number(document.getElementById('cashDiscountValue').value || 0),
+            pixDiscountType: document.getElementById('pixDiscountType').value,
+            pixDiscountValue: Number(document.getElementById('pixDiscountValue').value || 0),
+            creditInstallments: Number(document.getElementById('creditInstallments').value || 0),
+            creditWithInterest: document.getElementById('creditWithInterest').checked,
+            creditMonthlyInterestRate: document.getElementById('creditMonthlyInterestRate').value ? Number(document.getElementById('creditMonthlyInterestRate').value) : null,
+            boletoEnabled: document.getElementById('boletoEnabled').checked,
+            boletoValue: document.getElementById('boletoValue').value ? Number(document.getElementById('boletoValue').value) : null,
+            boletoInstallments: Number(document.getElementById('boletoInstallments').value || 0),
+            boletoFirstDueDate: document.getElementById('boletoFirstDueDate').value || null,
+            boletoIntervalDays: document.getElementById('boletoIntervalDays').value ? Number(document.getElementById('boletoIntervalDays').value) : null,
             observations: document.getElementById('quoteObs').value,
             warranty: document.getElementById('quoteWarranty').value,
             totalValue: finalNetValue,
@@ -2255,17 +2208,26 @@
 
                 const pm = q.paymentMethod || 'PIX';
                 document.getElementById('quotePayment').value = pm;
-                paymentAmounts = q.paymentBreakdown && typeof q.paymentBreakdown === 'object' ? q.paymentBreakdown : {};
-                paymentSplitEnabled = hasCompletePaymentSplit(selectedPaymentMethods(), paymentAmounts);
                 document.querySelectorAll('.pay-method-cb').forEach(cb => {
                     cb.checked = pm.includes(cb.value);
                 });
 
-                const instInput = document.getElementById('quoteInstallments');
-                if(instInput) instInput.value = q.installments || 1;
-
                 const discInput = document.getElementById('quoteDiscount');
                 if(discInput) discInput.value = q.discountPercent || 0;
+                document.getElementById('discountContainer')?.classList.toggle('hidden', !(Number(q.discountPercent) > 0));
+                document.getElementById('cashDiscountType').value = q.cashDiscountType || 'PERCENT';
+                document.getElementById('cashDiscountValue').value = q.cashDiscountValue ?? 0;
+                document.getElementById('pixDiscountType').value = q.pixDiscountType || 'PERCENT';
+                document.getElementById('pixDiscountValue').value = q.pixDiscountValue ?? 0;
+                document.getElementById('creditInstallments').value = Number(q.creditInstallments) > 0 ? q.creditInstallments : (q.installments || 0);
+                document.getElementById('creditWithInterest').checked = q.creditWithInterest === true;
+                document.getElementById('creditMonthlyInterestRate').value = q.creditMonthlyInterestRate ?? '';
+                document.getElementById('boletoEnabled').checked = q.boletoEnabled === true;
+                document.getElementById('boletoValue').value = q.boletoValue ?? '';
+                document.getElementById('boletoInstallments').value = q.boletoInstallments ?? 0;
+                document.getElementById('boletoFirstDueDate').value = q.boletoFirstDueDate || '';
+                document.getElementById('boletoIntervalDays').value = q.boletoIntervalDays ?? '';
+                toggleBoletoFields(false);
 
                 document.getElementById('quoteDeliveryBusinessDays').value = q.deliveryBusinessDays ?? 15;
                 document.getElementById('quoteDeliveryDate').value = q.deliveryDate || '';
