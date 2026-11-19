@@ -102,6 +102,7 @@ public class QuoteController {
             List<Map<String, String>> conditionRows = "approved".equals(quote.getStatus())
                     ? List.of() : commercialConditionRows(quote, commercial);
             List<Map<String, String>> agreedPaymentRows = agreedPaymentRows(quote, commercial);
+            List<Map<String, String>> paymentPlanRows = paymentPlanRows(quote, net);
 
             String companyName    = quote.getProfile() != null ? nvlStr(quote.getProfile().getCompanyName(), "") : "";
             String companyDoc     = quote.getProfile() != null ? nvlStr(quote.getProfile().getDocument(), "--") : "--";
@@ -166,6 +167,8 @@ public class QuoteController {
             ctx.setVariable("net",               formatBRL(net));
             ctx.setVariable("conditionRows",     conditionRows);
             ctx.setVariable("hasConditions",     !conditionRows.isEmpty());
+            ctx.setVariable("paymentPlanRows",   paymentPlanRows);
+            ctx.setVariable("hasPaymentPlanRows", !paymentPlanRows.isEmpty());
             ctx.setVariable("agreedPaymentRows", agreedPaymentRows);
             ctx.setVariable("hasAgreedPayments", !agreedPaymentRows.isEmpty());
             ctx.setVariable("paymentMethod",     nvlStr(quote.getPaymentMethod(), "Não informado"));
@@ -254,7 +257,7 @@ public class QuoteController {
                     + " · Desconto: " + formatPercent(calculation.pixDiscountPercent()) + " · Final: " + formatBRL(calculation.pixFinalTotal())));
         }
         if (methods.contains("crédito") || methods.contains("credito") || methods.contains("link de pagamento")) {
-            String description = "Original: " + formatBRL(calculation.originalTotal());
+            String description = "" + formatBRL(calculation.originalTotal());
             if (calculation.creditInstallments() == 0) {
                 description += " · Parcelamento não definido";
             } else if (calculation.creditWithInterest()) {
@@ -305,6 +308,36 @@ public class QuoteController {
             }
             rows.add(conditionRow(method.toUpperCase(Locale.ROOT), description));
         });
+        return rows;
+    }
+
+    private List<Map<String, String>> paymentPlanRows(Quote quote, BigDecimal total) {
+        String plan = quote.getPaymentPlan();
+        BigDecimal entry = quote.getPaymentEntryAmount();
+        BigDecimal delivery = quote.getPaymentDeliveryAmount();
+        BigDecimal amount = total != null ? total : BigDecimal.ZERO;
+
+        if (entry == null || delivery == null) {
+            switch (plan) {
+                case "FULL_UPFRONT" -> { entry = amount; delivery = BigDecimal.ZERO; }
+                case "FULL_ON_DELIVERY" -> { entry = BigDecimal.ZERO; delivery = amount; }
+                default -> {
+                    entry = amount.divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
+                    delivery = amount.subtract(entry);
+                    plan = "SPLIT_50_50";
+                }
+            }
+        }
+
+        String description = switch (plan) {
+            case "FULL_UPFRONT" -> "100% antecipado";
+            case "FULL_ON_DELIVERY" -> "100% na entrega";
+            default -> "Entrada + saldo na entrega";
+        };
+        List<Map<String, String>> rows = new ArrayList<>();
+        rows.add(conditionRow("CONDIÇÃO", description));
+        rows.add(conditionRow("ENTRADA / ANTECIPADO", formatBRL(entry)));
+        rows.add(conditionRow("NA ENTREGA", formatBRL(delivery)));
         return rows;
     }
 
@@ -541,6 +574,13 @@ public class QuoteController {
                     return ResponseEntity.badRequest().body(ex.getMessage());
                 }
             }
+            try {
+                BigDecimal paymentPlanTotal = approved && quote.getApprovedSaleTotal() != null
+                        ? quote.getApprovedSaleTotal() : quote.getTotalValue();
+                quoteService.validatePaymentPlan(quote, paymentPlanTotal);
+            } catch (IllegalArgumentException ex) {
+                return ResponseEntity.badRequest().body(ex.getMessage());
+            }
             existing.setClient(quote.getClient());
             existing.setProfile(quote.getProfile());
             if (quote.getDateCreated() != null) {
@@ -565,6 +605,9 @@ public class QuoteController {
             existing.setBoletoInstallments(quote.getBoletoInstallments());
             existing.setBoletoFirstDueDate(quote.getBoletoFirstDueDate());
             existing.setBoletoIntervalDays(quote.getBoletoIntervalDays());
+            existing.setPaymentPlan(quote.getPaymentPlan());
+            existing.setPaymentEntryAmount(quote.getPaymentEntryAmount());
+            existing.setPaymentDeliveryAmount(quote.getPaymentDeliveryAmount());
             if (approved) {
                 existing.setPaymentComposition(quote.getPaymentComposition());
                 existing.setApprovedSaleTotal(quote.getApprovedSaleTotal());
@@ -600,6 +643,12 @@ public class QuoteController {
 
         if (quote.getDateCreated() == null) {
             quote.setDateCreated(LocalDateTime.now());
+        }
+
+        try {
+            quoteService.validatePaymentPlan(quote, quote.getTotalValue());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
         }
 
         quote.setValidUntil(resolveValidUntil(quote.getValidUntil(), quote.getDateCreated(), null));

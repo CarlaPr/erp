@@ -475,66 +475,88 @@
             #receiptModal .receipt-company-details > div { display:flex; align-items:center; flex-wrap:wrap; gap:5px; }
             #receiptModal .receipt-company-details > div > div { display:flex; align-items:center; gap:5px; }
             #receiptModal #pdfCompanyName { font-size:13px; font-weight:800; line-height:1.15; text-transform:uppercase; color:#0f172a; letter-spacing:-.3px; }
-            #receiptModal .receipt-number-box { flex:0 0 180px; width:180px; min-width:0; text-align:right; }
-            #receiptModal .receipt-badge { display:block; width:100%; min-width:0; background:#0f172a; color:#fff; padding:13px 18px; border-radius:16px; }
+            #receiptModal .receipt-number-box { flex:0 0 190px; width:190px; min-width:0; text-align:right; }
+            #receiptModal .receipt-badge { display:block; width:100%; min-width:190px; background:#0f172a; color:#fff; padding:11px 13px; border-radius:10px; }
             #receiptModal .receipt-badge-field { margin:8px 0 0; padding:7px 0 0; border-top:1px solid #334155; }
-            #receiptModal .receipt-badge-field:first-child { margin:0 0 3px; padding:0; border:0; font-size:8px; font-weight:700; letter-spacing:2px; color:#94a3b8; }
-            #receiptModal .receipt-badge-field > span:first-child { display:block; font-size:8px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:1px; }
-            #receiptModal .receipt-badge-field > span:last-child { display:block; max-width:none; font-size:11.5px; font-weight:800; color:#fff; white-space:normal; overflow:visible; overflow-wrap:anywhere; text-overflow:clip; }
-            #receiptModal #recNum { padding:2px 0; font-size:25px; font-weight:800; line-height:1.15; overflow-wrap:anywhere; }
+            #receiptModal .receipt-badge-field:first-child { margin:0 0 3px; padding:0; border:0; font-size:7.5px; font-weight:700; letter-spacing:1.8px; color:#94a3b8; }
+            #receiptModal .receipt-badge-field > span:first-child { display:block; font-size:7px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:.8px; }
+            #receiptModal .receipt-badge-field > span:last-child { display:block; max-width:none; font-size:10px; font-weight:800; color:#fff; white-space:normal; overflow:visible; overflow-wrap:anywhere; text-overflow:clip; }
+            #receiptModal #recNum { padding:2px 0 5px; font-size:22px; font-weight:800; line-height:1.15; overflow-wrap:anywhere; }
             #receiptModal #recSeller { text-transform:capitalize; }
-            #receiptModal .receipt-separator { padding:18px 0 20px; }
-            #receiptModal .receipt-separator-line { height:0; border-top:3px solid #0f172a; }
-            #receiptModal .receipt-client { display:flex; align-items:stretch; gap:0; margin-bottom:14px; padding:0; background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; }
+            #receiptModal .receipt-separator { padding:11px 0 13px; }
+            #receiptModal .receipt-separator-line { height:0; border-top:2px solid #0f172a; }
+            #receiptModal .receipt-client { display:flex; align-items:stretch; gap:0; margin-bottom:10px; padding:0; background:#f8fafc; border:1px solid #e2e8f0; border-radius:9px; overflow:hidden; }
             #receiptModal .receipt-client-bar { width:4px; height:auto; flex:0 0 4px; border-radius:0; background:#0f172a; }
             #receiptModal .receipt-client-content { width:100%; min-width:0; padding:12px 16px; }
             #receiptModal .receipt-label { font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#94a3b8; }
-            #receiptModal #recClient { margin-top:3px; font-size:17px; font-weight:800; color:#0f172a; line-height:1.15; overflow-wrap:anywhere; }
+            #receiptModal #recClient { margin-top:3px; font-size:15px; font-weight:800; color:#0f172a; line-height:1.15; overflow-wrap:anywhere; }
             #receiptModal #pdfClientDetailsPanel { margin-top:9px; padding-top:7px; border-top:1px solid #e2e8f0; font-size:9.5px; color:#475569; font-weight:600; gap:4px 14px; grid-template-columns:repeat(2,minmax(0,1fr)); overflow-wrap:anywhere; }
             #receiptModal #pdfClientDetailsPanel:not(.hidden) { display:grid; }
             #receiptModal #pdfClientAddressRow { grid-column:1 / -1; }
-            #receiptModal .receipt-items-scroll { width:100%; overflow-x:auto; border:1px solid #e2e8f0; border-radius:14px 14px 0 0; box-shadow:none; margin:0; }
+            #receiptModal .receipt-items-scroll { width:100%; overflow-x:auto; border:1px solid #e2e8f0; border-radius:9px 9px 0 0; box-shadow:none; margin:0; }
             #receiptModal .receipt-items-table { width:100%; min-width:560px; border-collapse:collapse; font-size:10.5px; text-align:left; }
-            #receiptModal .receipt-items-table th { background:#0f172a; color:#fff; font-weight:700; text-transform:uppercase; font-size:8.5px; letter-spacing:1px; padding:9px 10px; }
-            #receiptModal .receipt-items-table th:nth-child(1) { width:50%; text-align:left; padding-left:16px; }
+            #receiptModal .receipt-items-table th { background:#0f172a; color:#fff; font-weight:700; text-transform:uppercase; font-size:8.5px; letter-spacing:1px; padding:8px 10px; }
+            #receiptModal .receipt-items-table th:nth-child(1) { width:46%; text-align:left; padding-left:16px; }
             #receiptModal .receipt-items-table th:nth-child(2) { width:8%; }
             #receiptModal .receipt-items-table th:nth-child(3) { width:9%; }
-            #receiptModal .receipt-items-table th:nth-child(4) { width:16%; }
-            #receiptModal .receipt-items-table th:nth-child(5) { width:17%; padding-right:16px; }
-            #receiptModal .receipt-items-table td { padding:9px 10px; border-bottom:1px solid #f1f5f9; vertical-align:top; font-size:10.5px; }
+            #receiptModal .receipt-items-table th:nth-child(4) { width:18%; }
+            #receiptModal .receipt-items-table th:nth-child(5) { width:19%; padding-right:16px; }
+            #receiptModal .receipt-items-table td { padding:7px 10px; border-bottom:1px solid #f1f5f9; vertical-align:top; font-size:10.5px; }
             #receiptModal .receipt-items-table td:first-child { padding-left:16px; overflow-wrap:anywhere; }
             #receiptModal .receipt-items-table td:first-child > :first-child { font-size:12px; font-weight:800; color:#0f172a; text-transform:uppercase; line-height:1.25; }
             #receiptModal .receipt-items-table td:first-child > :not(:first-child) { margin-top:3px; font-size:9.5px; color:#475569; white-space:pre-line; font-weight:500; line-height:1.55; }
             #receiptModal .receipt-items-table td:nth-child(2), #receiptModal .receipt-items-table td:nth-child(3), #receiptModal .receipt-items-table th:nth-child(2), #receiptModal .receipt-items-table th:nth-child(3) { text-align:center; }
+            #receiptModal .receipt-items-table td:nth-child(2) { color:#64748b; font-size:9.5px; font-weight:600; }
+            #receiptModal .receipt-items-table td:nth-child(4) { color:#64748b; font-weight:600; }
             #receiptModal .receipt-items-table td:nth-child(n+4), #receiptModal .receipt-items-table th:nth-child(n+4) { text-align:right; }
             #receiptModal .receipt-items-table td:last-child { padding-right:16px; font-weight:700; }
-            #receiptModal .receipt-totals { border:1px solid #e2e8f0; border-top:0; border-radius:0 0 14px 14px; overflow:hidden; margin-bottom:14px; }
-            #receiptModal .receipt-total-row { display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; }
+            #receiptModal .receipt-totals { border:1px solid #e2e8f0; border-top:0; border-radius:0 0 9px 9px; overflow:hidden; margin-bottom:10px; }
+            #receiptModal .receipt-total-row { display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:12px; padding:7px 16px; }
             #receiptModal .receipt-total-row > :first-child { font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; }
             #receiptModal .receipt-total-row > :last-child { text-align:right; font-size:14px; font-weight:700; }
             #receiptModal #recSubtotalRow { background:#f8fafc; color:#64748b; }
             #receiptModal #recDiscountRow { background:#fff1f2; color:#be123c; }
             #receiptModal .receipt-grand-total { background:#0f172a; color:#cbd5e1; }
             #receiptModal .receipt-grand-total > :first-child { font-size:9.5px; font-weight:800; }
-            #receiptModal #recTotal { font-size:20px; color:#fff; font-weight:800; }
+            #receiptModal #recTotal { font-size:19px; color:#fff; font-weight:800; }
             #receiptModal .receipt-agreed-payments { background:#0f172a; border-top:1px solid #334155; color:#fff; }
             #receiptModal .receipt-agreed-heading { padding:9px 16px 3px; color:#cbd5e1; font-size:9.5px; font-weight:800; letter-spacing:1.5px; }
             #receiptModal .receipt-agreed-body { padding:2px 16px 10px; color:#fff; font-size:11px; }
             #receiptModal .receipt-agreed-body > div { display:flex; flex-direction:row; justify-content:space-between; gap:12px; padding:5px 0; border-top:1px solid #1e293b; }
             #receiptModal .receipt-agreed-body strong { color:#cbd5e1; }
             #receiptModal .receipt-agreed-body span { color:#fff; }
-            #receiptModal .receipt-section { border:1px solid #e2e8f0; border-radius:14px; margin-bottom:12px; overflow:hidden; box-shadow:none; }
-            #receiptModal .receipt-section-heading { display:flex; align-items:center; gap:6px; padding:7px 14px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; color:#475569; }
+            #receiptModal .receipt-commercial-grid, #receiptModal .receipt-ops-grid { width:100%; table-layout:fixed; border-collapse:collapse; margin:0 0 10px; }
+            #receiptModal .receipt-commercial-grid > tbody > tr > td, #receiptModal .receipt-ops-grid > tbody > tr > td { vertical-align:top; padding:0; }
+            #receiptModal .receipt-commercial-grid .grid-gap, #receiptModal .receipt-ops-grid .grid-gap { width:10px; font-size:0; line-height:0; }
+            #receiptModal .receipt-commercial-card, #receiptModal .receipt-ops-card { background:#fff; border:1px solid #dce4ee; border-radius:9px; overflow:hidden; break-inside:avoid; page-break-inside:avoid; }
+            #receiptModal .receipt-commercial-titlebar { background:#f6f9fc; border-bottom:1px solid #e5ecf3; border-left:3px solid #2c6489; padding:8px 10px 9px; }
+            #receiptModal .receipt-commercial-category { display:block; color:#2c6489; font-size:7.3px; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px; }
+            #receiptModal .receipt-commercial-heading { display:block; color:#0f172a; font-size:10.5px; font-weight:800; line-height:1.2; }
+            #receiptModal .receipt-commercial-lines, #receiptModal .receipt-ops-kv { width:100%; table-layout:fixed; border-collapse:collapse; }
+            #receiptModal .receipt-commercial-lines td { vertical-align:top; padding:7px 9px; border-bottom:1px solid #eef2f6; }
+            #receiptModal .receipt-commercial-lines tr:last-child td, #receiptModal .receipt-ops-kv tr:last-child td { border-bottom:0; }
+            #receiptModal .receipt-commercial-lines .method { width:31%; padding-right:3px; }
+            #receiptModal .receipt-commercial-lines .method-label { display:block; color:#1e3a55; font-size:8.5px; font-weight:800; line-height:1.4; overflow-wrap:anywhere; }
+            #receiptModal .receipt-commercial-lines .description { color:#475569; font-size:9.1px; font-weight:500; line-height:1.45; white-space:pre-line; overflow-wrap:anywhere; }
+            #receiptModal .receipt-ops-head { background:#f6f9fc; border-bottom:1px solid #e5ecf3; padding:8px 11px; }
+            #receiptModal .receipt-ops-title { color:#0f172a; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.75px; }
+            #receiptModal .receipt-ops-kv td { border-bottom:1px solid #eff3f7; padding:4px 10px; vertical-align:top; overflow-wrap:anywhere; line-height:1.35; }
+            #receiptModal .receipt-ops-kv .ops-key { width:34%; color:#718096; font-size:8.3px; font-weight:700; }
+            #receiptModal .receipt-ops-kv .ops-value { color:#243449; font-size:9px; font-weight:600; }
+            #receiptModal .receipt-ops-kv .ops-emphasis { color:#0f172a; font-weight:800; }
+            #receiptModal .receipt-ops-note { background:#fbfcfd; border-top:1px solid #eff3f7; padding:6px 10px 7px; color:#64748b; font-size:8px; line-height:1.4; }
+            #receiptModal .receipt-section { border:1px solid #e2e8f0; border-radius:9px; margin-bottom:9px; overflow:hidden; background:#fff; box-shadow:none; }
+            #receiptModal .receipt-section-heading { display:flex; align-items:center; gap:6px; padding:7px 11px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; color:#475569; }
             #receiptModal .receipt-section-heading h5 { font-size:8.5px; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; }
-            #receiptModal .receipt-section-body { padding:13px 14px; min-height:0; font-size:10px; color:#334155; font-weight:500; white-space:pre-line; line-height:1.6; overflow-wrap:anywhere; }
-            #receiptModal .receipt-signature-section { border-top:2px dashed #cbd5e1; padding-top:26px; margin-top:18px; }
-            #receiptModal .receipt-signatures { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:30px; padding:0 15px; text-align:center; }
-            #receiptModal .receipt-signature { display:flex; flex-direction:column; justify-content:flex-end; align-items:center; min-width:0; min-height:105px; position:relative; }
-            #receiptModal .receipt-signature img { position:static; max-width:100%; max-height:58px; height:auto; width:auto; object-fit:contain; margin-bottom:6px; }
-            #receiptModal .receipt-signature-caption { width:100%; min-height:48px; border-top:2px solid #0f172a; padding-top:7px; overflow-wrap:anywhere; }
+            #receiptModal .receipt-section-body { padding:9px 11px; min-height:0; font-size:9.5px; color:#334155; font-weight:500; white-space:pre-line; line-height:1.5; overflow-wrap:anywhere; }
+            #receiptModal .receipt-signature-section { border-top:1px dashed #cbd5e1; padding-top:5px; margin-top:0; }
+            #receiptModal .receipt-signatures { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:30px; padding:0 30px; text-align:center; }
+            #receiptModal .receipt-signature { display:flex; flex-direction:column; justify-content:flex-end; align-items:center; min-width:0; min-height:30px; position:relative; }
+            #receiptModal .receipt-signature img { position:static; max-width:100%; max-height:44px; height:auto; width:auto; object-fit:contain; margin-bottom:6px; }
+            #receiptModal .receipt-signature-caption { width:100%; min-height:42px; border-top:2px solid #0f172a; padding-top:7px; overflow-wrap:anywhere; }
             #receiptModal .receipt-signature-caption p:first-child { font-size:11.5px; font-weight:800; color:#0f172a; }
             #receiptModal .receipt-signature-caption p:last-child { font-size:9.5px; color:#64748b; font-weight:600; margin-top:2px; }
-            #receiptModal .receipt-footer { display:block; position:static; width:100%; margin-top:24px; padding:4px 0 0; border-top:1px solid #e2e8f0; font-size:8.5px; color:#94a3b8; overflow-wrap:anywhere; }
+            #receiptModal .receipt-footer { display:block; position:static; width:100%; margin-top:0; padding:4px 0 0; border-top:0; font-size:8.5px; color:#94a3b8; overflow-wrap:anywhere; }
             #receiptModal #pfName { font-size:9.5px; color:#0f172a; font-weight:800; text-transform:uppercase; }
             #receiptModal #pfDetails, #receiptModal #pfContact { font-size:8.5px; }
             #receiptModal .receipt-footer > div:last-child { display:none; }
@@ -555,6 +577,14 @@
                 #receiptModal .receipt-badge-field:first-child, #receiptModal #recNum { grid-column:1 / -1; }
                 #receiptModal .receipt-badge-field { margin:0; }
                 #receiptModal #pdfClientDetailsPanel { grid-template-columns:1fr; }
+                #receiptModal .receipt-commercial-grid, #receiptModal .receipt-ops-grid,
+                #receiptModal .receipt-commercial-grid > tbody, #receiptModal .receipt-ops-grid > tbody,
+                #receiptModal .receipt-commercial-grid > tbody > tr, #receiptModal .receipt-ops-grid > tbody > tr,
+                #receiptModal .receipt-commercial-grid > tbody > tr > td, #receiptModal .receipt-ops-grid > tbody > tr > td { display:block; width:100%; }
+                #receiptModal .receipt-commercial-grid > tbody > tr > .grid-gap,
+                #receiptModal .receipt-ops-grid > tbody > tr > .grid-gap { display:none !important; }
+                #receiptModal .receipt-commercial-grid > tbody > tr > td + td,
+                #receiptModal .receipt-ops-grid > tbody > tr > td + td { margin-top:10px; }
                 #receiptModal .receipt-actions { grid-template-columns:1fr; }
                 #receiptModal .receipt-signatures { gap:18px; padding:0; }
                 #receiptModal .receipt-total-row { flex-wrap:wrap; }
@@ -617,33 +647,23 @@
                             <p id="pdfCompanyDoc">
                                 CNPJ/CPF: 00.000.000/0000-00
                             </p>
-                            <p>GRUPO GLASS</p>
-                            <p id="pdfCompanyAddress">
+                            <p>GRUPO TAHI GLASS</p>
+                            <p id="pdfCompanyAddressRow" style="display:none;">
+                                <span id="pdfCompanyAddress">
                                 Endereço da Empresa, 000 - Cidade - Estado
+                                </span>
                             </p>
-                            <div class="flex items-center gap-1.5 mt-1.5">
+                            <div id="pdfCompanyEmailRow" class="flex items-center gap-1.5 mt-1.5" style="display:none;">
                                 <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-500"></i>
                                 <span id="pdfCompanyEmail">
                                 email@empresa.com
                             </span>
                             </div>
-                            <div class="flex flex-wrap   items-center gap-x-4 gap-y-1">
+                            <div id="pdfCompanyPhoneRow" class="flex flex-wrap   items-center gap-x-4 gap-y-1" style="display:none;">
                                 <div class="flex items-center gap-1.5">
                                     <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-500"></i>
                                     <span id="pdfCompanyPhone">
                                     +55 (00) 00000-0000
-                                </span>
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-500"></i>
-                                    <span>
-                                    +55(11) 4107-0623
-                                </span>
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <i data-lucide="message-circle" class="w-3.5 h-3.5 text-slate-500"></i>
-                                    <span>
-                                    1194765-5931
                                 </span>
                                 </div>
                             </div>
@@ -665,7 +685,7 @@
                             <div class="mt-3 pt-2 border-t border-slate-700 receipt-badge-field">
                             <span class="text-[10px]   text-slate-400    font-bold block    uppercase tracking-wide">
 
-                                Data de emissão
+                                Emissão
 
                             </span>
                                 <span id="recDate" class="text-sm font-black    text-white">
@@ -677,7 +697,7 @@
                             <div id="recValidUntilBox" class="mt-2 pt-2   border-t border-slate-700 receipt-badge-field" style="display:none;">
                             <span class="text-[10px]   text-slate-400    font-bold block    uppercase tracking-wide">
 
-                                Válido até
+                                Validade
 
                             </span>
                                 <span id="recValidUntil" class="text-sm font-black    text-white">
@@ -689,7 +709,7 @@
                             <div class="mt-2 pt-2   border-t border-slate-700 receipt-badge-field">
                             <span class="text-[10px]     text-slate-400   font-bold block  uppercase tracking-wide">
 
-                                Vendedor(a)
+                                Responsável
 
                             </span>
 
@@ -798,43 +818,67 @@
                     </div>
                 </div>
 
-                <div id="recDeliverySection" class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm receipt-section" style="display:none;">
-                    <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 receipt-section-heading">
-                        <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Entrega / Instalação</h5>
-                    </div>
-                    <div class="text-sm text-slate-800 p-4 bg-white receipt-section-body">
-                        <div id="recDeliveryDaysRow"><strong>Prazo de até: </strong><span id="recDeliveryDays"></span><p class="text-xs text-slate-500 mt-1">Após a confirmação do pedido e, quando aplicável, do pagamento da entrada.</p></div>
-                        <div id="recDeliveryDateRow" class="mt-2"><strong>Data de entrega / instalação: </strong><span id="recDeliveryDate"></span></div>
-                    </div>
-                </div>
+                <table id="recCommercialGrid" class="receipt-commercial-grid">
+                    <tbody><tr>
+                        <td id="recPaymentPlanCell">
+                            <div class="receipt-commercial-card">
+                                <div class="receipt-commercial-titlebar">
+                                    <span class="receipt-commercial-category">Condição comercial</span>
+                                    <span class="receipt-commercial-heading">Pagamento do serviço</span>
+                                </div>
+                                <table class="receipt-commercial-lines"><tbody id="recPaymentPlanRows"></tbody></table>
+                            </div>
+                        </td>
+                        <td id="recCommercialGridGap" class="grid-gap"></td>
+                        <td id="recConditionsCell" style="display:none;">
+                            <div class="receipt-commercial-card">
+                                <div class="receipt-commercial-titlebar">
+                                    <span class="receipt-commercial-category">Informações comerciais</span>
+                                    <span class="receipt-commercial-heading">Formas e condições de pagamento</span>
+                                </div>
+                                <table class="receipt-commercial-lines"><tbody id="recCommercialConditions"></tbody></table>
+                            </div>
+                        </td>
+                    </tr></tbody>
+                </table>
 
-                <div id="recCommercialConditionsSection" class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm receipt-section" style="display:none;">
-                    <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 receipt-section-heading"><h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Condições de Pagamento</h5></div>
-                    <div id="recCommercialConditions" class="text-sm text-slate-800 p-4 bg-white receipt-section-body"></div>
-                </div>
-                <div id="recAcceptedPaymentsSection" class="border border-slate-200   rounded-xl overflow-hidden    mb-5 avoid-break shadow-sm receipt-section">
-                    <div class="bg-slate-100    border-b border-slate-200    px-4 py-2     flex items-center gap-2 receipt-section-heading">
-                        <i data-lucide="credit-card" class="w-4 h-4 text-slate-600    print:hidden"></i>
-                        <h5 class="text-xs font-black    text-slate-700   uppercase tracking-widest font-mono">Formas de Pagamento Aceitas</h5>
-                    </div>
-                    <div id="recPaymentMethods" class="text-sm font-bold   text-slate-800    p-4 bg-white receipt-section-body">
-                        --
-                    </div>
-                </div>
-
-                <div class="border border-slate-200 rounded-xl overflow-hidden mb-5 avoid-break shadow-sm receipt-section">
-                    <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 receipt-section-heading">
-                        <h5 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Dados Bancários</h5>
-                    </div>
-                    <div class="text-sm text-slate-800 p-4 bg-white receipt-section-body">
-                        <strong>Banco:</strong> 542 — CloudWalk<br/>
-                        <strong>Instituição:</strong> CloudWalk Instituição de Pagamento Ltda.<br/>
-                        <strong>Agência:</strong> 0001<br/>
-                        <strong>Conta Corrente:</strong> 21197925-6<br/>
-                        <strong>Titular:</strong> TAHI GLASS LTDA.<br/>
-                        <strong>PIX CNPJ:</strong> 46.942.469/0001-05
-                    </div>
-                </div>
+                <table class="receipt-ops-grid">
+                    <tbody><tr>
+                        <td id="recDeliveryCell" style="display:none;">
+                            <div class="receipt-ops-card">
+                                <div class="receipt-ops-head"><span class="receipt-ops-title">Entrega e instalação</span></div>
+                                <table class="receipt-ops-kv"><tbody>
+                                <tr id="recDeliveryDaysRow" style="display:none;">
+                                    <td class="ops-key">Prazo previsto</td>
+                                    <td id="recDeliveryDays" class="ops-value ops-emphasis"></td>
+                                </tr>
+                                <tr id="recApprovalDateRow" style="display:none;">
+                                    <td class="ops-key">Aprovação</td>
+                                    <td id="recApprovalDate" class="ops-value"></td>
+                                </tr>
+                                <tr id="recDeliveryDateRow" style="display:none;">
+                                    <td class="ops-key">Entrega / instalação</td>
+                                    <td id="recDeliveryDate" class="ops-value"></td>
+                                </tr>
+                                </tbody></table>
+                                <div id="recDeliveryNote" class="receipt-ops-note" style="display:none;">Prazo contado após a confirmação do pedido e, quando aplicável, do pagamento da entrada.</div>
+                            </div>
+                        </td>
+                        <td id="recOpsGridGap" class="grid-gap" style="display:none;"></td>
+                        <td>
+                            <div class="receipt-ops-card">
+                                <div class="receipt-ops-head"><span class="receipt-ops-title">Dados bancários para pagamento</span></div>
+                                <table class="receipt-ops-kv"><tbody>
+                                <tr><td class="ops-key">Banco</td><td class="ops-value">542 - CloudWalk</td></tr>
+                                <tr><td class="ops-key">Instituição</td><td class="ops-value">CloudWalk Instituição de Pagamento Ltda.</td></tr>
+                                <tr><td class="ops-key">Agência / conta</td><td class="ops-value">0001 / 21197925-6</td></tr>
+                                <tr><td class="ops-key">Titular</td><td class="ops-value">TAHI GLASS LTDA.</td></tr>
+                                <tr><td class="ops-key">PIX - CNPJ</td><td class="ops-value ops-emphasis">46.942.469/0001-05</td></tr>
+                                </tbody></table>
+                            </div>
+                        </td>
+                    </tr></tbody>
+                </table>
 
                 <div class="border border-slate-200   rounded-xl overflow-hidden   mb-5 avoid-break shadow-sm receipt-section">
                     <div class="bg-slate-100   border-b border-slate-200   px-4 py-2   flex items-center gap-2 receipt-section-heading">
@@ -2228,27 +2272,79 @@
         });
         if (!response.ok) throw new Error(await response.text());
         const summary = await response.json();
-        const fill = (containerId, sectionId, rows) => {
-            const host = document.getElementById(containerId);
-            const section = document.getElementById(sectionId);
+        const fillAgreedPayments = rows => {
+            const host = document.getElementById('recAgreedPayments');
+            const section = document.getElementById('recAgreedPaymentsSection');
             host.replaceChildren();
             (rows || []).forEach(row => {
                 const line = document.createElement('div');
-                line.className = 'flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 py-2 border-b border-slate-100 last:border-0';
                 const method = document.createElement('strong');
-                method.className = 'sm:min-w-[150px] text-slate-800';
-                method.textContent = row.method;
+                method.textContent = row.method || '';
                 const description = document.createElement('span');
-                description.className = 'text-slate-600';
-                description.textContent = row.description;
+                description.textContent = row.description || '';
                 line.append(method, description);
                 host.appendChild(line);
             });
             section.style.display = rows?.length ? 'block' : 'none';
         };
-        fill('recCommercialConditions', 'recCommercialConditionsSection',
-            quote.status === 'approved' ? [] : summary.conditionRows);
-        fill('recAgreedPayments', 'recAgreedPaymentsSection', summary.agreedPaymentRows);
+        const fillRows = (containerId, rows) => {
+            const host = document.getElementById(containerId);
+            if (!host) return;
+            host.replaceChildren();
+            (rows || []).forEach(row => {
+                const line = document.createElement('tr');
+                const methodCell = document.createElement('td');
+                methodCell.className = 'method';
+                const method = document.createElement('span');
+                method.className = 'method-label';
+                method.textContent = row.method || '';
+                methodCell.appendChild(method);
+                const description = document.createElement('td');
+                description.className = 'description';
+                description.textContent = row.description || '';
+                line.append(methodCell, description);
+                host.appendChild(line);
+            });
+            return (rows || []).length > 0;
+        };
+
+        let paymentPlan = quote.paymentPlan || 'SPLIT_50_50';
+        const approvedTotal = Number(quote.approvedSaleTotal);
+        const savedTotal = Number(quote.totalValue);
+        const calculatedGross = (quote.items || []).reduce((sum, item) => sum + QuoteMeasurements.summary(item).subtotal, 0);
+        const discountPct = Number(quote.discountPercent) || 0;
+        const calculatedNet = calculatedGross - calculatedGross * discountPct / 100;
+        const paymentPlanTotal = approvedTotal > 0 ? approvedTotal : savedTotal > 0 ? savedTotal : calculatedNet;
+        let entry = quote.paymentEntryAmount == null ? null : Number(quote.paymentEntryAmount);
+        let delivery = quote.paymentDeliveryAmount == null ? null : Number(quote.paymentDeliveryAmount);
+        if (entry == null || delivery == null) {
+            if (paymentPlan === 'FULL_UPFRONT') {
+                entry = paymentPlanTotal;
+                delivery = 0;
+            } else if (paymentPlan === 'FULL_ON_DELIVERY') {
+                entry = 0;
+                delivery = paymentPlanTotal;
+            } else {
+                entry = Math.round(paymentPlanTotal / 2 * 100) / 100;
+                delivery = paymentPlanTotal - entry;
+                paymentPlan = 'SPLIT_50_50';
+            }
+        }
+        const planDescription = paymentPlan === 'FULL_UPFRONT' ? '100% antecipado'
+            : paymentPlan === 'FULL_ON_DELIVERY' ? '100% na entrega' : 'Entrada + saldo na entrega';
+        fillRows('recPaymentPlanRows', [
+            {method: 'CONDIÇÃO', description: planDescription},
+            {method: 'ENTRADA / ANTECIPADO', description: formatarMoeda(entry)},
+            {method: 'NA ENTREGA', description: formatarMoeda(delivery)}
+        ]);
+
+        const conditionRows = quote.status === 'approved' ? [] : summary.conditionRows;
+        const hasConditions = fillRows('recCommercialConditions', conditionRows);
+        const conditionsCell = document.getElementById('recConditionsCell');
+        const commercialGap = document.getElementById('recCommercialGridGap');
+        if (conditionsCell) conditionsCell.style.display = hasConditions ? '' : 'none';
+        if (commercialGap) commercialGap.style.display = hasConditions ? '' : 'none';
+        fillAgreedPayments(summary.agreedPaymentRows);
     }
 
     function viewReceipt(id) {
@@ -2312,7 +2408,7 @@
                     }
                 }
 
-                setSafeText('recObs', q.observations || 'Sem observações adicionais.');
+                setSafeText('recObs', q.observations || ' ');
                 setSafeText('recWarrantyText', q.warranty || '');
 
                 let calculatedGross = 0;
@@ -2330,7 +2426,7 @@
                     <tr class="border-b border-slate-100 hover:bg-slate-50/50">
                         <td class="py-2.5 px-3 pl-4 text-slate-900 alignment-top">
                             <span class="font-extrabold text-[15px] text-slate-950 uppercase tracking-wide leading-none block m-0 p-0">${item.category || 'Item'}</span>
-                            <span class="text-sm text-slate-600 font-normal whitespace-pre-line leading-tight block mt-1 p-0">${item.product}</span>
+                            <span class="text-sm text-slate-600 font-normal whitespace-pre-line leading-tight block mt-1 p-0" style="${item.product ? '' : 'display:none;'}">${item.product || ''}</span>
                         </td>
                         <td class="py-2.5 px-3 text-center text-slate-500 font-mono text-xs">un</td>
                         <td class="py-2.5 px-3 text-center font-bold text-slate-900 text-sm whitespace-pre-line">${quantityText}</td>
@@ -2357,15 +2453,19 @@
                     if(recDiscountRow) recDiscountRow.style.display = 'none';
                 }
                 setSafeText('recTotal', formatarMoeda(net));
-                document.getElementById('recAcceptedPaymentsSection').style.display =
-                    q.status === 'approved' ? 'none' : 'block';
-                document.getElementById('recDeliverySection').style.display = q.deliveryBusinessDays != null || q.deliveryDate ? 'block' : 'none';
-                document.getElementById('recDeliveryDaysRow').style.display = q.deliveryBusinessDays != null ? 'block' : 'none';
-                setSafeText('recDeliveryDays', q.deliveryBusinessDays == null ? '' : `${q.deliveryBusinessDays} ${q.deliveryBusinessDays === 1 ? 'dia útil' : 'dias úteis'}`);
-                document.getElementById('recDeliveryDateRow').style.display = q.deliveryDate ? 'block' : 'none';
+                const approvalDate = q.status === 'approved' && q.workOrder && q.dateApproved
+                    ? String(q.dateApproved).slice(0, 10).split('-').reverse().join('/') : '';
+                const hasDeliveryDetails = q.deliveryBusinessDays != null || Boolean(q.deliveryDate) || Boolean(approvalDate);
+                document.getElementById('recDeliveryCell').style.display = hasDeliveryDetails ? '' : 'none';
+                document.getElementById('recOpsGridGap').style.display = hasDeliveryDetails ? '' : 'none';
+                document.getElementById('recDeliveryDaysRow').style.display = q.deliveryBusinessDays != null ? '' : 'none';
+                setSafeText('recDeliveryDays', q.deliveryBusinessDays == null ? '' : `Até ${q.deliveryBusinessDays} ${q.deliveryBusinessDays === 1 ? 'dia útil' : 'dias úteis'}`);
+                document.getElementById('recDeliveryNote').style.display = q.deliveryBusinessDays != null ? '' : 'none';
+                document.getElementById('recApprovalDateRow').style.display = approvalDate ? '' : 'none';
+                setSafeText('recApprovalDate', approvalDate);
+                document.getElementById('recDeliveryDateRow').style.display = q.deliveryDate ? '' : 'none';
                 setSafeText('recDeliveryDate', q.deliveryDate ? q.deliveryDate.split('-').reverse().join('/') : '');
 
-                setSafeText('recPaymentMethods', q.paymentMethod || 'Não informado');
                 try {
                     await renderReceiptCommercialSummary(q);
                 } catch (error) {
@@ -2373,19 +2473,25 @@
                 }
 
                 if (q.profile) {
+                    const companyAddress = q.profile.address || '';
+                    const companyEmail = q.profile.email || '';
+                    const companyPhone = q.profile.phone || '';
                     setSafeText('pdfCompanyName', q.profile.companyName || '');
                     setSafeText('pdfCompanyDoc', 'CNPJ/CPF: ' + (q.profile.document || '--'));
-                    setSafeText('pdfCompanyAddress', q.profile.address || '');
-                    setSafeText('pdfCompanyEmail', q.profile.email || '');
-                    setSafeText('pdfCompanyPhone', q.profile.phone || '');
+                    setSafeText('pdfCompanyAddress', companyAddress);
+                    setSafeText('pdfCompanyEmail', companyEmail);
+                    setSafeText('pdfCompanyPhone', companyPhone);
+                    document.getElementById('pdfCompanyAddressRow').style.display = companyAddress.trim() ? '' : 'none';
+                    document.getElementById('pdfCompanyEmailRow').style.display = companyEmail.trim() ? '' : 'none';
+                    document.getElementById('pdfCompanyPhoneRow').style.display = companyPhone.trim() ? '' : 'none';
                     setSafeText('pdfCompanySignatureDoc', 'CNPJ/CPF: ' + (q.profile.document || '--'));
                     setSafeText('pdfCompanyFooterName', q.profile.companyName || '');
                     setSafeText('pdfCompanySignatureName', q.profile.companyName || '');
 
                     setSafeText('pfName', q.profile.companyName || '');
                     let pfDocClean = q.profile.document ? q.profile.document.replace('CNPJ/CPF: ', '') : '--';
-                    setSafeText('pfDetails', `CNPJ/CPF: ${pfDocClean} | ${q.profile.address || ''}`);
-                    setSafeText('pfContact', `${q.profile.email || ''} | ${q.profile.phone || ''}`);
+                    setSafeText('pfDetails', `CNPJ/CPF: ${pfDocClean}${companyAddress ? ' | ' + companyAddress : ''}`);
+                    setSafeText('pfContact', [companyEmail, companyPhone].filter(Boolean).join(' | '));
 
                     // Logo e assinatura da empresa vêm dos arquivos da pasta "images/" do projeto
                     // (escolhidos pelo nome da empresa), servidos por /quotes/company-image/{perfil}/...
@@ -2400,6 +2506,22 @@
                     };
                     showCompanyImage('pdfCompanyLogo', 'logo');
                     showCompanyImage('pdfCompanySignature', 'signature');
+                } else {
+                    setSafeText('pdfCompanyName', '');
+                    setSafeText('pdfCompanyDoc', 'CNPJ/CPF: --');
+                    setSafeText('pdfCompanyAddress', '');
+                    setSafeText('pdfCompanyEmail', '');
+                    setSafeText('pdfCompanyPhone', '');
+                    setSafeText('pdfCompanySignatureDoc', 'CNPJ/CPF: --');
+                    setSafeText('pdfCompanySignatureName', '');
+                    setSafeText('pfName', '');
+                    setSafeText('pfDetails', 'CNPJ/CPF: --');
+                    setSafeText('pfContact', '');
+                    document.getElementById('pdfCompanyAddressRow').style.display = 'none';
+                    document.getElementById('pdfCompanyEmailRow').style.display = 'none';
+                    document.getElementById('pdfCompanyPhoneRow').style.display = 'none';
+                    document.getElementById('pdfCompanyLogo').style.display = 'none';
+                    document.getElementById('pdfCompanySignature').style.display = 'none';
                 }
 
                 const sigClientEl = document.getElementById('recSignatureClientImage');

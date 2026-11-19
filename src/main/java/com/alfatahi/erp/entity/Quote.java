@@ -97,8 +97,18 @@ public class Quote {
     @Column(name = "payment_plan", length = 20)
     private String paymentPlan = "SPLIT_50_50";
 
+    @Column(name = "payment_entry_amount", precision = 12, scale = 2)
+    private BigDecimal paymentEntryAmount;
+
+    @Column(name = "payment_delivery_amount", precision = 12, scale = 2)
+    private BigDecimal paymentDeliveryAmount;
+
     public String getPaymentPlan() { return paymentPlan != null ? paymentPlan : "SPLIT_50_50"; }
     public void setPaymentPlan(String paymentPlan) { this.paymentPlan = paymentPlan; }
+    public BigDecimal getPaymentEntryAmount() { return paymentEntryAmount; }
+    public void setPaymentEntryAmount(BigDecimal paymentEntryAmount) { this.paymentEntryAmount = paymentEntryAmount; }
+    public BigDecimal getPaymentDeliveryAmount() { return paymentDeliveryAmount; }
+    public void setPaymentDeliveryAmount(BigDecimal paymentDeliveryAmount) { this.paymentDeliveryAmount = paymentDeliveryAmount; }
 
     @Column(name = "date_created")
     private LocalDateTime dateCreated = LocalDateTime.now();

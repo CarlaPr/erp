@@ -78,6 +78,10 @@ public class QuoteService {
             quote.setAgreedCreditMonthlyInterestRate(quote.getCreditMonthlyInterestRate());
         }
 
+        BigDecimal paymentPlanTotal = quote.getApprovedSaleTotal() != null
+                ? quote.getApprovedSaleTotal() : computeFinalTotal(quote);
+        reconcilePaymentPlan(quote, paymentPlanTotal);
+
         ensureApprovedWorkOrder(quote);
     }
 
@@ -90,6 +94,74 @@ public class QuoteService {
         normalizeLegacyCreditTerms(quote);
         commercialConditionsService.applyAndValidate(quote);
         return commercialConditionsService.calculate(quote);
+    }
+
+    public void validatePaymentPlan(Quote quote, BigDecimal total) {
+        normalizePaymentPlan(quote, total, false);
+    }
+
+    private void reconcilePaymentPlan(Quote quote, BigDecimal total) {
+        normalizePaymentPlan(quote, total, true);
+    }
+
+    private void normalizePaymentPlan(Quote quote, BigDecimal informedTotal, boolean adjustToTotal) {
+        if (quote == null) return;
+        BigDecimal total = informedTotal != null ? informedTotal.setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO.setScale(2);
+        if (total.signum() < 0) throw new IllegalArgumentException("O total do plano de pagamento não pode ser negativo.");
+
+        String plan = quote.getPaymentPlan();
+        if (plan == null || plan.isBlank()) plan = PaymentTermsService.PLAN_SPLIT_50_50;
+        BigDecimal entry = quote.getPaymentEntryAmount();
+        BigDecimal delivery = quote.getPaymentDeliveryAmount();
+
+        switch (plan) {
+            case PaymentTermsService.PLAN_FULL_UPFRONT -> {
+                if (adjustToTotal || entry == null) entry = total;
+                if (adjustToTotal || delivery == null) delivery = BigDecimal.ZERO;
+            }
+            case PaymentTermsService.PLAN_FULL_ON_DELIVERY -> {
+                if (adjustToTotal || entry == null) entry = BigDecimal.ZERO;
+                if (adjustToTotal || delivery == null) delivery = total;
+            }
+            case PaymentTermsService.PLAN_SPLIT_50_50 -> {
+                if (entry == null && delivery == null) {
+                    entry = total.divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
+                    delivery = total.subtract(entry);
+                } else if (entry == null) {
+                    entry = total.subtract(delivery);
+                } else if (delivery == null) {
+                    delivery = total.subtract(entry);
+                } else if (adjustToTotal && entry.add(delivery).compareTo(total) != 0) {
+                    BigDecimal currentTotal = entry.add(delivery);
+                    if (currentTotal.signum() <= 0) {
+                        entry = total.divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
+                    } else {
+                        entry = total.multiply(entry).divide(currentTotal, 2, RoundingMode.HALF_UP);
+                    }
+                    delivery = total.subtract(entry);
+                }
+            }
+            default -> throw new IllegalArgumentException("Selecione uma condição de pagamento válida.");
+        }
+
+        entry = (entry != null ? entry : BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+        delivery = (delivery != null ? delivery : BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+        if (entry.signum() < 0 || delivery.signum() < 0) {
+            throw new IllegalArgumentException("Os valores da entrada e da entrega não podem ser negativos.");
+        }
+        if (entry.add(delivery).compareTo(total) != 0) {
+            throw new IllegalArgumentException("A entrada e o valor na entrega devem somar o total do orçamento. Ajuste os valores do plano de pagamento.");
+        }
+        if (PaymentTermsService.PLAN_FULL_UPFRONT.equals(plan) && delivery.signum() != 0) {
+            throw new IllegalArgumentException("No plano 100% antecipado, o valor na entrega deve ser R$ 0,00.");
+        }
+        if (PaymentTermsService.PLAN_FULL_ON_DELIVERY.equals(plan) && entry.signum() != 0) {
+            throw new IllegalArgumentException("No plano 100% na entrega, o valor da entrada deve ser R$ 0,00.");
+        }
+
+        quote.setPaymentPlan(plan);
+        quote.setPaymentEntryAmount(entry);
+        quote.setPaymentDeliveryAmount(delivery);
     }
 
     private void normalizeLegacyCreditTerms(Quote quote) {
@@ -186,6 +258,7 @@ public class QuoteService {
         quote.setAgreedCreditInstallments(null);
         quote.setAgreedCreditWithInterest(null);
         quote.setAgreedCreditMonthlyInterestRate(null);
+        reconcilePaymentPlan(quote, computeFinalTotal(quote));
         quoteRepo.saveAndFlush(quote);
     }
 

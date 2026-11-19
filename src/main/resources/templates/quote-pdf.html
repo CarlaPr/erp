@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head>
@@ -10,7 +9,7 @@
 
         @page {
             size: A4 portrait;
-            margin: 12mm 12mm 30mm 12mm;
+            margin: 12mm 12mm 18mm 12mm;
 
             @bottom-left {
                 content: element(page-footer);
@@ -95,11 +94,16 @@
         .company-contact-row span { font-size: 9.5px; color: #475569; font-weight: 600; vertical-align: middle; }
         .company-contact-sep { display: inline-block; width: 14px; }
 
-        .quote-badge { background: #0f172a; color: #ffffff; padding: 13px 18px; border-radius: 16px; min-width: 160px; }
-        .quote-badge-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; margin-bottom: 3px; }
-        .quote-badge-num { font-size: 25px; font-weight: 800; font-family: 'Inter', sans-serif; line-height: 1.15; padding: 2px 0; }
-        .quote-badge-date-label { font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-top: 1px solid #334155; margin-top: 8px; padding-top: 7px; }
-        .quote-badge-date-val { font-size: 11.5px; font-weight: 800; color: #ffffff; }
+        .quote-badge { background: #0f172a; color: #ffffff; padding: 11px 13px; border-radius: 10px; min-width: 190px; }
+        .quote-badge-label { font-size: 7.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.8px; color: #9eb0c6; }
+        .quote-badge-num { font-size: 22px; font-weight: 800; font-family: 'Inter', sans-serif; line-height: 1.15; padding: 2px 0 5px; }
+        .quote-meta-table { width: 100%; border-collapse: collapse; border-top: 1px solid #334155; }
+        .quote-meta-table td { padding: 7px 3px 5px 0; vertical-align: top; }
+        .quote-meta-label { font-size: 7px; color: #9eb0c6; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; }
+        .quote-meta-value { font-size: 10px; font-weight: 800; color: #fff; }
+        .quote-seller { border-top: 1px solid #334155; padding-top: 6px; margin-top: 2px; }
+        .quote-seller-label { color: #9eb0c6; font-size: 7px; text-transform: uppercase; font-weight: 800; letter-spacing: .6px; }
+        .quote-seller-val { color: #ffffff; font-size: 9.5px; font-weight: 800; margin-left: 5px; }
 
         .client-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
         .client-table { width: 100%; border-collapse: collapse; }
@@ -152,24 +156,123 @@
         .section-header-text { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; vertical-align: middle; }
         .section-body-cell { background: #ffffff; padding: 13px 14px; font-size: 10px; color: #334155; font-weight: 500; white-space: pre-line; line-height: 1.6; }
 
-        /* Condições de pagamento: bloco visual próprio, alinhado à identidade do orçamento. */
-        .payment-conditions-box { border: 1px solid #dbe3ed; border-radius: 14px; margin-bottom: 12px; overflow: hidden; background: #ffffff; page-break-inside: avoid; }
-        .payment-conditions-head { background: #0f172a; padding: 11px 15px; border-bottom: 3px solid #334155; }
-        .payment-conditions-kicker { display: block; color: #94a3b8; font-size: 7.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 3px; }
-        .payment-conditions-title { color: #ffffff; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.3px; }
-        .payment-conditions-table { width: 100%; border-collapse: collapse; }
-        .payment-conditions-row td { padding: 10px 14px; border-bottom: 1px solid #edf1f5; vertical-align: top; }
-        .payment-conditions-row:last-child td { border-bottom: 0; }
-        .payment-conditions-method { width: 28%; color: #0f172a; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
-        .payment-conditions-description { color: #475569; font-size: 9.5px; font-weight: 500; line-height: 1.55; white-space: pre-line; }
-        .payment-conditions-method-label { display: inline-block; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 7px; }
-        .payment-conditions-row:nth-child(even) td { background: #fbfcfe; }
+        .commercial-grid, .ops-grid {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin: 0 0 10px;
+        }
+        .commercial-grid > tbody > tr > td,
+        .ops-grid > tbody > tr > td { vertical-align: top; padding: 0; }
+        .commercial-grid td.grid-gap, .ops-grid td.grid-gap {
+            width: 10px;
+            font-size: 0;
+            line-height: 0;
+        }
+        .commercial-card, .ops-card {
+            background: #ffffff;
+            border: 1px solid #dce4ee;
+            border-radius: 9px;
+            overflow: hidden;
+            page-break-inside: avoid;
+        }
+        .commercial-titlebar {
+            background: #f6f9fc;
+            border-bottom: 1px solid #e5ecf3;
+            border-left: 3px solid #2c6489;
+            padding: 8px 10px 9px;
+        }
+        .commercial-category {
+            display: block;
+            color: #2c6489;
+            font-size: 7.3px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+        .commercial-heading {
+            display: block;
+            color: #0f172a;
+            font-size: 10.5px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .commercial-lines, .ops-kv { width: 100%; table-layout: fixed; border-collapse: collapse; }
+        .commercial-lines td {
+            vertical-align: top;
+            padding: 7px 9px;
+            border-bottom: 1px solid #eef2f6;
+        }
+        .commercial-lines tr:last-child td { border-bottom: none; }
+        .commercial-lines .method { width: 31%; padding-right: 3px; }
+        .commercial-lines .method-label {
+            display: block;
+            color: #1e3a55;
+            font-size: 8.5px;
+            font-weight: 800;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .commercial-lines .description {
+            color: #475569;
+            font-size: 9.1px;
+            font-weight: 500;
+            line-height: 1.45;
+            white-space: pre-line;
+            word-wrap: break-word;
+        }
+        .ops-card-head {
+            background: #f6f9fc;
+            border-bottom: 1px solid #e5ecf3;
+            padding: 8px 11px;
+        }
+        .ops-card-title {
+            color: #0f172a;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .75px;
+        }
+        .ops-kv td {
+            border-bottom: 1px solid #eff3f7;
+            padding: 4px 10px;
+            vertical-align: top;
+            word-wrap: break-word;
+            line-height: 1.35;
+        }
+        .ops-kv tr:last-child td { border-bottom: none; }
+        .ops-kv .ops-key { width: 34%; color: #718096; font-size: 8.3px; font-weight: 700; }
+        .ops-kv .ops-value { color: #243449; font-size: 9px; font-weight: 600; }
+        .ops-kv .ops-emphasis { color: #0f172a; font-weight: 800; }
+        .ops-note {
+            background: #fbfcfd;
+            border-top: 1px solid #eff3f7;
+            padding: 6px 10px 7px;
+            color: #64748b;
+            font-size: 8px;
+            line-height: 1.4;
+        }
 
-        .sig-section { border-top: 2px dashed #cbd5e1; padding-top: 26px; margin-top: 18px; page-break-inside: avoid; }
+        .header-separator { padding: 11px 0 13px; }
+        .header-separator-line { border-top-width: 2px; }
+        .client-box { border-radius: 9px; margin-bottom: 10px; }
+        .client-inner { padding: 10px 13px; }
+        .client-name-main { font-size: 15px; }
+        .items-wrapper { border-radius: 9px 9px 0 0; }
+        .items-table th { padding-top: 8px; padding-bottom: 8px; }
+        .items-table td { padding-top: 7px; padding-bottom: 7px; }
+        .totals-wrapper { border-radius: 0 0 9px 9px; margin-bottom: 10px; }
+        .totals-table td { padding-top: 7px; padding-bottom: 7px; }
+        .totals-table .total-val-cell { font-size: 19px; }
+        .section-box { border-radius: 9px; margin-bottom: 9px; }
+        .section-header-cell { padding: 7px 11px; }
+        .section-body-cell { padding: 9px 11px; font-size: 9.5px; line-height: 1.5; }
+        .sig-section { border-top: 1px dashed #cbd5e1; padding-top: 5px; margin-top: 0; page-break-inside: avoid; }
         .sig-table { width: 100%; border-collapse: collapse; }
         .sig-cell { width: 50%; text-align: center; padding: 0 30px; vertical-align: bottom; }
-        .sig-image-box { height: 62px; text-align: center; }
-        .sig-image-box img { max-height: 58px; max-width: 175px; }
+        .sig-image-box { min-height: 30px; text-align: center; }
+        .sig-image-box img { max-height: 44px; max-width: 175px; }
         .sig-line { border-top: 2px solid #0f172a; padding-top: 7px; margin-top: 6px; }
         .sig-name  { font-size: 11.5px; font-weight: 800; color: #0f172a; }
         .sig-label { font-size: 9.5px; color: #64748b; font-weight: 600; margin-top: 2px; }
@@ -220,15 +323,20 @@
                 <div class="quote-badge">
                     <div class="quote-badge-label">ORÇAMENTO</div>
                     <div class="quote-badge-num" th:text="${'N° ' + numDisplay}">N° 0000</div>
-
-                    <div class="quote-badge-date-label">Data de emissão</div>
-                    <div class="quote-badge-date-val" th:text="${dateFormatted}">--/--/----</div>
-
-                    <div class="quote-badge-date-label" th:if="${hasValidUntil}">Válido até</div>
-                    <div class="quote-badge-date-val" th:if="${hasValidUntil}" th:text="${validUntilFormatted}">--/--/----</div>
-
-                    <div class="quote-badge-date-label">Vendedor(a)</div>
-                    <div class="quote-badge-date-val" style="text-transform: capitalize;" th:text="${sellerName}">--</div>
+                    <table class="quote-meta-table"><tbody><tr>
+                        <td>
+                            <div class="quote-meta-label">Emissão</div>
+                            <div class="quote-meta-value" th:text="${dateFormatted}">--/--/----</div>
+                        </td>
+                        <td th:if="${hasValidUntil}">
+                            <div class="quote-meta-label">Validade</div>
+                            <div class="quote-meta-value" th:text="${validUntilFormatted}">--/--/----</div>
+                        </td>
+                    </tr></tbody></table>
+                    <div class="quote-seller">
+                        <span class="quote-seller-label">Responsável</span>
+                        <span class="quote-seller-val" th:text="${sellerName}">--</span>
+                    </div>
                 </div>
             </td>
         </tr>
@@ -326,65 +434,83 @@
 </div>
 
 
-<div class="payment-conditions-box avoid-break" th:if="${hasConditions}">
-    <div class="payment-conditions-head">
-        <span class="payment-conditions-kicker">Informações comerciais</span>
-        <span class="payment-conditions-title">Condições de pagamento</span>
-    </div>
-    <table class="payment-conditions-table">
-        <tbody>
-        <tr class="payment-conditions-row" th:each="condition : ${conditionRows}">
-            <td class="payment-conditions-method">
-                <span class="payment-conditions-method-label" th:text="${condition.method}">PIX</span>
-            </td>
-            <td class="payment-conditions-description" th:text="${condition.description}">Condição comercial</td>
-        </tr>
-        </tbody>
-    </table>
-</div>
+<table class="commercial-grid" th:if="${hasPaymentPlanRows || hasConditions}">
+    <tbody><tr>
+        <td th:if="${hasPaymentPlanRows}">
+            <div class="commercial-card">
+                <div class="commercial-titlebar">
+                    <span class="commercial-category">Condição comercial</span>
+                    <span class="commercial-heading">Pagamento do serviço</span>
+                </div>
+                <table class="commercial-lines">
+                    <tbody>
+                    <tr th:each="condition : ${paymentPlanRows}">
+                        <td class="method"><span class="method-label" th:text="${condition.method}">Entrada</span></td>
+                        <td class="description" th:text="${condition.description}">Valor de entrada e saldo restante</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </td>
+        <td class="grid-gap" th:if="${hasPaymentPlanRows && hasConditions}"></td>
+        <td th:if="${hasConditions}">
+            <div class="commercial-card">
+                <div class="commercial-titlebar">
+                    <span class="commercial-category">Informações comerciais</span>
+                    <span class="commercial-heading">Formas e condições de pagamento</span>
+                </div>
+                <table class="commercial-lines">
+                    <tbody>
+                    <tr th:each="condition : ${conditionRows}">
+                        <td class="method"><span class="method-label" th:text="${condition.method}">PIX</span></td>
+                        <td class="description" th:text="${condition.description}">Condição de pagamento</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </td>
+    </tr></tbody>
+</table>
 
-<div class="section-box avoid-break" th:if="${deliveryBusinessDays != null || deliveryDateFormatted != null || approvalDateFormatted != null}">
-    <table>
-        <tr>
-            <td class="section-header-cell" colspan="2"><span class="section-header-text">Entrega / Instalação</span></td>
-        </tr>
-        <tr>
-            <td th:if="${deliveryBusinessDays != null}" class="section-body-cell" style="padding:8px 14px; vertical-align:top;"><strong>Prazo de até: </strong><span th:text="${deliveryBusinessDays + (deliveryBusinessDays == 1 ? ' dia útil' : ' dias úteis')}"></span><br/><span style="font-size:9px;">Após a confirmação do pedido e, quando aplicável, do pagamento da entrada.</span></td>
-            <td th:if="${approvalDateFormatted != null || deliveryDateFormatted != null}" class="section-body-cell" style="padding:8px 14px; vertical-align:top; white-space:nowrap;">
-                <div th:if="${approvalDateFormatted != null}"><strong>Data de aprovação do orçamento: </strong><span th:text="${approvalDateFormatted}"></span></div>
-                <div th:if="${deliveryDateFormatted != null}" th:style="${approvalDateFormatted != null ? 'margin-top:6px;' : ''}"><strong>Data de entrega / instalação: </strong><br th:if="${approvalDateFormatted == null}"/><span th:text="${deliveryDateFormatted}"></span></div>
-            </td>
-        </tr>
-    </table>
-</div>
-
-
-
-<div class="section-box avoid-break">
-    <table style="width:100%; border-collapse:collapse;">
-        <tr>
-            <td class="section-header-cell">
-                <span class="section-header-text">Dados Bancários</span>
-            </td>
-        </tr>
-        <tr>
-            <td class="section-body-cell" style="
-                padding: 8px 14px;
-                line-height: 1.25;
-                white-space: normal;
-                font-size: 10px;
-                vertical-align: top;
-            ">
-                <div><strong>Banco:</strong> 542 — CloudWalk</div>
-                <div><strong>Instituição:</strong> CloudWalk Instituição de Pagamento Ltda.</div>
-                <div><strong>Agência:</strong> 0001</div>
-                <div><strong>Conta Corrente:</strong> 21197925-6</div>
-                <div><strong>Titular:</strong> TAHI GLASS LTDA.</div>
-                <div><strong>PIX CNPJ:</strong> 46.942.469/0001-05</div>
-            </td>
-        </tr>
-    </table>
-</div>
+<table class="ops-grid">
+    <tbody><tr>
+        <td th:if="${deliveryBusinessDays != null || deliveryDateFormatted != null || approvalDateFormatted != null}">
+            <div class="ops-card">
+                <div class="ops-card-head"><span class="ops-card-title">Entrega e instalação</span></div>
+                <table class="ops-kv"><tbody>
+                <tr th:if="${deliveryBusinessDays != null}">
+                    <td class="ops-key">Prazo previsto</td>
+                    <td class="ops-value ops-emphasis" th:text="${'Até ' + deliveryBusinessDays + (deliveryBusinessDays == 1 ? ' dia útil' : ' dias úteis')}">Até 20 dias úteis</td>
+                </tr>
+                <tr th:if="${approvalDateFormatted != null}">
+                    <td class="ops-key">Aprovação</td>
+                    <td class="ops-value" th:text="${approvalDateFormatted}">--/--/----</td>
+                </tr>
+                <tr th:if="${deliveryDateFormatted != null}">
+                    <td class="ops-key">Entrega / instalação</td>
+                    <td class="ops-value" th:text="${deliveryDateFormatted}">--/--/----</td>
+                </tr>
+                </tbody></table>
+                <div class="ops-note" th:if="${deliveryBusinessDays != null}">
+                    Prazo contado após a confirmação do pedido e, quando aplicável, do pagamento da entrada.
+                </div>
+            </div>
+        </td>
+        <td class="grid-gap" th:if="${deliveryBusinessDays != null || deliveryDateFormatted != null || approvalDateFormatted != null}"></td>
+        <td>
+            <div class="ops-card">
+                <div class="ops-card-head"><span class="ops-card-title">Dados bancários para pagamento</span></div>
+                <table class="ops-kv"><tbody>
+                <tr><td class="ops-key">Banco</td><td class="ops-value">542 - CloudWalk</td></tr>
+                <tr><td class="ops-key">Instituição</td><td class="ops-value">CloudWalk Instituição de Pagamento Ltda.</td></tr>
+                <tr><td class="ops-key">Agência / conta</td><td class="ops-value">0001 / 21197925-6</td></tr>
+                <tr><td class="ops-key">Titular</td><td class="ops-value">TAHI GLASS LTDA.</td></tr>
+                <tr><td class="ops-key">PIX - CNPJ</td><td class="ops-value ops-emphasis">46.942.469/0001-05</td></tr>
+                </tbody></table>
+            </div>
+        </td>
+    </tr></tbody>
+</table>
 
 <div class="section-box avoid-break">
     <table>
@@ -394,7 +520,7 @@
             </td>
         </tr>
         <tr>
-            <td class="section-body-cell" style="min-height:50px;" th:text="${observations.isEmpty() ? ' ' : observations}"></td>
+            <td class="section-body-cell" th:text="${observations.isEmpty() ? ' ' : observations}"></td>
         </tr>
     </table>
 </div>
@@ -407,7 +533,7 @@
             </td>
         </tr>
         <tr>
-            <td class="section-body-cell" style="min-height:50px;" th:text="${warranty.isEmpty() ? ' ' : warranty}"></td>
+            <td class="section-body-cell" th:text="${warranty.isEmpty() ? ' ' : warranty}"></td>
         </tr>
     </table>
 </div>

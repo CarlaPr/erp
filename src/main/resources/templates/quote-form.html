@@ -39,7 +39,7 @@
 
         <div th:if="${quoteStatus == 'approved'}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-sm font-semibold">
             <i data-lucide="badge-check" class="w-4 h-4 shrink-0"></i>
-            <span>Este orçamento já está aprovado. Ao salvar, os itens, total e pagamentos combinados serão atualizados no orçamento, no PDF e na O.S. vinculada.</span>
+            <span>Este orçamento já está aprovado. Ao salvar, os itens, o total, as modalidades e os valores de entrada e entrega serão atualizados no orçamento, no PDF e na O.S. vinculada.</span>
         </div>
 
         <form id="quoteForm" onsubmit="saveQuote(event)" novalidate>
@@ -134,16 +134,34 @@
 
                 </div>
 
-                <div class="hidden">
-                    <div id="paymentPlanContainer">
-                        <label class="block text-slate-700 dark:text-slate-400 font-bold mb-3 text-base">Plano de Pagamento</label>
-                        <select id="quotePaymentPlan" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-5 py-3.5 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-lg font-semibold">
-                            <option value="SPLIT_50_50">50% Entrada + 50% Entrega (padrão)</option>
-                            <option value="FULL_UPFRONT">100% Antecipado</option>
-                            <option value="FULL_ON_DELIVERY">100% na Entrega</option>
-                        </select>
+                <section id="paymentPlanContainer" class="sm:col-span-2 lg:col-span-6 rounded-2xl border border-cyan-200 dark:border-cyan-500/20 bg-cyan-50/50 dark:bg-cyan-500/5 p-4 sm:p-5">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                        <label class="block lg:col-span-1 text-slate-700 dark:text-slate-300 font-bold text-sm">
+                            Condição de Pagamento
+                            <select id="quotePaymentPlan" onchange="onPaymentPlanChanged()" class="mt-2 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 transition-colors text-sm font-semibold">
+                                <option value="SPLIT_50_50">Entrada + saldo na entrega (padrão 50% / 50%)</option>
+                                <option value="FULL_UPFRONT">100% antecipado</option>
+                                <option value="FULL_ON_DELIVERY">100% na entrega</option>
+                            </select>
+                        </label>
+                        <label id="paymentPlanEntryWrap" class="block text-slate-700 dark:text-slate-300 font-bold text-sm">
+                            <span id="paymentPlanEntryLabel">Valor da entrada</span>
+                            <input id="paymentEntryAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00" class="mt-2 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-right font-semibold outline-none focus:border-brand-500 dark:focus:border-cyan-500">
+                        </label>
+                        <label id="paymentPlanDeliveryWrap" class="block text-slate-700 dark:text-slate-300 font-bold text-sm">
+                            <span>Valor na entrega</span>
+                            <input id="paymentDeliveryAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00" class="mt-2 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-right font-semibold outline-none focus:border-brand-500 dark:focus:border-cyan-500">
+                        </label>
                     </div>
-                </div>
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-400">
+
+                        <span>Total previsto: <strong id="paymentPlanTotal" class="text-slate-900 dark:text-white">Calculando…</strong>
+                            <span class="mx-1">·</span> Distribuído: <strong id="paymentPlanAllocated" class="text-slate-900 dark:text-white">R$ 0,00</strong>
+                            <span class="mx-1">·</span> Saldo: <strong id="paymentPlanRemaining" class="text-slate-900 dark:text-white">—</strong>
+                        </span>
+                    </div>
+                    <div id="paymentPlanError" role="alert" class="hidden mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"></div>
+                </section>
             </div>
 
             <div id="itemFormSection" class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5 sm:p-7 mb-5 lg:mb-6">
@@ -654,6 +672,7 @@
     let latestCommercialCalculation = null;
     let approvedQuoteEditing = false;
     let approvedPaymentAmounts = {};
+    let paymentPlanAmountsInitialized = false;
 
     // Validade padrão sugerida (dias corridos a partir da emissão). Só é aplicada automaticamente enquanto
     // o usuário não tiver informado/alterado a data manualmente.
@@ -705,6 +724,8 @@
             approvedPaymentComposition: approvedQuoteEditing ? { ...approvedPaymentAmounts } : null,
             agreedCreditInstallments: document.getElementById('approvedCreditInstallments')?.value || '',
             paymentPlan: document.getElementById('quotePaymentPlan')?.value || '',
+            paymentEntryAmount: paymentPlanAmountsInitialized ? parseMoedaBRL(document.getElementById('paymentEntryAmount')?.value) : null,
+            paymentDeliveryAmount: paymentPlanAmountsInitialized ? parseMoedaBRL(document.getElementById('paymentDeliveryAmount')?.value) : null,
             discount: document.getElementById('quoteDiscount')?.value || '',
             cashDiscountType: document.getElementById('cashDiscountType')?.value || 'PERCENT',
             cashDiscountValue: document.getElementById('cashDiscountValue')?.value || '0',
@@ -777,6 +798,11 @@
             }
         }
         if (draft.paymentPlan) { const el = document.getElementById('quotePaymentPlan'); if (el) el.value = draft.paymentPlan; }
+        if (draft.paymentEntryAmount != null && draft.paymentDeliveryAmount != null) {
+            document.getElementById('paymentEntryAmount').value = formatarMoeda(Number(draft.paymentEntryAmount) || 0);
+            document.getElementById('paymentDeliveryAmount').value = formatarMoeda(Number(draft.paymentDeliveryAmount) || 0);
+            paymentPlanAmountsInitialized = true;
+        }
         if (draft.discount) { const el = document.getElementById('quoteDiscount'); if (el) el.value = draft.discount; }
         if (Number(draft.discount) > 0) document.getElementById('discountContainer')?.classList.remove('hidden');
         if (draft.cashDiscountType) document.getElementById('cashDiscountType').value = draft.cashDiscountType;
@@ -799,6 +825,7 @@
 
         updateClientDetailsPanel();
         togglePaymentOptions();
+        renderPaymentPlanFields();
         renderQuoteItems();
 
         const banner = document.getElementById('draftRestoredBanner');
@@ -812,6 +839,16 @@
     document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('quoteForm')?.addEventListener('input', saveQuoteDraft);
         document.getElementById('quoteForm')?.addEventListener('change', saveQuoteDraft);
+        ['paymentEntryAmount', 'paymentDeliveryAmount'].forEach(id => {
+            const input = document.getElementById(id);
+            input?.addEventListener('focus', () => prepararCampoMoedaBRL(input));
+            input?.addEventListener('input', () => onPaymentPlanAmountInput(input));
+            input?.addEventListener('blur', () => {
+                formatarCampoMoedaBRL(input);
+                updatePaymentPlanSummary();
+                saveQuoteDraft();
+            });
+        });
     });
 
     function toggleModal(id, show) {
@@ -1294,14 +1331,12 @@
     }
 
     function togglePaymentOptions() {
-        const payment = document.getElementById('quotePayment').value || '';
-        const planContainer  = document.getElementById('paymentPlanContainer');
-        const isPlannable = payment.includes('PIX') || payment.includes('Dinheiro');
-
-        planContainer.style.display = isPlannable ? 'block' : 'none';
+        // A condição de pagamento do serviço também se aplica às modalidades sem parcelamento comercial.
+        document.getElementById('paymentPlanContainer')?.classList.remove('hidden');
 
         renderQuoteItems();
         renderApprovedPaymentOptions();
+        renderPaymentPlanFields();
     }
 
     function toggleBoletoFields(syncMethod = true) {
@@ -1372,7 +1407,105 @@
         if (total) total.textContent = money(calculation.baseSaleTotal);
         const error = document.getElementById('commercialConditionsError');
         error?.classList.add('hidden');
+        applyPaymentPlanDefaults();
         updateApprovedPaymentSummary();
+        updatePaymentPlanSummary();
+    }
+
+    function paymentPlanTarget() {
+        if (!latestCommercialCalculation) return null;
+        if (approvedQuoteEditing) {
+            const approvedTotal = approvedPaymentTarget();
+            if (approvedTotal != null) return approvedTotal;
+        }
+        return Number(latestCommercialCalculation.baseSaleTotal || 0);
+    }
+
+    function applyPaymentPlanDefaults(force = false) {
+        const target = paymentPlanTarget();
+        if (target == null || (paymentPlanAmountsInitialized && !force)) return;
+        const plan = document.getElementById('quotePaymentPlan')?.value || 'SPLIT_50_50';
+        let entry = 0;
+        let delivery = 0;
+        if (plan === 'FULL_UPFRONT') entry = target;
+        else if (plan === 'FULL_ON_DELIVERY') delivery = target;
+        else {
+            entry = Math.round(target * 50) / 100;
+            delivery = Math.round((target - entry) * 100) / 100;
+        }
+        document.getElementById('paymentEntryAmount').value = formatarMoeda(entry);
+        document.getElementById('paymentDeliveryAmount').value = formatarMoeda(delivery);
+        paymentPlanAmountsInitialized = target > 0;
+    }
+
+    function renderPaymentPlanFields() {
+        const plan = document.getElementById('quotePaymentPlan')?.value || 'SPLIT_50_50';
+        const upfront = plan === 'FULL_UPFRONT';
+        const deliveryOnly = plan === 'FULL_ON_DELIVERY';
+        document.getElementById('paymentPlanDeliveryWrap')?.classList.toggle('hidden', upfront);
+        document.getElementById('paymentPlanEntryWrap')?.classList.toggle('hidden', deliveryOnly);
+        const entryLabel = document.getElementById('paymentPlanEntryLabel');
+        if (entryLabel) entryLabel.textContent = upfront ? 'Valor antecipado' : 'Valor da entrada';
+        applyPaymentPlanDefaults();
+        updatePaymentPlanSummary();
+    }
+
+    function updatePaymentPlanSummary() {
+        const target = paymentPlanTarget();
+        const entry = parseMoedaBRL(document.getElementById('paymentEntryAmount')?.value);
+        const delivery = parseMoedaBRL(document.getElementById('paymentDeliveryAmount')?.value);
+        const distributed = entry + delivery;
+        const remaining = target == null ? null : target - distributed;
+        const totalEl = document.getElementById('paymentPlanTotal');
+        const allocatedEl = document.getElementById('paymentPlanAllocated');
+        const remainingEl = document.getElementById('paymentPlanRemaining');
+        if (totalEl) totalEl.textContent = target == null ? 'Calculando…' : formatarMoeda(target);
+        if (allocatedEl) allocatedEl.textContent = formatarMoeda(distributed);
+        if (remainingEl) {
+            remainingEl.textContent = remaining == null ? '—' : formatarMoeda(remaining);
+            remainingEl.classList.toggle('text-rose-600', remaining != null && remaining < -0.005);
+            remainingEl.classList.toggle('text-emerald-600', remaining != null && Math.abs(remaining) <= 0.005);
+        }
+
+        const plan = document.getElementById('quotePaymentPlan')?.value || 'SPLIT_50_50';
+        let message = '';
+        if (target == null) message = 'Aguarde o cálculo do total do orçamento.';
+        else if (entry < 0 || delivery < 0) message = 'Os valores da entrada e da entrega não podem ser negativos.';
+        else if (Math.round(distributed * 100) !== Math.round(target * 100)) {
+            message = remaining > 0
+                ? `Ainda falta distribuir ${formatarMoeda(remaining)} entre a entrada e a entrega.`
+                : `Os valores excedem o total em ${formatarMoeda(Math.abs(remaining))}.`;
+        } else if (target > 0 && plan === 'SPLIT_50_50' && (entry <= 0 || delivery <= 0)) {
+            message = 'Informe um valor maior que zero para a entrada e para a entrega.';
+        } else if (plan === 'FULL_UPFRONT' && delivery !== 0) {
+            message = 'No plano 100% antecipado, o valor na entrega deve ser R$ 0,00.';
+        } else if (plan === 'FULL_ON_DELIVERY' && entry !== 0) {
+            message = 'No plano 100% na entrega, o valor da entrada deve ser R$ 0,00.';
+        }
+        const error = document.getElementById('paymentPlanError');
+        if (error) {
+            error.textContent = message;
+            error.classList.toggle('hidden', !message);
+        }
+        const approvedPaymentError = approvedQuoteEditing
+            ? document.getElementById('approvedPaymentError')?.textContent : '';
+        document.querySelectorAll('.btn-save-quote').forEach(button => {
+            button.disabled = Boolean(message || approvedPaymentError);
+        });
+        saveQuoteDraft();
+    }
+
+    function onPaymentPlanChanged() {
+        paymentPlanAmountsInitialized = false;
+        applyPaymentPlanDefaults(true);
+        renderPaymentPlanFields();
+        saveQuoteDraft();
+    }
+
+    function onPaymentPlanAmountInput(input) {
+        sanitizarCampoMoedaBRL(input);
+        paymentPlanAmountsInitialized = true;
+        updatePaymentPlanSummary();
     }
 
     const approvedPaymentLabels = {
@@ -1502,7 +1635,9 @@
             error.textContent = message;
             error.classList.toggle('hidden', !message);
         }
-        document.querySelectorAll('.btn-save-quote').forEach(button => { button.disabled = Boolean(message); });
+        const paymentPlanError = document.getElementById('paymentPlanError')?.textContent;
+        document.querySelectorAll('.btn-save-quote').forEach(button => { button.disabled = Boolean(message || paymentPlanError); });
+        updatePaymentPlanSummary();
     }
 
     function approvedPaymentEditPayload() {
@@ -1538,6 +1673,7 @@
         const version = ++commercialPreviewVersion;
         latestCommercialCalculation = null;
         updateApprovedPaymentSummary();
+        updatePaymentPlanSummary();
         commercialPreviewTimer = setTimeout(async () => {
             const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
@@ -2243,6 +2379,12 @@
         if (!deliveryDaysInput.reportValidity()) return;
         const deliveryDateInput = document.getElementById('quoteDeliveryDate');
         if (!deliveryDateInput.reportValidity()) return;
+        updatePaymentPlanSummary();
+        if (document.getElementById('paymentPlanError')?.textContent) {
+            alert(document.getElementById('paymentPlanError').textContent);
+            document.getElementById('paymentPlanContainer')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
         updateApprovedPaymentSummary();
         if (approvedQuoteEditing && document.getElementById('approvedPaymentError')?.textContent) {
             alert(document.getElementById('approvedPaymentError').textContent);
@@ -2260,9 +2402,9 @@
             deliveryDate: deliveryDateInput.value || null,
             paymentMethod: document.getElementById('quotePayment').value,
             installments: Number(document.getElementById('creditInstallments').value || 0),
-            paymentPlan: (document.getElementById('quotePaymentPlan')?.offsetParent !== null
-                ? document.getElementById('quotePaymentPlan').value
-                : 'SPLIT_50_50'),
+            paymentPlan: document.getElementById('quotePaymentPlan').value,
+            paymentEntryAmount: parseMoedaBRL(document.getElementById('paymentEntryAmount').value),
+            paymentDeliveryAmount: parseMoedaBRL(document.getElementById('paymentDeliveryAmount').value),
             discountPercent: discountPct,
             cashDiscountType: document.getElementById('cashDiscountType').value,
             cashDiscountValue: Number(document.getElementById('cashDiscountValue').value || 0),
@@ -2340,6 +2482,10 @@
     function initNewQuoteForm() {
         approvedQuoteEditing = false;
         approvedPaymentAmounts = {};
+        paymentPlanAmountsInitialized = false;
+        document.getElementById('quotePaymentPlan').value = 'SPLIT_50_50';
+        document.getElementById('paymentEntryAmount').value = '';
+        document.getElementById('paymentDeliveryAmount').value = '';
         document.getElementById('quoteWarranty').value = DEFAULT_WARRANTY;
         document.getElementById('quoteObs').value = DEFAULT_OBSERVATIONS;
         document.getElementById('quoteProfile').value = '';
@@ -2358,6 +2504,7 @@
 
         currentItems = [];
         togglePaymentOptions();
+        renderPaymentPlanFields();
         renderQuoteItems();
         updateClientDetailsPanel();
     }
@@ -2369,6 +2516,10 @@
                 document.getElementById('quoteId').value = q.id;
                 approvedQuoteEditing = q.status === 'approved';
                 approvedPaymentAmounts = {};
+                document.getElementById('quotePaymentPlan').value = q.paymentPlan || 'SPLIT_50_50';
+                paymentPlanAmountsInitialized = q.paymentEntryAmount != null && q.paymentDeliveryAmount != null;
+                document.getElementById('paymentEntryAmount').value = q.paymentEntryAmount == null ? '' : formatarMoeda(Number(q.paymentEntryAmount));
+                document.getElementById('paymentDeliveryAmount').value = q.paymentDeliveryAmount == null ? '' : formatarMoeda(Number(q.paymentDeliveryAmount));
                 if (approvedQuoteEditing && q.paymentComposition && typeof q.paymentComposition === 'object') {
                     approvedPaymentAmounts = Object.fromEntries(Object.entries(q.paymentComposition)
                         .map(([method, amount]) => [method, Number(amount) || 0]));
