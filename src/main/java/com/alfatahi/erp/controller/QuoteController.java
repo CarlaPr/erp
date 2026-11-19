@@ -532,6 +532,15 @@ public class QuoteController {
         quote.setPaymentBreakdown(Map.of());
         if (quote.getId() != null) {
             Quote existing = quoteRepo.findById(quote.getId()).orElseThrow();
+            boolean approved = "approved".equals(existing.getStatus());
+            if (approved) {
+                try {
+                    quoteService.updateApprovedPaymentComposition(quote, quote.getPaymentComposition(),
+                            quote.getAgreedCreditInstallments());
+                } catch (IllegalArgumentException ex) {
+                    return ResponseEntity.badRequest().body(ex.getMessage());
+                }
+            }
             existing.setClient(quote.getClient());
             existing.setProfile(quote.getProfile());
             if (quote.getDateCreated() != null) {
@@ -556,6 +565,13 @@ public class QuoteController {
             existing.setBoletoInstallments(quote.getBoletoInstallments());
             existing.setBoletoFirstDueDate(quote.getBoletoFirstDueDate());
             existing.setBoletoIntervalDays(quote.getBoletoIntervalDays());
+            if (approved) {
+                existing.setPaymentComposition(quote.getPaymentComposition());
+                existing.setApprovedSaleTotal(quote.getApprovedSaleTotal());
+                existing.setAgreedCreditInstallments(quote.getAgreedCreditInstallments());
+                existing.setAgreedCreditWithInterest(quote.getAgreedCreditWithInterest());
+                existing.setAgreedCreditMonthlyInterestRate(quote.getAgreedCreditMonthlyInterestRate());
+            }
             existing.setValidUntil(resolveValidUntil(quote.getValidUntil(), existing.getDateCreated(), existing.getValidUntil()));
             existing.setDeliveryBusinessDays(quote.getDeliveryBusinessDays());
             existing.setDeliveryDate(quote.getDeliveryDate());

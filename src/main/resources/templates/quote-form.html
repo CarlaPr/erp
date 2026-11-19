@@ -39,7 +39,7 @@
 
         <div th:if="${quoteStatus == 'approved'}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-sm font-semibold">
             <i data-lucide="badge-check" class="w-4 h-4 shrink-0"></i>
-            <span>Este orçamento já está aprovado. Ao salvar, os itens e o valor da Ordem de Serviço vinculada serão atualizados junto com o orçamento.</span>
+            <span>Este orçamento já está aprovado. Ao salvar, os itens, total e pagamentos combinados serão atualizados no orçamento, no PDF e na O.S. vinculada.</span>
         </div>
 
         <form id="quoteForm" onsubmit="saveQuote(event)" novalidate>
@@ -346,6 +346,29 @@
                 <div id="commercialConditionsError" class="hidden mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"></div>
             </div>
 
+            <section id="approvedPaymentEditor" th:if="${quoteStatus == 'approved'}" class="bg-white dark:bg-[#131C2F] border border-emerald-200 dark:border-emerald-500/30 rounded-2xl shadow-sm p-5 sm:p-7 mb-5 lg:mb-6">
+                <h3 class="text-sm font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i data-lucide="wallet-cards" class="w-4 h-4"></i> Forma de pagamento aprovada
+                </h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Confira as modalidades e valores combinados. Se alterar itens, descontos ou o total, ajuste os valores para que a soma corresponda ao novo total. Para incluir uma modalidade, habilite-a em “Formas de Pagamento” acima.</p>
+                <div id="approvedPaymentMethods" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                <div id="approvedCreditInstallmentsWrap" class="hidden mt-4 max-w-xs">
+                    <label for="approvedCreditInstallments" class="block text-xs font-bold text-slate-600 dark:text-slate-300">Parcelas do cartão acordadas</label>
+                    <select id="approvedCreditInstallments" onchange="updateApprovedPaymentSummary()" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm">
+                        <option value="">Selecione as parcelas</option>
+                        <option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option>
+                        <option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option>
+                    </select>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">As condições de juros seguem a configuração de Cartão de Crédito acima.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+                    <div class="rounded-xl bg-slate-50 dark:bg-slate-900 p-4"><span class="text-xs font-bold text-slate-500 dark:text-slate-400">Total previsto</span><strong id="approvedPaymentTarget" class="block mt-1 text-lg text-slate-900 dark:text-white">Calculando…</strong></div>
+                    <div class="rounded-xl bg-slate-50 dark:bg-slate-900 p-4"><span class="text-xs font-bold text-slate-500 dark:text-slate-400">Total distribuído</span><strong id="approvedPaymentAllocated" class="block mt-1 text-lg text-slate-900 dark:text-white">R$ 0,00</strong></div>
+                    <div class="rounded-xl bg-slate-50 dark:bg-slate-900 p-4"><span class="text-xs font-bold text-slate-500 dark:text-slate-400">Saldo restante</span><strong id="approvedPaymentRemaining" class="block mt-1 text-lg text-slate-900 dark:text-white">R$ 0,00</strong></div>
+                </div>
+                <div id="approvedPaymentError" role="alert" class="hidden mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"></div>
+            </section>
+
             <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5 sm:p-7 mb-5 lg:mb-6">
                 <h3 class="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-5 flex items-center gap-2">
                     <i data-lucide="calendar-days" class="w-4 h-4"></i> Entrega / Instalação
@@ -629,6 +652,8 @@
     let commercialPreviewTimer = null;
     let commercialPreviewVersion = 0;
     let latestCommercialCalculation = null;
+    let approvedQuoteEditing = false;
+    let approvedPaymentAmounts = {};
 
     // Validade padrão sugerida (dias corridos a partir da emissão). Só é aplicada automaticamente enquanto
     // o usuário não tiver informado/alterado a data manualmente.
@@ -677,6 +702,8 @@
             deliveryBusinessDays: document.getElementById('quoteDeliveryBusinessDays').value,
             deliveryDate: document.getElementById('quoteDeliveryDate').value,
             payment: document.getElementById('quotePayment')?.value || '',
+            approvedPaymentComposition: approvedQuoteEditing ? { ...approvedPaymentAmounts } : null,
+            agreedCreditInstallments: document.getElementById('approvedCreditInstallments')?.value || '',
             paymentPlan: document.getElementById('quotePaymentPlan')?.value || '',
             discount: document.getElementById('quoteDiscount')?.value || '',
             cashDiscountType: document.getElementById('cashDiscountType')?.value || 'PERCENT',
@@ -740,6 +767,14 @@
         if (draft.payment) {
             document.getElementById('quotePayment').value = draft.payment;
             document.querySelectorAll('.pay-method-cb').forEach(cb => cb.checked = draft.payment.split(',').map(method => method.trim()).includes(cb.value));
+        }
+        if (approvedQuoteEditing && draft.approvedPaymentComposition) {
+            approvedPaymentAmounts = Object.fromEntries(Object.entries(draft.approvedPaymentComposition)
+                .map(([method, amount]) => [method, Number(amount) || 0]));
+            const installments = document.getElementById('approvedCreditInstallments');
+            if (installments && draft.agreedCreditInstallments !== undefined) {
+                installments.value = draft.agreedCreditInstallments;
+            }
         }
         if (draft.paymentPlan) { const el = document.getElementById('quotePaymentPlan'); if (el) el.value = draft.paymentPlan; }
         if (draft.discount) { const el = document.getElementById('quoteDiscount'); if (el) el.value = draft.discount; }
@@ -1254,6 +1289,7 @@
         document.getElementById('boletoEnabled').checked = selected.includes('Boleto Bancário');
         toggleBoletoFields(false);
         togglePaymentOptions();
+        refreshCommercialConditions();
         closeModal('paymentMethodsModal');
     }
 
@@ -1265,6 +1301,7 @@
         planContainer.style.display = isPlannable ? 'block' : 'none';
 
         renderQuoteItems();
+        renderApprovedPaymentOptions();
     }
 
     function toggleBoletoFields(syncMethod = true) {
@@ -1335,6 +1372,153 @@
         if (total) total.textContent = money(calculation.baseSaleTotal);
         const error = document.getElementById('commercialConditionsError');
         error?.classList.add('hidden');
+        updateApprovedPaymentSummary();
+    }
+
+    const approvedPaymentLabels = {
+        'PIX': 'PIX',
+        'Dinheiro': 'Dinheiro',
+        'Débito': 'Cartão de débito',
+        'Crédito': 'Cartão de crédito',
+        'Link de Pagamento': 'Link de pagamento',
+        'Boleto Bancário': 'Boleto bancário',
+        'Transferência Bancária': 'Transferência bancária'
+    };
+
+    function acceptedApprovedPaymentMethods() {
+        return Array.from(document.querySelectorAll('.pay-method-cb:checked'))
+            .map(input => input.value)
+            .filter(method => Object.prototype.hasOwnProperty.call(approvedPaymentLabels, method));
+    }
+
+    function selectedApprovedPaymentMethods() {
+        return Array.from(document.querySelectorAll('#approvedPaymentMethods [data-approved-payment-method]:checked'))
+            .map(input => input.value);
+    }
+
+    function approvedPaymentTarget(methods = selectedApprovedPaymentMethods()) {
+        const calculation = latestCommercialCalculation;
+        if (!calculation) return null;
+        if (methods.length === 1) {
+            if (methods[0] === 'Dinheiro') return Number(calculation.cashFinalTotal || 0);
+            if (methods[0] === 'PIX') return Number(calculation.pixFinalTotal || 0);
+            if (methods[0] === 'Boleto Bancário' && document.getElementById('boletoEnabled')?.checked) {
+                return Number(calculation.boletoTotal ?? calculation.baseSaleTotal ?? 0);
+            }
+        }
+        return Number(calculation.baseSaleTotal || 0);
+    }
+
+    function renderApprovedPaymentOptions() {
+        const host = document.getElementById('approvedPaymentMethods');
+        if (!approvedQuoteEditing || !host) return;
+
+        const methods = acceptedApprovedPaymentMethods();
+        const accepted = new Set(methods);
+        Object.keys(approvedPaymentAmounts).forEach(method => {
+            if (!accepted.has(method)) delete approvedPaymentAmounts[method];
+        });
+        host.replaceChildren();
+
+        if (!methods.length) {
+            const empty = document.createElement('p');
+            empty.className = 'md:col-span-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200';
+            empty.textContent = 'Habilite as formas aceitas no orçamento para selecionar a composição aprovada.';
+            host.appendChild(empty);
+        }
+
+        methods.forEach(method => {
+            const selected = Object.prototype.hasOwnProperty.call(approvedPaymentAmounts, method);
+            const card = document.createElement('div');
+            card.className = 'rounded-xl border border-slate-200 dark:border-slate-700 p-4';
+            card.innerHTML = `<label class="flex items-center gap-3 cursor-pointer font-bold text-slate-800 dark:text-slate-100"><input type="checkbox" data-approved-payment-method value="${method}" ${selected ? 'checked' : ''} class="h-4 w-4 rounded text-emerald-600"><span>${approvedPaymentLabels[method]}</span></label><div class="${selected ? '' : 'hidden'} mt-3" data-approved-payment-value-wrap><label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Valor combinado</label><input type="text" inputmode="decimal" autocomplete="off" aria-label="Valor combinado em ${approvedPaymentLabels[method]}" data-approved-payment-value="${method}" value="${selected ? formatarMoeda(Number(approvedPaymentAmounts[method])) : ''}" placeholder="R$ 0,00" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-right text-slate-900 dark:text-white"></div>`;
+            host.appendChild(card);
+        });
+
+        host.querySelectorAll('[data-approved-payment-method]').forEach(input => input.addEventListener('change', () => {
+            const method = input.value;
+            if (input.checked) {
+                const selected = selectedApprovedPaymentMethods();
+                const target = approvedPaymentTarget(selected);
+                const allocatedElsewhere = selected
+                    .filter(value => value !== method)
+                    .reduce((sum, value) => sum + Number(approvedPaymentAmounts[value] || 0), 0);
+                approvedPaymentAmounts[method] = target == null ? 0 : Math.max(0, Number((target - allocatedElsewhere).toFixed(2)));
+            } else {
+                delete approvedPaymentAmounts[method];
+            }
+            renderApprovedPaymentOptions();
+            updateApprovedPaymentSummary();
+        }));
+
+        host.querySelectorAll('[data-approved-payment-value]').forEach(input => {
+            input.addEventListener('focus', () => prepararCampoMoedaBRL(input));
+            input.addEventListener('input', () => {
+                sanitizarCampoMoedaBRL(input);
+                approvedPaymentAmounts[input.dataset.approvedPaymentValue] = Math.round(parseMoedaBRL(input.value) * 100) / 100;
+                updateApprovedPaymentSummary();
+            });
+            input.addEventListener('blur', () => formatarCampoMoedaBRL(input));
+        });
+        updateApprovedPaymentSummary();
+    }
+
+    function updateApprovedPaymentSummary() {
+        const editor = document.getElementById('approvedPaymentEditor');
+        if (!approvedQuoteEditing || !editor) return;
+
+        const methods = selectedApprovedPaymentMethods();
+        const target = approvedPaymentTarget(methods);
+        const allocated = methods.reduce((sum, method) => sum + Number(approvedPaymentAmounts[method] || 0), 0);
+        const remaining = target == null ? 0 : target - allocated;
+        const hasCredit = methods.some(method => method === 'Crédito' || method === 'Link de Pagamento');
+        const installmentSelect = document.getElementById('approvedCreditInstallments');
+        document.getElementById('approvedCreditInstallmentsWrap')?.classList.toggle('hidden', !hasCredit);
+
+        const targetEl = document.getElementById('approvedPaymentTarget');
+        const allocatedEl = document.getElementById('approvedPaymentAllocated');
+        const remainingEl = document.getElementById('approvedPaymentRemaining');
+        if (targetEl) targetEl.textContent = target == null ? 'Calculando…' : formatarMoeda(target);
+        if (allocatedEl) allocatedEl.textContent = formatarMoeda(allocated);
+        if (remainingEl) {
+            remainingEl.textContent = target == null ? '—' : formatarMoeda(remaining);
+            remainingEl.classList.toggle('text-rose-600', target != null && remaining < -0.005);
+            remainingEl.classList.toggle('text-emerald-600', target != null && Math.abs(remaining) <= 0.005);
+        }
+
+        let message = '';
+        if (target == null) message = 'Aguarde o recálculo das condições comerciais.';
+        else if (!methods.length) message = 'Selecione ao menos uma modalidade de pagamento aprovada.';
+        else if (methods.some(method => Number(approvedPaymentAmounts[method]) <= 0)) message = 'Informe um valor maior que zero para cada modalidade selecionada.';
+        else if (hasCredit && (!Number.isInteger(Number(installmentSelect?.value)) || Number(installmentSelect?.value) < 1 || Number(installmentSelect?.value) > 10)) message = 'Informe as parcelas acordadas do cartão.';
+        else if (Math.round(allocated * 100) !== Math.round(target * 100)) {
+            message = remaining > 0
+                ? `Ainda falta distribuir ${formatarMoeda(remaining)}.`
+                : `O valor distribuído excede o total em ${formatarMoeda(Math.abs(remaining))}.`;
+        }
+
+        const error = document.getElementById('approvedPaymentError');
+        if (error) {
+            error.textContent = message;
+            error.classList.toggle('hidden', !message);
+        }
+        document.querySelectorAll('.btn-save-quote').forEach(button => { button.disabled = Boolean(message); });
+    }
+
+    function approvedPaymentEditPayload() {
+        if (!approvedQuoteEditing) return {};
+        const methods = selectedApprovedPaymentMethods();
+        const paymentComposition = {};
+        methods.forEach(method => {
+            paymentComposition[method] = Number(approvedPaymentAmounts[method] || 0).toFixed(2);
+        });
+        const hasCredit = methods.some(method => method === 'Crédito' || method === 'Link de Pagamento');
+        return {
+            paymentComposition,
+            agreedCreditInstallments: hasCredit
+                ? Number(document.getElementById('approvedCreditInstallments').value) || null
+                : null
+        };
     }
 
     function changeCommercialDiscountType(modality) {
@@ -1351,8 +1535,10 @@
 
     function refreshCommercialConditions() {
         clearTimeout(commercialPreviewTimer);
+        const version = ++commercialPreviewVersion;
+        latestCommercialCalculation = null;
+        updateApprovedPaymentSummary();
         commercialPreviewTimer = setTimeout(async () => {
-            const version = ++commercialPreviewVersion;
             const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
             try {
@@ -2057,6 +2243,12 @@
         if (!deliveryDaysInput.reportValidity()) return;
         const deliveryDateInput = document.getElementById('quoteDeliveryDate');
         if (!deliveryDateInput.reportValidity()) return;
+        updateApprovedPaymentSummary();
+        if (approvedQuoteEditing && document.getElementById('approvedPaymentError')?.textContent) {
+            alert(document.getElementById('approvedPaymentError').textContent);
+            document.getElementById('approvedPaymentEditor')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
 
         const payload = {
             id: document.getElementById('quoteId').value || null,
@@ -2087,6 +2279,7 @@
             observations: document.getElementById('quoteObs').value,
             warranty: document.getElementById('quoteWarranty').value,
             totalValue: finalNetValue,
+            ...approvedPaymentEditPayload(),
             items: currentItems
         };
 
@@ -2116,6 +2309,7 @@
                         b.disabled = false;
                         b.innerHTML = originalHtmlMap.get(b);
                     });
+                    updateApprovedPaymentSummary();
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     return;
                 }
@@ -2133,6 +2327,7 @@
                         b.disabled = false;
                         b.innerHTML = originalHtmlMap.get(b);
                     });
+                    updateApprovedPaymentSummary();
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                 }
             });
@@ -2143,6 +2338,8 @@
     }
 
     function initNewQuoteForm() {
+        approvedQuoteEditing = false;
+        approvedPaymentAmounts = {};
         document.getElementById('quoteWarranty').value = DEFAULT_WARRANTY;
         document.getElementById('quoteObs').value = DEFAULT_OBSERVATIONS;
         document.getElementById('quoteProfile').value = '';
@@ -2170,6 +2367,14 @@
             .then(res => res.json())
             .then(q => {
                 document.getElementById('quoteId').value = q.id;
+                approvedQuoteEditing = q.status === 'approved';
+                approvedPaymentAmounts = {};
+                if (approvedQuoteEditing && q.paymentComposition && typeof q.paymentComposition === 'object') {
+                    approvedPaymentAmounts = Object.fromEntries(Object.entries(q.paymentComposition)
+                        .map(([method, amount]) => [method, Number(amount) || 0]));
+                }
+                const agreedInstallments = document.getElementById('approvedCreditInstallments');
+                if (agreedInstallments) agreedInstallments.value = q.agreedCreditInstallments ?? '';
 
                 if(q.client) {
                     const select = document.getElementById('quoteClient');
@@ -2208,8 +2413,9 @@
 
                 const pm = q.paymentMethod || 'PIX';
                 document.getElementById('quotePayment').value = pm;
+                const acceptedMethods = new Set(pm.split(',').map(method => method.trim()));
                 document.querySelectorAll('.pay-method-cb').forEach(cb => {
-                    cb.checked = pm.includes(cb.value);
+                    cb.checked = acceptedMethods.has(cb.value);
                 });
 
                 const discInput = document.getElementById('quoteDiscount');

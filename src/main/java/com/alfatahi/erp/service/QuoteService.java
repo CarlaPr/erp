@@ -135,6 +135,36 @@ public class QuoteService {
     }
 
     @Transactional
+    public void updateApprovedPaymentComposition(Quote quote, Map<String, BigDecimal> paymentComposition,
+                                                 Integer agreedCreditInstallments) {
+        if (paymentComposition == null || paymentComposition.isEmpty()) {
+            throw new IllegalArgumentException("Selecione ao menos uma modalidade de pagamento aprovada.");
+        }
+
+        commercialConditions(quote);
+        Map<String, BigDecimal> normalizedPayments = new java.util.LinkedHashMap<>();
+        paymentComposition.forEach((method, amount) -> {
+            if (method == null || amount == null) {
+                throw new IllegalArgumentException("Informe uma modalidade e um valor de pagamento válidos.");
+            }
+            normalizedPayments.put(method, amount.setScale(2, RoundingMode.HALF_UP));
+        });
+
+        boolean cardSelected = normalizedPayments.keySet().stream().anyMatch(QuoteService::isCreditPaymentMethod);
+        if (cardSelected && (agreedCreditInstallments == null
+                || agreedCreditInstallments < 1 || agreedCreditInstallments > 10)) {
+            throw new IllegalArgumentException("Informe as parcelas do cartão entre 1 e 10.");
+        }
+
+        BigDecimal approvedTotal = resolveApprovedSaleTotal(quote, normalizedPayments);
+        quote.setPaymentComposition(normalizedPayments);
+        quote.setApprovedSaleTotal(approvedTotal);
+        quote.setAgreedCreditInstallments(cardSelected ? agreedCreditInstallments : null);
+        quote.setAgreedCreditWithInterest(cardSelected && quote.getCreditWithInterest());
+        quote.setAgreedCreditMonthlyInterestRate(cardSelected ? quote.getCreditMonthlyInterestRate() : null);
+    }
+
+    @Transactional
     public WorkOrder recoverApprovedWorkOrder(UUID quoteId) {
         Quote quote = quoteRepo.findByIdForUpdate(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException("Orçamento não encontrado"));
@@ -265,9 +295,10 @@ public class QuoteService {
         }
         os.getItems().addAll(refreshedItems);
 
-        BigDecimal finalTotal = (quote.getTotalValue() != null && quote.getTotalValue().compareTo(BigDecimal.ZERO) > 0)
-                ? quote.getTotalValue()
-                : computeFinalTotal(quote);
+        BigDecimal finalTotal = quote.getApprovedSaleTotal() != null && quote.getApprovedSaleTotal().compareTo(BigDecimal.ZERO) > 0
+                ? quote.getApprovedSaleTotal()
+                : ((quote.getTotalValue() != null && quote.getTotalValue().compareTo(BigDecimal.ZERO) > 0)
+                    ? quote.getTotalValue() : computeFinalTotal(quote));
         os.setTotalValue(finalTotal);
 
         String currentNotes = os.getNotes() != null ? os.getNotes() : "";
