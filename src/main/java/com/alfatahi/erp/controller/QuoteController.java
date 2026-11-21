@@ -245,19 +245,19 @@ public class QuoteController {
     }
 
     private List<Map<String, String>> commercialConditionRows(Quote quote,
-            com.alfatahi.erp.service.QuoteCommercialConditionsService.Calculation calculation) {
+                                                              com.alfatahi.erp.service.QuoteCommercialConditionsService.Calculation calculation) {
         List<Map<String, String>> rows = new ArrayList<>();
         String methods = quote.getPaymentMethod() == null ? "" : quote.getPaymentMethod().toLowerCase(Locale.ROOT);
         if (methods.contains("dinheiro")) {
-            rows.add(conditionRow("DINHEIRO", "" + formatBRL(calculation.originalTotal())
+            rows.add(conditionRow("DINHEIRO", ""
                     + " · Desconto: " + formatPercent(calculation.cashDiscountPercent()) + " · Final: " + formatBRL(calculation.cashFinalTotal())));
         }
         if (methods.contains("pix")) {
-            rows.add(conditionRow("PIX", "" + formatBRL(calculation.originalTotal())
+            rows.add(conditionRow("PIX", ""
                     + " · Desconto: " + formatPercent(calculation.pixDiscountPercent()) + " · Final: " + formatBRL(calculation.pixFinalTotal())));
         }
         if (methods.contains("crédito") || methods.contains("credito") || methods.contains("link de pagamento")) {
-            String description = "" + formatBRL(calculation.originalTotal());
+            String description = "";
             if (calculation.creditInstallments() == 0) {
                 description += " · Parcelamento não definido";
             } else if (calculation.creditWithInterest()) {
