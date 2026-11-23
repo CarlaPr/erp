@@ -16,6 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,6 +35,7 @@ public class PayableController {
     private final SupplierService supplierService;
     private final FinanceService financeService;
     private final CashLedgerService cashLedgerService;
+    private final BankAccountService bankAccountService;
     private final SupplierRepository supplierRepository;
     private final WorkOrderRepository workOrderRepository;
     private final CategoryCatalogService categoryCatalogService;
@@ -46,6 +48,7 @@ public class PayableController {
                              SupplierService supplierService,
                              FinanceService financeService,
                              CashLedgerService cashLedgerService,
+                             BankAccountService bankAccountService,
                              SupplierRepository supplierRepository,
                              WorkOrderRepository workOrderRepository,
                              CategoryCatalogService categoryCatalogService,
@@ -56,6 +59,7 @@ public class PayableController {
         this.supplierService = supplierService;
         this.financeService = financeService;
         this.cashLedgerService = cashLedgerService;
+        this.bankAccountService = bankAccountService;
         this.supplierRepository = supplierRepository;
         this.workOrderRepository = workOrderRepository;
         this.categoryCatalogService = categoryCatalogService;
@@ -133,6 +137,8 @@ public class PayableController {
         model.addAttribute("currentPage", "payables");
         model.addAttribute("payables", list);
         model.addAttribute("newPayable", new AccountsPayable());
+        model.addAttribute("bankAccounts", bankAccountService.listAccounts());
+        model.addAttribute("paymentToday", FinancialPeriod.today());
         model.addAttribute("suppliers", supplierRepository.findByIsActiveTrueOrderByNameAsc());
         model.addAttribute("workOrders", workOrderRepository.findAll());
         model.addAttribute("categories", categoryCatalogService.listActiveCategories());
@@ -250,6 +256,7 @@ public class PayableController {
     }
 
 
+    @Transactional
     @PostMapping("/edit/{id}")
     public String edit(@PathVariable UUID id, @ModelAttribute AccountsPayable form,
                        @RequestParam(required = false, defaultValue = "single") String editScope,
@@ -257,7 +264,7 @@ public class PayableController {
                        @RequestParam(required = false) List<UUID> workOrderIds,
                        @RequestParam(required = false) List<BigDecimal> workOrderValues,
                        @RequestParam(required = false) List<String> workOrderDescriptions) {
-        AccountsPayable ap = payableRepository.findById(id).orElseThrow(() -> new RuntimeException("Conta não encontrada"));
+        AccountsPayable ap = payableRepository.findForUpdateById(id).orElseThrow(() -> new RuntimeException("Conta não encontrada"));
         applyDerivedFields(form);
 
         if ("series".equals(editScope) && ap.getRecurrenceId() != null) {
@@ -279,8 +286,7 @@ public class PayableController {
         ap.setRecurring(form.getRecurring());
         ap.setNotes(form.getNotes());
 
-        if (form.getPaidAmount() != null) {
-            ap.setPaidAmount(form.getPaidAmount());
+        if ("pending".equals(ap.getStatus()) || "partial".equals(ap.getStatus()) || "paid".equals(ap.getStatus())) {
             if (ap.getPaidAmount().compareTo(BigDecimal.ZERO) == 0) {
                 ap.setStatus("pending");
             } else if (ap.getPaidAmount().compareTo(ap.getTotalAmount()) >= 0) {
@@ -316,6 +322,9 @@ public class PayableController {
                        @RequestParam(required = false) List<String> workOrderDescriptions) {
 
         applyDerivedFields(payable);
+        payable.setPaidAmount(BigDecimal.ZERO);
+        payable.setPaymentDate(null);
+        payable.setStatus("pending");
 
         UUID payableIdForAllocation;
         if (recurrenceEnabled && recurrenceFrequency != null && !recurrenceFrequency.isBlank()) {
@@ -365,18 +374,14 @@ public class PayableController {
             @RequestParam(required = false) BigDecimal amount,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate paymentDate,
             @RequestParam(required = false) String paymentMethod,
-            @RequestParam(required = false) String notes) {
-
-        AccountsPayable ap = payableRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
-
-        BigDecimal toPayAmount = (amount != null) ? amount : ap.getBalance();
-
-        if (toPayAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            return "redirect:/payables?error=invalid_amount";
+            @RequestParam(required = false) UUID bankAccountId,
+            @RequestParam(required = false) String notes,
+            RedirectAttributes redirectAttributes) {
+        try {
+            financeService.processPayablePayment(id, amount, paymentDate, paymentMethod, bankAccountId, notes);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("paymentError", e.getMessage());
         }
-
-        financeService.processPayablePayment(id, toPayAmount, paymentDate, paymentMethod, notes);
         return "redirect:/payables";
     }
 

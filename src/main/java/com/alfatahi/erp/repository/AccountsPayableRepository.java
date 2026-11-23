@@ -1,16 +1,23 @@
 package com.alfatahi.erp.repository;
 import com.alfatahi.erp.dto.PayableCategoryTotals;
 import com.alfatahi.erp.entity.AccountsPayable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface AccountsPayableRepository extends JpaRepository<AccountsPayable, UUID> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM AccountsPayable p WHERE p.id = :id")
+    Optional<AccountsPayable> findForUpdateById(@Param("id") UUID id);
 
     @Query("""
             SELECT new com.alfatahi.erp.dto.PayableCategoryTotals(p.category, p.subcategory, COUNT(p),

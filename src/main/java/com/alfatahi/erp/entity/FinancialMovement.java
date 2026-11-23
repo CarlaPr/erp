@@ -36,6 +36,10 @@ public class FinancialMovement {
     private String paymentMethod;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bank_account_id")
+    private BankAccount bankAccount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "accounts_receivable_id")
     private AccountsReceivable accountsReceivable;
 
@@ -62,6 +66,8 @@ public class FinancialMovement {
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    public BankAccount getBankAccount() { return bankAccount; }
+    public void setBankAccount(BankAccount bankAccount) { this.bankAccount = bankAccount; }
     public AccountsReceivable getAccountsReceivable() { return accountsReceivable; }
     public void setAccountsReceivable(AccountsReceivable accountsReceivable) { this.accountsReceivable = accountsReceivable; }
     public AccountsPayable getAccountsPayable() { return accountsPayable; }

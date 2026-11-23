@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.beans.PropertyEditorSupport;
 import java.math.BigDecimal;
@@ -33,6 +34,7 @@ public class ReceivableController {
     private final WorkOrderService workOrderService;
     private final FinanceService financeService;
     private final CashLedgerService cashLedgerService;
+    private final BankAccountService bankAccountService;
     private final ClientRepository clientRepository;
     private final WorkOrderRepository workOrderRepository;
 
@@ -40,7 +42,8 @@ public class ReceivableController {
                                 ClientService clientService,
                                 WorkOrderService workOrderService,
                                 FinanceService financeService,
-                             CashLedgerService cashLedgerService,
+                                CashLedgerService cashLedgerService,
+                                BankAccountService bankAccountService,
                                 ClientRepository clientRepository,
                                 WorkOrderRepository workOrderRepository) {
         this.receivableRepository = receivableRepository;
@@ -48,6 +51,7 @@ public class ReceivableController {
         this.workOrderService = workOrderService;
         this.financeService = financeService;
         this.cashLedgerService = cashLedgerService;
+        this.bankAccountService = bankAccountService;
         this.clientRepository = clientRepository;
         this.workOrderRepository = workOrderRepository;
     }
@@ -154,6 +158,8 @@ public class ReceivableController {
         model.addAttribute("workOrders", workOrders);
         model.addAttribute("pendingWorkOrders", pendingWorkOrders);
         model.addAttribute("newReceivable", new AccountsReceivable());
+        model.addAttribute("bankAccounts", bankAccountService.listAccounts());
+        model.addAttribute("paymentToday", FinancialPeriod.today());
 
         model.addAttribute("saldoReal", saldoReal);
         model.addAttribute("valFaturado", faturado);
@@ -196,7 +202,10 @@ public class ReceivableController {
             receivable.setWorkOrder(null);
         }
 
-        if (receivable.getReceivedAmount() == null) receivable.setReceivedAmount(BigDecimal.ZERO);
+        receivable.setReceivedAmount(BigDecimal.ZERO);
+        receivable.setGrossReceivedAmount(BigDecimal.ZERO);
+        receivable.setFeeAmount(BigDecimal.ZERO);
+        receivable.setPaymentDate(null);
         if (receivable.getInstallments() == null) receivable.setInstallments(1);
         if (receivable.getDiscount() == null) receivable.setDiscount(BigDecimal.ZERO);
         if (receivable.getCardFeePercentage() == null) receivable.setCardFeePercentage(BigDecimal.ZERO);
@@ -218,9 +227,10 @@ public class ReceivableController {
         return "redirect:/receivables";
     }
 
+    @Transactional
     @PostMapping("/edit/{id}")
     public String edit(@PathVariable UUID id, @ModelAttribute AccountsReceivable form) {
-        AccountsReceivable ar = receivableRepository.findById(id)
+        AccountsReceivable ar = receivableRepository.findForUpdateById(id)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
 
         String newStage = (form.getPaymentStage() != null && !form.getPaymentStage().isBlank())
@@ -231,8 +241,6 @@ public class ReceivableController {
             wo = workOrderService.findById(form.getWorkOrder().getId());
         }
 
-        // Evita duas contas ativas com o mesmo estágio de pagamento (ex.: duas "entrada")
-        // para a mesma O.S., o que deixaria o status de pagamento da O.S. inconsistente.
         if (wo != null && hasDuplicatePaymentStage(wo, newStage, ar.getId())) {
             return "redirect:/receivables?error=duplicate_payment_stage";
         }
@@ -248,13 +256,18 @@ public class ReceivableController {
         ar.setCardFeePercentage(form.getCardFeePercentage());
         ar.setDiscount(form.getDiscount());
 
-        BigDecimal received = form.getReceivedAmount() != null ? form.getReceivedAmount() : BigDecimal.ZERO;
-        if (received.compareTo(BigDecimal.ZERO) <= 0) {
-            ar.setStatus("pending");
-        } else if (received.compareTo(ar.getTotalAmount()) >= 0) {
-            ar.setStatus("received");
-        } else {
-            ar.setStatus("partial");
+        if ("pending".equals(ar.getStatus()) || "partial".equals(ar.getStatus()) || "received".equals(ar.getStatus())) {
+            BigDecimal received = ar.getGrossReceivedAmount();
+            if (received.signum() == 0) {
+                received = ar.getReceivedAmount().add(ar.getFeeAmount());
+            }
+            if (received.signum() <= 0) {
+                ar.setStatus("pending");
+            } else if (received.compareTo(ar.getTotalAmount()) >= 0) {
+                ar.setStatus("received");
+            } else {
+                ar.setStatus("partial");
+            }
         }
 
         if (form.getClient() != null && form.getClient().getId() != null) {
@@ -287,25 +300,23 @@ public class ReceivableController {
             @RequestParam BigDecimal amount,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate paymentDate,
             @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false) UUID bankAccountId,
             @RequestParam(required = false) BigDecimal discount,
             @RequestParam(required = false) BigDecimal cardFee,
-            @RequestParam(required = false) String notes) {
-
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            return "redirect:/receivables?error=invalid_amount";
+            @RequestParam(required = false) String notes,
+            RedirectAttributes redirectAttributes) {
+        try {
+            financeService.processReceivablePayment(id, amount, paymentDate, cardFee, discount, paymentMethod, bankAccountId, notes);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("paymentError", e.getMessage());
+            return "redirect:/receivables";
         }
-
-        financeService.processReceivablePayment(id, amount, paymentDate, cardFee, discount, paymentMethod, notes);
-
         return "redirect:/receivables?success=payment_processed";
     }
 
     @PostMapping("/cancel/{id}")
     public String cancel(@PathVariable UUID id) {
-        AccountsReceivable ar = receivableRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
-        ar.setStatus("cancelled");
-        receivableRepository.save(ar);
+        financeService.cancelReceivable(id);
         return "redirect:/receivables";
     }
 

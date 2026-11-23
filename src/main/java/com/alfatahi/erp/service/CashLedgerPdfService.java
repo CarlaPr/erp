@@ -82,7 +82,7 @@ public class CashLedgerPdfService {
                 : entry.isFinancialExpense() ? "Taxa" : "Saída";
         return new Line(entry.getDate().format(DATE), type, text(entry.getParty()), text(entry.getDescription()),
                 text(entry.getWorkOrderNumber()), text(entry.getPaymentMethod()),
-                entry.getBalanceLocation() == CashLedgerEntryDto.BalanceLocation.DINHEIRO ? "Dinheiro" : "Banco",
+                text(entry.getAccountLabel()),
                 entry.getEntrada().signum() == 0 ? "-" : money(entry.getEntrada()),
                 entry.getSaida().signum() == 0 ? "-" : money(entry.getSaida()), money(entry.getSaldo()),
                 text(entry.getNotes()), entry.isFinancialExpense(), entry.getSaldo().signum() < 0);

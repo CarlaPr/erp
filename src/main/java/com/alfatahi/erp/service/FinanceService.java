@@ -21,6 +21,7 @@ public class FinanceService {
     private final AccountsReceivableRepository receivableRepository;
     private final WorkOrderRepository workOrderRepository;
     private final FinancialMovementRepository financialMovementRepository;
+    private final BankAccountService bankAccountService;
     private final ExpenseAllocationRepository expenseAllocationRepository;
     private final WorkOrderItemRepository workOrderItemRepository;
 
@@ -28,12 +29,14 @@ public class FinanceService {
                           AccountsReceivableRepository receivableRepository,
                           WorkOrderRepository workOrderRepository,
                           FinancialMovementRepository financialMovementRepository,
+                          BankAccountService bankAccountService,
                           ExpenseAllocationRepository expenseAllocationRepository,
                           WorkOrderItemRepository workOrderItemRepository) {
         this.payableRepository = payableRepository;
         this.receivableRepository = receivableRepository;
         this.workOrderRepository = workOrderRepository;
         this.financialMovementRepository = financialMovementRepository;
+        this.bankAccountService = bankAccountService;
         this.expenseAllocationRepository = expenseAllocationRepository;
         this.workOrderItemRepository = workOrderItemRepository;
     }
@@ -48,17 +51,23 @@ public class FinanceService {
 
     @Transactional
     public void processPayablePayment(UUID payableId, BigDecimal amountPaid,
-                                      LocalDate paymentDate, String paymentMethod, String notes) {
-        AccountsPayable ap = payableRepository.findById(payableId)
+                                      LocalDate paymentDate, String paymentMethod, UUID bankAccountId, String notes) {
+        AccountsPayable ap = payableRepository.findForUpdateById(payableId)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada: " + payableId));
+
+        if (amountPaid == null) {
+            amountPaid = ap.getBalance();
+        }
+        validatePayment(ap.getStatus(), amountPaid);
+        LocalDate effectivePaymentDate = paymentDate != null ? paymentDate : FinancialPeriod.today();
+        String effectivePaymentMethod = paymentMethod != null && !paymentMethod.isBlank()
+                ? paymentMethod : ap.getPaymentMethod();
+        FinancialMovement movement = createMovement(FinancialMovement.MovementType.SAIDA,
+                amountPaid, effectivePaymentDate, effectivePaymentMethod, bankAccountId);
+        movement.setAccountsPayable(ap);
 
         BigDecimal newTotalPaid = ap.getPaidAmount().add(amountPaid);
         ap.setPaidAmount(newTotalPaid);
-
-        LocalDate effectivePaymentDate = paymentDate != null ? paymentDate : LocalDate.now();
-        String effectivePaymentMethod = paymentMethod != null && !paymentMethod.isBlank()
-                ? paymentMethod : ap.getPaymentMethod();
-
         ap.setPaymentDate(effectivePaymentDate);
         if (effectivePaymentMethod != null && !effectivePaymentMethod.isBlank())
             ap.setPaymentMethod(effectivePaymentMethod);
@@ -71,12 +80,12 @@ public class FinanceService {
             ap.setStatus("paid");
         }
         payableRepository.save(ap);
-        recordPayableMovement(ap, amountPaid, effectivePaymentDate, effectivePaymentMethod);
+        financialMovementRepository.save(movement);
     }
 
     @Transactional
     public void cancelPayable(UUID payableId) {
-        AccountsPayable ap = payableRepository.findById(payableId).orElseThrow();
+        AccountsPayable ap = payableRepository.findForUpdateById(payableId).orElseThrow();
         ap.setStatus("cancelled");
         payableRepository.save(ap);
         removeAllocationsAndCosts(payableId);
@@ -85,11 +94,12 @@ public class FinanceService {
     @Transactional
     public void processReceivablePayment(UUID receivableId, BigDecimal amountReceived,
                                          LocalDate paymentDate, BigDecimal cardFeePercent,
-                                         BigDecimal discountAmount, String paymentMethod, String notes) {
+                                         BigDecimal discountAmount, String paymentMethod, UUID bankAccountId, String notes) {
 
-        AccountsReceivable ar = receivableRepository.findById(receivableId)
+        AccountsReceivable ar = receivableRepository.findForUpdateById(receivableId)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada: " + receivableId));
 
+        validatePayment(ar.getStatus(), amountReceived);
         BigDecimal fee = (cardFeePercent != null) ? cardFeePercent : BigDecimal.ZERO;
         BigDecimal feeForThisPayment;
         BigDecimal netAmount;
@@ -107,6 +117,13 @@ public class FinanceService {
             netAmount = amountReceived;
         }
 
+        LocalDate effectivePaymentDate = paymentDate != null ? paymentDate : FinancialPeriod.today();
+        String effectivePaymentMethod = paymentMethod != null && !paymentMethod.isBlank()
+                ? paymentMethod : ar.getPaymentMethod();
+        FinancialMovement movement = createMovement(FinancialMovement.MovementType.ENTRADA,
+                netAmount, effectivePaymentDate, effectivePaymentMethod, bankAccountId);
+        movement.setAccountsReceivable(ar);
+
         BigDecimal newNetTotal   = ar.getReceivedAmount().add(netAmount);
         BigDecimal newGrossTotal = ar.getGrossReceivedAmount().add(amountReceived);
         BigDecimal newFeeTotal   = ar.getFeeAmount().add(feeForThisPayment);
@@ -114,10 +131,6 @@ public class FinanceService {
         ar.setReceivedAmount(newNetTotal);
         ar.setGrossReceivedAmount(newGrossTotal);
         ar.setFeeAmount(newFeeTotal);
-
-        LocalDate effectivePaymentDate = paymentDate != null ? paymentDate : LocalDate.now();
-        String effectivePaymentMethod = paymentMethod != null && !paymentMethod.isBlank()
-                ? paymentMethod : ar.getPaymentMethod();
 
         ar.setPaymentDate(effectivePaymentDate);
         if (effectivePaymentMethod != null && !effectivePaymentMethod.isBlank())
@@ -195,12 +208,12 @@ public class FinanceService {
         }
 
         receivableRepository.save(ar);
-        recordReceivableMovement(ar, netAmount, effectivePaymentDate, effectivePaymentMethod);
+        financialMovementRepository.save(movement);
     }
 
     @Transactional
     public void cancelReceivable(UUID receivableId) {
-        AccountsReceivable ar = receivableRepository.findById(receivableId).orElseThrow();
+        AccountsReceivable ar = receivableRepository.findForUpdateById(receivableId).orElseThrow();
         ar.setStatus("cancelled");
         receivableRepository.save(ar);
     }
@@ -214,28 +227,30 @@ public class FinanceService {
                                 BigDecimal.ZERO, AccountsPayable::getTotalAmount, BigDecimal::add)));
     }
 
-    private void recordPayableMovement(AccountsPayable payable, BigDecimal amount,
-                                       LocalDate date, String paymentMethod) {
-        FinancialMovement movement = new FinancialMovement();
-        movement.setMovementDate(date);
-        movement.setType(FinancialMovement.MovementType.SAIDA);
-        movement.setBalanceLocation(resolveBalanceLocation(paymentMethod));
-        movement.setAmount(amount);
-        movement.setPaymentMethod(paymentMethod);
-        movement.setAccountsPayable(payable);
-        financialMovementRepository.save(movement);
+    private void validatePayment(String status, BigDecimal amount) {
+        if (!"pending".equals(status) && !"partial".equals(status)) {
+            throw new IllegalArgumentException("A conta precisa estar em aberto para registrar uma baixa.");
+        }
+        if (amount == null || amount.signum() <= 0 || amount.stripTrailingZeros().scale() > 2) {
+            throw new IllegalArgumentException("Informe um valor maior que zero com até duas casas decimais.");
+        }
     }
 
-    private void recordReceivableMovement(AccountsReceivable receivable, BigDecimal amount,
-                                          LocalDate date, String paymentMethod) {
+    private FinancialMovement createMovement(FinancialMovement.MovementType type, BigDecimal amount,
+                                              LocalDate date, String paymentMethod, UUID bankAccountId) {
+        if (paymentMethod == null || paymentMethod.isBlank()) {
+            throw new IllegalArgumentException("Informe a forma de pagamento.");
+        }
         FinancialMovement movement = new FinancialMovement();
         movement.setMovementDate(date);
-        movement.setType(FinancialMovement.MovementType.ENTRADA);
+        movement.setType(type);
         movement.setBalanceLocation(resolveBalanceLocation(paymentMethod));
         movement.setAmount(amount);
         movement.setPaymentMethod(paymentMethod);
-        movement.setAccountsReceivable(receivable);
-        financialMovementRepository.save(movement);
+        if (movement.getBalanceLocation() == FinancialMovement.BalanceLocation.BANK) {
+            movement.setBankAccount(bankAccountService.requireAccount(bankAccountId));
+        }
+        return movement;
     }
 
     private FinancialMovement.BalanceLocation resolveBalanceLocation(String paymentMethod) {

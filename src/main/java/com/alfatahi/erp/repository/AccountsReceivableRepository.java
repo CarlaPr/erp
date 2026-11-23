@@ -1,6 +1,8 @@
 package com.alfatahi.erp.repository;
 import com.alfatahi.erp.entity.AccountsReceivable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -8,9 +10,14 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface AccountsReceivableRepository extends JpaRepository<AccountsReceivable, UUID> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM AccountsReceivable r WHERE r.id = :id")
+    Optional<AccountsReceivable> findForUpdateById(@Param("id") UUID id);
 
     List<AccountsReceivable> findAllByOrderByDueDateAsc();
 

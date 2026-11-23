@@ -134,7 +134,7 @@
 
                 </div>
 
-                <section id="paymentPlanContainer" class="sm:col-span-2 lg:col-span-6 rounded-2xl border border-cyan-200 dark:border-cyan-500/20 bg-cyan-50/50 dark:bg-cyan-500/5 p-4 sm:p-5">
+                <section id="paymentPlanContainer" class="scroll-mt-20 lg:scroll-mt-6 sm:col-span-2 lg:col-span-6 rounded-2xl border border-cyan-200 dark:border-cyan-500/20 bg-cyan-50/50 dark:bg-cyan-500/5 p-4 sm:p-5">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
                         <label class="block lg:col-span-1 text-slate-700 dark:text-slate-300 font-bold text-sm">
                             Condição de Pagamento
@@ -445,6 +445,18 @@
         </button>
     </div>
 
+    <dialog id="paymentPlanDialog" aria-labelledby="paymentPlanDialogTitle" aria-describedby="paymentPlanDialogMessage"
+            class="m-auto w-11/12 max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#131C2F] p-6 text-slate-900 dark:text-white shadow-2xl backdrop:bg-slate-950/60">
+        <h2 id="paymentPlanDialogTitle" class="text-xl font-black">Ajuste a Condição de Pagamento</h2>
+        <p id="paymentPlanDialogMessage" class="mt-2 text-sm text-slate-600 dark:text-slate-300"></p>
+        <div class="mt-6 flex justify-end">
+            <button type="button" autofocus onclick="closePaymentPlanDialog()"
+                    class="rounded-xl bg-brand-600 dark:bg-cyan-500 px-4 py-2.5 text-sm font-bold text-white dark:text-slate-900">
+                Ajustar valores
+            </button>
+        </div>
+    </dialog>
+
     <div id="paymentMethodsModal" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[110] p-4">
         <div class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <h3 class="font-black text-slate-900 dark:text-white text-lg mb-4 flex items-center gap-2">
@@ -673,6 +685,7 @@
     let approvedQuoteEditing = false;
     let approvedPaymentAmounts = {};
     let paymentPlanAmountsInitialized = false;
+    let reviewPaymentPlanAfterPreview = false;
 
     // Validade padrão sugerida (dias corridos a partir da emissão). Só é aplicada automaticamente enquanto
     // o usuário não tiver informado/alterado a data manualmente.
@@ -1409,7 +1422,9 @@
         error?.classList.add('hidden');
         applyPaymentPlanDefaults();
         updateApprovedPaymentSummary();
-        updatePaymentPlanSummary();
+        const reviewPaymentPlan = reviewPaymentPlanAfterPreview;
+        reviewPaymentPlanAfterPreview = false;
+        updatePaymentPlanSummary(reviewPaymentPlan);
     }
 
     function paymentPlanTarget() {
@@ -1450,12 +1465,13 @@
         updatePaymentPlanSummary();
     }
 
-    function updatePaymentPlanSummary() {
+    function updatePaymentPlanSummary(reviewPaymentPlan = false) {
         const target = paymentPlanTarget();
         const entry = parseMoedaBRL(document.getElementById('paymentEntryAmount')?.value);
         const delivery = parseMoedaBRL(document.getElementById('paymentDeliveryAmount')?.value);
         const distributed = entry + delivery;
-        const remaining = target == null ? null : target - distributed;
+        const remainingCents = target == null ? null : Math.round(target * 100) - Math.round(distributed * 100);
+        const remaining = remainingCents == null ? null : remainingCents / 100;
         const totalEl = document.getElementById('paymentPlanTotal');
         const allocatedEl = document.getElementById('paymentPlanAllocated');
         const remainingEl = document.getElementById('paymentPlanRemaining');
@@ -1463,17 +1479,18 @@
         if (allocatedEl) allocatedEl.textContent = formatarMoeda(distributed);
         if (remainingEl) {
             remainingEl.textContent = remaining == null ? '—' : formatarMoeda(remaining);
-            remainingEl.classList.toggle('text-rose-600', remaining != null && remaining < -0.005);
-            remainingEl.classList.toggle('text-emerald-600', remaining != null && Math.abs(remaining) <= 0.005);
+            remainingEl.classList.toggle('text-rose-600', remainingCents != null && remainingCents < 0);
+            remainingEl.classList.toggle('text-emerald-600', remainingCents === 0);
         }
 
         const plan = document.getElementById('quotePaymentPlan')?.value || 'SPLIT_50_50';
+        const totalsDiffer = remainingCents != null && remainingCents !== 0;
         let message = '';
         if (target == null) message = 'Aguarde o cálculo do total do orçamento.';
         else if (entry < 0 || delivery < 0) message = 'Os valores da entrada e da entrega não podem ser negativos.';
-        else if (Math.round(distributed * 100) !== Math.round(target * 100)) {
+        else if (totalsDiffer) {
             message = remaining > 0
-                ? `Ainda falta distribuir ${formatarMoeda(remaining)} entre a entrada e a entrega.`
+                ? `Ainda falta distribuir ${formatarMoeda(remaining)} para atingir o total previsto.`
                 : `Os valores excedem o total em ${formatarMoeda(Math.abs(remaining))}.`;
         } else if (target > 0 && plan === 'SPLIT_50_50' && (entry <= 0 || delivery <= 0)) {
             message = 'Informe um valor maior que zero para a entrada e para a entrega.';
@@ -1493,6 +1510,26 @@
             button.disabled = Boolean(message || approvedPaymentError);
         });
         saveQuoteDraft();
+        if (reviewPaymentPlan && totalsDiffer) showPaymentPlanDialog(message);
+    }
+
+    function scrollToPaymentPlan() {
+        const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+        document.getElementById('paymentPlanContainer').scrollIntoView({ behavior, block: 'start' });
+    }
+
+    function showPaymentPlanDialog(message) {
+        const dialog = document.getElementById('paymentPlanDialog');
+        document.getElementById('paymentPlanDialogMessage').textContent = message;
+        if (!dialog.open) dialog.showModal();
+        scrollToPaymentPlan();
+    }
+
+    function closePaymentPlanDialog() {
+        document.getElementById('paymentPlanDialog').close();
+        const deliveryOnly = document.getElementById('quotePaymentPlan').value === 'FULL_ON_DELIVERY';
+        document.getElementById(deliveryOnly ? 'paymentDeliveryAmount' : 'paymentEntryAmount').focus({ preventScroll: true });
+        scrollToPaymentPlan();
     }
 
     function onPaymentPlanChanged() {
@@ -1841,6 +1878,9 @@
         }
 
         const itemData = { category: cat, product: prod, width: w, height: h, measurements, quantity: q, unitPrice: price };
+        const previousItem = currentItems[editingItemIndex];
+        const previousSubtotal = previousItem ? QuoteMeasurements.subtotal(previousItem) : 0;
+        const subtotalChanged = QuoteMeasurements.subtotal(itemData) !== previousSubtotal;
 
         if (editingItemIndex >= 0) {
             currentItems[editingItemIndex] = itemData;
@@ -1848,9 +1888,7 @@
             currentItems.push(itemData);
         }
 
-        clearItemForm();
-        cancelEditItem(false);
-        renderQuoteItems();
+        cancelEditItem(subtotalChanged);
     }
 
     function editQuoteItem(idx) {
@@ -1878,7 +1916,7 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
-    function cancelEditItem(clearForm = true) {
+    function cancelEditItem(reviewPaymentPlan = false) {
         editingItemIndex = -1;
 
         const banner = document.getElementById('itemEditBanner');
@@ -1887,25 +1925,26 @@
         const addBtn = document.getElementById('btnAddItem');
         if(addBtn) addBtn.innerHTML = '<i data-lucide="plus" class="w-5 h-5"></i> Adicionar à Lista';
 
-        if (clearForm) clearItemForm();
-
-        renderQuoteItems();
+        clearItemForm();
+        renderQuoteItems(reviewPaymentPlan);
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     function removeQuoteItem(idx) {
-        currentItems.splice(idx, 1);
+        const [removedItem] = currentItems.splice(idx, 1);
+        if (!removedItem) return;
+        const reviewPaymentPlan = QuoteMeasurements.subtotal(removedItem) !== 0;
 
         if (editingItemIndex === idx) {
-            cancelEditItem();
+            cancelEditItem(reviewPaymentPlan);
         } else {
             if (editingItemIndex > idx) editingItemIndex--;
-            renderQuoteItems();
+            renderQuoteItems(reviewPaymentPlan);
         }
     }
 
-    function renderQuoteItems() {
+    function renderQuoteItems(reviewPaymentPlan = false) {
         const tbody = document.getElementById('quoteItemsTable');
         const cardsWrap = document.getElementById('quoteItemsCards');
         const emptyState = document.getElementById('quoteItemsEmpty');
@@ -2003,6 +2042,7 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
         saveQuoteDraft();
+        if (reviewPaymentPlan) reviewPaymentPlanAfterPreview = true;
         refreshCommercialConditions();
     }
 
@@ -2380,9 +2420,9 @@
         const deliveryDateInput = document.getElementById('quoteDeliveryDate');
         if (!deliveryDateInput.reportValidity()) return;
         updatePaymentPlanSummary();
-        if (document.getElementById('paymentPlanError')?.textContent) {
-            alert(document.getElementById('paymentPlanError').textContent);
-            document.getElementById('paymentPlanContainer')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const paymentPlanError = document.getElementById('paymentPlanError')?.textContent;
+        if (paymentPlanError) {
+            showPaymentPlanDialog(paymentPlanError);
             return;
         }
         updateApprovedPaymentSummary();
@@ -2628,6 +2668,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('paymentPlanDialog').addEventListener('cancel', event => {
+            event.preventDefault();
+            closePaymentPlanDialog();
+        });
         setItemMeasurements([]);
         document.getElementById('itemMeasurements').addEventListener('input', updateItemMeasurementSummary);
         const idVal = document.getElementById('quoteId').value;

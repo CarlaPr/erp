@@ -1,11 +1,13 @@
 package com.alfatahi.erp.controller;
 
 import com.alfatahi.erp.dto.CashLedgerReport;
+import com.alfatahi.erp.service.BankAccountService;
 import com.alfatahi.erp.service.CashLedgerPdfService;
 import com.alfatahi.erp.service.CashLedgerService;
 import com.alfatahi.erp.service.FinancialPeriod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -14,10 +16,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
@@ -28,10 +32,13 @@ public class CashLedgerController {
     private static final Logger log = LoggerFactory.getLogger(CashLedgerController.class);
     private final CashLedgerService cashLedgerService;
     private final CashLedgerPdfService cashLedgerPdfService;
+    private final BankAccountService bankAccountService;
 
-    public CashLedgerController(CashLedgerService cashLedgerService, CashLedgerPdfService cashLedgerPdfService) {
+    public CashLedgerController(CashLedgerService cashLedgerService, CashLedgerPdfService cashLedgerPdfService,
+                                BankAccountService bankAccountService) {
         this.cashLedgerService = cashLedgerService;
         this.cashLedgerPdfService = cashLedgerPdfService;
+        this.bankAccountService = bankAccountService;
     }
 
     @GetMapping
@@ -51,6 +58,7 @@ public class CashLedgerController {
         CashLedgerReport report = cashLedgerService.buildReport(period.from(), period.to());
 
         model.addAttribute("currentPage",    "cash-ledger");
+        model.addAttribute("bankAccountBalances", bankAccountService.currentBalances());
         model.addAttribute("entries",        report.entries());
         model.addAttribute("from",           report.from());
         model.addAttribute("to",             report.to());
@@ -65,6 +73,20 @@ public class CashLedgerController {
         model.addAttribute("openingBankBalance", report.openingBalances().bank());
         model.addAttribute("openingCashBalance", report.openingBalances().cash());
         return "cash-ledger";
+    }
+
+    @PostMapping("/bank-accounts")
+    public String createBankAccount(@RequestParam String name, @RequestParam(required = false) BigDecimal openingBalance,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            bankAccountService.create(name, openingBalance);
+            redirectAttributes.addFlashAttribute("bankAccountSuccess", "Conta bancária cadastrada.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("bankAccountError", e.getMessage());
+        } catch (DataIntegrityViolationException e) {
+            redirectAttributes.addFlashAttribute("bankAccountError", "Já existe uma conta bancária com esse nome.");
+        }
+        return "redirect:/cash-ledger#contas-bancarias";
     }
 
     @GetMapping("/pdf")

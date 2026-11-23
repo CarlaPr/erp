@@ -1,854 +1,696 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-
 <head th:replace="~{fragments/layout :: head(title='Livro Caixa - Grupo Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200">
 
-<body class="bg-slate-50 dark:bg-[#0B1120] flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300 overflow-x-hidden">
+<style>
+    .cl-page, .cl-page * { box-sizing: border-box; }
+    .cl-page {
+        --cl-surface: #ffffff; --cl-surface-soft: #f8fafc; --cl-text: #172338;
+        --cl-muted: #66758b; --cl-line: #e2e8f0; --cl-brand: #2563eb;
+        --cl-brand-hover: #1d4ed8; --cl-blue-soft: #eff6ff;
+        --cl-green: #047857; --cl-red: #dc2626; --cl-amber: #b45309;
+        min-width: 0; width: 100%; min-height: 100vh;
+        padding: 80px 14px 36px; color: var(--cl-text);
+    }
+    .dark .cl-page {
+        --cl-surface: #141e30; --cl-surface-soft: #0f1728; --cl-text: #eef3fc;
+        --cl-muted: #9eacc2; --cl-line: #2b3950; --cl-brand: #37b9e7;
+        --cl-brand-hover: #18a7d6; --cl-blue-soft: #182c42;
+        --cl-green: #4adea5; --cl-red: #fb7185; --cl-amber: #fbbf24;
+    }
+    .cl-page svg { width: 19px; height: 19px; flex-shrink: 0; }
+    .cl-container { width: 100%; max-width: 1600px; margin: 0 auto; }
+    .cl-page-header { display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between; align-items: center; margin-bottom: 26px; }
+    .cl-page-heading, .cl-section-heading { display: flex; align-items: flex-start; gap: 13px; min-width: 0; }
+    .cl-heading-icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 15px; color: white; background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 8px 16px #2563eb21; }
+    .cl-heading-icon svg { width: 24px; height: 24px; }
+    .cl-heading-copy { min-width: 0; }
+    .cl-eyebrow { display: block; font-size: 11px; letter-spacing: .09em; text-transform: uppercase; font-weight: 800; color: var(--cl-muted); margin: 1px 0 4px; }
+    .cl-eyebrow span { padding: 0 5px; color: #a9b3c2; }
+    .cl-page h1 { font-size: clamp(24px, 3vw, 32px); line-height: 1.16; letter-spacing: -.035em; font-weight: 800; margin: 0; }
+    .cl-page-header p { color: var(--cl-muted); font-size: 13px; line-height: 1.55; margin: 7px 0 0; }
+    .cl-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 11px 17px; border-radius: 11px; border: 1px solid transparent; font: inherit; font-size: 13px; line-height: 1.3; font-weight: 800; text-align: center; text-decoration: none; cursor: pointer; transition: background .15s, box-shadow .15s, border-color .15s, transform .15s; white-space: nowrap; }
+    .cl-button svg { width: 17px; height: 17px; }
+    .cl-button:active { transform: translateY(1px); }
+    .cl-button-primary { background: #2563eb; border-color: #2563eb; color: white; box-shadow: 0 6px 12px #2563eb1a; }
+    .cl-button-primary:hover { background: #1d4ed8; }
+    .cl-button-outline { background: var(--cl-surface); border-color: var(--cl-line); color: var(--cl-text); }
+    .cl-button-outline:hover { background: var(--cl-surface-soft); border-color: #94a3b8; }
+    .cl-arrow-end { width: 14px !important; height: 14px !important; color: var(--cl-muted); }
+    .cl-page :is(input, button, summary, a, .cl-table-scroll):focus-visible { outline: 3px solid #38bdf8; outline-offset: 3px; }
+    .cl-panel { background: var(--cl-surface); border: 1px solid var(--cl-line); border-radius: 18px; padding: 20px; box-shadow: 0 4px 18px #17233807; }
+    .cl-bank-section, .cl-filter-section { margin-bottom: 24px; }
+    .cl-section-header { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 19px; }
+    .cl-section-icon { display: grid; place-items: center; width: 39px; height: 39px; flex: 0 0 39px; border-radius: 12px; }
+    .cl-section-icon svg { width: 19px; height: 19px; }
+    .cl-section-icon-blue { background: #e9f1ff; color: #2563eb; }
+    .cl-section-icon-slate { background: #eef2f7; color: #52637c; }
+    .dark .cl-section-icon-blue { background: #183452; color: #67d5ff; }
+    .dark .cl-section-icon-slate { background: #25344b; color: #a8b7cc; }
+    .cl-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+    .cl-page h2 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.018em; line-height: 1.4; }
+    .cl-section-heading p { margin: 4px 0 0; color: var(--cl-muted); font-size: 12px; line-height: 1.55; }
+    .cl-counter { border: 1px solid var(--cl-line); background: var(--cl-surface-soft); border-radius: 999px; padding: 3px 8px; color: var(--cl-muted); font-size: 10px; font-weight: 800; white-space: nowrap; }
+    .cl-alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin: 12px 0; font-size: 13px; line-height: 1.5; font-weight: 600; border-radius: 12px; }
+    .cl-alert svg { width: 18px; height: 18px; margin-top: 1px; }
+    .cl-alert-success { color: #047857; border: 1px solid #a7f3d0; background: #ecfdf5; }
+    .cl-alert-error { color: #be123c; border: 1px solid #fecdd3; background: #fff1f2; }
+    .dark .cl-alert-success { color: #6ee7b7; background: #064e3b32; border-color: #04785766; }
+    .dark .cl-alert-error { color: #fda4af; background: #88133732; border-color: #be123c66; }
+    .cl-account-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); gap: 14px; }
+    .cl-account-card { position: relative; isolation: isolate; overflow: hidden; min-width: 0; padding: 18px; border: 1px solid var(--cl-line); border-radius: 15px; background: linear-gradient(148deg, var(--cl-surface) 43%, var(--cl-blue-soft) 160%); }
+    .cl-account-card::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, #2563eb, #38bdf8); }
+    .cl-account-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .cl-account-avatar { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 42px; border-radius: 12px; background: var(--cl-blue-soft); color: #2563eb; }
+    .dark .cl-account-avatar { color: #67d5ff; }
+    .cl-account-identity { min-width: 0; flex: 1; }
+    .cl-kicker, .cl-small-label { display: block; font-size: 10px; font-weight: 700; line-height: 1.4; color: var(--cl-muted); }
+    .cl-kicker { text-transform: uppercase; letter-spacing: .075em; }
+    .cl-account-identity h3 { font-size: 14px; line-height: 1.35; margin: 3px 0 0; font-weight: 800; overflow-wrap: anywhere; }
+    .cl-account-number { color: var(--cl-muted); font-size: 10px; font-weight: 800; background: var(--cl-surface-soft); border-radius: 7px; padding: 4px 6px; align-self: flex-start; }
+    .cl-account-balance { margin-top: 24px; }
+    .cl-account-amount { display: block; margin-top: 5px; font-size: clamp(22px, 2vw, 29px); line-height: 1.2; font-weight: 850; letter-spacing: -.035em; }
+    .cl-money { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .cl-account-divider { height: 1px; background: var(--cl-line); margin: 20px 0 14px; }
+    .cl-account-bottom { display: flex; gap: 15px; justify-content: space-between; align-items: flex-start; }
+    .cl-account-bottom > div { min-width: 0; }
+    .cl-account-difference { text-align: right; }
+    .cl-account-secondary { display: block; margin-top: 4px; font-size: 12px; font-weight: 800; }
+    .cl-positive { color: var(--cl-green) !important; }
+    .cl-negative { color: var(--cl-red) !important; }
+    .cl-warning { color: var(--cl-amber) !important; }
+    .cl-neutral { color: var(--cl-muted) !important; }
+    .cl-bank-empty, .cl-entry-empty { border: 1px dashed var(--cl-line); border-radius: 15px; text-align: center; padding: 24px 17px; background: var(--cl-surface-soft); }
+    .cl-empty-icon { width: 46px; height: 46px; margin: 0 auto 11px; display: grid; place-items: center; color: var(--cl-muted); background: var(--cl-surface); border-radius: 14px; border: 1px solid var(--cl-line); }
+    .cl-bank-empty h3 { font-size: 15px; font-weight: 800; margin: 0; }
+    .cl-bank-empty p, .cl-entry-empty p { font-size: 12px; line-height: 1.6; color: var(--cl-muted); margin: 6px auto 0; max-width: 450px; }
+    .cl-create-account { margin-top: 18px; border: 1px solid var(--cl-line); border-radius: 13px; overflow: hidden; }
+    .cl-create-trigger { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 62px; padding: 12px 14px; list-style: none; cursor: pointer; background: var(--cl-surface-soft); }
+    .cl-create-trigger::-webkit-details-marker { display: none; }
+    .cl-create-trigger-left { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .cl-create-plus { flex: 0 0 33px; height: 33px; display: grid; place-items: center; border-radius: 10px; background: var(--cl-blue-soft); color: var(--cl-brand); }
+    .cl-create-plus svg { width: 17px; height: 17px; }
+    .cl-create-trigger strong, .cl-create-trigger small { display: block; }
+    .cl-create-trigger strong { font-size: 13px; color: var(--cl-text); font-weight: 800; }
+    .cl-create-trigger small { font-size: 11px; margin-top: 3px; line-height: 1.45; color: var(--cl-muted); }
+    .cl-details-chevron { color: var(--cl-muted); transition: transform .2s; }
+    .cl-create-account[open] .cl-details-chevron { transform: rotate(180deg); }
+    .cl-create-content { padding: 16px; border-top: 1px solid var(--cl-line); }
+    .cl-form-note { margin: 0 0 14px; font-size: 12px; color: var(--cl-muted); line-height: 1.6; }
+    .cl-bank-form, .cl-filter-form { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+    .cl-field { min-width: 0; }
+    .cl-field label { display: block; margin-bottom: 7px; color: var(--cl-text); font-size: 12px; font-weight: 800; }
+    .cl-field label span { color: var(--cl-red); }
+    .cl-field input { display: block; width: 100%; min-width: 0; min-height: 45px; height: 45px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; color: var(--cl-text); background: var(--cl-surface); font: inherit; font-size: 14px; outline: none; color-scheme: light; transition: border-color .15s, box-shadow .15s; }
+    .cl-field input::placeholder { color: #94a3b8; }
+    .cl-field input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px #3b82f61c; }
+    .dark .cl-field input { border-color: #3a4b63; color-scheme: dark; }
+    .cl-field small { display: block; margin-top: 6px; font-size: 10px; color: var(--cl-muted); line-height: 1.4; }
+    .cl-input-currency { position: relative; }
+    .cl-input-currency > span { position: absolute; z-index: 1; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 12px; color: var(--cl-muted); font-weight: 800; }
+    .cl-input-currency input { padding-left: 39px; }
+    .cl-save-account { margin-bottom: 20px; }
+    .cl-filter-header { align-items: center; }
+    .cl-period-shortcuts { display: flex; flex-wrap: wrap; gap: 7px; }
+    .cl-period-shortcuts[hidden], .cl-validation-error[hidden] { display: none !important; }
+    .cl-shortcut { min-height: 35px; border: 1px solid var(--cl-line); border-radius: 9px; color: var(--cl-muted); background: var(--cl-surface-soft); font: inherit; font-size: 11px; font-weight: 800; padding: 7px 10px; cursor: pointer; }
+    .cl-shortcut:hover { color: var(--cl-brand); border-color: var(--cl-brand); }
+    .cl-filter-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+    .cl-filter-actions { display: flex; gap: 8px; }
+    .cl-filter-actions .cl-button { height: 45px; }
+    .cl-validation-error { grid-column: 1 / -1; margin: -2px 0 0; font-size: 12px; color: var(--cl-red); }
+    .cl-results-section { margin-bottom: 24px; }
+    .cl-results-heading { margin-bottom: 13px; }
+    .cl-balance-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .cl-overview-card { min-width: 0; border-radius: 15px; border: 1px solid var(--cl-line); background: var(--cl-surface); padding: 18px; }
+    .cl-overview-primary { background: linear-gradient(135deg, #1e40af, #4338ca); color: #fff; border-color: transparent; box-shadow: 0 8px 20px #1d4ed820; }
+    .cl-overview-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--cl-muted); font-size: 11px; font-weight: 800; }
+    .cl-overview-head svg { width: 19px; height: 19px; color: var(--cl-brand); }
+    .cl-overview-primary .cl-overview-head, .cl-overview-primary .cl-overview-head svg { color: #dfebff; }
+    .cl-overview-value { font-size: clamp(20px, 2.25vw, 29px); line-height: 1.18; font-weight: 850; margin: 17px 0 0; letter-spacing: -.03em; }
+    .cl-overview-foot { font-size: 11px; margin: 7px 0 0; color: var(--cl-muted); }
+    .cl-overview-primary .cl-overview-foot { color: #dbeafe; }
+    .cl-metrics-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .cl-metric { min-width: 0; padding: 16px; background: var(--cl-surface); border: 1px solid var(--cl-line); border-radius: 13px; }
+    .cl-metric-final { border-color: #bfdbfe; background: var(--cl-blue-soft); }
+    .dark .cl-metric-final { border-color: #2c546f; }
+    .cl-metric-caption { display: flex; gap: 8px; align-items: center; font-size: 11px; font-weight: 800; color: var(--cl-muted); }
+    .cl-metric-caption svg { width: 16px; height: 16px; }
+    .cl-metric > strong { display: block; font-size: clamp(15px, 1.65vw, 21px); letter-spacing: -.02em; margin-top: 12px; line-height: 1.3; }
+    .cl-history-head { margin-bottom: 13px; }
+    .cl-table-shell { background: var(--cl-surface); border: 1px solid var(--cl-line); border-radius: 15px; overflow: hidden; }
+    .cl-table-hint { display: none; align-items: center; gap: 7px; padding: 9px 14px; font-size: 11px; color: var(--cl-muted); border-bottom: 1px solid var(--cl-line); background: var(--cl-surface-soft); }
+    .cl-table-hint svg { width: 14px; height: 14px; }
+    .cl-table-scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #94a3b8 transparent; }
+    .cl-table-scroll::-webkit-scrollbar { height: 7px; }
+    .cl-table-scroll::-webkit-scrollbar-thumb { background: #94a3b8aa; border-radius: 20px; }
+    .cl-table { border-collapse: collapse; border-spacing: 0; width: 100%; min-width: 1120px; font-size: 12px; text-align: left; }
+    .cl-table th { padding: 14px 12px; background: var(--cl-surface-soft); color: var(--cl-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .055em; font-weight: 850; white-space: nowrap; border-bottom: 1px solid var(--cl-line); }
+    .cl-table td { padding: 13px 12px; border-bottom: 1px solid var(--cl-line); max-width: 200px; }
+    .cl-table tbody tr:last-child td { border-bottom: 0; }
+    .cl-table tbody tr:hover { background: var(--cl-surface-soft); }
+    .cl-opening-row { background: var(--cl-surface-soft); color: var(--cl-muted); font-style: italic; }
+    .cl-nowrap { white-space: nowrap; }
+    .cl-truncate-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 135px !important; }
+    .cl-description-cell { max-width: 195px !important; }
+    .cl-align-right { text-align: right !important; white-space: nowrap; }
+    .cl-table-money { white-space: nowrap; font-weight: 850; font-variant-numeric: tabular-nums; }
+    .cl-table-empty { text-align: center; padding: 36px 16px !important; color: var(--cl-muted); }
+    .cl-tag { display: inline-flex; max-width: 125px; align-items: center; gap: 4px; padding: 5px 8px; border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; font-size: 10px; font-weight: 800; line-height: 1.2; }
+    .cl-tag svg { width: 12px; height: 12px; }
+    .cl-tag-income { background: #dcfce7; color: #166534; }
+    .cl-tag-expense { background: #ffe4e6; color: #be123c; }
+    .cl-tag-fee, .cl-tag-cash { background: #fef3c7; color: #92400e; }
+    .cl-tag-bank { background: #dbeafe; color: #1d4ed8; }
+    .dark .cl-tag-income { background: #064e3b88; color: #6ee7b7; }
+    .dark .cl-tag-expense { background: #88133777; color: #fda4af; }
+    .dark .cl-tag-fee, .dark .cl-tag-cash { background: #78350f77; color: #fcd34d; }
+    .dark .cl-tag-bank { background: #1e3a8a77; color: #93c5fd; }
+    .cl-mobile-history { display: none; }
+    @media (min-width: 1024px) {
+        .cl-page { margin-left: 18rem; width: calc(100% - 18rem); padding: 32px 28px 56px; }
+    }
+    @media (min-width: 1024px) and (max-width: 1439px) { .cl-table-hint { display: flex; } }
+    @media (max-width: 1100px) {
+        .cl-bank-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .cl-save-account { grid-column: 1 / -1; margin-bottom: 0; }
+        .cl-filter-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .cl-filter-actions { grid-column: 1 / -1; }
+        .cl-filter-actions .cl-button { flex: 1; }
+    }
+    @media (max-width: 1023px) {
+        .cl-table-shell { display: none; }
+        .cl-mobile-history { display: grid; gap: 11px; }
+        .cl-mobile-opening { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 15px 17px; border: 1px solid var(--cl-line); border-radius: 13px; background: var(--cl-surface-soft); }
+        .cl-mobile-opening strong { display: block; margin-top: 4px; font-size: 19px; font-weight: 850; }
+        .cl-mobile-opening-date { font-size: 11px; color: var(--cl-muted); font-weight: 800; white-space: nowrap; }
+        .cl-entry-card { background: var(--cl-surface); border: 1px solid var(--cl-line); border-radius: 15px; padding: 16px; min-width: 0; }
+        .cl-entry-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        .cl-entry-heading { display: flex; gap: 9px; min-width: 0; align-items: flex-start; }
+        .cl-entry-icon { display: grid; place-items: center; flex: 0 0 36px; height: 36px; border-radius: 11px; }
+        .cl-entry-icon svg { width: 17px; height: 17px; }
+        .cl-entry-icon-income { color: #047857; background: #d1fae5; }
+        .cl-entry-icon-expense { color: #e11d48; background: #ffe4e6; }
+        .cl-entry-icon-fee { color: #b45309; background: #fef3c7; }
+        .dark .cl-entry-icon-income { color: #6ee7b7; background: #064e3b77; }
+        .dark .cl-entry-icon-expense { color: #fda4af; background: #88133766; }
+        .dark .cl-entry-icon-fee { color: #fcd34d; background: #78350f66; }
+        .cl-entry-identity { min-width: 0; }
+        .cl-entry-identity strong { display: block; font-size: 13px; line-height: 1.3; font-weight: 850; overflow-wrap: anywhere; }
+        .cl-entry-identity > span { display: block; font-size: 11px; color: var(--cl-muted); margin-top: 4px; }
+        .cl-entry-amount-block { min-width: 0; text-align: right; }
+        .cl-entry-type { display: block; color: var(--cl-muted); font-size: 10px; font-weight: 750; }
+        .cl-entry-amount-block strong { display: block; margin-top: 4px; font-size: 15px; font-weight: 850; line-height: 1.35; }
+        .cl-entry-description { margin: 13px 0 0; font-size: 12px; color: var(--cl-muted); overflow-wrap: anywhere; line-height: 1.55; }
+        .cl-entry-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; border-top: 1px solid var(--cl-line); padding-top: 13px; margin-top: 13px; }
+        .cl-entry-info-grid strong { display: block; margin-top: 3px; font-size: 12px; font-weight: 800; overflow-wrap: anywhere; }
+        .cl-entry-footer { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding: 13px 0 0; margin-top: 13px; border-top: 1px solid var(--cl-line); }
+        .cl-entry-account { min-width: 0; }
+        .cl-entry-account .cl-tag { margin-top: 5px; }
+        .cl-entry-running-balance { min-width: 0; text-align: right; }
+        .cl-entry-running-balance strong { display: block; margin-top: 5px; font-size: 14px; font-weight: 850; }
+        .cl-entry-empty { padding: 25px 15px; }
+        .cl-entry-empty > strong { font-size: 14px; }
+    }
+    @media (max-width: 767px) {
+        .cl-page { padding: 78px 12px 30px; }
+        .cl-page-header { gap: 15px; margin-bottom: 20px; }
+        .cl-heading-icon { width: 43px; height: 43px; flex-basis: 43px; }
+        .cl-page-header p { font-size: 12px; }
+        .cl-closing-link { width: 100%; }
+        .cl-panel { padding: 15px; border-radius: 15px; }
+        .cl-section-header { margin-bottom: 15px; }
+        .cl-page h2 { font-size: 15px; }
+        .cl-section-icon { width: 35px; height: 35px; flex-basis: 35px; }
+        .cl-bank-section, .cl-filter-section, .cl-results-section { margin-bottom: 19px; }
+        .cl-account-grid { grid-template-columns: 1fr; gap: 10px; }
+        .cl-account-card { padding: 16px; }
+        .cl-account-balance { margin-top: 19px; }
+        .cl-account-amount { font-size: 26px; }
+        .cl-account-divider { margin: 15px 0 12px; }
+        .cl-bank-form, .cl-filter-form { grid-template-columns: minmax(0, 1fr); }
+        .cl-save-account, .cl-filter-actions { grid-column: 1; }
+        .cl-filter-header { display: block; }
+        .cl-period-shortcuts { margin: 13px 0 0 48px; }
+        .cl-filter-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .cl-filter-actions .cl-button { padding: 10px 8px; font-size: 12px; white-space: normal; }
+        .cl-balance-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .cl-overview-primary { grid-column: 1 / -1; }
+        .cl-overview-card { padding: 15px; }
+        .cl-overview-head { font-size: 10px; }
+        .cl-overview-value { font-size: 18px; }
+        .cl-overview-primary .cl-overview-value { font-size: 26px; }
+        .cl-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .cl-metric { padding: 13px 12px; }
+        .cl-metric-caption { font-size: 10px; align-items: flex-start; }
+        .cl-metric > strong { font-size: 16px; }
+        .cl-history-head { margin-bottom: 12px; }
+    }
+    @media (max-width: 389px) {
+        .cl-page { padding-left: 10px; padding-right: 10px; }
+        .cl-panel { padding: 13px; }
+        .cl-section-heading { gap: 9px; }
+        .cl-overview-head svg { width: 16px; height: 16px; }
+        .cl-overview-card { padding: 13px 11px; }
+        .cl-overview-value { font-size: 16px; }
+        .cl-metric > strong { font-size: 14px; }
+        .cl-entry-card { padding: 13px; }
+        .cl-entry-top { flex-wrap: wrap; }
+        .cl-entry-amount-block { width: 100%; padding-left: 45px; text-align: left; }
+    }
+    @media (prefers-reduced-motion: reduce) { .cl-page *, .cl-page *::before, .cl-page *::after { transition-duration: 0s !important; } }
+</style>
 
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 <div th:replace="~{fragments/layout :: topbar}"></div>
 <div th:replace="~{fragments/layout :: pending-schedule-alert}"></div>
 
-
-<main class="lg:ml-72 px-3 sm:px-6 lg:px-8 pb-8 pt-20 lg:pt-8 w-full min-h-screen overflow-x-hidden">
-
-    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5">
-
-        <div class="min-w-0">
-
-            <div class="flex items-center gap-3">
-
-                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-brand-100 dark:bg-cyan-500/10 flex items-center justify-center shrink-0">
-                    <i data-lucide="wallet"
-                       class="w-5 h-5 sm:w-6 sm:h-6 text-brand-600 dark:text-cyan-400"></i>
+<main class="cl-page" id="conteudo-principal">
+    <div class="cl-container">
+        <!-- CABEÇALHO -->
+        <header class="cl-page-header">
+            <div class="cl-page-heading">
+                <div class="cl-heading-icon" aria-hidden="true">
+                    <i data-lucide="chart-no-axes-combined"></i>
                 </div>
-
-                <div class="min-w-0">
-
-                    <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight truncate">
-                        Fluxo de Caixa
-                    </h2>
-
-                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                        Extrato cronológico com saldo após cada movimento.
-                    </p>
-
+                <div class="cl-heading-copy">
+                    <span class="cl-eyebrow">Financeiro <span aria-hidden="true">/</span> Livro caixa</span>
+                    <h1>Fluxo de caixa</h1>
+                    <p>Visualize seus saldos, contas bancárias e movimentações em um só lugar.</p>
                 </div>
-
             </div>
+            <a th:href="@{/financial-closing}" class="cl-button cl-button-outline cl-closing-link">
+                <i data-lucide="calendar-check" aria-hidden="true"></i>
+                <span>Fechamentos mensais</span>
+                <i data-lucide="arrow-up-right" class="cl-arrow-end" aria-hidden="true"></i>
+            </a>
+        </header>
 
+        <div th:if="${error}" role="alert" class="cl-alert cl-alert-error">
+            <i data-lucide="circle-alert" aria-hidden="true"></i>
+            <span th:text="${error}">Erro ao carregar o fluxo de caixa.</span>
         </div>
 
-
-        <a href="/financial-closing"
-           class="w-full sm:w-auto flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white font-bold px-4 py-3 rounded-xl text-sm transition-all shadow-md shadow-violet-500/20">
-
-            <i data-lucide="calendar-check" class="w-4 h-4 shrink-0"></i>
-
-            <span>Fechamentos Mensais</span>
-
-        </a>
-
-    </header>
-
-    <div th:if="${error}" role="alert" class="mb-6 rounded-2xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm font-semibold text-rose-800 dark:text-rose-300" th:text="${error}"></div>
-
-    <form th:action="@{/cash-ledger}"
-          method="GET"
-          class="bg-white dark:bg-[#131C2F] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm mb-6">
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto] gap-4 items-end">
-
-
-
-            <div class="min-w-0">
-
-                <label for="cash-ledger-from" class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                    De
-                </label>
-
-                <input
-                        type="date"
-                        id="cash-ledger-from"
-                        name="from"
-                        required
-                        th:value="${from}"
-                        class="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 sm:px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/10 text-sm font-semibold transition-all"
-                />
-
-            </div>
-
-            <div class="min-w-0">
-
-                <label for="cash-ledger-to" class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                    Até
-                </label>
-
-                <input
-                        type="date"
-                        id="cash-ledger-to"
-                        name="to"
-                        required
-                        th:value="${to}"
-                        class="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 sm:px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-cyan-500 focus:ring-2 focus:ring-brand-500/10 text-sm font-semibold transition-all"
-                />
-
-            </div>
-
-            <button
-                    type="submit"
-                    class="w-full lg:w-auto bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:text-slate-900 font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-md shadow-brand-500/20">
-
-                <i data-lucide="filter" class="w-4 h-4"></i>
-
-                Filtrar
-
-            </button>
-
-            <button type="submit" th:formaction="@{/cash-ledger/pdf}"
-                    class="w-full lg:w-auto bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-brand-500 dark:hover:border-cyan-500 text-slate-700 dark:text-slate-200 font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-sm">
-                <i data-lucide="download" class="w-4 h-4"></i>
-                Baixar PDF
-            </button>
-
-        </div>
-
-        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">Selecione as datas e clique em Baixar PDF para obter o relatório completo do período.</p>
-
-    </form>
-
-    <section class="mb-6">
-        <div class="flex items-end justify-between gap-4 mb-3">
-            <div>
-                <h3 class="text-lg font-black text-slate-900 dark:text-white mt-1">Saldos ao final do período</h3>
-            </div>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <article class="relative overflow-hidden rounded-2xl border border-brand-200 dark:border-cyan-500/20 bg-gradient-to-br from-brand-600 to-indigo-700 dark:from-cyan-500/20 dark:to-blue-500/10 p-5 shadow-lg shadow-brand-500/10">
-                <div class="flex items-center justify-between gap-3">
+        <!-- CONTAS BANCÁRIAS: SALDOS ATUAIS, INDEPENDENTES DO PERÍODO FILTRADO -->
+        <section id="contas-bancarias" class="cl-panel cl-bank-section" aria-labelledby="cl-bank-title"
+                 th:with="accountCount=${bankAccountBalances == null ? 0 : #lists.size(bankAccountBalances)}">
+            <div class="cl-section-header">
+                <div class="cl-section-heading">
+                    <div class="cl-section-icon cl-section-icon-blue" aria-hidden="true">
+                        <i data-lucide="landmark"></i>
+                    </div>
                     <div>
-                        <p class="text-[11px] font-black uppercase tracking-wider text-white/75 dark:text-cyan-300">Saldo total</p>
-                        <p class="mt-2 text-2xl font-black text-white dark:text-white"
-                           th:text="|R$ ${#numbers.formatDecimal(saldoTotalAtual, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
-                        <p class="mt-1 text-[11px] font-semibold text-white/65 dark:text-slate-400">Banco + dinheiro</p>
+                        <div class="cl-title-row">
+                            <h2 id="cl-bank-title">Minhas contas bancárias</h2>
+                            <span class="cl-counter" th:text="|${accountCount} ${accountCount == 1 ? 'conta' : 'contas'}|">0 contas</span>
+                        </div>
+                        <p>Saldos atuais de cada conta, sem depender do período selecionado abaixo.</p>
                     </div>
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white">
-                        <i data-lucide="wallet-cards" class="h-6 w-6"></i>
-                    </span>
                 </div>
-            </article>
-            <article class="rounded-2xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/10 p-5 shadow-sm">
-                <div class="flex items-center justify-between gap-3">
+            </div>
+
+            <div th:if="${bankAccountSuccess}" role="status" class="cl-alert cl-alert-success">
+                <i data-lucide="check-circle-2" aria-hidden="true"></i>
+                <span th:text="${bankAccountSuccess}">Conta cadastrada com sucesso.</span>
+            </div>
+            <div th:if="${bankAccountError}" role="alert" class="cl-alert cl-alert-error">
+                <i data-lucide="circle-alert" aria-hidden="true"></i>
+                <span th:text="${bankAccountError}">Não foi possível cadastrar a conta.</span>
+            </div>
+
+            <div th:if="${#lists.isEmpty(bankAccountBalances)}" class="cl-bank-empty">
+                <span class="cl-empty-icon"><i data-lucide="wallet-cards" aria-hidden="true"></i></span>
+                <h3>Você ainda não cadastrou nenhuma conta</h3>
+                <p>Cadastre uma conta e informe o saldo que ela possui neste momento para acompanhar as próximas movimentações.</p>
+            </div>
+
+            <div th:unless="${#lists.isEmpty(bankAccountBalances)}" class="cl-account-grid">
+                <article class="cl-account-card" th:each="account, accountStat : ${bankAccountBalances}"
+                         th:with="variation=${account.currentBalance().subtract(account.openingBalance())}">
+                    <div class="cl-account-top">
+                        <div class="cl-account-avatar" aria-hidden="true"><i data-lucide="landmark"></i></div>
+                        <div class="cl-account-identity">
+                            <span class="cl-kicker">Conta bancária</span>
+                            <h3 th:text="${account.name()}">Conta principal</h3>
+                        </div>
+                        <span class="cl-account-number" th:text="|#${accountStat.count}|" aria-hidden="true">#1</span>
+                    </div>
+
+                    <div class="cl-account-balance">
+                        <span class="cl-small-label">Saldo atual</span>
+                        <strong class="cl-money cl-account-amount"
+                                th:classappend="${account.currentBalance().signum() < 0} ? 'cl-negative' : ''"
+                                th:text="|R$ ${#numbers.formatDecimal(account.currentBalance(), 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong>
+                    </div>
+
+                    <div class="cl-account-divider"></div>
+                    <div class="cl-account-bottom">
+                        <div>
+                            <span class="cl-small-label">Saldo no cadastro</span>
+                            <strong class="cl-money cl-account-secondary"
+                                    th:text="|R$ ${#numbers.formatDecimal(account.openingBalance(), 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong>
+                        </div>
+                        <div class="cl-account-difference">
+                            <span class="cl-small-label">Diferença desde o cadastro</span>
+                            <strong class="cl-money cl-account-secondary"
+                                    th:classappend="${variation.signum() > 0 ? 'cl-positive' : (variation.signum() < 0 ? 'cl-negative' : 'cl-neutral')}"
+                                    th:text="|${variation.signum() > 0 ? '+' : (variation.signum() < 0 ? '-' : '')}R$ ${#numbers.formatDecimal(variation.abs(), 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Mantém exatamente a permissão e o endpoint de cadastro existentes. -->
+            <details class="cl-create-account"
+                     th:if="${@pageAccess.canEdit('cash-ledger')}"
+                     th:open="${bankAccountError != null or #lists.isEmpty(bankAccountBalances)}">
+                <summary class="cl-create-trigger">
+                    <span class="cl-create-trigger-left">
+                        <span class="cl-create-plus"><i data-lucide="plus" aria-hidden="true"></i></span>
+                        <span>
+                            <strong>Adicionar conta bancária</strong>
+                            <small>Cadastre outra conta para acompanhar o saldo separadamente.</small>
+                        </span>
+                    </span>
+                    <i data-lucide="chevron-down" class="cl-details-chevron" aria-hidden="true"></i>
+                </summary>
+                <div class="cl-create-content">
+                    <p class="cl-form-note">Informe o saldo que aparece no banco no momento do cadastro. As próximas baixas vinculadas à conta atualizarão esse valor.</p>
+                    <form th:action="@{/cash-ledger/bank-accounts}" method="post" class="cl-bank-form">
+                        <div class="cl-field">
+                            <label for="cl-account-name">Nome da conta <span aria-hidden="true">*</span></label>
+                            <input id="cl-account-name" name="name" type="text" maxlength="100" required
+                                   autocomplete="off" placeholder="Ex.: Itaú - Conta principal">
+                        </div>
+                        <div class="cl-field">
+                            <label for="cl-opening-balance">Saldo inicial (R$) <span aria-hidden="true">*</span></label>
+                            <div class="cl-input-currency">
+                                <span aria-hidden="true">R$</span>
+                                <input id="cl-opening-balance" name="openingBalance" type="number" step="0.01"
+                                       inputmode="decimal" required placeholder="0,00"
+                                       aria-describedby="cl-balance-hint">
+                            </div>
+                            <small id="cl-balance-hint">Informe o saldo atual, mesmo que seja zero ou negativo.</small>
+                        </div>
+                        <button type="submit" class="cl-button cl-button-primary cl-save-account">
+                            <i data-lucide="plus-circle" aria-hidden="true"></i>
+                            Cadastrar conta
+                        </button>
+                    </form>
+                </div>
+            </details>
+        </section>
+
+        <!-- FILTRO E EXPORTAÇÃO -->
+        <section class="cl-panel cl-filter-section" aria-labelledby="cl-filter-title">
+            <div class="cl-section-header cl-filter-header">
+                <div class="cl-section-heading">
+                    <div class="cl-section-icon cl-section-icon-slate" aria-hidden="true"><i data-lucide="calendar-range"></i></div>
                     <div>
-                        <p class="text-[11px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Saldo no banco</p>
-                        <p class="mt-2 text-2xl font-black text-indigo-700 dark:text-indigo-300"
-                           th:text="|R$ ${#numbers.formatDecimal(saldoBancoAtual, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
-                        <p class="mt-1 text-[11px] font-semibold text-indigo-600/70 dark:text-indigo-300/60">PIX, cartão, boleto e transferência</p>
+                        <h2 id="cl-filter-title">Período do extrato</h2>
+                        <p>Escolha as datas para consultar os lançamentos e gerar o PDF.</p>
                     </div>
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300">
-                        <i data-lucide="landmark" class="h-6 w-6"></i>
-                    </span>
                 </div>
-            </article>
-            <article class="rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-5 shadow-sm">
-                <div class="flex items-center justify-between gap-3">
+                <div class="cl-period-shortcuts" id="cl-period-shortcuts" hidden>
+                    <button type="button" class="cl-shortcut" data-period="this-month">Este mês</button>
+                    <button type="button" class="cl-shortcut" data-period="last-month">Mês anterior</button>
+                </div>
+            </div>
+            <form id="cl-period-form" th:action="@{/cash-ledger}" method="get" class="cl-filter-form">
+                <div class="cl-field">
+                    <label for="cash-ledger-from">Data inicial</label>
+                    <input type="date" id="cash-ledger-from" name="from" th:value="${from}" required>
+                </div>
+                <div class="cl-field">
+                    <label for="cash-ledger-to">Data final</label>
+                    <input type="date" id="cash-ledger-to" name="to" th:value="${to}" required
+                           aria-describedby="cl-date-error">
+                </div>
+                <div class="cl-filter-actions">
+                    <button type="submit" id="cl-apply-period" class="cl-button cl-button-primary">
+                        <i data-lucide="filter" aria-hidden="true"></i> Aplicar filtro
+                    </button>
+                    <button type="submit" th:formaction="@{/cash-ledger/pdf}" class="cl-button cl-button-outline">
+                        <i data-lucide="file-down" aria-hidden="true"></i> Exportar PDF
+                    </button>
+                </div>
+                <p id="cl-date-error" class="cl-validation-error" role="alert" hidden>A data final deve ser igual ou posterior à data inicial.</p>
+            </form>
+        </section>
+
+        <!-- SALDOS DO EXTRATO: DADOS DO PERÍODO SELECIONADO -->
+        <section class="cl-results-section" aria-labelledby="cl-results-title">
+            <div class="cl-section-heading cl-results-heading">
+                <div class="cl-section-icon cl-section-icon-blue" aria-hidden="true"><i data-lucide="chart-column-increasing"></i></div>
+                <div>
+                    <h2 id="cl-results-title">Saldos ao final do período</h2>
+                    <p>Visão consolidada do extrato para as datas filtradas.</p>
+                </div>
+            </div>
+            <div class="cl-balance-grid">
+                <article class="cl-overview-card cl-overview-primary">
+                    <div class="cl-overview-head"><span>Saldo total do extrato</span><i data-lucide="wallet" aria-hidden="true"></i></div>
+                    <p class="cl-money cl-overview-value" th:text="|R$ ${#numbers.formatDecimal(saldoTotalAtual, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
+                    <p class="cl-overview-foot">Banco + dinheiro</p>
+                </article>
+                <article class="cl-overview-card">
+                    <div class="cl-overview-head"><span>Saldo bancário do extrato</span><i data-lucide="landmark" aria-hidden="true"></i></div>
+                    <p class="cl-money cl-overview-value" th:text="|R$ ${#numbers.formatDecimal(saldoBancoAtual, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
+                    <p class="cl-overview-foot">Movimentações via banco</p>
+                </article>
+                <article class="cl-overview-card">
+                    <div class="cl-overview-head"><span>Saldo em dinheiro</span><i data-lucide="banknote" aria-hidden="true"></i></div>
+                    <p class="cl-money cl-overview-value" th:text="|R$ ${#numbers.formatDecimal(saldoDinheiroAtual, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
+                    <p class="cl-overview-foot">Movimentações em espécie</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="cl-results-section" aria-labelledby="cl-activity-title">
+            <div class="cl-section-heading cl-results-heading">
+                <div class="cl-section-icon cl-section-icon-slate" aria-hidden="true"><i data-lucide="arrow-left-right"></i></div>
+                <div>
+                    <h2 id="cl-activity-title">Resumo das movimentações</h2>
+                    <p>Abertura, entradas, saídas e saldo final do intervalo.</p>
+                </div>
+            </div>
+            <div class="cl-metrics-grid">
+                <article class="cl-metric">
+                    <span class="cl-metric-caption"><i data-lucide="wallet-minimal" aria-hidden="true"></i> Saldo de abertura</span>
+                    <strong class="cl-money" th:text="|R$ ${#numbers.formatDecimal(openingBalance, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong>
+                </article>
+                <article class="cl-metric">
+                    <span class="cl-metric-caption"><i data-lucide="arrow-down-left" aria-hidden="true"></i> Entradas</span>
+                    <strong class="cl-money cl-positive" th:text="|+ R$ ${#numbers.formatDecimal(totalEntradas, 1, 'POINT', 2, 'COMMA')}|">+ R$ 0,00</strong>
+                </article>
+                <article class="cl-metric">
+                    <span class="cl-metric-caption"><i data-lucide="arrow-up-right" aria-hidden="true"></i> Saídas</span>
+                    <strong class="cl-money cl-negative" th:text="|- R$ ${#numbers.formatDecimal(totalSaidas, 1, 'POINT', 2, 'COMMA')}|">- R$ 0,00</strong>
+                </article>
+                <article class="cl-metric cl-metric-final">
+                    <span class="cl-metric-caption"><i data-lucide="check-circle-2" aria-hidden="true"></i> Saldo final</span>
+                    <strong class="cl-money"
+                            th:classappend="${saldoFinal != null and saldoFinal.signum() < 0} ? 'cl-negative' : 'cl-positive'"
+                            th:text="|R$ ${#numbers.formatDecimal(saldoFinal, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong>
+                </article>
+            </div>
+        </section>
+
+        <!-- EXTRATO: TABELA NO DESKTOP / CARTÕES NOS CELULARES -->
+        <section id="movimentacoes" class="cl-history-section" aria-labelledby="cl-history-title">
+            <div class="cl-history-head">
+                <div class="cl-section-heading">
+                    <div class="cl-section-icon cl-section-icon-slate" aria-hidden="true"><i data-lucide="list-ordered"></i></div>
                     <div>
-                        <p class="text-[11px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Saldo em dinheiro</p>
-                        <p class="mt-2 text-2xl font-black text-amber-700 dark:text-amber-300"
-                           th:text="|R$ ${#numbers.formatDecimal(saldoDinheiroAtual, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</p>
+                        <div class="cl-title-row">
+                            <h2 id="cl-history-title">Extrato detalhado</h2>
+                            <span class="cl-counter" th:text="|${#lists.size(entries)} ${#lists.size(entries) == 1 ? 'lançamento' : 'lançamentos'}|">0 lançamentos</span>
+                        </div>
+                        <p>Movimentações em ordem cronológica, com saldo após cada lançamento.</p>
                     </div>
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300">
-                        <i data-lucide="banknote" class="h-6 w-6"></i>
-                    </span>
                 </div>
-            </article>
-        </div>
-    </section>
-
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-
-        <div class="bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 p-4 sm:p-5 shadow-sm min-w-0">
-
-            <div class="flex items-center justify-between gap-2 mb-2">
-
-                <p class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Saldo Abertura
-                </p>
-
-                <div class="hidden sm:flex w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 items-center justify-center shrink-0">
-                    <i data-lucide="wallet"
-                       class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
-                </div>
-
             </div>
 
-            <p
-                    class="text-base sm:text-xl font-black text-slate-700 dark:text-slate-200 break-all leading-tight"
-                    th:text="|R$ ${#numbers.formatDecimal(openingBalance, 1, 'POINT', 2, 'COMMA')}|">
-                R$ 0,00
-            </p>
-
-        </div>
-        <div class="bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 p-4 sm:p-5 shadow-sm min-w-0">
-
-            <div class="flex items-center justify-between gap-2 mb-2">
-
-                <p class="text-[10px] sm:text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                    Entradas
-                </p>
-
-                <div class="hidden sm:flex w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 items-center justify-center shrink-0">
-
-                    <i data-lucide="arrow-up"
-                       class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
-
+            <div class="cl-table-shell">
+                <div class="cl-table-hint"><i data-lucide="move-horizontal" aria-hidden="true"></i> Deslize a tabela para os lados para ver todas as colunas.</div>
+                <div class="cl-table-scroll" tabindex="0" role="region" aria-label="Tabela de movimentações; role horizontalmente para ver todas as colunas">
+                    <table class="cl-table">
+                        <thead>
+                        <tr>
+                            <th scope="col">Data</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col">Parte</th>
+                            <th scope="col">Descrição</th>
+                            <th scope="col">OS</th>
+                            <th scope="col">Pagamento</th>
+                            <th scope="col">Conta</th>
+                            <th scope="col" class="cl-align-right">Entrada</th>
+                            <th scope="col" class="cl-align-right">Saída</th>
+                            <th scope="col" class="cl-align-right">Saldo</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr class="cl-opening-row">
+                            <td th:text="${#temporals.format(from, 'dd/MM/yyyy')}">01/07/2026</td>
+                            <td colspan="6">Saldo de abertura</td>
+                            <td class="cl-align-right">—</td>
+                            <td class="cl-align-right">—</td>
+                            <td class="cl-align-right cl-table-money"
+                                th:text="|R$ ${#numbers.formatDecimal(openingBalance, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</td>
+                        </tr>
+                        <tr th:each="entry : ${entries}">
+                            <td class="cl-nowrap" th:text="${#temporals.format(entry.date, 'dd/MM/yyyy')}">01/07/2026</td>
+                            <td>
+                                <span th:if="${entry.type.name() == 'ENTRADA'}" class="cl-tag cl-tag-income">
+                                    <i data-lucide="arrow-down-left" aria-hidden="true"></i> Entrada
+                                </span>
+                                <span th:if="${entry.type.name() == 'SAIDA'}" class="cl-tag"
+                                      th:classappend="${entry.financialExpense} ? 'cl-tag-fee' : 'cl-tag-expense'">
+                                    <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+                                    <span th:text="${entry.financialExpense} ? 'Taxa' : 'Saída'">Saída</span>
+                                </span>
+                            </td>
+                            <td class="cl-truncate-cell" th:title="${entry.party}" th:text="${entry.party ?: '—'}">—</td>
+                            <td class="cl-truncate-cell cl-description-cell" th:title="${entry.description}" th:text="${entry.description ?: '—'}">—</td>
+                            <td th:text="${entry.workOrderNumber ?: '—'}">—</td>
+                            <td th:text="${entry.paymentMethod ?: '—'}">—</td>
+                            <td><span class="cl-tag"
+                                      th:classappend="${entry.balanceLocation.name() == 'DINHEIRO'} ? 'cl-tag-cash' : 'cl-tag-bank'"
+                                      th:text="${entry.accountLabel ?: '—'}">Banco</span></td>
+                            <td class="cl-align-right cl-table-money cl-positive"
+                                th:text="${entry.entrada.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? 'R$ ' + #numbers.formatDecimal(entry.entrada, 1, 'POINT', 2, 'COMMA') : '—'}">—</td>
+                            <td class="cl-align-right cl-table-money cl-negative"
+                                th:text="${entry.saida.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? 'R$ ' + #numbers.formatDecimal(entry.saida, 1, 'POINT', 2, 'COMMA') : '—'}">—</td>
+                            <td class="cl-align-right cl-table-money"
+                                th:classappend="${entry.saldo.signum() < 0} ? 'cl-negative' : ''"
+                                th:text="|R$ ${#numbers.formatDecimal(entry.saldo, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(entries)}"><td colspan="10" class="cl-table-empty">Nenhuma movimentação no período selecionado.</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-
             </div>
 
-            <p
-                    class="text-base sm:text-xl font-black text-emerald-600 dark:text-emerald-400 break-all leading-tight"
-                    th:text="|+ R$ ${#numbers.formatDecimal(totalEntradas, 1, 'POINT', 2, 'COMMA')}|">
-                R$ 0,00
-            </p>
-
-        </div>
-
-        <div class="bg-rose-50 dark:bg-rose-500/10 rounded-2xl border border-rose-200 dark:border-rose-500/20 p-4 sm:p-5 shadow-sm min-w-0">
-
-            <div class="flex items-center justify-between gap-2 mb-2">
-
-                <p class="text-[10px] sm:text-[11px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
-                    Saídas
-                </p>
-
-                <div class="hidden sm:flex w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-500/10 items-center justify-center shrink-0">
-
-                    <i data-lucide="arrow-down"
-                       class="w-4 h-4 text-rose-600 dark:text-rose-400"></i>
-
+            <div class="cl-mobile-history">
+                <div class="cl-mobile-opening">
+                    <div>
+                        <span class="cl-small-label">Saldo de abertura</span>
+                        <strong class="cl-money" th:text="|R$ ${#numbers.formatDecimal(openingBalance, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong>
+                    </div>
+                    <span class="cl-mobile-opening-date" th:text="${#temporals.format(from, 'dd/MM/yyyy')}">01/07/2026</span>
                 </div>
 
-            </div>
-
-            <p
-                    class="text-base sm:text-xl font-black text-rose-600 dark:text-rose-400 break-all leading-tight"
-                    th:text="|- R$ ${#numbers.formatDecimal(totalSaidas, 1, 'POINT', 2, 'COMMA')}|">
-                R$ 0,00
-            </p>
-
-        </div>
-
-        <div
-                class="bg-white dark:bg-[#131C2F] rounded-2xl border p-4 sm:p-5 shadow-sm min-w-0"
-                th:classappend="${saldoFinal != null and saldoFinal.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'border-emerald-200 dark:border-emerald-500/20' : 'border-rose-200 dark:border-rose-500/20'}">
-
-            <div class="flex items-center justify-between gap-2 mb-2">
-
-                <p class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Saldo Final
-                </p>
-
-                <div
-                        class="hidden sm:flex w-8 h-8 rounded-lg items-center justify-center shrink-0"
-                        th:classappend="${saldoFinal != null and saldoFinal.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'bg-emerald-100 dark:bg-emerald-500/10' : 'bg-rose-100 dark:bg-rose-500/10'}">
-
-                    <i
-                            data-lucide="wallet-cards"
-                            class="w-4 h-4"
-                            th:classappend="${saldoFinal != null and saldoFinal.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
-                    </i>
-
+                <article class="cl-entry-card" th:each="entry : ${entries}">
+                    <div class="cl-entry-top">
+                        <div class="cl-entry-heading">
+                            <span class="cl-entry-icon"
+                                  th:classappend="${entry.type.name() == 'ENTRADA' ? 'cl-entry-icon-income' : (entry.financialExpense ? 'cl-entry-icon-fee' : 'cl-entry-icon-expense')}">
+                                <i th:if="${entry.type.name() == 'ENTRADA'}" data-lucide="arrow-down-left" aria-hidden="true"></i>
+                                <i th:if="${entry.type.name() == 'SAIDA'}" data-lucide="arrow-up-right" aria-hidden="true"></i>
+                            </span>
+                            <div class="cl-entry-identity">
+                                <strong th:text="${entry.party ?: 'Movimentação'}">Movimentação</strong>
+                                <span th:text="${#temporals.format(entry.date, 'dd/MM/yyyy')}">01/07/2026</span>
+                            </div>
+                        </div>
+                        <div class="cl-entry-amount-block">
+                            <span class="cl-entry-type" th:text="${entry.type.name() == 'ENTRADA' ? 'Entrada' : (entry.financialExpense ? 'Taxa' : 'Saída')}">Entrada</span>
+                            <strong class="cl-money"
+                                    th:classappend="${entry.type.name() == 'ENTRADA' ? 'cl-positive' : (entry.financialExpense ? 'cl-warning' : 'cl-negative')}"
+                                    th:text="${entry.type.name() == 'ENTRADA' ? '+ R$ ' + #numbers.formatDecimal(entry.entrada, 1, 'POINT', 2, 'COMMA') : '- R$ ' + #numbers.formatDecimal(entry.saida, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</strong>
+                        </div>
+                    </div>
+                    <p class="cl-entry-description" th:text="${entry.description ?: 'Sem descrição cadastrada'}">Sem descrição cadastrada</p>
+                    <div class="cl-entry-info-grid">
+                        <div><span class="cl-small-label">Ordem de serviço</span><strong th:text="${entry.workOrderNumber ?: '—'}">—</strong></div>
+                        <div><span class="cl-small-label">Forma de pagamento</span><strong th:text="${entry.paymentMethod ?: '—'}">—</strong></div>
+                    </div>
+                    <div class="cl-entry-footer">
+                        <div class="cl-entry-account">
+                            <span class="cl-small-label">Conta</span>
+                            <span class="cl-tag"
+                                  th:classappend="${entry.balanceLocation.name() == 'DINHEIRO'} ? 'cl-tag-cash' : 'cl-tag-bank'"
+                                  th:text="${entry.accountLabel ?: '—'}">Banco</span>
+                        </div>
+                        <div class="cl-entry-running-balance">
+                            <span class="cl-small-label">Saldo após movimentação</span>
+                            <strong class="cl-money" th:classappend="${entry.saldo.signum() < 0} ? 'cl-negative' : ''"
+                                    th:text="|R$ ${#numbers.formatDecimal(entry.saldo, 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong>
+                        </div>
+                    </div>
+                </article>
+                <div class="cl-entry-empty" th:if="${#lists.isEmpty(entries)}">
+                    <span class="cl-empty-icon"><i data-lucide="inbox" aria-hidden="true"></i></span>
+                    <strong>Nenhuma movimentação encontrada</strong>
+                    <p>Tente selecionar outro período para consultar seus lançamentos.</p>
                 </div>
-
             </div>
-
-            <p
-                    class="text-base sm:text-xl font-black break-all leading-tight"
-                    th:classappend="${saldoFinal != null and saldoFinal.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}"
-                    th:text="|R$ ${#numbers.formatDecimal(saldoFinal, 1, 'POINT', 2, 'COMMA')}|">
-                R$ 0,00
-            </p>
-
-        </div>
-
+        </section>
     </div>
-
-    <div class="hidden md:block bg-white dark:bg-[#131C2F] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden">
-
-        <div class="overflow-x-auto">
-
-            <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[900px]">
-
-                <thead>
-
-                <tr class="bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700/50">
-
-                    <th class="p-4">Data</th>
-                    <th class="p-4">Tipo</th>
-                    <th class="p-4">Parte</th>
-                    <th class="p-4">Descrição</th>
-                    <th class="p-4">OS</th>
-                    <th class="p-4">Forma Pgto</th>
-                    <th class="p-4">Conta</th>
-
-                    <th class="p-4 text-right text-emerald-600 dark:text-emerald-400">
-                        Entrada
-                    </th>
-
-                    <th class="p-4 text-right text-rose-600 dark:text-rose-400">
-                        Saída
-                    </th>
-
-                    <th class="p-4 text-right font-black">
-                        Saldo
-                    </th>
-
-                </tr>
-
-                </thead>
-
-
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
-
-
-
-
-                <tr class="bg-slate-50 dark:bg-slate-800/30 italic">
-
-                    <td
-                            class="p-3 pl-4 text-xs text-slate-500"
-                            th:text="${#temporals.format(from, 'dd/MM/yyyy')}">
-                        01/07/2026
-                    </td>
-
-                    <td class="p-3 pl-4" colspan="6">
-
-                        <span class="text-xs text-slate-400">
-                            Saldo de Abertura
-                        </span>
-
-                    </td>
-
-                    <td class="p-3 text-right font-mono text-xs text-slate-400">
-                        —
-                    </td>
-
-                    <td class="p-3 text-right font-mono text-xs text-slate-400">
-                        —
-                    </td>
-
-                    <td
-                            class="p-3 pr-4 text-right font-mono font-black text-sm text-slate-700 dark:text-slate-200"
-                            th:text="|R$ ${#numbers.formatDecimal(openingBalance, 1, 'POINT', 2, 'COMMA')}|">
-                        R$ 0,00
-                    </td>
-
-                </tr>
-
-
-                <tr
-                        th:each="entry : ${entries}"
-                        class="transition-colors"
-                        th:classappend="${entry.type.name() == 'ENTRADA'} ? 'hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5' : 'hover:bg-rose-50/40 dark:hover:bg-rose-500/5'">
-
-                    <td class="p-3 pl-4 text-xs text-slate-500 font-semibold"
-                        th:text="${#temporals.format(entry.date, 'dd/MM/yyyy')}">
-                        01/07/2026
-                    </td>
-
-
-                    <td class="p-3">
-
-                        <span
-                                th:if="${entry.type.name() == 'ENTRADA'}"
-                                class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/15 px-2 py-0.5 rounded-full">
-
-                            <i data-lucide="arrow-up" class="w-3 h-3"></i>
-
-                            Entrada
-
-                        </span>
-
-
-                        <span
-                                th:if="${entry.type.name() == 'SAIDA'}"
-                                th:classappend="${entry.financialExpense} ? 'text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/15' : 'text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/15'"
-                                class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full">
-
-                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
-
-                            <span th:text="${entry.financialExpense} ? 'Taxa' : 'Saída'">
-                                Saída
-                            </span>
-
-                        </span>
-
-                    </td>
-
-
-                    <td
-                            class="p-3 text-slate-700 dark:text-slate-300 font-semibold max-w-[140px] truncate"
-                            th:text="${entry.party}">
-                        —
-                    </td>
-
-
-                    <td
-                            class="p-3 text-slate-500 dark:text-slate-400 max-w-[200px] truncate"
-                            th:text="${entry.description}">
-                        —
-                    </td>
-
-
-                    <td
-                            class="p-3 font-mono text-xs text-slate-500"
-                            th:text="${entry.workOrderNumber}">
-                        —
-                    </td>
-
-
-                    <td
-                            class="p-3 text-xs text-slate-500"
-                            th:text="${entry.paymentMethod != null ? entry.paymentMethod : '—'}">
-                        —
-                    </td>
-                    <td class="p-3">
-                        <span class="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide"
-                              th:classappend="${entry.balanceLocation.name() == 'DINHEIRO' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300'}"
-                              th:text="${entry.balanceLocation.name() == 'DINHEIRO' ? 'Dinheiro' : 'Banco'}">
-                            Banco
-                        </span>
-                    </td>
-
-
-                    <td
-                            class="p-3 pr-4 text-right font-mono font-semibold text-emerald-600 dark:text-emerald-400"
-                            th:text="${entry.entrada.compareTo(T(java.math.BigDecimal).ZERO) > 0 ?
-                                'R$ ' + #numbers.formatDecimal(entry.entrada, 1, 'POINT', 2, 'COMMA') :
-                                '—'}">
-                        —
-                    </td>
-
-
-                    <td
-                            class="p-3 pr-4 text-right font-mono font-semibold text-rose-600 dark:text-rose-400"
-                            th:text="${entry.saida.compareTo(T(java.math.BigDecimal).ZERO) > 0 ?
-                            'R$ ' + #numbers.formatDecimal(entry.saida, 1, 'POINT', 2, 'COMMA') :
-                            '—'}">
-                        —
-                    </td>
-
-
-                    <td
-                            class="p-3 pr-4 text-right font-mono font-black"
-                            th:classappend="${entry.saldo.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'text-slate-900 dark:text-white' : 'text-rose-600 dark:text-rose-400'}"
-                            th:text="|R$ ${#numbers.formatDecimal(entry.saldo, 1, 'POINT', 2, 'COMMA')}|">
-                        R$ 0,00
-                    </td>
-
-                </tr>
-
-
-
-
-                <tr th:if="${#lists.isEmpty(entries)}">
-
-                    <td colspan="10" class="p-10 text-center text-slate-400 dark:text-slate-500">
-
-                        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>
-
-                        <p>
-                            Nenhuma movimentação no período selecionado.
-                        </p>
-
-                    </td>
-
-                </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
-    <div class="md:hidden space-y-3">
-
-
-
-
-        <div class="bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
-
-            <div class="flex items-center justify-between gap-3">
-
-                <div class="flex items-center gap-3 min-w-0">
-
-                    <div class="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center shrink-0 shadow-sm">
-
-                        <i data-lucide="wallet"
-                           class="w-5 h-5 text-slate-500 dark:text-slate-400"></i>
-
-                    </div>
-
-                    <div class="min-w-0">
-
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Saldo de Abertura
-                        </p>
-
-                        <p
-                                class="text-lg font-black text-slate-800 dark:text-white truncate"
-                                th:text="|R$ ${#numbers.formatDecimal(openingBalance, 1, 'POINT', 2, 'COMMA')}|">
-                            R$ 0,00
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="text-right shrink-0">
-
-                    <p class="text-[10px] text-slate-400 dark:text-slate-500">
-                        Início
-                    </p>
-
-                    <p
-                            class="text-xs font-bold text-slate-600 dark:text-slate-300"
-                            th:text="${#temporals.format(from, 'dd/MM/yyyy')}">
-                        01/07/2026
-                    </p>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div
-                th:each="entry : ${entries}"
-                class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-slate-100 dark:border-slate-800/70">
-
-                <div class="flex items-start justify-between gap-3">
-
-                    <div class="flex items-start gap-3 min-w-0">
-
-
-
-                        <div
-                                class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                                th:classappend="${entry.type.name() == 'ENTRADA' ? 'bg-emerald-100 dark:bg-emerald-500/10' : (entry.financialExpense ? 'bg-amber-100 dark:bg-amber-500/10' : 'bg-rose-100 dark:bg-rose-500/10')}">
-
-                            <i
-                                    th:if="${entry.type.name() == 'ENTRADA'}"
-                                    data-lucide="arrow-down-left"
-                                    class="w-5 h-5 text-emerald-600 dark:text-emerald-400">
-                            </i>
-
-                            <i
-                                    th:if="${entry.type.name() == 'SAIDA'}"
-                                    data-lucide="arrow-up-right"
-                                    class="w-5 h-5"
-                                    th:classappend="${entry.financialExpense} ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'">
-                            </i>
-
-                        </div>
-
-
-                        <div class="min-w-0">
-
-                            <p
-                                    class="font-black text-slate-900 dark:text-white text-sm truncate"
-                                    th:text="${entry.party ?: 'Movimentação'}">
-                                Movimentação
-                            </p>
-
-                            <p
-                                    class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2"
-                                    th:text="${entry.description ?: 'Sem descrição'}">
-                                Descrição
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-
-
-                    <span
-                            th:if="${entry.type.name() == 'ENTRADA'}"
-                            class="shrink-0 inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/15 px-2 py-1 rounded-full uppercase">
-
-                        Entrada
-
-                    </span>
-
-
-                    <span
-                            th:if="${entry.type.name() == 'SAIDA'}"
-                            th:classappend="${entry.financialExpense} ? 'text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/15' : 'text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/15'"
-                            class="shrink-0 inline-flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-full uppercase">
-
-                        <span th:text="${entry.financialExpense} ? 'Taxa' : 'Saída'">
-                            Saída
-                        </span>
-
-                    </span>
-
-                </div>
-
-            </div>
-
-
-
-
-            <div class="p-4 space-y-3">
-
-
-
-
-                <div class="grid grid-cols-2 gap-3">
-
-                    <div class="min-w-0">
-
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-                            Data
-                        </p>
-
-                        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
-
-                            <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-
-                            <span th:text="${#temporals.format(entry.date, 'dd/MM/yyyy')}">
-                                01/07/2026
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="min-w-0">
-
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-                            O.S.
-                        </p>
-
-                        <div class="flex items-center gap-1.5 text-xs font-bold text-brand-600 dark:text-cyan-400">
-
-                            <i data-lucide="clipboard-list" class="w-3.5 h-3.5 shrink-0"></i>
-
-                            <span class="truncate"
-                                  th:text="${entry.workOrderNumber ?: '—'}">
-                                —
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-
-
-                <div class="flex items-center justify-between gap-3 py-2.5 border-y border-slate-100 dark:border-slate-800/70">
-
-                    <div class="flex items-center gap-2 min-w-0">
-
-                        <i data-lucide="credit-card"
-                           class="w-4 h-4 text-slate-400 shrink-0"></i>
-
-                        <span class="text-xs text-slate-500 dark:text-slate-400">
-                            Forma de pagamento
-                        </span>
-
-                    </div>
-
-                    <div class="flex items-center justify-end gap-2 min-w-0">
-                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 truncate text-right"
-                              th:text="${entry.paymentMethod ?: 'Não informado'}">PIX</span>
-                        <span class="shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide"
-                              th:classappend="${entry.balanceLocation.name() == 'DINHEIRO' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300'}"
-                              th:text="${entry.balanceLocation.name() == 'DINHEIRO' ? 'Dinheiro' : 'Banco'}">Banco</span>
-                    </div>
-
-                </div>
-
-
-
-
-                <div class="grid grid-cols-2 gap-3">
-
-
-
-                    <div class="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-3">
-
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-1">
-                            Entrada
-                        </p>
-
-                        <p
-                                class="text-sm font-black text-emerald-600 dark:text-emerald-400 break-all"
-                                th:text="${entry.entrada.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? |+ R$ ${#numbers.formatDecimal(entry.entrada, 1, 'POINT', 2, 'COMMA')}| : '—'">
-                            —
-                        </p>
-
-                    </div>
-
-
-
-
-                    <div class="rounded-xl bg-rose-50 dark:bg-rose-500/10 p-3">
-
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 mb-1">
-                            Saída
-                        </p>
-
-                        <p
-                                class="text-sm font-black text-rose-600 dark:text-rose-400 break-all"
-                                th:text="${entry.saida.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? |- R$ ${#numbers.formatDecimal(entry.saida, 1, 'POINT', 2, 'COMMA')}| : '—'">
-                            —
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-
-
-                <div
-                        class="rounded-xl p-3 border"
-                        th:classappend="${entry.saldo.compareTo(T(java.math.BigDecimal).ZERO) >= 0
-                            ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
-                            : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20'}">
-
-                    <div class="flex items-center justify-between gap-3">
-
-                        <div class="flex items-center gap-2">
-
-                            <i data-lucide="wallet-cards"
-                               class="w-4 h-4 text-slate-400 shrink-0"></i>
-
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Saldo após movimento
-                            </span>
-
-                        </div>
-
-                        <p
-                                class="text-base font-black break-all text-right"
-                                th:classappend="${entry.saldo.compareTo(T(java.math.BigDecimal).ZERO) >= 0
-                                    ? 'text-slate-900 dark:text-white'
-                                    : 'text-rose-600 dark:text-rose-400'}"
-                                th:text="|R$ ${#numbers.formatDecimal(entry.saldo, 1, 'POINT', 2, 'COMMA')}|">
-                            R$ 0,00
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div
-                th:if="${#lists.isEmpty(entries)}"
-                class="bg-white dark:bg-[#131C2F] border border-slate-200 dark:border-slate-700/50 rounded-2xl p-8 text-center">
-
-            <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-
-                <i data-lucide="inbox"
-                   class="w-7 h-7 text-slate-400 dark:text-slate-500"></i>
-
-            </div>
-
-            <p class="font-bold text-slate-700 dark:text-slate-300">
-                Nenhuma movimentação
-            </p>
-
-            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                Não existem lançamentos no período selecionado.
-            </p>
-
-        </div>
-
-    </div>
-
 </main>
-
 
 <div th:replace="~{fragments/layout :: lucide-script}"></div>
 
+
+
 <script>
-    const cashLedgerFrom = document.getElementById('cash-ledger-from');
-    const cashLedgerTo = document.getElementById('cash-ledger-to');
-    function validateCashLedgerPeriod() {
-        cashLedgerTo.setCustomValidity(cashLedgerFrom.value && cashLedgerTo.value && cashLedgerFrom.value > cashLedgerTo.value
-            ? 'A data final deve ser posterior ou igual à data inicial.' : '');
-    }
-    cashLedgerFrom.addEventListener('input', validateCashLedgerPeriod);
-    cashLedgerTo.addEventListener('input', validateCashLedgerPeriod);
-    validateCashLedgerPeriod();
+    (() => {
+        'use strict';
+        const periodForm = document.getElementById('cl-period-form');
+        const from = document.getElementById('cash-ledger-from');
+        const to = document.getElementById('cash-ledger-to');
+        const error = document.getElementById('cl-date-error');
+        const apply = document.getElementById('cl-apply-period');
+        const shortcuts = document.getElementById('cl-period-shortcuts');
+        if (!periodForm || !from || !to) return;
+
+        function validatePeriod() {
+            const invalid = Boolean(from.value && to.value && from.value > to.value);
+            to.setCustomValidity(invalid ? 'A data final deve ser igual ou posterior à data inicial.' : '');
+            if (error) error.hidden = !invalid;
+            return !invalid;
+        }
+        from.addEventListener('input', validatePeriod);
+        to.addEventListener('input', validatePeriod);
+        from.addEventListener('change', validatePeriod);
+        to.addEventListener('change', validatePeriod);
+        periodForm.addEventListener('submit', (event) => {
+            if (!validatePeriod()) {
+                event.preventDefault();
+                to.reportValidity();
+            }
+        });
+        validatePeriod();
+
+        function formatLocalDate(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        if (shortcuts) {
+            shortcuts.hidden = false;
+            shortcuts.querySelectorAll('[data-period]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const today = new Date();
+                    const year = today.getFullYear();
+                    const month = today.getMonth();
+                    if (button.dataset.period === 'this-month') {
+                        from.value = formatLocalDate(new Date(year, month, 1));
+                        to.value = formatLocalDate(today);
+                    } else {
+                        from.value = formatLocalDate(new Date(year, month - 1, 1));
+                        to.value = formatLocalDate(new Date(year, month, 0));
+                    }
+                    if (validatePeriod()) {
+                        if (periodForm.requestSubmit) periodForm.requestSubmit(apply);
+                        else apply.click();
+                    }
+                });
+            });
+        }
+    })();
 </script>
-
-
-<style>
-
-
-    @media (max-width: 767px) {
-
-        input[type="date"] {
-            min-width: 0;
-            max-width: 100%;
-        }
-
-        input,
-        select,
-        button {
-            min-height: 44px;
-        }
-
-        body,
-        main {
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-
-    }
-
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(100, 116, 139, 0.35);
-        border-radius: 999px;
-    }
-
-</style>
-
-
 </body>
 </html>

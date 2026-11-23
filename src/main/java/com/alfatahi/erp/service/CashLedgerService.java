@@ -114,6 +114,9 @@ public class CashLedgerService {
                 ? CashLedgerEntryDto.EntryType.ENTRADA : CashLedgerEntryDto.EntryType.SAIDA);
         entry.setBalanceLocation(movement.getBalanceLocation() == FinancialMovement.BalanceLocation.CASH
                 ? CashLedgerEntryDto.BalanceLocation.DINHEIRO : CashLedgerEntryDto.BalanceLocation.BANCO);
+        if (movement.getBankAccount() != null) {
+            entry.setBankAccountName(movement.getBankAccount().getName());
+        }
         entry.setPaymentMethod(movement.getPaymentMethod());
 
         if (movement.getAccountsReceivable() != null) {

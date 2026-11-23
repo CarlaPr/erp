@@ -15,6 +15,7 @@ public class CashLedgerEntryDto {
     private String workOrderNumber;
     private String paymentMethod;
     private BalanceLocation balanceLocation;
+    private String bankAccountName;
     private BigDecimal entrada = BigDecimal.ZERO;
     private BigDecimal saida   = BigDecimal.ZERO;
     private BigDecimal saldo   = BigDecimal.ZERO;
@@ -36,6 +37,11 @@ public class CashLedgerEntryDto {
     public void setPaymentMethod(String m) { this.paymentMethod = m; }
     public BalanceLocation getBalanceLocation() { return balanceLocation; }
     public void setBalanceLocation(BalanceLocation balanceLocation) { this.balanceLocation = balanceLocation; }
+    public void setBankAccountName(String bankAccountName) { this.bankAccountName = bankAccountName; }
+    public String getAccountLabel() {
+        if (balanceLocation == BalanceLocation.DINHEIRO) return "Dinheiro";
+        return bankAccountName != null ? bankAccountName : "Banco sem identificação";
+    }
     public BigDecimal getEntrada()         { return entrada; }
     public void setEntrada(BigDecimal e)   { this.entrada = e; }
     public BigDecimal getSaida()           { return saida; }

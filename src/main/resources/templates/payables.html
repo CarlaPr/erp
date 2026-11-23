@@ -86,12 +86,17 @@
         <div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Contas a Pagar</h2>
             <p class="text-base text-slate-500 dark:text-slate-400 mt-1">Controlo de fornecedores, despesas fixas e CMV.</p>
+            <a th:if="${@pageAccess.canView('cash-ledger')}" th:href="@{/cash-ledger#contas-bancarias}"
+               class="mt-2 inline-flex text-sm font-bold text-indigo-700 dark:text-indigo-300 hover:underline">Saldos bancários</a>
         </div>
         <button data-permission="edit" onclick="openNewPayableModal()"
                 class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-rose-500/20 text-base">
             <i data-lucide="plus" class="w-5 h-5"></i> Nova Despesa
         </button>
     </header>
+
+    <p th:if="${paymentError}" th:text="${paymentError}" role="alert"
+       class="mb-6 rounded-xl bg-rose-50 dark:bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-700 dark:text-rose-300"></p>
 
     <div class="flex flex-wrap gap-2 mb-6 payables-tabs">
         <a th:href="@{/payables(aba='todas',currentWeek=${filterCurrentWeek},month=${reportAllMonths ? 'all' : reportMonth},dateFrom=${filterDateFrom},dateTo=${filterDateTo})}"
@@ -120,7 +125,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 payables-kpis">
         <div class="bg-indigo-600 dark:bg-indigo-900 p-6 rounded-2xl shadow-md border-none">
-            <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1">Saldo acumulado</span>
+            <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider block mb-1">Saldo das movimentações</span>
             <p class="text-xs text-indigo-200 mb-2" th:text="${reportTo != null ? 'Até ' + #temporals.format(reportTo, 'dd/MM/yyyy') : 'Até hoje'}"></p>
             <p class="text-2xl font-black text-white" th:text="'R$ ' + ${#numbers.formatDecimal(saldoReal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
         </div>
@@ -731,11 +736,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Data de Pagamento</label>
-                        <input type="date" name="paymentDate" id="payDate" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
+                        <input type="date" name="paymentDate" id="payDate" th:value="${paymentToday}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Forma de Pagamento</label>
-                        <select name="paymentMethod" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
+                        <select name="paymentMethod" onchange="syncBankAccountField(this.form)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-base">
                             <option value="PIX">PIX</option>
                             <option value="CARD">Cartão</option>
                             <option value="BOLETO">Boleto</option>
@@ -743,6 +748,7 @@
                             <option value="TRANSFER">Transferência</option>
                         </select>
                     </div>
+                    <div th:replace="~{fragments/bank-account-field :: field('Conta bancária de origem')}"></div>
                 </div>
 
                 <div>
@@ -860,7 +866,7 @@
 
                     <div>
                         <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">Valor Já Pago (R$)</label>
-                        <input type="number" step="0.01" name="paidAmount" id="editPaidAmount" class="w-full bg-slate-50 dark:bg-slate-900 border border-emerald-300 rounded-xl px-4 py-3 text-emerald-700 font-black outline-none">
+                        <input type="number" id="editPaidAmount" readonly class="w-full bg-slate-50 dark:bg-slate-900 border border-emerald-300 rounded-xl px-4 py-3 text-emerald-700 font-black outline-none">
                     </div>
 
                     <div id="editScopePanel" class="hidden lg:col-span-3 overflow-hidden rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/5">
@@ -1020,6 +1026,7 @@
 </main>
 
 <script th:src="@{/js/currency-brl.js}"></script>
+<script th:src="@{/js/bank-account-field.js}"></script>
 <script th:inline="javascript">
     const TODAY = new Date().toISOString().split('T')[0];
 
@@ -1304,10 +1311,12 @@
     }
 
     function openPayModal(id, balance) {
-        document.getElementById('payForm').action = '/payables/pay/' + id;
+        const form = document.getElementById('payForm');
+        form.reset();
+        form.action = '/payables/pay/' + id;
         document.getElementById('payBalance').textContent = 'R$ ' + balance;
         document.getElementById('payAmount').value = Number(balance).toFixed(2);
-        document.getElementById('payDate').value = TODAY;
+        syncBankAccountField(form);
         openModal('payModal');
     }
 
