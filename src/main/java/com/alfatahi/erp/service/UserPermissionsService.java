@@ -29,7 +29,7 @@ public class UserPermissionsService {
         Map<String, UserPagePermission> existing = permissions.findByUserId(user.getId()).stream()
                 .collect(Collectors.toMap(UserPagePermission::getPageKey, permission -> permission));
         UserPermissionsForm form = new UserPermissionsForm();
-        for (PageModule page : PageModule.values()) {
+        for (PageModule page : access.modulesForRole(user.getRole())) {
             UserPermissionsForm.Row row = new UserPermissionsForm.Row();
             row.setPageKey(page.getKey());
             UserPagePermission custom = existing.get(page.getKey());
@@ -50,13 +50,13 @@ public class UserPermissionsService {
         if ("GESTAO".equals(user.getRole())) {
             throw new IllegalArgumentException("A role Gestão mantém acesso completo e administra as permissões da equipe.");
         }
-        if (form.getPages() == null || form.getPages().size() != PageModule.values().length) {
+        if (form.getPages() == null || form.getPages().size() != access.modulesForRole(user.getRole()).size()) {
             throw new IllegalArgumentException("A lista de páginas está incompleta. Atualize a tela e tente novamente.");
         }
         Set<String> seen = new HashSet<>();
         for (UserPermissionsForm.Row row : form.getPages()) {
             if (row == null) throw new IllegalArgumentException("Configuração de página inválida.");
-            PageModule page = PageModule.fromKey(row.getPageKey())
+            PageModule page = PageModule.fromKey(row.getPageKey()).filter(module -> module.supportsRole(user.getRole()))
                     .orElseThrow(() -> new IllegalArgumentException("Página inválida."));
             if (!seen.add(row.getPageKey()) || !("default".equals(row.getMode()) || "custom".equals(row.getMode()))) {
                 throw new IllegalArgumentException("Configuração de página inválida.");

@@ -12,6 +12,7 @@ public enum PageModule {
     RECEIPTS("receipts", "Recibos", true, Set.of("VENDAS"), "/receipts"),
     AGENDA("agenda", "Agenda Comercial", true, Set.of("VENDAS", "TECNICO"), "/agenda"),
     TECHNICAL_VISITS("technical-visits", "Visitas Técnicas", true, Set.of("VENDAS", "TECNICO"), "/technical-visits"),
+    TECHNICIAN_WORK_ORDERS("technician-work-orders", "Ordens de Serviço (Técnico)", true, Set.of("TECNICO"), "/technician-work-orders"),
     CLIENTS("clients", "Clientes", true, Set.of("VENDAS"), "/clients"),
     CUT_RULES("cut-plans-regras", "Regras Técnicas", true, Set.of(), "/cut-plans/regras-tecnicas"),
     CUT_PARAMETERS("cut-plans-parametros", "Parâmetros de Serviço", true, Set.of(), "/cut-plans/parametros-servico"),
@@ -45,7 +46,14 @@ public enum PageModule {
     public String getLabel() { return label; }
     public String getPath() { return paths.getFirst(); }
     public boolean isWritable() { return writable; }
-    public boolean allowedByRole(String role) { return "GESTAO".equals(role) || defaultRoles.contains(role); }
+    public boolean supportsRole(String role) {
+        return this != TECHNICIAN_WORK_ORDERS || "TECNICO".equals(role) || "ROLE_TECNICO".equals(role);
+    }
+
+    public boolean allowedByRole(String role) {
+        if (this == TECHNICIAN_WORK_ORDERS) return supportsRole(role);
+        return "GESTAO".equals(role) || defaultRoles.contains(role);
+    }
 
     public static Optional<PageModule> fromKey(String key) {
         return Arrays.stream(values()).filter(page -> page.key.equals(key)).findFirst();

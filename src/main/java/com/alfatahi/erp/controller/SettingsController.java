@@ -79,10 +79,11 @@ public class SettingsController {
                 .findFirst().orElse(permissionUser == null && !permissionUsers.isEmpty() ? permissionUsers.getFirst() : null);
         model.addAttribute("permissionUsers", permissionUsers);
         model.addAttribute("selectedPermissionUser", selectedUser);
-        model.addAttribute("permissionPages", pageAccess.modules());
         if (selectedUser != null) {
+            var permissionPages = pageAccess.modulesForRole(selectedUser.getRole());
+            model.addAttribute("permissionPages", permissionPages);
             model.addAttribute("permissionForm", userPermissions.formFor(selectedUser));
-            model.addAttribute("permissionDefaults", pageAccess.modules().stream().collect(Collectors.toMap(
+            model.addAttribute("permissionDefaults", permissionPages.stream().collect(Collectors.toMap(
                     page -> page.getKey(), page -> pageAccess.defaults(page, selectedUser.getRole()))));
         }
         return "settings";

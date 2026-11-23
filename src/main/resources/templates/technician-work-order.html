@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Ordem de Serviço - Grupo Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] text-slate-800 dark:text-slate-200">
+<link rel="stylesheet" th:href="@{/css/technician-work-orders.css}">
+<link rel="stylesheet" th:href="@{/css/technician-work-order-detail.css}">
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="field-os-page tech-os-page lg:ml-72">
+    <div class="tech-os-shell" th:with="order=${detail.order},customer=${detail.customer}">
+
+        <!-- Retorno, identificação e estado da OS -->
+        <a class="tech-os-back" th:href="@{/technician-work-orders(filter=${order.completed ? 'completed' : 'active'})}">
+            <i data-lucide="arrow-left" aria-hidden="true"></i>
+            <span>Voltar para ordens de serviço</span>
+        </a>
+
+        <header class="tech-os-hero">
+            <div class="tech-os-hero-copy">
+                <p class="tech-os-eyebrow"><span class="tech-os-eyebrow-mark"></span> PAINEL DO TÉCNICO <span aria-hidden="true">/</span> DETALHES DA OS</p>
+                <div class="tech-os-hero-title">
+                    <h1 th:text="${order.number}">OS-2026-0148</h1>
+                    <span class="tech-os-status" th:attr="data-completed=${order.completed}" th:text="${order.status}">Em andamento</span>
+                </div>
+                <p class="tech-os-subtitle">Consulte o serviço, confira os materiais e registre as atividades da instalação.</p>
+            </div>
+            <div class="tech-os-hero-date">
+                <span class="tech-os-hero-date-icon"><i data-lucide="calendar-days" aria-hidden="true"></i></span>
+                <div>
+                    <span class="tech-os-overline">INSTALAÇÃO PREVISTA</span>
+                    <strong th:text="${order.installationDate != null ? #temporals.format(order.installationDate, 'dd/MM/yyyy') : 'Sem agendamento'}">21/11/2026</strong>
+                    <span class="tech-os-time" th:if="${detail.installationTime}" th:text="|Às ${#temporals.format(detail.installationTime, 'HH:mm')}|">Às 09:00</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navegação por seções: rolagem lateral em telas pequenas -->
+        <nav class="tech-os-nav" aria-label="Seções desta ordem de serviço">
+            <a href="#cliente"><i data-lucide="map-pin" aria-hidden="true"></i> Cliente e local</a>
+            <a href="#servicos"><i data-lucide="layers-3" aria-hidden="true"></i> Serviços</a>
+            <a href="#checklist"><i data-lucide="list-checks" aria-hidden="true"></i> Checklist</a>
+            <a href="#observacoes"><i data-lucide="message-square-text" aria-hidden="true"></i> Observações</a>
+        </nav>
+
+        <!-- Visão geral -->
+        <div class="tech-os-overview-grid">
+            <section id="cliente" class="tech-os-panel tech-os-client" aria-labelledby="cliente-titulo">
+                <div class="tech-os-panel-head">
+                    <div class="tech-os-heading-cluster">
+                        <span class="tech-os-section-icon"><i data-lucide="map-pinned" aria-hidden="true"></i></span>
+                        <div>
+                            <span class="tech-os-kicker">DESTINO DO SERVIÇO</span>
+                            <h2 id="cliente-titulo">Cliente e local</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tech-os-client-main">
+                    <span class="tech-os-data-label">CLIENTE</span>
+                    <strong class="tech-os-client-name" th:text="${order.customerName ?: 'Cliente não informado'}">Residencial Villa Verde</strong>
+                    <div class="tech-os-address">
+                        <span class="tech-os-inline-icon"><i data-lucide="map-pin" aria-hidden="true"></i></span>
+                        <p th:text="${order.address ?: 'Endereço da instalação não cadastrado'}">Rua das Palmeiras, 252 — São Paulo, SP</p>
+                    </div>
+                </div>
+
+                <div class="tech-os-quick-actions" th:if="${detail.mapUrl != null or detail.callUrl != null or detail.whatsappUrl != null}">
+                    <a class="tech-os-btn tech-os-btn-primary" th:if="${detail.mapUrl}" th:href="${detail.mapUrl}" target="_blank" rel="noopener noreferrer">
+                        <i data-lucide="navigation" aria-hidden="true"></i> Abrir no Maps
+                    </a>
+                    <a class="tech-os-btn tech-os-btn-light" th:if="${detail.callUrl}" th:href="${detail.callUrl}">
+                        <i data-lucide="phone" aria-hidden="true"></i> Ligar
+                    </a>
+                    <a class="tech-os-btn tech-os-btn-light" th:if="${detail.whatsappUrl}" th:href="${detail.whatsappUrl}" target="_blank" rel="noopener noreferrer">
+                        <i data-lucide="message-circle" aria-hidden="true"></i> WhatsApp
+                    </a>
+                </div>
+
+                <div class="tech-os-contact-grid" th:if="${!#strings.isEmpty(detail.siteContact) or (detail.sitePhone != null and (customer == null or detail.sitePhone != customer.phone))}">
+                    <div class="tech-os-contact" th:if="${detail.siteContact}">
+                        <span class="tech-os-data-label">CONTATO NO LOCAL</span>
+                        <strong th:text="${detail.siteContact}">Anderson</strong>
+                    </div>
+                    <div class="tech-os-contact" th:if="${detail.sitePhone != null and (customer == null or detail.sitePhone != customer.phone)}">
+                        <span class="tech-os-data-label">TELEFONE NO LOCAL</span>
+                        <strong th:text="${detail.sitePhone}">(11) 99999-9999</strong>
+                    </div>
+                </div>
+
+                <div class="tech-os-notice" th:if="${detail.accessInstructions}">
+                    <i data-lucide="info" aria-hidden="true"></i>
+                    <div>
+                        <strong>Instruções de acesso</strong>
+                        <p class="tech-os-preserve" th:text="${detail.accessInstructions}"></p>
+                    </div>
+                </div>
+
+                <details class="tech-os-more" th:if="${customer != null}">
+                    <summary><span><i data-lucide="contact-round" aria-hidden="true"></i> Mais informações do cliente</span><i class="tech-os-chevron" data-lucide="chevron-down" aria-hidden="true"></i></summary>
+                    <dl class="tech-os-dl tech-os-dl-two">
+                        <div th:if="${customer.phone}"><dt>Telefone do cliente</dt><dd th:text="${customer.phone}"></dd></div>
+                        <div th:if="${customer.email}"><dt>E-mail</dt><dd th:text="${customer.email}"></dd></div>
+                        <div th:if="${customer.document}"><dt>CPF/CNPJ</dt><dd th:text="${customer.document}"></dd></div>
+                        <div th:if="${customer.address}"><dt>Endereço cadastral</dt><dd th:text="${customer.address}"></dd></div>
+                        <div th:if="${customer.city}"><dt>Cidade</dt><dd th:text="${customer.city}"></dd></div>
+                        <div class="tech-os-span-all" th:if="${customer.notes}"><dt>Observações do cadastro</dt><dd class="tech-os-preserve" th:text="${customer.notes}"></dd></div>
+                    </dl>
+                </details>
+            </section>
+
+            <section class="tech-os-panel tech-os-schedule" aria-labelledby="informacoes-titulo">
+                <div class="tech-os-panel-head">
+                    <div class="tech-os-heading-cluster">
+                        <span class="tech-os-section-icon"><i data-lucide="clipboard-list" aria-hidden="true"></i></span>
+                        <div>
+                            <span class="tech-os-kicker">ORGANIZAÇÃO</span>
+                            <h2 id="informacoes-titulo">Informações da OS</h2>
+                        </div>
+                    </div>
+                </div>
+                <dl class="tech-os-dl tech-os-schedule-dl">
+                    <div>
+                        <dt>Instalação agendada</dt>
+                        <dd>
+                            <span th:text="${order.installationDate != null ? #temporals.format(order.installationDate, 'dd/MM/yyyy') : 'Sem agendamento'}"></span>
+                            <span th:if="${detail.installationTime}" th:text="| às ${#temporals.format(detail.installationTime, 'HH:mm')}|"></span>
+                        </dd>
+                    </div>
+                    <div th:if="${detail.technician}"><dt>Técnico responsável</dt><dd th:text="${detail.technician}"></dd></div>
+                    <div th:if="${detail.team}"><dt>Equipe</dt><dd th:text="${detail.team}"></dd></div>
+                    <div th:if="${detail.createdAt}"><dt>OS criada em</dt><dd th:text="${#temporals.format(detail.createdAt, 'dd/MM/yyyy')}"></dd></div>
+                </dl>
+                <div class="tech-os-instructions" th:if="${!#strings.isEmpty(detail.description) or !#strings.isEmpty(detail.notes) or !#strings.isEmpty(detail.installationNotes) or !#strings.isEmpty(detail.agendaNotes)}">
+                    <div th:if="${detail.description}"><span class="tech-os-data-label">DESCRIÇÃO DA OS</span><p class="tech-os-preserve" th:text="${detail.description}"></p></div>
+                    <div th:if="${detail.installationNotes}"><span class="tech-os-data-label">INSTRUÇÕES DE INSTALAÇÃO</span><p class="tech-os-preserve" th:text="${detail.installationNotes}"></p></div>
+                    <div th:if="${detail.notes}"><span class="tech-os-data-label">OBSERVAÇÕES DA OS</span><p class="tech-os-preserve" th:text="${detail.notes}"></p></div>
+                    <div th:if="${detail.agendaNotes}"><span class="tech-os-data-label">OBSERVAÇÕES DO AGENDAMENTO</span><p class="tech-os-preserve" th:text="${detail.agendaNotes}"></p></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Serviços -->
+        <section id="servicos" class="tech-os-panel tech-os-section" aria-labelledby="servicos-titulo">
+            <div class="tech-os-panel-head tech-os-section-head">
+                <div class="tech-os-heading-cluster">
+                    <span class="tech-os-section-icon"><i data-lucide="layers-3" aria-hidden="true"></i></span>
+                    <div>
+                        <span class="tech-os-kicker">ESCOPO DO TRABALHO</span>
+                        <h2 id="servicos-titulo">Serviços contratados</h2>
+                    </div>
+                </div>
+                <span class="tech-os-count" th:unless="${#lists.isEmpty(detail.services)}" th:text="|${#lists.size(detail.services)} serviço(s)|">2 serviços</span>
+            </div>
+            <div class="tech-os-empty" th:if="${#lists.isEmpty(detail.services)}">
+                <i data-lucide="layers-3" aria-hidden="true"></i>
+                <p>Nenhum serviço detalhado nesta OS.</p>
+            </div>
+            <div class="tech-os-service-list" th:unless="${#lists.isEmpty(detail.services)}">
+                <article class="tech-os-service" th:each="service, svcStat : ${detail.services}">
+                    <div class="tech-os-service-head">
+                        <span class="tech-os-service-number" th:text="${svcStat.count}">1</span>
+                        <div class="tech-os-service-heading">
+                            <span class="tech-os-data-label" th:if="${service.category != null and service.category != service.name}" th:text="${service.category}">VIDROS</span>
+                            <h3 th:text="${service.name}">Instalação de vidro temperado</h3>
+                        </div>
+                        <span class="tech-os-service-qty" th:if="${service.quantity != null}" th:text="|Qtd. ${#strings.replace(service.quantity.stripTrailingZeros().toPlainString(),'.',',')}|">Qtd. 2</span>
+                    </div>
+                    <p class="tech-os-service-desc tech-os-preserve" th:if="${service.description}" th:text="${service.description}"></p>
+                    <div class="tech-os-service-data" th:if="${!#lists.isEmpty(service.measurements) or !#strings.isEmpty(service.fieldMeasurements) or !#strings.isEmpty(service.fieldNotes)}">
+                        <div th:unless="${#lists.isEmpty(service.measurements)}">
+                            <span class="tech-os-data-label">MEDIDAS DO ORÇAMENTO</span>
+                            <ul class="tech-os-measurements">
+                                <li th:each="m : ${service.measurements}">
+                                    <i data-lucide="ruler" aria-hidden="true"></i>
+                                    <span th:text="|${#numbers.formatDecimal(m.width,1,2,'COMMA')} m × ${#numbers.formatDecimal(m.height,1,2,'COMMA')} m|">1,20 m × 2,00 m</span>
+                                    <span class="tech-os-muted" th:if="${m.quantity != null}" th:text="| · ${#strings.replace(m.quantity.stripTrailingZeros().toPlainString(),'.',',')} un.|"> · 2 un.</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div th:if="${service.fieldMeasurements}">
+                            <span class="tech-os-data-label">MEDIDAS REGISTRADAS NA OS</span>
+                            <p class="tech-os-preserve" th:text="${service.fieldMeasurements}"></p>
+                        </div>
+                        <div th:if="${service.fieldNotes}">
+                            <span class="tech-os-data-label">OBSERVAÇÕES DO SERVIÇO</span>
+                            <p class="tech-os-preserve" th:text="${service.fieldNotes}"></p>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Checklist com progresso, edição e exclusão preservados -->
+        <section id="checklist" class="tech-os-panel tech-os-section" aria-labelledby="checklist-titulo"
+                 th:with="total=${#lists.size(detail.items)},completed=${detail.completedItems()}">
+            <div class="tech-os-panel-head tech-os-section-head tech-os-checklist-head">
+                <div class="tech-os-heading-cluster">
+                    <span class="tech-os-section-icon"><i data-lucide="list-checks" aria-hidden="true"></i></span>
+                    <div>
+                        <span class="tech-os-kicker">PREPARAÇÃO E MATERIAIS</span>
+                        <h2 id="checklist-titulo">Checklist do serviço</h2>
+                    </div>
+                </div>
+                <span class="tech-os-count" th:text="|${completed} de ${total} concluídos|">2 de 4 concluídos</span>
+            </div>
+            <div class="tech-os-progress-area">
+                <div class="tech-os-progress-meta">
+                    <span><strong th:text="${completed}">2</strong> concluídos <span class="tech-os-muted">·</span> <strong th:text="${total - completed}">2</strong> pendentes</span>
+                    <strong class="tech-os-progress-percent" th:text="|${#numbers.formatDecimal(detail.progress(),1,1,'COMMA')}%|">50,0%</strong>
+                </div>
+                <progress class="tech-os-progress" aria-label="Progresso do checklist" th:max="${total == 0 ? 1 : total}" th:value="${completed}" max="4" value="2"></progress>
+            </div>
+
+            <p th:if="${checklistMessage}" class="tech-os-feedback" role="status" th:text="${checklistMessage}"></p>
+            <p th:if="${checklistError}" class="tech-os-feedback tech-os-feedback-error" role="alert" th:text="${checklistError}"></p>
+
+            <div class="tech-os-check-toolbar" th:if="${canEdit}">
+                <details class="tech-os-toolbar-accordion">
+                    <summary class="tech-os-btn tech-os-btn-primary"><i data-lucide="plus" aria-hidden="true"></i> Adicionar item <i class="tech-os-summary-chevron" data-lucide="chevron-down" aria-hidden="true"></i></summary>
+                    <div class="tech-os-inline-form">
+                        <h3>Novo item do checklist</h3>
+                        <form class="tech-os-form" method="post" th:action="@{/technician-work-orders/{id}/items(id=${order.id})}">
+                            <div th:replace="~{:: itemFields(${null})}"></div>
+                            <button class="tech-os-btn tech-os-btn-primary" type="submit"><i data-lucide="plus" aria-hidden="true"></i> Adicionar item</button>
+                        </form>
+                    </div>
+                </details>
+                <form method="post" th:action="@{/technician-work-orders/{id}/suggestions(id=${order.id})}">
+                    <button class="tech-os-btn tech-os-btn-light" type="submit"><i data-lucide="wand-sparkles" aria-hidden="true"></i> Gerar sugestões</button>
+                </form>
+            </div>
+
+            <div class="tech-os-empty" th:if="${total == 0}">
+                <i data-lucide="clipboard-check" aria-hidden="true"></i>
+                <p>Nenhum item cadastrado no checklist.</p>
+            </div>
+            <ul class="tech-os-check-list" th:unless="${total == 0}">
+                <li class="tech-os-check-item" th:each="item : ${detail.items}" th:attr="data-completed=${item.completed}">
+                    <div class="tech-os-check-main">
+                        <form class="tech-os-completion-form" th:if="${canEdit}" method="post"
+                              th:action="@{/technician-work-orders/{id}/items/{itemId}/completion(id=${order.id},itemId=${item.id})}">
+                            <input type="hidden" name="version" th:value="${item.version}">
+                            <button class="tech-os-check-toggle" type="submit" name="completed" th:value="${!item.completed}"
+                                    th:attr="aria-label=|${item.completed ? 'Marcar como pendente' : 'Concluir'}: ${item.name}|"
+                                    th:attrappend="aria-pressed=${item.completed ? 'true' : 'false'}">
+                                <i data-lucide="check" aria-hidden="true"></i>
+                            </button>
+                        </form>
+                        <span class="tech-os-check-readonly" th:unless="${canEdit}" aria-hidden="true"><i data-lucide="check" aria-hidden="true"></i></span>
+                        <div class="tech-os-check-content">
+                            <div class="tech-os-check-title-line">
+                                <h3 th:text="${item.name}">Silicone estrutural</h3>
+                                <span class="tech-os-check-tag" th:text="${item.completed ? 'Concluído' : 'Pendente'}">Pendente</span>
+                            </div>
+                            <p class="tech-os-check-quantity" th:if="${item.quantity != null}"
+                               th:text="|Quantidade: ${#strings.replace(item.quantity.stripTrailingZeros().toPlainString(),'.',',')}|">Quantidade: 2</p>
+                            <p class="tech-os-check-observation tech-os-preserve" th:if="${item.observation}" th:text="${item.observation}"></p>
+                        </div>
+                    </div>
+                    <div class="tech-os-check-options" th:if="${canEdit or canDelete}">
+                        <details class="tech-os-item-edit" th:if="${canEdit}">
+                            <summary class="tech-os-mini-action" th:attr="aria-label=|Editar ${item.name}|"><i data-lucide="pencil" aria-hidden="true"></i> Editar</summary>
+                            <div class="tech-os-item-expanded">
+                                <form class="tech-os-form" method="post"
+                                      th:action="@{/technician-work-orders/{id}/items/{itemId}/edit(id=${order.id},itemId=${item.id})}">
+                                    <input type="hidden" name="version" th:value="${item.version}">
+                                    <div th:replace="~{:: itemFields(${item})}"></div>
+                                    <button class="tech-os-btn tech-os-btn-primary" type="submit"><i data-lucide="save" aria-hidden="true"></i> Salvar alterações</button>
+                                </form>
+                            </div>
+                        </details>
+                        <details class="tech-os-item-delete" th:if="${canDelete}">
+                            <summary class="tech-os-mini-action tech-os-mini-danger" th:attr="aria-label=|Excluir ${item.name}|"><i data-lucide="trash-2" aria-hidden="true"></i> Excluir</summary>
+                            <div class="tech-os-delete-confirm">
+                                <p>Excluir este item do checklist? Essa ação não poderá ser desfeita.</p>
+                                <form method="post"
+                                      th:action="@{/technician-work-orders/{id}/items/{itemId}/delete(id=${order.id},itemId=${item.id})}">
+                                    <input type="hidden" name="version" th:value="${item.version}">
+                                    <button class="tech-os-btn tech-os-btn-danger" type="submit">Confirmar exclusão</button>
+                                </form>
+                            </div>
+                        </details>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Registro e histórico de observações -->
+        <section id="observacoes" class="tech-os-panel tech-os-section" aria-labelledby="observacoes-titulo">
+            <div class="tech-os-panel-head tech-os-section-head">
+                <div class="tech-os-heading-cluster">
+                    <span class="tech-os-section-icon"><i data-lucide="message-square-text" aria-hidden="true"></i></span>
+                    <div>
+                        <span class="tech-os-kicker">DIÁRIO DA EXECUÇÃO</span>
+                        <h2 id="observacoes-titulo">Observações da execução</h2>
+                    </div>
+                </div>
+                <span class="tech-os-count" th:unless="${#lists.isEmpty(detail.executionNotes)}"
+                      th:text="|${#lists.size(detail.executionNotes)} registro(s)|">2 registros</span>
+            </div>
+            <p th:if="${noteMessage}" class="tech-os-feedback" role="status" th:text="${noteMessage}"></p>
+            <p th:if="${noteError}" class="tech-os-feedback tech-os-feedback-error" role="alert" th:text="${noteError}"></p>
+
+            <form th:if="${canEdit}" class="tech-os-note-form tech-os-form" method="post" th:action="@{/technician-work-orders/{id}/notes(id=${order.id})}">
+                <label for="tech-os-note-body">Adicionar observação</label>
+                <textarea id="tech-os-note-body" name="body" rows="3" required maxlength="20000"
+                          placeholder="Ex.: Material conferido, acesso liberado, instalação iniciada..."></textarea>
+                <div class="tech-os-note-form-footer">
+                    <span>Registre ocorrências importantes para a equipe.</span>
+                    <button class="tech-os-btn tech-os-btn-primary" type="submit"><i data-lucide="send" aria-hidden="true"></i> Registrar observação</button>
+                </div>
+            </form>
+
+            <div class="tech-os-history">
+                <h3>Histórico de registros</h3>
+                <div class="tech-os-empty tech-os-empty-left" th:if="${#lists.isEmpty(detail.executionNotes)}">
+                    <i data-lucide="message-square-text" aria-hidden="true"></i>
+                    <p>Nenhuma observação de execução registrada.</p>
+                </div>
+                <ol class="tech-os-notes" th:unless="${#lists.isEmpty(detail.executionNotes)}">
+                    <li th:each="note : ${detail.executionNotes}">
+                        <span class="tech-os-note-avatar"><i data-lucide="user-round" aria-hidden="true"></i></span>
+                        <div class="tech-os-note-content">
+                            <div class="tech-os-note-meta">
+                                <strong th:text="${note.authorName}">Técnico</strong>
+                                <time th:datetime="${note.createdAt}" th:text="${#temporals.format(note.createdAt, 'dd/MM/yyyy HH:mm')}">19/11/2026 14:30</time>
+                            </div>
+                            <p class="tech-os-preserve" th:text="${note.body}">Materiais conferidos.</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <div class="tech-os-bottom-link">
+            <a class="tech-os-back" th:href="@{/technician-work-orders(filter=${order.completed ? 'completed' : 'active'})}"><i data-lucide="arrow-left" aria-hidden="true"></i> Voltar para ordens de serviço</a>
+        </div>
+    </div>
+</main>
+
+
+<th:block th:remove="all">
+    <div th:fragment="itemFields(item)" class="tech-os-item-fields">
+        <label>Nome do item
+            <input name="name" required maxlength="180" th:value="${item?.name}" placeholder="Ex.: Buchas e parafusos">
+        </label>
+        <label>Quantidade (opcional)
+            <input name="quantity" type="number" inputmode="decimal" min="0.01" max="99999999.99" step="0.01"
+                   th:value="${item?.quantity}" placeholder="1,00">
+        </label>
+        <label class="tech-os-field-wide">Observação (opcional)
+            <textarea name="observation" maxlength="2000" rows="2" th:text="${item?.observation}"
+                      placeholder="Detalhes úteis para o técnico..."></textarea>
+        </label>
+    </div>
+</th:block>
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+</body>
+</html>

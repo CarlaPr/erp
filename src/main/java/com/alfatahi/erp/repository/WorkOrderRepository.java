@@ -1,7 +1,9 @@
 package com.alfatahi.erp.repository;
 
 import com.alfatahi.erp.entity.WorkOrder;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,6 +22,19 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, UUID> {
     Optional<WorkOrder> findByQuoteId(@Param("quoteId") UUID quoteId);
 
     List<WorkOrder> findAllByOrderByCreatedAtDesc();
+
+    @Query("""
+            SELECT DISTINCT w FROM WorkOrder w
+            LEFT JOIN FETCH w.client LEFT JOIN FETCH w.category LEFT JOIN FETCH w.quote LEFT JOIN FETCH w.items
+            WHERE (:history = true AND LOWER(TRIM(COALESCE(w.status, ''))) IN :completed)
+               OR (:history = false AND LOWER(TRIM(COALESCE(w.status, ''))) NOT IN :closed)
+            ORDER BY w.createdAt DESC
+            """)
+    List<WorkOrder> findTechnicianListing(boolean history, Set<String> completed, Set<String> closed);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT w FROM WorkOrder w WHERE w.id = :id")
+    Optional<WorkOrder> findByIdForFieldUpdate(UUID id);
 
     @Query("SELECT SUM(w.totalValue) FROM WorkOrder w WHERE w.status <> 'cancelled'")
     BigDecimal sumTotalRevenue();

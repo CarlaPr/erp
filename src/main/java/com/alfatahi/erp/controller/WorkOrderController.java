@@ -30,6 +30,10 @@ import java.util.ArrayList;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.alfatahi.erp.util.WorkOrderStatus.isCancelled;
+import static com.alfatahi.erp.util.WorkOrderStatus.isCompleted;
+import static com.alfatahi.erp.util.WorkOrderStatus.isInProgress;
+
 @Controller
 @RequestMapping("/work-orders")
 public class WorkOrderController {
@@ -132,29 +136,11 @@ public class WorkOrderController {
         return "work-orders";
     }
 
-    private static final Set<String> COMPLETED_STATUSES = Set.of("completed", "delivered", "done", "concluida", "concluída");
-    private static final Set<String> CANCELLED_STATUSES = Set.of("cancelled", "canceled");
     private static final Set<String> STATUS_FILTERS = Set.of("active", "all", "in_progress", "completed", "cancelled");
 
     private static String normalizeStatusFilter(String status) {
         String normalized = status == null ? "" : status.trim().toLowerCase(Locale.ROOT);
         return STATUS_FILTERS.contains(normalized) ? normalized : "active";
-    }
-
-    private static String orderStatus(WorkOrder order) {
-        return order.getStatus() == null ? "" : order.getStatus().trim().toLowerCase(Locale.ROOT);
-    }
-
-    private static boolean isCompleted(WorkOrder order) {
-        return COMPLETED_STATUSES.contains(orderStatus(order));
-    }
-
-    private static boolean isCancelled(WorkOrder order) {
-        return CANCELLED_STATUSES.contains(orderStatus(order));
-    }
-
-    private static boolean isInProgress(WorkOrder order) {
-        return !isCompleted(order) && !isCancelled(order);
     }
 
     private static boolean matchesStatusFilter(WorkOrder order, String filter) {

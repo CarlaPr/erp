@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(title='Ordens de Serviço - Grupo Glass')}"></head>
+<body class="bg-slate-50 dark:bg-[#0B1120] text-slate-800 dark:text-slate-200">
+
+<!-- Mantido aqui para funcionar com o fragmento <head th:replace="..."> existente. -->
+<link rel="stylesheet" th:href="@{/css/technician-work-orders.css}" href="/css/technician-work-orders.css">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+
+<main class="field-os-page lg:ml-72" id="main-content">
+    <div class="field-os-shell">
+
+        <!-- Cabeçalho -->
+        <header class="field-os-heading">
+            <div class="field-os-heading-copy">
+                <div class="field-os-eyebrow">
+                    <span class="field-os-eyebrow-dot" aria-hidden="true"></span>
+                    ÁREA DO TÉCNICO
+                </div>
+                <h1>Ordens de serviço</h1>
+                <p>Acompanhe suas atividades, consulte os dados da instalação e abra cada ordem para ver os detalhes.</p>
+            </div>
+
+            <div class="field-os-overview" aria-label="Quantidade de ordens no filtro selecionado">
+                <div class="field-os-overview-icon" aria-hidden="true">
+                    <i data-lucide="clipboard-list"></i>
+                </div>
+                <div>
+                    <strong th:text="${#lists.size(orders)}">0</strong>
+                    <span th:text="${#lists.size(orders) == 1 ? 'ordem neste filtro' : 'ordens neste filtro'}">ordens neste filtro</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filtros de status -->
+        <section class="field-os-toolbar" aria-label="Filtros e busca de ordens de serviço">
+            <div class="field-os-toolbar-title">
+                <div>
+                    <h2>Suas ordens</h2>
+                    <p>Selecione um status para visualizar as ordens correspondentes.</p>
+                </div>
+                <span class="field-os-swipe-hint" aria-hidden="true">
+                    <i data-lucide="move-horizontal"></i>
+                    Deslize
+                </span>
+            </div>
+
+            <nav class="field-os-filters" aria-label="Filtrar ordens de serviço por status">
+                <a th:each="filter : ${filters}"
+                   th:href="@{/technician-work-orders(filter=${filter.key})}"
+                   th:attr="aria-current=${filter == selectedFilter ? 'page' : null}"
+                   th:text="${filter.label}">Em andamento</a>
+            </nav>
+
+            <!-- Busca local: pesquisa apenas as ordens carregadas neste filtro. -->
+            <div class="field-os-search-bar" th:unless="${#lists.isEmpty(orders)}">
+                <div class="field-os-search-field">
+                    <i data-lucide="search" aria-hidden="true"></i>
+                    <input id="field-os-search"
+                           type="search"
+                           autocomplete="off"
+                           placeholder="Buscar por OS, cliente, endereço ou serviço..."
+                           aria-label="Buscar entre as ordens exibidas">
+                    <button class="field-os-clear-search" id="field-os-clear-search"
+                            type="button" aria-label="Limpar busca" hidden>
+                        <i data-lucide="x" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <span class="field-os-result-count" aria-live="polite">
+                    <strong id="field-os-visible-count" th:text="${#lists.size(orders)}">0</strong>
+                    <span id="field-os-result-label">exibidas</span>
+                </span>
+            </div>
+        </section>
+
+        <!-- Nenhuma OS neste filtro (resposta do servidor). -->
+        <div th:if="${#lists.isEmpty(orders)}" class="field-os-empty">
+            <div class="field-os-empty-icon" aria-hidden="true">
+                <i data-lucide="clipboard-check"></i>
+            </div>
+            <h2>Nenhuma ordem por aqui</h2>
+            <p>Não existem ordens de serviço para o filtro selecionado. Escolha outro status acima para consultar.</p>
+        </div>
+
+        <!-- Nenhum resultado da busca local. -->
+        <div class="field-os-empty field-os-search-empty" id="field-os-search-empty" hidden>
+            <div class="field-os-empty-icon" aria-hidden="true">
+                <i data-lucide="search-x"></i>
+            </div>
+            <h2>Nenhuma ordem encontrada</h2>
+            <p>Tente buscar por outro número, nome do cliente, endereço ou serviço.</p>
+            <button type="button" class="field-os-reset-button" id="field-os-reset-search">Limpar pesquisa</button>
+        </div>
+
+        <!-- Lista de ordens -->
+        <div class="field-os-list" id="field-os-list" th:unless="${#lists.isEmpty(orders)}">
+            <article class="field-os-order" th:each="order : ${orders}"
+                     th:attr="data-completed=${order.completed}">
+
+                <div class="field-os-order-top">
+                    <div class="field-os-order-identity">
+                        <span class="field-os-order-eyebrow">ORDEM DE SERVIÇO</span>
+                        <h2 th:text="${order.number}">OS-0001</h2>
+                    </div>
+                    <span class="field-os-status" th:attr="data-completed=${order.completed}"
+                          th:text="${order.status}">Em andamento</span>
+                </div>
+
+                <div class="field-os-order-body">
+                    <div class="field-os-customer-block">
+                        <span class="field-os-info-label">CLIENTE</span>
+                        <strong class="field-os-customer" th:if="${order.customerName}"
+                                th:text="${order.customerName}">Nome do cliente</strong>
+                        <strong class="field-os-customer field-os-placeholder" th:unless="${order.customerName}">
+                            Cliente não informado
+                        </strong>
+                        <p class="field-os-address" th:if="${order.address}">
+                            <i data-lucide="map-pin" aria-hidden="true"></i>
+                            <span th:text="${order.address}">Endereço da instalação</span>
+                        </p>
+                    </div>
+
+                    <div class="field-os-metadata">
+                        <div class="field-os-meta-item">
+                            <div class="field-os-meta-icon" aria-hidden="true"><i data-lucide="calendar-days"></i></div>
+                            <div>
+                                <span class="field-os-info-label">INSTALAÇÃO</span>
+                                <span class="field-os-meta-value"
+                                      th:text="${order.installationDate != null ? #temporals.format(order.installationDate, 'dd/MM/yyyy') : 'Sem agendamento'}">Sem agendamento</span>
+                            </div>
+                        </div>
+                        <div class="field-os-meta-item" th:if="${order.phone}">
+                            <div class="field-os-meta-icon" aria-hidden="true"><i data-lucide="phone"></i></div>
+                            <div>
+                                <span class="field-os-info-label">TELEFONE</span>
+                                <a class="field-os-phone" th:href="${'tel:' + order.phone}"
+                                   th:text="${order.phone}" aria-label="Ligar para o cliente">(11) 99999-9999</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field-os-services" th:unless="${#lists.isEmpty(order.services)}">
+                        <div class="field-os-services-icon" aria-hidden="true"><i data-lucide="layers-3"></i></div>
+                        <div>
+                            <span class="field-os-info-label">SERVIÇOS PREVISTOS</span>
+                            <p th:text="${#strings.listJoin(order.services, ' · ')}">Instalação de vidro temperado</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field-os-order-bottom">
+                    <span class="field-os-bottom-helper">Consulte os detalhes e orientações da OS</span>
+                    <a class="field-os-open" th:href="@{/technician-work-orders/{id}(id=${order.id})}"
+                       th:attr="aria-label=${'Abrir ordem de serviço ' + order.number}">
+                        Abrir OS
+                        <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </article>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: lucide-script}"></div>
+
+<script>
+(function () {
+    'use strict';
+
+    const input = document.getElementById('field-os-search');
+    const list = document.getElementById('field-os-list');
+    if (!input || !list) return;
+
+    const orders = Array.from(list.querySelectorAll('.field-os-order'));
+    const counter = document.getElementById('field-os-visible-count');
+    const countLabel = document.getElementById('field-os-result-label');
+    const empty = document.getElementById('field-os-search-empty');
+    const clear = document.getElementById('field-os-clear-search');
+    const reset = document.getElementById('field-os-reset-search');
+
+    function normalize(value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('pt-BR');
+    }
+
+    // Pré-indexa cada cartão para a busca continuar rápida em celulares.
+    const indexed = orders.map(card => ({ card, text: normalize(card.textContent) }));
+
+    function searchOrders() {
+        const query = normalize(input.value.trim());
+        let visible = 0;
+
+        indexed.forEach(({ card, text }) => {
+            const matched = !query || text.includes(query);
+            card.hidden = !matched;
+            if (matched) visible++;
+        });
+
+        counter.textContent = visible;
+        countLabel.textContent = query ? (visible === 1 ? 'encontrada' : 'encontradas') : 'exibidas';
+        clear.hidden = !input.value;
+        empty.hidden = !query || visible > 0;
+        list.hidden = Boolean(query && visible === 0);
+    }
+
+    input.addEventListener('input', searchOrders);
+    function clearSearch() {
+        input.value = '';
+        searchOrders();
+        input.focus();
+    }
+    clear.addEventListener('click', clearSearch);
+    reset.addEventListener('click', clearSearch);
+})();
+</script>
+</body>
+</html>

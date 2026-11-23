@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 @Service("pageAccess")
 public class PageAccessService {
     private static final String SNAPSHOT_KEY = PageAccessService.class.getName() + ".snapshot";
+    private static final Access NO_ACCESS = new Access(false, false, false, false);
     private static final Access MANAGEMENT_ACCESS = new Access(true, true, true, false);
     private final AppUserRepository users;
     private final UserPagePermissionRepository permissions;
@@ -79,6 +80,7 @@ public class PageAccessService {
     }
 
     public Access defaults(PageModule page, String role) {
+        if (!page.supportsRole(role)) return NO_ACCESS;
         if ("GESTAO".equals(role)) return MANAGEMENT_ACCESS;
         boolean view = page.allowedByRole(role);
         boolean write = view && page.isWritable();
@@ -89,6 +91,7 @@ public class PageAccessService {
     }
 
     private Access access(PageModule page, Snapshot snapshot) {
+        if (!page.supportsRole(snapshot.role())) return NO_ACCESS;
         if ("GESTAO".equals(snapshot.role())) return MANAGEMENT_ACCESS;
         UserPagePermission permission = snapshot.permissions().get(page.getKey());
         if (permission == null) return defaults(page, snapshot.role());
@@ -98,7 +101,7 @@ public class PageAccessService {
 
     public Access access(String key) {
         return PageModule.fromKey(key).map(page -> access(page, current()))
-                .orElseGet(() -> new Access(false, false, false, false));
+                .orElse(NO_ACCESS);
     }
 
     public boolean canView(String key) { return access(key).canView(); }
@@ -154,4 +157,8 @@ public class PageAccessService {
     }
 
     public List<PageModule> modules() { return List.of(PageModule.values()); }
+
+    public List<PageModule> modulesForRole(String role) {
+        return modules().stream().filter(page -> page.supportsRole(role)).toList();
+    }
 }

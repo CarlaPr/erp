@@ -122,6 +122,15 @@
                 </a>
             </div>
 
+            <div th:if="${@pageAccess.canView('technician-work-orders')}" class="space-y-1">
+                <div class="px-3 pt-3 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Operações de campo</div>
+                <a th:href="@{/technician-work-orders}" th:attr="aria-current=${currentPage == 'technician-work-orders' ? 'page' : null}"
+                   th:classappend="${currentPage == 'technician-work-orders'} ? 'bg-brand-50 text-brand-600 border-brand-600 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border-transparent'"
+                   class="flex items-center gap-3 px-3 py-3 border-l-4 rounded-r-lg transition-all text-sm font-semibold">
+                    <i data-lucide="clipboard-list" class="w-4 h-4" aria-hidden="true"></i> Ordens de Serviço
+                </a>
+            </div>
+
             <div th:if="${@pageAccess.canViewAny('cut-plans', 'cut-plans-regras', 'cut-plans-parametros', 'cut-plans-catalogo')}" class="space-y-1">
                 <div class="px-3 pt-6 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Setor Plano de Corte</div>
 
