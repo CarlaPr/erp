@@ -142,6 +142,7 @@
                                 <option value="SPLIT_50_50">Entrada + saldo na entrega (padrão 50% / 50%)</option>
                                 <option value="FULL_UPFRONT">100% antecipado</option>
                                 <option value="FULL_ON_DELIVERY">100% na entrega</option>
+                                <option value="" hidden>Selecione a condição</option>
                             </select>
                         </label>
                         <label id="paymentPlanEntryWrap" class="block text-slate-700 dark:text-slate-300 font-bold text-sm">
@@ -719,6 +720,7 @@
     const QUOTE_DRAFT_KEY = 'quoteDraft:' + (quoteDraftIdFromServer || 'new');
     const QUOTE_DRAFT_TTL_MS = 24 * 60 * 60 * 1000; // rascunhos com mais de 24h são ignorados
     let draftSaveTimer = null;
+    let quoteDraftHasChanges = false;
 
     function collectQuoteDraft() {
         const clientSelect = document.getElementById('quoteClient');
@@ -741,9 +743,9 @@
             paymentDeliveryAmount: paymentPlanAmountsInitialized ? parseMoedaBRL(document.getElementById('paymentDeliveryAmount')?.value) : null,
             discount: document.getElementById('quoteDiscount')?.value || '',
             cashDiscountType: document.getElementById('cashDiscountType')?.value || 'PERCENT',
-            cashDiscountValue: document.getElementById('cashDiscountValue')?.value || '0',
+            cashDiscountValue: document.getElementById('cashDiscountValue')?.value ?? '0',
             pixDiscountType: document.getElementById('pixDiscountType')?.value || 'PERCENT',
-            pixDiscountValue: document.getElementById('pixDiscountValue')?.value || '0',
+            pixDiscountValue: document.getElementById('pixDiscountValue')?.value ?? '0',
             creditInstallments: document.getElementById('creditInstallments')?.value || '0',
             creditWithInterest: document.getElementById('creditWithInterest')?.checked || false,
             creditMonthlyInterestRate: document.getElementById('creditMonthlyInterestRate')?.value || '',
@@ -759,6 +761,7 @@
     }
 
     function saveQuoteDraft() {
+        if (!quoteDraftHasChanges) return;
         clearTimeout(draftSaveTimer);
         draftSaveTimer = setTimeout(function () {
             try {
@@ -767,10 +770,42 @@
         }, 400);
     }
 
-    function discardQuoteDraft() {
+    function markQuoteDraftChanged() {
+        quoteDraftHasChanges = true;
+        saveQuoteDraft();
+    }
+
+    function clearQuoteDraft() {
+        quoteDraftHasChanges = false;
+        clearTimeout(draftSaveTimer);
         try { localStorage.removeItem(QUOTE_DRAFT_KEY); } catch (e) {}
         document.getElementById('draftRestoredBanner')?.classList.add('hidden');
         document.getElementById('draftRestoredBanner')?.classList.remove('flex');
+    }
+
+    function discardQuoteDraft() {
+        clearQuoteDraft();
+        if (quoteDraftIdFromServer) {
+            window.location.reload();
+            return;
+        }
+
+        document.getElementById('quoteForm').reset();
+        [
+            'quotePaymentPlan', 'quoteDeliveryBusinessDays', 'quoteDiscount',
+            'cashDiscountValue', 'pixDiscountValue', 'creditMonthlyInterestRate'
+        ].forEach(id => document.getElementById(id).value = '');
+        document.querySelectorAll('.pay-method-cb').forEach(cb => cb.checked = false);
+        document.getElementById('discountContainer').classList.add('hidden');
+        currentItems = [];
+        validUntilTouched = false;
+        paymentPlanAmountsInitialized = false;
+        reviewPaymentPlanAfterPreview = false;
+        updateClientDetailsPanel();
+        toggleBoletoFields(false);
+        cancelEditItem();
+        renderPaymentPlanFields();
+        document.getElementById('quoteProfile').focus();
     }
 
     function restoreQuoteDraftIfAny() {
@@ -781,26 +816,28 @@
         let draft;
         try { draft = JSON.parse(raw); } catch (e) { return; }
         if (!draft || (Date.now() - (draft.savedAt || 0)) > QUOTE_DRAFT_TTL_MS) {
-            discardQuoteDraft();
+            clearQuoteDraft();
             return;
         }
 
+        quoteDraftHasChanges = true;
         if (draft.clientId) {
             const clientSelect = document.getElementById('quoteClient');
             if (clientSelect) clientSelect.value = draft.clientId;
         }
         if (draft.clientName) document.getElementById('quoteClientName').value = draft.clientName;
         if (draft.profileId) document.getElementById('quoteProfile').value = draft.profileId;
-        if (draft.date) document.getElementById('quoteDate').value = draft.date;
-        if (draft.validUntil) {
+        if (draft.date !== undefined) document.getElementById('quoteDate').value = draft.date;
+        if (draft.validUntil !== undefined) {
             document.getElementById('quoteValidUntil').value = draft.validUntil;
-            validUntilTouched = true;
+            validUntilTouched = Boolean(draft.validUntil);
         }
         if (draft.deliveryBusinessDays !== undefined) document.getElementById('quoteDeliveryBusinessDays').value = draft.deliveryBusinessDays;
         if (draft.deliveryDate !== undefined) document.getElementById('quoteDeliveryDate').value = draft.deliveryDate;
-        if (draft.payment) {
+        if (draft.payment !== undefined) {
             document.getElementById('quotePayment').value = draft.payment;
-            document.querySelectorAll('.pay-method-cb').forEach(cb => cb.checked = draft.payment.split(',').map(method => method.trim()).includes(cb.value));
+            const methods = (draft.payment || '').split(',').map(method => method.trim());
+            document.querySelectorAll('.pay-method-cb').forEach(cb => cb.checked = methods.includes(cb.value));
         }
         if (approvedQuoteEditing && draft.approvedPaymentComposition) {
             approvedPaymentAmounts = Object.fromEntries(Object.entries(draft.approvedPaymentComposition)
@@ -810,7 +847,7 @@
                 installments.value = draft.agreedCreditInstallments;
             }
         }
-        if (draft.paymentPlan) { const el = document.getElementById('quotePaymentPlan'); if (el) el.value = draft.paymentPlan; }
+        if (draft.paymentPlan !== undefined) document.getElementById('quotePaymentPlan').value = draft.paymentPlan;
         if (draft.paymentEntryAmount != null && draft.paymentDeliveryAmount != null) {
             document.getElementById('paymentEntryAmount').value = formatarMoeda(Number(draft.paymentEntryAmount) || 0);
             document.getElementById('paymentDeliveryAmount').value = formatarMoeda(Number(draft.paymentDeliveryAmount) || 0);
@@ -831,10 +868,10 @@
         if (draft.boletoFirstDueDate) document.getElementById('boletoFirstDueDate').value = draft.boletoFirstDueDate;
         if (draft.boletoIntervalDays) document.getElementById('boletoIntervalDays').value = draft.boletoIntervalDays;
         toggleBoletoFields(false);
-        if (draft.observations) document.getElementById('quoteObs').value = draft.deliveryBusinessDays === undefined
+        if (draft.observations !== undefined) document.getElementById('quoteObs').value = draft.deliveryBusinessDays === undefined
             ? observationsWithoutLegacyDeliveryTerm(draft.observations) : draft.observations;
-        if (draft.warranty) document.getElementById('quoteWarranty').value = draft.warranty;
-        if (Array.isArray(draft.items) && draft.items.length > 0) currentItems = draft.items;
+        if (draft.warranty !== undefined) document.getElementById('quoteWarranty').value = draft.warranty;
+        if (Array.isArray(draft.items)) currentItems = draft.items;
 
         updateClientDetailsPanel();
         togglePaymentOptions();
@@ -850,8 +887,8 @@
 
 
     document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('quoteForm')?.addEventListener('input', saveQuoteDraft);
-        document.getElementById('quoteForm')?.addEventListener('change', saveQuoteDraft);
+        document.getElementById('quoteForm')?.addEventListener('input', markQuoteDraftChanged);
+        document.getElementById('quoteForm')?.addEventListener('change', markQuoteDraftChanged);
         ['paymentEntryAmount', 'paymentDeliveryAmount'].forEach(id => {
             const input = document.getElementById(id);
             input?.addEventListener('focus', () => prepararCampoMoedaBRL(input));
@@ -1032,6 +1069,7 @@
         document.getElementById('quoteClientName').value = name;
         updateClientDetailsPanel();
         closeModal('clientSearchModal');
+        markQuoteDraftChanged();
     }
 
     function updateClientDetailsPanel() {
@@ -1316,7 +1354,7 @@
                 closeModal('clientInlineModal');
 
                 updateClientDetailsPanel();
-                saveQuoteDraft();
+                markQuoteDraftChanged();
             })
             .catch(err => {
                 console.error(err);
@@ -1341,6 +1379,7 @@
         togglePaymentOptions();
         refreshCommercialConditions();
         closeModal('paymentMethodsModal');
+        markQuoteDraftChanged();
     }
 
     function togglePaymentOptions() {
@@ -1438,6 +1477,7 @@
 
     function applyPaymentPlanDefaults(force = false) {
         const target = paymentPlanTarget();
+        if (target === 0 && currentItems.length === 0) return;
         if (target == null || (paymentPlanAmountsInitialized && !force)) return;
         const plan = document.getElementById('quotePaymentPlan')?.value || 'SPLIT_50_50';
         let entry = 0;
@@ -1889,6 +1929,7 @@
         }
 
         cancelEditItem(subtotalChanged);
+        markQuoteDraftChanged();
     }
 
     function editQuoteItem(idx) {
@@ -1942,6 +1983,7 @@
             if (editingItemIndex > idx) editingItemIndex--;
             renderQuoteItems(reviewPaymentPlan);
         }
+        markQuoteDraftChanged();
     }
 
     function renderQuoteItems(reviewPaymentPlan = false) {
@@ -2499,7 +2541,7 @@
                     const message = await response.text();
                     throw new Error(message || `Status: ${response.status}`);
                 }
-                discardQuoteDraft();
+                clearQuoteDraft();
                 window.location.href = '/quotes';
             })
             .catch(err => {
