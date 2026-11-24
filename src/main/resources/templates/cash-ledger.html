@@ -77,6 +77,15 @@
     .cl-account-bottom > div { min-width: 0; }
     .cl-account-difference { text-align: right; }
     .cl-account-secondary { display: block; margin-top: 4px; font-size: 12px; font-weight: 800; }
+    .cl-account-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin-top: 14px; }
+    .cl-account-actions .cl-button { padding-inline: 10px; gap: 6px; }
+    .cl-account-edit { min-width: 0; }
+    .cl-account-edit[open] { flex-basis: 100%; }
+    .cl-account-edit summary { list-style: none; }
+    .cl-account-edit summary::-webkit-details-marker { display: none; }
+    .cl-account-edit-form { display: grid; gap: 8px; margin-top: 8px; }
+    .cl-button-danger { color: var(--cl-red); }
+    .cl-button-danger:hover { border-color: var(--cl-red); }
     .cl-positive { color: var(--cl-green) !important; }
     .cl-negative { color: var(--cl-red) !important; }
     .cl-warning { color: var(--cl-amber) !important; }
@@ -294,7 +303,9 @@
 
         <!-- CONTAS BANCÁRIAS: SALDOS ATUAIS, INDEPENDENTES DO PERÍODO FILTRADO -->
         <section id="contas-bancarias" class="cl-panel cl-bank-section" aria-labelledby="cl-bank-title"
-                 th:with="accountCount=${bankAccountBalances == null ? 0 : #lists.size(bankAccountBalances)}">
+                 th:with="accountCount=${bankAccountBalances == null ? 0 : #lists.size(bankAccountBalances)},
+                          canEditAccounts=${@pageAccess.canEdit('cash-ledger')},
+                          canDeleteAccounts=${@pageAccess.canDelete('cash-ledger')}">
             <div class="cl-section-header">
                 <div class="cl-section-heading">
                     <div class="cl-section-icon cl-section-icon-blue" aria-hidden="true">
@@ -314,9 +325,9 @@
                 <i data-lucide="check-circle-2" aria-hidden="true"></i>
                 <span th:text="${bankAccountSuccess}">Conta cadastrada com sucesso.</span>
             </div>
-            <div th:if="${bankAccountError}" role="alert" class="cl-alert cl-alert-error">
+            <div th:if="${bankAccountError != null or bankAccountCreateError != null}" role="alert" class="cl-alert cl-alert-error">
                 <i data-lucide="circle-alert" aria-hidden="true"></i>
-                <span th:text="${bankAccountError}">Não foi possível cadastrar a conta.</span>
+                <span th:text="${bankAccountError ?: bankAccountCreateError}">Não foi possível salvar a alteração.</span>
             </div>
 
             <div th:if="${#lists.isEmpty(bankAccountBalances)}" class="cl-bank-empty">
@@ -347,7 +358,7 @@
                     <div class="cl-account-divider"></div>
                     <div class="cl-account-bottom">
                         <div>
-                            <span class="cl-small-label">Saldo no cadastro</span>
+                            <span class="cl-small-label">Saldo inicial</span>
                             <strong class="cl-money cl-account-secondary"
                                     th:text="|R$ ${#numbers.formatDecimal(account.openingBalance(), 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong>
                         </div>
@@ -358,13 +369,40 @@
                                     th:text="|${variation.signum() > 0 ? '+' : (variation.signum() < 0 ? '-' : '')}R$ ${#numbers.formatDecimal(variation.abs(), 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong>
                         </div>
                     </div>
+                    <div th:if="${canEditAccounts or canDeleteAccounts}" class="cl-account-actions">
+                        <details th:if="${canEditAccounts}" th:open="${bankAccountEditId == account.id()}" class="cl-account-edit">
+                            <summary class="cl-button cl-button-outline" th:aria-label="|Editar saldo inicial de ${account.name()}|">
+                                <i data-lucide="pencil" aria-hidden="true"></i>
+                                Editar saldo inicial
+                            </summary>
+                            <form th:action="@{/cash-ledger/bank-accounts/{id}/edit(id=${account.id()})}" method="post" class="cl-account-edit-form">
+                                <div class="cl-field">
+                                    <label th:for="|cl-opening-balance-${account.id()}|">Saldo inicial (R$)</label>
+                                    <div class="cl-input-currency">
+                                        <span aria-hidden="true">R$</span>
+                                        <input th:id="|cl-opening-balance-${account.id()}|" th:value="${account.openingBalance().toPlainString()}"
+                                               name="openingBalance" type="number" step="0.01" inputmode="decimal"
+                                               min="-999999999999.99" max="999999999999.99" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="cl-button cl-button-primary">Salvar saldo</button>
+                            </form>
+                        </details>
+                        <form th:if="${canDeleteAccounts}" th:action="@{/cash-ledger/bank-accounts/{id}/delete(id=${account.id()})}"
+                              method="post" th:data-account-name="${account.name()}"
+                              onsubmit="return confirm('Deseja excluir a conta bancária ‘' + this.dataset.accountName + '’?')">
+                            <button type="submit" class="cl-button cl-button-outline cl-button-danger" th:aria-label="|Excluir conta ${account.name()}|">
+                                <i data-lucide="trash-2" aria-hidden="true"></i>
+                                Excluir
+                            </button>
+                        </form>
+                    </div>
                 </article>
             </div>
 
-            <!-- Mantém exatamente a permissão e o endpoint de cadastro existentes. -->
             <details class="cl-create-account"
-                     th:if="${@pageAccess.canEdit('cash-ledger')}"
-                     th:open="${bankAccountError != null or #lists.isEmpty(bankAccountBalances)}">
+                     th:if="${canEditAccounts}"
+                     th:open="${bankAccountCreateError != null or #lists.isEmpty(bankAccountBalances)}">
                 <summary class="cl-create-trigger">
                     <span class="cl-create-trigger-left">
                         <span class="cl-create-plus"><i data-lucide="plus" aria-hidden="true"></i></span>

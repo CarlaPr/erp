@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,12 +25,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/cash-ledger")
 public class CashLedgerController {
 
     private static final Logger log = LoggerFactory.getLogger(CashLedgerController.class);
+    private static final String BANK_ACCOUNTS_REDIRECT = "redirect:/cash-ledger#contas-bancarias";
     private final CashLedgerService cashLedgerService;
     private final CashLedgerPdfService cashLedgerPdfService;
     private final BankAccountService bankAccountService;
@@ -82,11 +85,38 @@ public class CashLedgerController {
             bankAccountService.create(name, openingBalance);
             redirectAttributes.addFlashAttribute("bankAccountSuccess", "Conta bancária cadastrada.");
         } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("bankAccountCreateError", e.getMessage());
+        } catch (DataIntegrityViolationException e) {
+            redirectAttributes.addFlashAttribute("bankAccountCreateError", "Já existe uma conta bancária com esse nome.");
+        }
+        return BANK_ACCOUNTS_REDIRECT;
+    }
+
+    @PostMapping("/bank-accounts/{id}/edit")
+    public String updateBankAccountOpeningBalance(@PathVariable UUID id,
+                                                  @RequestParam(required = false) BigDecimal openingBalance,
+                                                  RedirectAttributes redirectAttributes) {
+        try {
+            bankAccountService.updateOpeningBalance(id, openingBalance);
+            redirectAttributes.addFlashAttribute("bankAccountSuccess", "Saldo inicial atualizado.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("bankAccountError", e.getMessage());
+            redirectAttributes.addFlashAttribute("bankAccountEditId", id);
+        }
+        return BANK_ACCOUNTS_REDIRECT;
+    }
+
+    @PostMapping("/bank-accounts/{id}/delete")
+    public String deleteBankAccount(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
+        try {
+            bankAccountService.delete(id);
+            redirectAttributes.addFlashAttribute("bankAccountSuccess", "Conta bancária excluída.");
+        } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("bankAccountError", e.getMessage());
         } catch (DataIntegrityViolationException e) {
-            redirectAttributes.addFlashAttribute("bankAccountError", "Já existe uma conta bancária com esse nome.");
+            redirectAttributes.addFlashAttribute("bankAccountError", "Esta conta bancária possui movimentações vinculadas e não pode ser excluída.");
         }
-        return "redirect:/cash-ledger#contas-bancarias";
+        return BANK_ACCOUNTS_REDIRECT;
     }
 
     @GetMapping("/pdf")

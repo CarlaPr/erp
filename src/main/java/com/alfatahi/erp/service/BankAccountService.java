@@ -4,6 +4,7 @@ import com.alfatahi.erp.dto.BankAccountBalance;
 import com.alfatahi.erp.entity.BankAccount;
 import com.alfatahi.erp.repository.BankAccountRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -39,10 +40,29 @@ public class BankAccountService {
         if (accountName.isEmpty() || accountName.length() > 100) {
             throw new IllegalArgumentException("Informe um nome para a conta bancária com até 100 caracteres.");
         }
+        validateOpeningBalance(openingBalance);
+        repository.save(new BankAccount(accountName, openingBalance));
+    }
+
+    @Transactional
+    public void updateOpeningBalance(UUID id, BigDecimal openingBalance) {
+        validateOpeningBalance(openingBalance);
+        if (repository.updateOpeningBalance(id, openingBalance) == 0) {
+            throw new IllegalArgumentException("Conta bancária não encontrada.");
+        }
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        if (repository.deleteConfiguredAccount(id) == 0) {
+            throw new IllegalArgumentException("Conta bancária não encontrada.");
+        }
+    }
+
+    private void validateOpeningBalance(BigDecimal openingBalance) {
         if (openingBalance == null || openingBalance.stripTrailingZeros().scale() > 2
                 || openingBalance.abs().compareTo(new BigDecimal("1000000000000")) >= 0) {
             throw new IllegalArgumentException("Informe um saldo inicial válido com até duas casas decimais.");
         }
-        repository.save(new BankAccount(accountName, openingBalance));
     }
 }
