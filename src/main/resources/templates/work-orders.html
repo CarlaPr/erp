@@ -82,8 +82,14 @@
         </button>
     </header>
     <section id="osFilters" aria-labelledby="osFiltersTitle" class="bg-white dark:bg-[#131C2F] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm mb-8">
-        <div class="mb-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
             <h3 id="osFiltersTitle" class="text-base font-bold text-slate-900 dark:text-white">Filtros das ordens de serviço</h3>
+            <a th:if="${showFinancialReport}" id="osReportPdf"
+               th:href="@{/work-orders/pdf(month=${reportAllMonths ? 'all' : reportMonth},status=${selectedStatus})}"
+               target="_blank" rel="noopener" onclick="applyOsFilters()"
+               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-white text-sm font-bold transition-colors">
+                <i data-lucide="file-down" class="w-4 h-4" aria-hidden="true"></i> PDF das O.S. filtradas
+            </a>
         </div>
         <div class="os-period-filter">
             <div th:replace="~{fragments/financial-period :: filter('/work-orders', '', true)}"></div>
@@ -506,10 +512,20 @@
     }
 
     function applyOsFilters() {
-        const searchTerm = document.getElementById('filterSearch').value.trim().toLowerCase();
+        const search = document.getElementById('filterSearch').value.trim();
+        const searchTerm = search.toLowerCase();
         const statusTerm = document.getElementById('filterStatus').value.toLowerCase();
         const monthTerm = document.getElementById('filterMonth').value;
 
+        const reportLink = document.getElementById('osReportPdf');
+        if (reportLink) {
+            const url = new URL(reportLink.href);
+            if (search) url.searchParams.set('search', search);
+            else url.searchParams.delete('search');
+            if (monthTerm === 'unscheduled') url.searchParams.set('scheduling', monthTerm);
+            else url.searchParams.delete('scheduling');
+            reportLink.href = url.toString();
+        }
 
         const cards = osCards;
         let visibleCount = 0;

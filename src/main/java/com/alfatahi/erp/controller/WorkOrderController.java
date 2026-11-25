@@ -11,7 +11,9 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
@@ -51,13 +54,14 @@ public class WorkOrderController {
     private final AccountsPayableRepository payableRepo;
     private final QuoteService quoteService;
     private final WorkOrderPdfService workOrderPdfService;
+    private final WorkOrderReportPdfService workOrderReportPdfService;
 
     public WorkOrderController(WorkOrderService workOrderService, ClientService clientService,
                                ServiceCategoryRepository categoryRepository, ProfileRepository profileRepository,
                                QuoteRepository quoteRepository, WorkOrderRepository workOrderRepo,
                                ClientRepository clientRepository, AccountsReceivableRepository receivableRepo,
                                AccountsPayableRepository payableRepo, QuoteService quoteService,
-                               WorkOrderPdfService workOrderPdfService) {
+                               WorkOrderPdfService workOrderPdfService, WorkOrderReportPdfService workOrderReportPdfService) {
         this.workOrderService = workOrderService;
         this.clientService = clientService;
         this.categoryRepository = categoryRepository;
@@ -69,6 +73,7 @@ public class WorkOrderController {
         this.payableRepo = payableRepo;
         this.quoteService = quoteService;
         this.workOrderPdfService = workOrderPdfService;
+        this.workOrderReportPdfService = workOrderReportPdfService;
     }
 
     @GetMapping
@@ -80,11 +85,7 @@ public class WorkOrderController {
         String statusFilter = normalizeStatusFilter(status);
         model.addAttribute("selectedStatus", statusFilter);
         model.addAttribute("periodStatusFilter", statusFilter);
-        List<WorkOrder> periodOrders = period.from() != null && period.to() != null
-                ? workOrderRepo.findListingByPeriod(period.from().atStartOfDay(), period.endExclusive().atStartOfDay())
-                : workOrderRepo.findAllWithItemsOrderByCreatedAtDesc();
-        List<WorkOrder> orders = periodOrders.stream()
-                .filter(wo -> matchesStatusFilter(wo, statusFilter)).toList();
+        List<WorkOrder> orders = listOrders(period, statusFilter);
 
         Profile profile = profileRepository.findAll().stream().findFirst().orElseGet(() -> {
             Profile p = new Profile();
@@ -97,11 +98,10 @@ public class WorkOrderController {
         BigDecimal globalProfit = BigDecimal.ZERO;
         BigDecimal averageMargin = BigDecimal.ZERO;
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isTecnico = auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("TECNICO") || a.getAuthority().equals("ROLE_TECNICO"));
+        boolean showFinancialReport = !isTechnician();
+        model.addAttribute("showFinancialReport", showFinancialReport);
 
-        if (!isTecnico) {
+        if (showFinancialReport) {
             totalRevenue = orders.stream()
                     .filter(wo -> !isCancelled(wo))
                     .map(wo -> wo.getTotalValue() != null ? wo.getTotalValue() : BigDecimal.ZERO)
@@ -134,6 +134,67 @@ public class WorkOrderController {
         model.addAttribute("currentPage", "work-orders");
 
         return "work-orders";
+    }
+
+    @GetMapping("/pdf")
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> reportPdf(@RequestParam(required = false) String month,
+                                            @RequestParam(required = false) String status,
+                                            @RequestParam(defaultValue = "") String search,
+                                            @RequestParam(required = false) String scheduling) {
+        if (isTechnician()) return ResponseEntity.status(403).build();
+
+        FinancialPeriod period = FinancialPeriod.select(month, false, null, null);
+        String statusFilter = normalizeStatusFilter(status);
+        String searchTerm = search.strip().toLowerCase(Locale.ROOT);
+        boolean unscheduled = "unscheduled".equals(scheduling);
+        List<WorkOrder> orders = listOrders(period, statusFilter).stream()
+                .filter(order -> !unscheduled || order.getInstallDate() == null)
+                .filter(order -> searchTerm.isEmpty() || matchesSearch(order, searchTerm))
+                .toList();
+
+        String statusLabel = switch (statusFilter) {
+            case "all" -> "Todos os status";
+            case "completed" -> "Concluídas / entregues";
+            case "cancelled" -> "Canceladas";
+            case "in_progress" -> "Em andamento";
+            default -> "Não concluídas";
+        };
+
+        try {
+            byte[] pdf = workOrderReportPdfService.render(orders, period, statusLabel, search.strip(), unscheduled);
+            String filename = "Ordens-de-Servico-" + (period.reference() == null ? "todos-os-meses" : period.monthValue()) + ".pdf";
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().filename(filename).build().toString())
+                    .body(pdf);
+        } catch (Exception e) {
+            log.error("Erro ao gerar o relatório de ordens de serviço", e);
+            return ResponseEntity.internalServerError()
+                    .contentType(new MediaType("text", "plain", StandardCharsets.UTF_8))
+                    .body("Não foi possível gerar o PDF das ordens de serviço. Tente novamente.".getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    private List<WorkOrder> listOrders(FinancialPeriod period, String statusFilter) {
+        List<WorkOrder> orders = period.from() != null && period.to() != null
+                ? workOrderRepo.findListingByPeriod(period.from().atStartOfDay(), period.endExclusive().atStartOfDay())
+                : workOrderRepo.findAllWithItemsOrderByCreatedAtDesc();
+        return orders.stream().filter(order -> matchesStatusFilter(order, statusFilter)).toList();
+    }
+
+    private static boolean matchesSearch(WorkOrder order, String term) {
+        String fields = String.join(" ", order.getNumber(),
+                order.getQuote() == null ? "" : order.getQuote().getNumber(),
+                order.getTitle() == null ? "" : order.getTitle(),
+                order.getClient() == null ? "" : order.getClient().getName());
+        return fields.toLowerCase(Locale.ROOT).contains(term);
+    }
+
+    private static boolean isTechnician() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("TECNICO") || a.getAuthority().equals("ROLE_TECNICO"));
     }
 
     private static final Set<String> STATUS_FILTERS = Set.of("active", "all", "in_progress", "completed", "cancelled");
