@@ -38,10 +38,11 @@
         .metrics td { width: 25%; border: 1px solid #e2e8f0; padding: 6px 9px; background: #f8fafc; }
         .metric-label, .field-label { display: block; color: #475569; }
         .metric-value { font-size: 12px; font-weight: bold; color: #0f172a; white-space: nowrap; }
-        .metrics .balance { background: #e8f0f6; }
+        .metrics .balance { background: #fef3c7; }
         .metrics .negative { color: #9f1239; }
         .summary-note { font-size: 9px; color: #475569; margin-top: 5px; }
-        .order { margin-top: 16px; }
+        .order { display: block; margin-top: 16px; }
+        .order + .order { page-break-before: always; }
         .order-heading { background: #e8f0f6; border-top: 2px solid #0f172a; padding: 7px 9px; page-break-after: avoid; page-break-inside: avoid; }
         .order-heading td:first-child { width: 78%; }
         .order-heading td:last-child { text-align: right; vertical-align: middle; font-weight: bold; }
@@ -55,6 +56,8 @@
         .entries tbody tr:nth-child(even) { background: #f8fafc; }
         .entries .number { text-align: right; white-space: nowrap; }
         .entries .date { white-space: nowrap; }
+        .metrics .net, .entries th.sale { background: #dcfce7; }
+        .entries .sale { color: #166534; }
         .entries th.cost { background: #fee2e2; }
         .entries th.cost, .entries td.cost, .metrics .cost .metric-label, .metrics .cost .metric-value { color: #b91c1c; }
         .wrap { white-space: pre-wrap; word-wrap: break-word; }
@@ -142,8 +145,8 @@
     <table th:unless="${#lists.isEmpty(detail.items)}" class="entries">
         <colgroup><col style="width: 41%" /><col style="width: 7%" /><col style="width: 13%" /><col style="width: 13%" /><col style="width: 13%" /><col style="width: 13%" /></colgroup>
         <thead><tr>
-            <th th:text="${'Item | ' + wo.number}">Item</th><th class="number">Qtd.</th><th class="number">Venda un.</th>
-            <th class="number cost">Custo un.</th><th class="number">Venda total</th><th class="number cost">Custo total</th>
+            <th th:text="${'Item | ' + wo.number}">Item</th><th class="number">Qtd.</th><th class="number sale">Venda un.</th>
+            <th class="number cost">Custo un.</th><th class="number sale">Venda total</th><th class="number cost">Custo total</th>
         </tr></thead>
         <tbody>
         <tr th:each="line : ${detail.items}" th:with="item=${line.item}">
@@ -154,9 +157,9 @@
                 <div class="secondary wrap" th:if="${!#strings.isEmpty(item.technicalNotes)}" th:text="${item.technicalNotes}"></div>
             </td>
             <td class="number" th:text="${item.quantity == null ? '-' : item.quantity.stripTrailingZeros().toPlainString().replace('.', ',')}"></td>
-            <td class="number" th:text="${#numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'COMMA') ?: '-'}"></td>
+            <td class="number sale" th:text="${#numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'COMMA') ?: '-'}"></td>
             <td class="number cost" th:text="${#numbers.formatDecimal(item.unitCost, 1, 'POINT', 2, 'COMMA') ?: '-'}"></td>
-            <td class="number" th:text="${#numbers.formatDecimal(item.totalPrice, 1, 'POINT', 2, 'COMMA')}"></td>
+            <td class="number sale" th:text="${#numbers.formatDecimal(item.totalPrice, 1, 'POINT', 2, 'COMMA')}"></td>
             <td class="number cost" th:text="${#numbers.formatDecimal(item.totalCost, 1, 'POINT', 2, 'COMMA')}"></td>
         </tr>
         </tbody>
@@ -202,20 +205,20 @@
 
 <th:block th:remove="all">
     <td th:fragment="field(label, value)"><span class="field-label" th:text="${label}"></span><div class="wrap" th:text="${#strings.isEmpty(value) ? '-' : value}"></div></td>
-    <td th:fragment="metric(label, amount, isCost)" th:classappend="${isCost} ? 'cost' : ''">
+    <td th:fragment="metric(label, amount, colorClass)" th:classappend="${colorClass}">
         <span class="metric-label" th:text="${label}"></span>
         <span class="metric-value" th:classappend="${amount.signum() < 0 ? 'negative' : ''}" th:text="${'R$ ' + #numbers.formatDecimal(amount, 1, 'POINT', 2, 'COMMA')}"></span>
     </td>
     <table class="metrics" th:fragment="metrics(amounts)">
         <tr>
-            <td th:replace="~{:: metric('Valor contratado', ${amounts.contracted}, false)}"></td>
-            <td th:replace="~{:: metric('Custos da O.S.', ${amounts.cost}, true)}"></td>
-            <td th:replace="~{:: metric('Lucro bruto', ${amounts.profit()}, false)}"></td>
+            <td th:replace="~{:: metric('Valor contratado', ${amounts.contracted}, '')}"></td>
+            <td th:replace="~{:: metric('Custos da O.S.', ${amounts.cost}, 'cost')}"></td>
+            <td th:replace="~{:: metric('Lucro bruto', ${amounts.profit()}, '')}"></td>
             <td><span class="metric-label">Margem</span><span class="metric-value" th:text="${#numbers.formatDecimal(amounts.margin(), 1, 'POINT', 2, 'COMMA') + '%'}"></span></td>
         </tr>
         <tr>
-            <td th:replace="~{:: metric('Recebido bruto', ${amounts.gross}, false)}"></td>
-            <td th:replace="~{:: metric('Recebido líquido', ${amounts.net}, false)}"></td>
+            <td th:replace="~{:: metric('Recebido bruto', ${amounts.gross}, '')}"></td>
+            <td th:replace="~{:: metric('Recebido líquido', ${amounts.net}, 'net')}"></td>
             <td colspan="2" class="balance"><span class="metric-label">Saldo a receber</span><span class="metric-value" th:text="${'R$ ' + #numbers.formatDecimal(amounts.balance, 1, 'POINT', 2, 'COMMA')}"></span></td>
         </tr>
     </table>
